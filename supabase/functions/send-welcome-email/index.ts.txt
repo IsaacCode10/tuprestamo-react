@@ -1,0 +1,93 @@
+ 1 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+    2 import { corsHeaders } from "../_shared/cors.ts";
+    3
+    4 // Obtén la clave de API de Resend desde las variables de entorno de Supabase
+    5 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    6
+    7 // URL del logo (reemplazar con la URL de tu logo)
+    8 const LOGO_URL = "https://[TU_DOMINIO_AQUI]/assets/Logo-Tu-Prestamo.png";
+    9
+   10 // URL de la página de oportunidades (reemplazar con tu URL)
+   11 const OPORTUNIDADES_URL = "https://[TU_DOMINIO_AQUI]/oportunidades";
+   12
+   13 const handler = async (_req: Request): Promise<Response> => {
+   14   // Si el método no es POST, devuelve un error
+   15   if (_req.method !== "POST") {
+   16     return new Response("Method Not Allowed", { status: 405 });
+   17   }
+   18
+   19   try {
+   20     // Obtiene los datos del cuerpo de la solicitud
+   21     const { record } = await _req.json();
+   22
+   23     // Extrae los datos del prospecto
+   24     const { email, nombre, tipo_solicitud } = record;
+   25
+   26     // Define el asunto y el cuerpo del correo según el tipo de solicitud
+   27     let subject = "";
+   28     let htmlBody = "";
+   29
+   30     if (tipo_solicitud === "inversionista") {
+   31       subject = "¡Gracias por tu interés en Tu Préstamo Bolivia!";
+   32       htmlBody = `
+   33         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+   34           <img src="${LOGO_URL}" alt="Logo Tu Préstamo Bolivia" style="width: 150px; margin-bottom: 20px;">
+   35           <h2 style="color: #333;">¡Hola ${nombre}!</h2>
+   36           <p>Gracias por registrarte como inversionista en <strong>Tu Préstamo Bolivia</strong>.</p>
+   37           <p>Hemos recibido tus datos y nuestro equipo se pondrá en contacto contigo pronto para guiarte en los siguientes
+      pasos.</p>
+   38           <p>Mientras tanto, puedes ver las oportunidades de inversión activas en nuestro sitio web:</p>
+   39           <p><a href="${OPORTUNIDADES_URL}" style="background-color: #007bff; color: white; padding: 10px 20px;
+      text-decoration: none; border-radius: 5px;">Ver Oportunidades</a></p>
+   40           <p>Atentamente,<br>El equipo de Tu Préstamo Bolivia</p>
+   41         </div>
+   42       `;
+   43     } else if (tipo_solicitud === "prestatario") {
+   44       subject = "Hemos recibido tu solicitud de préstamo";
+   45       htmlBody = `
+   46         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+   47           <img src="${LOGO_URL}" alt="Logo Tu Préstamo Bolivia" style="width: 150px; margin-bottom: 20px;">
+   48           <h2 style="color: #333;">¡Hola ${nombre}!</h2>
+   49           <p>Hemos recibido tu solicitud de préstamo en <strong>Tu Préstamo Bolivia</strong>.</p>
+   50           <p>Nuestro equipo la revisará y se pondrá en contacto contigo pronto para informarte sobre los siguientes
+      pasos.</p>
+   51           <p>Atentamente,<br>El equipo de Tu Préstamo Bolivia</p>
+   52         </div>
+   53       `;
+   54     } else {
+   55       // Si el tipo de solicitud no es válido, no se envía correo
+   56       return new Response("Invalid request type", { status: 400 });
+   57     }
+   58
+   59     // Envía el correo usando la API de Resend
+   60     const resendResponse = await fetch("https://api.resend.com/emails", {
+   61       method: "POST",
+   62       headers: {
+   63         "Content-Type": "application/json",
+   64         Authorization: `Bearer ${RESEND_API_KEY}`,
+   65       },
+   66       body: JSON.stringify({
+   67         from: "Tu Préstamo Bolivia <alfaro.isaac10@gmail.com>",
+   68         to: [email],
+   69         subject: subject,
+   70         html: htmlBody,
+   71       }),
+   72     });
+   73
+   74     const resendData = await resendResponse.json();
+   75
+   76     // Devuelve la respuesta de Resend
+   77     return new Response(JSON.stringify(resendData), {
+   78       headers: { "Content-Type": "application/json", ...corsHeaders },
+   79       status: resendResponse.status,
+   80     });
+   81   } catch (error) {
+   82     return new Response(JSON.stringify({ error: error.message }), {
+   83       headers: { "Content-Type": "application/json", ...corsHeaders },
+   84       status: 400,
+   85     });
+   86   }
+   87 };
+   88
+   89 // Inicia el servidor de la Edge Function
+   90 serve(handler);
