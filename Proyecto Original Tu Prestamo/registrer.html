@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Registro — Tu Préstamo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header idéntico al de index -->
+  <header>
+    <div class="container header__inner">
+      <a href="indexTuPrestamo.html"><img src="logo-tu-prestamo.png" alt="Tu Préstamo" class="logo"></a>
+      <!-- … tu nav … -->
+    </div>
+  </header>
+
+  <!-- Sección de Registro Dinámico -->
+  <section id="registro" class="section section--white section--compact">
+    <div class="container">
+      <h2 id="registro-title" class="section__title">Registro</h2>
+      <p id="registro-subtitle" class="section__text">
+        Completa los datos para continuar.
+      </p>
+      <!-- Aquí incrustaremos el Google Form -->
+      <div class="form-embed">
+        <iframe id="formFrame"
+          src=""
+          width="100%"
+          height="800"
+          frameborder="0"
+          marginheight="0"
+          marginwidth="0">
+          Cargando…
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <!-- … tu footer personalizado … -->
+  </footer>
+
+  <script>
+    // 1) Leer parámetros de URL
+    const params = new URLSearchParams(window.location.search);
+    const role  = params.get('role');    // 'prestatario' o 'inversionista'
+    const email = params.get('email');   // correo verificado (opcional)
+
+   // 2) Mapeo a los distintos formularios de Google Forms
+const forms = {
+  prestatario: {
+    title: 'Formulario de Prestatarios',
+    subtitle: `Te hemos enviado un código a ${decodeURIComponent(email)}. Completa tus datos aquí:`,
+    // Correcto: ahora es solo la URL
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScm0QeD0iMbikqsEJmWldaYz6StBxIQ82KUOq5XoF0Qado0wg/viewform?embedded=true'
+  },
+  inversionista: {
+    title: 'Formulario de Inversionistas',
+    subtitle: `Tu correo (${decodeURIComponent(email)}) ha sido verificado. Cuéntanos sobre tu inversión:`,
+    // Correcto: ahora es solo la URL
+    embedUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSeXM8XVKFMBJH-2KzkgOhYnRme9pnwc8Gn5P6f_dbiDYz9s2g/viewform?embedded=true'
+  }
+};
+
+const titleEl    = document.getElementById('registro-title');
+const subtitleEl = document.getElementById('registro-subtitle');
+const iframe     = document.getElementById('formFrame');
+
+if (forms[role]) {
+  titleEl.textContent    = forms[role].title;
+  subtitleEl.textContent = forms[role].subtitle;
+  // Esto ahora funcionará correctamente
+  iframe.src             = forms[role].embedUrl;
+} else {
+  // fallback si no hay role válido
+  titleEl.textContent    = 'Elige tu perfil';
+  subtitleEl.textContent = 'Vuelve al inicio y haz click en “Quiero refinanciar” o “Quiero invertir”.';
+  iframe.style.display   = 'none';
+}
+  </script>
+</body>
+</html>

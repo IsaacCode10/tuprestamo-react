@@ -1,0 +1,38 @@
+.loan-requests-list {
+  margin-top: 20px;
+}
+
+.loan-requests-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.loan-requests-list li {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.loan-requests-list li p {
+  margin: 0 0 5px 0;
+}
+
+.status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+}
+
+.status-pendiente {
+  background-color: #f0ad4e;
+}
+
+.status-aprobado {
+  background-color: #5cb85c;
+}
+
+.status-rechazado {
+  background-color: #d9534f;
+}
