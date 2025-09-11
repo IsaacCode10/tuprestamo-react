@@ -90,7 +90,7 @@ const LoanRequestForm = ({ onClose, role }) => {
       <div className="modal-overlay">
         <div className="modal-content modal-content--success">
           <h2 className="success-title">¡Solicitud Enviada!</h2>
-          <p className="success-message">Gracias por tu interés. Hemos recibido tu solicitud correctamente y un analista se pondrá en contacto contigo muy pronto.</p>
+          <p className="success-message">¡Excelente! Hemos recibido tu solicitud. Nuestro sistema ya está procesando tu información para pre-aprobar tu nuevo crédito. Mantente atento a tu correo electrónico, te notificaremos los siguientes pasos. ¡Estás más cerca de una mejor salud financiera!</p>
           <button onClick={onClose} className="btn btn--primary">Cerrar</button>
         </div>
       </div>

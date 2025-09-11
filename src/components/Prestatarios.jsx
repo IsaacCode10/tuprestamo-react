@@ -25,7 +25,7 @@ const Prestatarios = ({ onSolicitudClick }) => {
         <div className="button-container">
           <p className="cta-text">¡Solicita tu refinanciamiento ahora sin compromiso!</p>
           {/* BOTÓN QUE ABRE EL MODAL */}
-          <button className="btn btn--primary" onClick={() => onSolicitudClick('prestatario')}>
+          <button className="btn btn--secondary" onClick={() => onSolicitudClick('prestatario')}>
             Completa tu Solicitud
           </button>
         </div>
