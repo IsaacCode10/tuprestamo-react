@@ -9,7 +9,7 @@ const borrowerQuestions = [
   { id: 2, texto: 'Gracias. Ahora, tu correo electrónico.', tipo: 'email', clave: 'email', required: true },
   { id: 3, texto: '¿Y tu número de celular (WhatsApp)?', tipo: 'tel', clave: 'telefono', required: true },
   { id: 4, texto: '¿En qué ciudad de Bolivia resides?', tipo: 'text', clave: 'ciudad', required: true },
-  { id: 5, texto: 'Perfecto. ¿Cuál es tu número de Cédula de Identidad?', tipo: 'text', clave: 'cedula_identidad', required: true },
+  { id: 5, texto: 'Perfecto. ¿Cuál es tu número de Cédula de Identidad?', tipo: 'text', clave: 'cedula_identidad', required: true, validation: { regex: /^\d{5,8}(-[A-Z]{2})?$/, errorMessage: 'Introduce un CI válido (ej: 1234567 o 1234567-LP).' } },
   { id: 6, texto: '¿Tu fecha de nacimiento?', tipo: 'date', clave: 'fecha_nacimiento', required: true },
   { id: 7, texto: '¿Cuál es tu situación laboral actual?', tipo: 'select', clave: 'situacion_laboral', required: true, opciones: [
       { value: 'Dependiente', label: 'Dependiente' },
