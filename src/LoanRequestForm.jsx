@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { supabase } from './supabaseClient';
-import InteractiveForm from './components/InteractiveForm.jsx'; // Importamos el nuevo componente
-import './Modal.css';
+import { supabase } from '@/supabaseClient';
+import InteractiveForm from '@/components/InteractiveForm.jsx'; // Importamos el nuevo componente
+import '@/Modal.css';
 
 // Definimos las preguntas para el formulario de prestatario
 const borrowerQuestions = [
