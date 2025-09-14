@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from './supabaseClient';
-import InteractiveForm from './components/InteractiveForm'; // Importamos el nuevo componente
+import InteractiveForm from './components/InteractiveForm.jsx'; // Importamos el nuevo componente
 import './Modal.css';
 
 // Definimos las preguntas para el formulario de prestatario
@@ -8,7 +8,17 @@ const borrowerQuestions = [
   { id: 1, texto: '¡Hola! Para empezar, ¿cuál es tu nombre completo?', tipo: 'text', clave: 'nombre_completo', required: true },
   { id: 2, texto: 'Gracias. Ahora, tu correo electrónico.', tipo: 'email', clave: 'email', required: true },
   { id: 3, texto: '¿Y tu número de celular (WhatsApp)?', tipo: 'tel', clave: 'telefono', required: true },
-  { id: 4, texto: '¿En qué ciudad de Bolivia resides?', tipo: 'text', clave: 'ciudad', required: true },
+  { id: 4, texto: '¿En qué departamento de Bolivia resides?', tipo: 'select', clave: 'departamento', required: true, opciones: [
+      { value: 'La Paz', label: 'La Paz' },
+      { value: 'Cochabamba', label: 'Cochabamba' },
+      { value: 'Santa Cruz', label: 'Santa Cruz' },
+      { value: 'Chuquisaca', label: 'Chuquisaca' },
+      { value: 'Oruro', label: 'Oruro' },
+      { value: 'Potosí', label: 'Potosí' },
+      { value: 'Tarija', label: 'Tarija' },
+      { value: 'Beni', label: 'Beni' },
+      { value: 'Pando', label: 'Pando' },
+  ] },
   { id: 5, texto: 'Perfecto. ¿Cuál es tu número de Cédula de Identidad?', tipo: 'text', clave: 'cedula_identidad', required: true, validation: { regex: /^\d{5,8}(-[A-Z]{2})?$/, errorMessage: 'Introduce un CI válido (ej: 1234567 o 1234567-LP).' } },
   { id: 6, texto: '¿Tu fecha de nacimiento?', tipo: 'date', clave: 'fecha_nacimiento', required: true, validation: { regex: /^\d{4}-\d{2}-\d{2}$/, errorMessage: 'Por favor, introduce una fecha válida.' } },
   { id: 7, texto: '¿Cuál es tu situación laboral actual?', tipo: 'select', clave: 'situacion_laboral', required: true, opciones: [
