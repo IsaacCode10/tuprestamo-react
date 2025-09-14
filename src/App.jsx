@@ -1,6 +1,6 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useProfile } from './hooks/useProfile';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useProfile } from './hooks/useProfile.js';
 
 import './style.css';
 import Header from './components/Header';
@@ -98,12 +98,15 @@ const RedirectIfAuth = ({ profile, loading, children }) => {
 
 
 function App() {
-  const { session, profile, loading } = useProfile();
+  const { profile, loading, authEvent } = useProfile(); // Obtenemos el authEvent
+  const navigate = useNavigate();
 
-  // AÑADIDO PARA DEBUGGING
-  console.log('App.jsx - Profile:', profile);
-  console.log('App.jsx - Loading:', loading);
-  console.log('App.jsx - Session:', session);
+  useEffect(() => {
+    // Si el evento es PASSWORD_RECOVERY, redirigimos a la página de creación de contraseña
+    if (authEvent === 'PASSWORD_RECOVERY') {
+      navigate('/confirmar-y-crear-perfil');
+    }
+  }, [authEvent, navigate]); // El efecto se ejecuta cuando authEvent cambia
 
   return (
     <div className="App">
