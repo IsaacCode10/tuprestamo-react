@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useProfile } from './hooks/useProfile.js';
+import { useProfile } from '@/hooks/useProfile.js';
 
 import './style.css';
 import Header from './components/Header';
