@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 import './BorrowerDashboard.css'; // Importamos los nuevos estilos
+import SavingsCalculator from '@/components/SavingsCalculator.jsx';
 
 // --- Componentes de UI específicos para el Dashboard ---
 
@@ -263,12 +264,15 @@ const BorrowerDashboard = () => {
       <StatusCard solicitud={solicitud} />
 
       {solicitud.estado === 'pre-aprobado' && (
-        <DocumentManager 
-          solicitud={solicitud} 
-          user={user}
-          uploadedDocuments={documents}
-          onUpload={fetchData} // Pasamos la función para refrescar
-        />
+        <>
+          <SavingsCalculator />
+          <DocumentManager 
+            solicitud={solicitud} 
+            user={user}
+            uploadedDocuments={documents}
+            onUpload={fetchData} // Pasamos la función para refrescar
+          />
+        </>
       )}
 
       <button onClick={handleLogout} className="logout-button">Cerrar Sesión</button>
