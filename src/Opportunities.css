@@ -1,0 +1,125 @@
+/* Opportunities.css */
+
+.opportunities-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.opportunities-container h2 {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.opportunities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.opportunity-card {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.opportunity-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--header-primary-color, #00445A);
+}
+
+.risk-badge {
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0.4rem 0.8rem;
+  border-radius: 16px;
+  color: #fff;
+}
+
+.risk-A { background-color: #28a745; } /* Verde */
+.risk-B { background-color: #0275d8; } /* Azul */
+.risk-C { background-color: #f0ad4e; } /* Naranja */
+
+.card-body {
+  padding: 1.5rem;
+  flex-grow: 1;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-item {
+  text-align: center;
+}
+
+.metric-item .label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.metric-item .value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.returns-breakdown {
+  font-size: 0.9rem;
+  text-align: center;
+  background-color: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.returns-breakdown strong {
+    color: #28a745;
+}
+
+.card-footer {
+  padding: 1rem 1.5rem;
+  background-color: #f9fafb;
+  border-top: 1px solid #f0f0f0;
+}
+
+.invest-button {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: var(--header-accent-color, #26C2B2);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.invest-button:hover {
+  background-color: var(--header-primary-color, #00445A);
+}
