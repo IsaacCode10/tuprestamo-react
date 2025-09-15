@@ -265,7 +265,7 @@ const BorrowerDashboard = () => {
 
       {solicitud.estado === 'pre-aprobado' && (
         <>
-          <SavingsCalculator />
+          <SavingsCalculator solicitud={solicitud} />
           <DocumentManager 
             solicitud={solicitud} 
             user={user}
