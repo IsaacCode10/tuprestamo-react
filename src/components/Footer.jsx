@@ -37,8 +37,6 @@ const Footer = () => {
 
         {/* Bloque medio: enlaces rápidos */}
         <div className="footer__links">
-          <a href="#privacidad" className="footer__link">Política de Privacidad</a>
-          <a href="#terminos" className="footer__link">Términos y Condiciones</a>
           <a href="#faq" className="footer__link">FAQ</a>
         </div>
 
