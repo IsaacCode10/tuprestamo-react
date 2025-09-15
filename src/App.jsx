@@ -2,19 +2,19 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile.js';
 
-import './style.css';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import LandingPage from './components/LandingPage';
-import Auth from './Auth';
-import AdminDashboard from './AdminDashboard';
-import InvestorDashboard from './InvestorDashboard';
-import InvestorManagementDashboard from './InvestorManagementDashboard';
-import Opportunities from './Opportunities';
-import OpportunityDetail from './OpportunityDetail';
-import ConfirmAndSetPassword from './ConfirmAndSetPassword';
-import BorrowerDashboard from './BorrowerDashboard';
-import BorrowerActivateAccount from './BorrowerActivateAccount';
+import '@/style.css';
+import Header from '@/components/Header.jsx';
+import Footer from '@/components/Footer.jsx';
+import LandingPage from '@/components/LandingPage.jsx';
+import Auth from '@/Auth.jsx';
+import AdminDashboard from '@/AdminDashboard.jsx';
+import InvestorDashboard from '@/InvestorDashboard.jsx';
+import InvestorManagementDashboard from '@/InvestorManagementDashboard.jsx';
+import Opportunities from '@/Opportunities.jsx';
+import OpportunityDetail from '@/OpportunityDetail.jsx';
+import ConfirmAndSetPassword from '@/ConfirmAndSetPassword.jsx';
+import BorrowerDashboard from '@/BorrowerDashboard.jsx';
+import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
 
 // Componente "Guardia" específico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
