@@ -1,0 +1,131 @@
+/* Contenedor principal del formulario interactivo */
+.interactive-form-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 40px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Contenedor de la pregunta y el input */
+.question-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Etiqueta de la pregunta */
+.question-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+}
+
+/* Estilo base para los inputs de texto, email, número, etc. */
+.interactive-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1.1rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+.interactive-input:focus {
+  outline: none;
+  border-color: #007bff; /* Un azul brillante para el foco */
+  background-color: #fff;
+}
+
+/* Contenedor para checkboxes para alineación */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+
+.checkbox-container:hover {
+    background-color: #f0f0f0;
+}
+
+/* Checkbox personalizado */
+.interactive-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* Etiqueta del checkbox */
+.checkbox-label {
+  font-size: 1rem;
+  color: #555;
+  cursor: pointer;
+}
+
+/* Botones de navegación */
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+/* Estilos generales para los botones (puedes usar los de tu App.css si prefieres) */
+.btn {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn--primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn--primary:hover {
+  background-color: #0056b3;
+}
+
+.btn--secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn--secondary:hover {
+  background-color: #5a6268;
+}
+
+/* Barra de progreso */
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #007bff;
+  border-radius: 4px;
+  transition: width 0.4s ease-in-out;
+}

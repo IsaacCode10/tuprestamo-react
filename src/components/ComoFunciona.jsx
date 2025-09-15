@@ -36,7 +36,7 @@ const ComoFunciona = () => {
             </div>
             <h3 className="step-card__title">Fondeo Colectivo</h3>
             <p className="step-card__text">
-              Tu préstamo aprobado se publica como una oportunidad de inversión en nuestra plataforma. Inversionistas como tú aportan montos desde Bs 350 hasta completar el total.
+              Tu préstamo aprobado se publica como una oportunidad de inversión en nuestra plataforma. Inversionistas como tú aportan montos desde Bs 700 hasta completar el total.
             </p>
           </div>
         </div>

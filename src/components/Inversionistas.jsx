@@ -25,7 +25,7 @@ const Inversionistas = ({ onSolicitudClick }) => {
         <div className="button-container">
           <p className="cta-text">¡Regístrate como inversionista y conoce las oportunidades!</p>
           {/* BOTÓN QUE ABRE EL MODAL */}
-          <button className="btn btn--secondary" onClick={() => onSolicitudClick('inversionista')}>
+          <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
             Ver Oportunidades
           </button>
         </div>
