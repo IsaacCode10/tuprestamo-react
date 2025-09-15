@@ -70,6 +70,7 @@ const LoanRequestForm = ({ onClose, role }) => {
     const dataToInsert = {
       ...answers,
       tipo_solicitud: role,
+      estado: 'pre-aprobado', // Establecemos el estado inicial
       ingreso_mensual: parseToNumberOrNull(answers.ingreso_mensual),
       saldo_deuda_tc: parseToNumberOrNull(answers.saldo_deuda_tc),
       tasa_interes_tc: parseToNumberOrNull(answers.tasa_interes_tc),
