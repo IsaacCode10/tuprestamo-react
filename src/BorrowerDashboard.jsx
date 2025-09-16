@@ -46,36 +46,51 @@ const ProgressStepper = ({ currentStep }) => {
   );
 };
 
-const StatusCard = ({ solicitud }) => (
-  <div className="card">
-    <h2>Estado de tu Solicitud</h2>
-    <div className="status-card-content">
-      <span className="status-highlight">
-        {solicitud.estado === 'pre-aprobado'
-          ? 'Acción Requerida: Sube tus documentos'
-          : `Estado Actual: ${solicitud.estado}`}
-      </span>
-      <div className="loan-details">
-        <div>
-          <span className="detail-label">Monto Solicitado</span>
-          <span className="detail-value">Bs {solicitud.monto_solicitado}</span>
-        </div>
-        <div>
-          <span className="detail-label">Tasa Anual</span>
-          <span className="detail-value">{solicitud.tasa_interes || 'N/A'}%</span>
-        </div>
-        <div>
-          <span className="detail-label">Cuota Mensual (Aprox)</span>
-          <span className="detail-value">Bs {solicitud.cuota_mensual || 'N/A'}</span>
-        </div>
-        <div>
-          <span className="detail-label">Plazo</span>
-          <span className="detail-value">{solicitud.plazo_meses} meses</span>
+const StatusCard = ({ solicitud }) => {
+  const oportunidad = solicitud.oportunidades && solicitud.oportunidades[0];
+
+  // Función para calcular la cuota mensual (PMT)
+  const calculatePmt = (principal, annualRate, months) => {
+    if (annualRate === 0) return principal / months;
+    const monthlyRate = annualRate / 100 / 12;
+    return principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months));
+  };
+
+  const tasaAnual = oportunidad?.tasa_interes_prestatario || 'N/A';
+  const cuotaMensual = oportunidad ? calculatePmt(solicitud.monto_solicitado, tasaAnual, solicitud.plazo_meses) : 'N/A';
+
+  return (
+    <div className="card">
+      <h2>Estado de tu Solicitud</h2>
+      <div className="status-card-content">
+        <span className="status-highlight">
+          {solicitud.estado === 'pre-aprobado'
+            ? 'Acción Requerida: Sube tus documentos'
+            : `Estado Actual: ${solicitud.estado}`}
+        </span>
+        <div className="loan-details">
+          <div>
+            <span className="detail-label">Monto Solicitado</span>
+            <span className="detail-value">Bs {solicitud.monto_solicitado}</span>
+          </div>
+          <div>
+            <span className="detail-label">Tasa Anual</span>
+            <span className="detail-value">{tasaAnual}%</span>
+          </div>
+          <div>
+            <span className="detail-label">Cuota Mensual (Aprox)</span>
+            <span className="detail-value">Bs {cuotaMensual !== 'N/A' ? cuotaMensual.toFixed(2) : 'N/A'}</span>
+          </div>
+          <div>
+            <span className="detail-label">Plazo</span>
+            <span className="detail-value">{solicitud.plazo_meses} meses</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
 
 const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -201,7 +216,10 @@ const BorrowerDashboard = () => {
 
       const { data: solData, error: solError } = await supabase
         .from('solicitudes')
-        .select('*')
+        .select(`
+          *,
+          oportunidades!solicitudes_opportunity_id_fkey(*)
+        `)
         .eq('email', user.email)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -219,7 +237,7 @@ const BorrowerDashboard = () => {
         .select('*')
         .eq('solicitud_id', currentSolicitud.id);
       
-      if (docsError) throw docsError;
+      if (docsError) throw docsData;
       setDocuments(docsData);
 
     } catch (err) {
@@ -265,7 +283,7 @@ const BorrowerDashboard = () => {
 
       {solicitud.estado === 'pre-aprobado' && (
         <>
-          <SavingsCalculator solicitud={solicitud} />
+          <SavingsCalculator solicitud={solicitud} oportunidad={solicitud.oportunidades[0]} />
           <DocumentManager 
             solicitud={solicitud} 
             user={user}
