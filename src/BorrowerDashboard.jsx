@@ -273,7 +273,7 @@ const BorrowerDashboard = () => {
     <div className="borrower-dashboard">
       
       <div className="dashboard-header">
-        <h1>Hola, {user?.user_metadata?.nombre || 'Prestatario'}</h1>
+        <h1>Hola, {user?.user_metadata?.full_name || 'Prestatario'}</h1>
         <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
       </div>
 
