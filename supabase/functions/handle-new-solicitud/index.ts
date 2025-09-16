@@ -144,6 +144,7 @@ serve(async (req) => {
         tasa_rendimiento_inversionista: riskProfile.tasa_rendimiento_inversionista,
         comision_originacion_porcentaje: 3.5, // Actualizado a 3.5%
         seguro_desgravamen_porcentaje: 0.05, // Actualizado a 0.05%
+        comision_administracion_porcentaje: 0.1, // Nuevo campo
         comision_servicio_inversionista_porcentaje: 1.5, // Este es para el inversionista, no el prestatario
         estado: 'disponible',
       }]).select().single();
