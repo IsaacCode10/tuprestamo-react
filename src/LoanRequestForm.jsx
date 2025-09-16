@@ -31,8 +31,8 @@ const borrowerQuestions = [
   { id: 9, texto: '¿Cuántos meses de antigüedad tienes en tu trabajo o actividad actual?', tipo: 'number', clave: 'antiguedad_laboral', required: true },
   { id: 10, texto: '¿Cuál es tu ingreso mensual promedio (neto) en Bolivianos (Bs)?', tipo: 'number', clave: 'ingreso_mensual', required: true },
   { id: 11, texto: 'Ahora, sobre tus tarjetas de crédito. ¿En qué banco(s) las tienes?', tipo: 'text', clave: 'bancos_deuda' },
-  { id: 12, texto: '¿Cuál es el saldo total aproximado de tu deuda en esas tarjetas? (en Bs)', tipo: 'number', clave: 'saldo_deuda_tc' },
-  { id: 13, texto: '¿Recuerdas la tasa de interés anual que pagas? (ej. 24 para 24%)', tipo: 'number', clave: 'tasa_interes_tc' },
+  { id: 12, texto: '¿Cuál es el saldo total aproximado de tu deuda en esas tarjetas? (en Bs)', tipo: 'number', clave: 'saldo_deuda_tc', required: true },
+  { id: 13, texto: '¿Recuerdas la tasa de interés anual que pagas? (ej. 24 para 24%)', tipo: 'number', clave: 'tasa_interes_tc', required: true },
   { id: 14, texto: '¿Qué monto te gustaría refinanciar con nosotros? (en Bs)', tipo: 'number', clave: 'monto_solicitado', required: true },
   { id: 15, texto: '¿En qué plazo te gustaría pagarlo?', tipo: 'select', clave: 'plazo_meses', required: true, opciones: [
       { value: '12', label: '12 meses' },
@@ -41,8 +41,8 @@ const borrowerQuestions = [
       { value: '36', label: '36 meses' },
       { value: '48', label: '48 meses' },
   ]},
-  { id: 16, texto: 'Para evaluar tu solicitud, necesitamos tu autorización para consultar tu historial en Infocred.', tipo: 'checkbox', clave: 'autoriza_infocred' },
-  { id: 17, texto: 'Finalmente, ¿aceptas que te contactemos por WhatsApp o email para dar seguimiento a tu solicitud?', tipo: 'checkbox', clave: 'acepta_contacto', required: true },
+  { id: 17, texto: 'Para evaluar tu solicitud, necesitamos tu autorización para consultar tu historial en Infocred.', tipo: 'checkbox', clave: 'autoriza_infocred' },
+  { id: 18, texto: 'Finalmente, ¿aceptas que te contactemos por WhatsApp o email para dar seguimiento a tu solicitud?', tipo: 'checkbox', clave: 'acepta_contacto', required: true },
 ];
 
 
@@ -70,7 +70,7 @@ const LoanRequestForm = ({ onClose, role }) => {
     const dataToInsert = {
       ...answers,
       tipo_solicitud: role,
-      estado: 'pre-aprobado', // Establecemos el estado inicial
+      estado: 'pendiente', // El estado ahora es pendiente, la Edge Function decidirá
       ingreso_mensual: parseToNumberOrNull(answers.ingreso_mensual),
       saldo_deuda_tc: parseToNumberOrNull(answers.saldo_deuda_tc),
       tasa_interes_tc: parseToNumberOrNull(answers.tasa_interes_tc),
