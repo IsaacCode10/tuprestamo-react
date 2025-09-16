@@ -147,12 +147,12 @@ serve(async (req) => {
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
-        subject: `¡Felicidades! Tu solicitud en Tu Préstamo ha sido pre-aprobada (Perfil ${riskProfile.label})`,
+        subject: `¡Felicidades! Tu solicitud en Tu Préstamo ha sido pre-aprobada`,
         html: `
           <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
             <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
             <h2>¡Felicidades, ${nombre_completo}!</h2>
-            <p>Tu solicitud de préstamo ha sido <strong>pre-aprobada</strong> con un perfil de riesgo <strong>${riskProfile.label}</strong>.</p>
+            <p>Tu solicitud de préstamo ha sido <strong>pre-aprobada</strong>.</p>
             <p>Este es el primer paso para obtener el financiamiento que necesitas. Ahora, para que podamos realizar el análisis final, necesitamos que completes tu perfil y subas la documentación requerida.</p>
             <p>Por favor, haz clic en el siguiente enlace para crear tu cuenta y subir tus documentos:</p>
             <a href="${inviteLink}" style="background-color: #00445A; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">Completar mi Solicitud</a>
