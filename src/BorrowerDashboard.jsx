@@ -61,7 +61,7 @@ const StatusCard = ({ solicitud, oportunidad }) => {
 
   return (
     <div className="card">
-      <h2>Estado de tu Solicitud</h2>
+      <h2>Estado de tu Solicitud de Refinanciamiento de Tarjeta de Crédito</h2>
       <div className="status-card-content">
         <span className="status-highlight">
           {solicitud.estado === 'pre-aprobado'
