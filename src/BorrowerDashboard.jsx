@@ -283,6 +283,7 @@ const BorrowerDashboard = () => {
 
       {solicitud.estado === 'pre-aprobado' && (
         <>
+          {console.log('Solicitud en BorrowerDashboard:', solicitud)} {/* LOGGING AQUI */}
           <SavingsCalculator solicitud={solicitud} oportunidad={solicitud.oportunidades[0]} />
           <DocumentManager 
             solicitud={solicitud} 
