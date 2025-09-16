@@ -1,9 +1,10 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 
-console.log('Function handle-new-solicitud (V4.2 - Email Fix) starting up.');
+console.log('Function handle-new-solicitud (V4.3 - Debugging Update) starting up.');
 
 // --- Modelo de Riesgo y Precios ---
 
@@ -90,7 +91,10 @@ serve(async (req) => {
     console.log(`Solicitud ${solicitud_id}: Perfil Asignado=${riskProfile.label}`);
 
     if (riskProfile.label === 'Rechazado') {
-      await supabaseAdmin.from('solicitudes').update({ estado: 'rechazado' }).eq('id', solicitud_id);
+      console.log(`Solicitud ${solicitud_id}: Iniciando actualización a estado 'rechazado'.`);
+      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({ estado: 'rechazado' }).eq('id', solicitud_id);
+      if (updateError) console.error(`Error al actualizar solicitud ${solicitud_id} a rechazado:`, updateError);
+      console.log(`Solicitud ${solicitud_id}: Actualización a 'rechazado' finalizada.`);
 
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
@@ -111,21 +115,24 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ message: 'Solicitud rechazada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     } else {
+      console.log(`Solicitud ${solicitud_id}: Iniciando flujo de pre-aprobación.`);
       const { data: user, error: userError } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true, user_metadata: { full_name: nombre_completo, role: 'prestatario' } });
       if (userError) {
         if (userError.message.includes('User already registered')) {
             console.error('Error de usuario ya registrado:', userError.message);
-            // No lanzamos error, pero sí lo registramos. El flujo puede querer continuar para usuarios existentes.
         } else {
             throw userError;
         }
       }
       const user_id = user?.user?.id || (await supabaseAdmin.auth.admin.getUserByEmail(email)).data.user.id;
+      console.log(`Solicitud ${solicitud_id}: user_id obtenido: ${user_id}`);
 
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: 'recovery', email });
       if (linkError) throw linkError;
       const inviteLink = linkData.properties.action_link;
+      console.log(`Solicitud ${solicitud_id}: Enlace de invitación generado.`);
 
+      console.log(`Solicitud ${solicitud_id}: Iniciando inserción de oportunidad.`);
       const { data: oppData, error: oppError } = await supabaseAdmin.from('oportunidades').insert([{
         solicitud_id,
         user_id,
@@ -135,14 +142,24 @@ serve(async (req) => {
         tasa_interes_anual: riskProfile.tasa_interes_prestatario,
         tasa_interes_prestatario: riskProfile.tasa_interes_prestatario,
         tasa_rendimiento_inversionista: riskProfile.tasa_rendimiento_inversionista,
-        comision_originacion_porcentaje: 5.0,
-        seguro_desgravamen_porcentaje: 0.10,
-        comision_servicio_inversionista_porcentaje: 1.5,
+        comision_originacion_porcentaje: 3.5, // Actualizado a 3.5%
+        seguro_desgravamen_porcentaje: 0.05, // Actualizado a 0.05%
+        comision_servicio_inversionista_porcentaje: 1.5, // Este es para el inversionista, no el prestatario
         estado: 'disponible',
       }]).select().single();
-      if (oppError) throw oppError;
+      if (oppError) {
+        console.error(`Error al insertar oportunidad para solicitud ${solicitud_id}:`, oppError);
+        throw oppError;
+      }
+      console.log(`Solicitud ${solicitud_id}: Oportunidad insertada con ID: ${oppData.id}`);
 
-      await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id, opportunity_id: oppData.id }).eq('id', solicitud_id);
+      console.log(`Solicitud ${solicitud_id}: Iniciando actualización de solicitud a 'pre-aprobado'.`);
+      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id, opportunity_id: oppData.id }).eq('id', solicitud_id);
+      if (updateError) {
+        console.error(`Error al actualizar solicitud ${solicitud_id} a 'pre-aprobado':`, updateError);
+        throw updateError;
+      }
+      console.log(`Solicitud ${solicitud_id}: Actualización a 'pre-aprobado' finalizada.`);
 
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
@@ -166,7 +183,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
   } catch (error) {
-    console.error(`Error en handle-new-solicitud (V4.2): ${error.message}`);
+    console.error(`Error en handle-new-solicitud (V4.3): ${error.message}`);
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });
