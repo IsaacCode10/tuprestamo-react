@@ -46,14 +46,14 @@ const ProgressStepper = ({ currentStep }) => {
   );
 };
 
-const StatusCard = ({ solicitud }) => {
-  const oportunidad = solicitud.oportunidades && solicitud.oportunidades[0];
-
+const StatusCard = ({ solicitud, oportunidad }) => {
   // Función para calcular la cuota mensual (PMT)
   const calculatePmt = (principal, annualRate, months) => {
     if (annualRate === 0) return principal / months;
     const monthlyRate = annualRate / 100 / 12;
-    return principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months));
+    const factor = Math.pow(1 + monthlyRate, months);
+    const pago = principal * monthlyRate * factor / (factor - 1);
+    return pago;
   };
 
   const tasaAnual = oportunidad?.tasa_interes_prestatario || 'N/A';
@@ -75,7 +75,7 @@ const StatusCard = ({ solicitud }) => {
           </div>
           <div>
             <span className="detail-label">Tasa Anual</span>
-            <span className="detail-value">{tasaAnual}%</span>
+            <span className="detail-value">{tasaAnual !== 'N/A' ? tasaAnual.toFixed(1) : 'N/A'}%</span>
           </div>
           <div>
             <span className="detail-label">Cuota Mensual (Aprox)</span>
@@ -279,7 +279,7 @@ const BorrowerDashboard = () => {
 
       <ProgressStepper currentStep={solicitud.estado} />
       
-      <StatusCard solicitud={solicitud} />
+      <StatusCard solicitud={solicitud} oportunidad={solicitud.oportunidades} />
 
       {solicitud.estado === 'pre-aprobado' && (
         <>
