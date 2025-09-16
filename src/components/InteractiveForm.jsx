@@ -67,7 +67,7 @@ const InteractiveForm = ({ questions, onSubmit }) => {
     switch (tipo) {
       case 'select':
         return (
-          <select id={clave} name={clave} value={currentValue} onChange={handleInputChange} className="interactive-input">
+          <select key={clave} id={clave} name={clave} value={currentValue} onChange={handleInputChange} className="interactive-input">
             <option value="" disabled>Selecciona una opción...</option>
             {opciones.map(op => <option key={op.value} value={op.value}>{op.label}</option>)}
           </select>
@@ -75,13 +75,14 @@ const InteractiveForm = ({ questions, onSubmit }) => {
       case 'checkbox':
         return (
           <div className="checkbox-container">
-            <input type="checkbox" id={clave} name={clave} checked={!!currentValue} onChange={handleInputChange} className="interactive-checkbox" />
+            <input key={clave} type="checkbox" id={clave} name={clave} checked={!!currentValue} onChange={handleInputChange} className="interactive-checkbox" />
             <label htmlFor={clave} className="checkbox-label">{currentQuestion.texto}</label>
           </div>
         );
       default:
         return (
           <input
+            key={clave} // <-- LA SOLUCIÓN
             type={tipo}
             id={clave}
             name={clave}
