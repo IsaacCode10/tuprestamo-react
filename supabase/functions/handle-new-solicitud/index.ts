@@ -1,10 +1,9 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 
-console.log('Function handle-new-solicitud (V4 - Scorecard Model) starting up.');
+console.log('Function handle-new-solicitud (V4.2 - Email Fix) starting up.');
 
 // --- Modelo de Riesgo y Precios ---
 
@@ -24,7 +23,6 @@ const runRiskScorecard = (solicitud) => {
     antiguedad_laboral,
   } = solicitud;
 
-  // 1. Validar y parsear datos de entrada
   const ingresos = parseFloat(ingreso_mensual);
   const saldoDeuda = parseFloat(saldo_deuda_tc);
   const tasaAnual = parseFloat(tasa_interes_tc);
@@ -35,15 +33,13 @@ const runRiskScorecard = (solicitud) => {
     return PRICING_MODEL.Rechazado;
   }
 
-  // 2. Lógica de Rechazo Automático (Early Exit)
   if (ingresos < 3000) {
     console.log(`Rechazo automático: Ingreso ${ingresos} < 3000`);
     return PRICING_MODEL.Rechazado;
   }
 
-  // 3. Estimar Deuda Mensual y Calcular DTI
   const interesMensual = (saldoDeuda * (tasaAnual / 100)) / 12;
-  const amortizacionCapital = saldoDeuda * 0.01; // Asumimos 1% del capital
+  const amortizacionCapital = saldoDeuda * 0.01;
   const deudaMensualEstimada = interesMensual + amortizacionCapital;
   const dti = (deudaMensualEstimada / ingresos) * 100;
 
@@ -52,34 +48,26 @@ const runRiskScorecard = (solicitud) => {
     return PRICING_MODEL.Rechazado;
   }
 
-  // 4. Calcular Puntos del Scorecard
   let totalScore = 0;
-
-  // Puntos por Ingreso
   if (ingresos > 8000) totalScore += 3;
   else if (ingresos >= 5000) totalScore += 2;
   else if (ingresos >= 3000) totalScore += 1;
 
-  // Puntos por DTI
   if (dti < 30) totalScore += 3;
   else if (dti <= 40) totalScore += 2;
   else if (dti <= 50) totalScore += 1;
 
-  // Puntos por Antigüedad Laboral
   if (antiguedad >= 24) totalScore += 2;
   else if (antiguedad >= 12) totalScore += 1;
 
   console.log(`Scorecard: Ingresos=${ingresos}, DTI=${dti.toFixed(2)}%, Antigüedad=${antiguedad}m => Puntuación Total = ${totalScore}`);
 
-  // 5. Asignar Perfil de Riesgo según Puntaje
   if (totalScore >= 7) return PRICING_MODEL.A;
   if (totalScore >= 5) return PRICING_MODEL.B;
   if (totalScore >= 2) return PRICING_MODEL.C;
   
   return PRICING_MODEL.Rechazado;
 };
-
-// --- Inicialización de Servicios ---
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
@@ -92,95 +80,93 @@ serve(async (req) => {
     const { record: solicitud } = await req.json();
     const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses } = solicitud;
 
-    // La lógica para inversionistas no cambia y se puede manejar por separado.
-    if (tipo_solicitud === 'inversionista') {
-      // ... (código original para inversionistas, si se quiere mantener)
-      console.log(`Procesando solicitud de inversionista para ${email}...`);
-      return new Response(JSON.stringify({ message: 'Flujo de inversionista procesado.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
-    }
-    
     if (tipo_solicitud !== 'prestatario') {
-        throw new Error(`Tipo de solicitud no reconocido: ${tipo_solicitud}`);
+      console.log(`Procesando otro tipo de solicitud: ${tipo_solicitud}`);
+      return new Response(JSON.stringify({ message: 'Solicitud no procesable por esta función.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
-    // --- INICIA FLUJO AUTOMÁTICO PARA PRESTATARIO ---
-
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    // 1. Correr el Scorecard de Riesgo
+    const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const riskProfile = runRiskScorecard(solicitud);
     console.log(`Solicitud ${solicitud_id}: Perfil Asignado=${riskProfile.label}`);
 
-    // 2. Manejar el resultado
     if (riskProfile.label === 'Rechazado') {
-      // --- FLUJO DE RECHAZO AUTOMÁTICO ---
       await supabaseAdmin.from('solicitudes').update({ estado: 'rechazado' }).eq('id', solicitud_id);
 
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
         subject: 'Actualización sobre tu solicitud en Tu Préstamo',
-        html: `... (HTML de correo de rechazo) ...`,
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
+            <h2>Hola, ${nombre_completo},</h2>
+            <p>Te agradecemos por tu interés en Tu Préstamo. Hemos revisado la información inicial que nos proporcionaste.</p>
+            <p>Lamentablemente, en este momento no podemos continuar con tu solicitud de préstamo. Esta decisión se basa en nuestro modelo de riesgo automático y no necesariamente refleja tu capacidad de pago futura.</p>
+            <p>Te invitamos a volver a intentarlo en el futuro si tus circunstancias financieras cambian.</p>
+            <br>
+            <p>El equipo de Tu Préstamo</p>
+          </div>
+        `,
       });
 
-      return new Response(JSON.stringify({ message: 'Solicitud rechazada automáticamente.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-
+      return new Response(JSON.stringify({ message: 'Solicitud rechazada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     } else {
-      // --- FLUJO DE PRE-APROBACIÓN AUTOMÁTICA ---
-      
-      // a. Crear usuario en Auth
-      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true, user_metadata: { full_name: nombre_completo, role: 'prestatario' } });
-      if (userError && !userError.message.includes('User already registered')) throw userError;
-      const user_id = userData?.user?.id || (await supabaseAdmin.auth.admin.getUserByEmail(email)).data.user.id;
+      const { data: user, error: userError } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true, user_metadata: { full_name: nombre_completo, role: 'prestatario' } });
+      if (userError) {
+        if (userError.message.includes('User already registered')) {
+            console.error('Error de usuario ya registrado:', userError.message);
+            // No lanzamos error, pero sí lo registramos. El flujo puede querer continuar para usuarios existentes.
+        } else {
+            throw userError;
+        }
+      }
+      const user_id = user?.user?.id || (await supabaseAdmin.auth.admin.getUserByEmail(email)).data.user.id;
 
-      // b. Generar enlace de activación
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: 'recovery', email });
       if (linkError) throw linkError;
       const inviteLink = linkData.properties.action_link;
 
-      // c. Crear la oportunidad de inversión con el pricing correcto
       const { data: oppData, error: oppError } = await supabaseAdmin.from('oportunidades').insert([{
         solicitud_id,
-        user_id, // Nombre de columna corregido
+        user_id,
         monto: monto_solicitado,
         plazo_meses,
         perfil_riesgo: riskProfile.label,
-        tasa_interes_anual: riskProfile.tasa_interes_prestatario, // Añadido para cumplir con NOT NULL
+        tasa_interes_anual: riskProfile.tasa_interes_prestatario,
         tasa_interes_prestatario: riskProfile.tasa_interes_prestatario,
         tasa_rendimiento_inversionista: riskProfile.tasa_rendimiento_inversionista,
-        // Las comisiones y seguros pueden ser fijos o parte del pricing model
-        comision_originacion_porcentaje: 5.0, // Ejemplo
-        seguro_desgravamen_porcentaje: 0.10, // Ejemplo
-        comision_servicio_inversionista_porcentaje: 1.5, // Ejemplo
+        comision_originacion_porcentaje: 5.0,
+        seguro_desgravamen_porcentaje: 0.10,
+        comision_servicio_inversionista_porcentaje: 1.5,
         estado: 'disponible',
       }]).select().single();
       if (oppError) throw oppError;
 
-      // d. Actualizar la solicitud original
       await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id, opportunity_id: oppData.id }).eq('id', solicitud_id);
 
-      // e. Enviar correo de pre-aprobación
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
         subject: `¡Felicidades! Tu solicitud en Tu Préstamo ha sido pre-aprobada (Perfil ${riskProfile.label})`,
-        html: `... (HTML de correo de pre-aprobación) ...`,
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
+            <h2>¡Felicidades, ${nombre_completo}!</h2>
+            <p>Tu solicitud de préstamo ha sido <strong>pre-aprobada</strong> con un perfil de riesgo <strong>${riskProfile.label}</strong>.</p>
+            <p>Este es el primer paso para obtener el financiamiento que necesitas. Ahora, para que podamos realizar el análisis final, necesitamos que completes tu perfil y subas la documentación requerida.</p>
+            <p>Por favor, haz clic en el siguiente enlace para crear tu cuenta y subir tus documentos:</p>
+            <a href="${inviteLink}" style="background-color: #00445A; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">Completar mi Solicitud</a>
+            <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+            <br>
+            <p>El equipo de Tu Préstamo</p>
+          </div>
+        `,
       });
 
-      return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada automáticamente.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
-
   } catch (error) {
-    console.error('Error en handle-new-solicitud (V4):', error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+    console.error(`Error en handle-new-solicitud (V4.2): ${error.message}`);
+    return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });
