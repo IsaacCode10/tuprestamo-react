@@ -1,4 +1,3 @@
-
 /* src/BorrowerDashboard.css */
 
 .borrower-dashboard {
@@ -246,3 +245,116 @@
     background-color: #c82333;
 }
 
+/* --- SavingsCalculator specific styles --- */
+.savings-calculator .calculator-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dos columnas */
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.savings-calculator .input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.savings-calculator .calculator-form label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.savings-calculator .calculator-form input[type="number"],
+.savings-calculator .calculator-form select {
+  width: auto; /* Anula el width: 100% de interactive-input */
+  max-width: 180px; /* Limita el ancho */
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fefefe;
+}
+
+.savings-calculator .calculator-form input[type="number"]:focus,
+.savings-calculator .calculator-form select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.savings-calculator .calculator-form .btn-submit {
+  grid-column: span 2; /* El botón ocupa ambas columnas */
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  background-color: #26C2B2;
+  color: white;
+}
+
+.savings-calculator .calculator-form .btn-submit:hover {
+  background-color: #1e9e92;
+  transform: translateY(-2px);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.comparison-table th,
+.comparison-table td {
+  border: 1px solid #eee;
+  padding: 10px;
+  text-align: left;
+}
+
+.comparison-table th {
+  background-color: #f2f2f2;
+  font-weight: 600;
+  color: #333;
+}
+
+.comparison-table .tu-prestamo-header {
+  background-color: #e6f7f5; /* Un color suave para la columna de Tu Préstamo */
+  color: #26C2B2;
+}
+
+.comparison-table .tu-prestamo-data {
+  color: #26C2B2;
+  font-weight: 500;
+}
+
+.comparison-table .total-row {
+  font-weight: bold;
+  background-color: #e6f7f5;
+}
+
+.total-savings {
+  text-align: center;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #d4edda;
+  border-radius: 8px;
+  color: #155724;
+}
+
+.total-savings-label {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.total-savings-value {
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.total-savings-sublabel {
+  font-size: 0.9rem;
+  color: #333;
+}
