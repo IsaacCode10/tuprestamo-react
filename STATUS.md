@@ -27,24 +27,22 @@
 *   **Dashboard del Prestatario (`BorrowerDashboard.jsx`):**
     *   El `ProgressStepper` ahora refleja correctamente el estado de la solicitud (`Solicitud Recibida` -> `Verificación Inicial` -> `Sube tus Documentos`).
     *   La `StatusCard` muestra la `Tasa Anual` y `Cuota Mensual` correctas, obtenidas de la oportunidad pre-aprobada.
-    *   **La `SavingsCalculator` (Calculadora de Ahorros) ahora es completamente dinámica:**
-        *   Se muestra y precarga con los datos de la solicitud pre-aprobada.
-        *   Utiliza la tasa de interés del prestatario asignada por el Scorecard para la propuesta de "Tu Préstamo".
-        *   **Calcula dinámicamente la Comisión de Administración (0.1% sobre saldo deudor, min. Bs 10) y el Seguro de Desgravamen (0.05% sobre saldo deudor) a lo largo de toda la amortización del préstamo.**
-        *   Muestra el "Costo Mantenimiento Mensual" promedio y el ahorro total de forma precisa.
-    *   La sección de "Sube tu Documentación" está visible y funcional para los prestatarios pre-aprobados.
+    *   La `SavingsCalculator` (Calculadora de Ahorros) es completamente dinámica, calculando comisiones y seguros.
+    *   **Gestión Dinámica de Documentos (`DocumentManager`):**
+        *   Implementada la lógica para mostrar documentos requeridos de forma dinámica según la `situacion_laboral` del prestatario.
+        *   Verificado el funcionamiento para prestatarios `Dependiente`.
+        *   Añadidos nuevos tipos de documentos: `Boleta_Pago`, `Certificado_Gestora`, `Extracto_Bancario_3_Meses`, `NIT`, `Boleta_Pago_Jubilacion`, `Foto_Selfie_CI`.
 
 ---
 
 ## Tarea Actual
 
-*   **Verificación Final de la Calculadora:** Realizar una prueba exhaustiva de la calculadora con diferentes escenarios para asegurar que los cálculos son correctos y se alinean con el "Ejemplo de Préstamo de Bs 10.000" proporcionado.
+*   **Definir el "Journey Map" del Inversionista:** Entender el flujo ideal para los inversionistas.
 
 ---
 
 ## Próximos Pasos (Definidos por Isaac)
 
-*   **Definir el "Journey Map" del Inversionista:** Entender el flujo ideal para los inversionistas.
 *   **Implementar el "Journey Map" del Inversionista:** Desarrollar las funcionalidades necesarias para el flujo del inversionista.
 *   **Revisión y Optimización del Admin Dashboard:** Mejorar la interfaz y funcionalidades para el administrador.
 
