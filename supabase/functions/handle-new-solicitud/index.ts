@@ -152,6 +152,7 @@ serve(async (req) => {
         monto: monto_solicitado,
         plazo_meses,
         perfil_riesgo: riskProfile.label,
+        tasa_interes_anual: riskProfile.tasa_interes_prestatario, // Añadido para cumplir con NOT NULL
         tasa_interes_prestatario: riskProfile.tasa_interes_prestatario,
         tasa_rendimiento_inversionista: riskProfile.tasa_rendimiento_inversionista,
         // Las comisiones y seguros pueden ser fijos o parte del pricing model
