@@ -102,6 +102,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
     { value: 'CI_Anverso', label: 'Cédula de Identidad (Anverso)' },
     { value: 'CI_Reverso', label: 'Cédula de Identidad (Reverso)' },
     { value: 'Factura_Servicio_Basico', label: 'Factura de Servicio Básico' },
+    { value: 'Boleta_Tarjeta_Credito', label: 'Boleta de Tarjeta de Crédito' }, // Nuevo documento requerido
   ];
 
   const handleUpload = async () => {
