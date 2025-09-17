@@ -11,10 +11,16 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
 
   const [resultados, setResultados] = useState(null);
 
+  // Si no hay oportunidad, no podemos renderizar la calculadora.
+  if (!oportunidad) {
+    return <div>Cargando datos de la oportunidad...</div>;
+  }
+
   // Usamos la tasa de la oportunidad para Tu Préstamo
-  const TU_PRESTAMO_TASA_ANUAL = oportunidad.tasa_interes_prestatario / 100; 
-  const TU_PRESTAMO_COMISION_ADMIN_PORCENTAJE = oportunidad.comision_administracion_porcentaje / 100; // 0.1% -> 0.001
-  const TU_PRESTAMO_SEGURO_DESGRAVAMEN_PORCENTAJE = oportunidad.seguro_desgravamen_porcentaje / 100; // 0.05% -> 0.0005
+  const TU_PRESTAMO_TASA_ANUAL = oportunidad.tasa_interes_prestatario / 100;
+  const TU_PRESTAMO_COMISION_ADMIN_PORCENTAJE = oportunidad.comision_administracion_porcentaje / 100;
+  const TU_PRESTAMO_SEGURO_DESGRAVAMEN_PORCENTAJE = oportunidad.seguro_desgravamen_porcentaje / 100;
+  const TU_PRESTAMO_COMISION_ORIGINACION_PORCENTAJE = oportunidad.comision_originacion_porcentaje / 100;
   const TU_PRESTAMO_MANTENIMIENTO_MENSUAL_MINIMO = 10; // Mínimo de 10 Bs
 
   // Función para calcular la cuota mensual (PMT) - solo capital e interés
@@ -103,14 +109,10 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
 
     const ahorroMensual = pagoTotalMensualBanco - pagoTotalMensualTP;
     const ahorroTotal = ahorroMensual * plazo;
+    
+    const costoOriginacion = deuda * TU_PRESTAMO_COMISION_ORIGINACION_PORCENTAJE;
 
     setResultados({
-      tasaBanco: (tasaBanco * 100).toFixed(1),
-      pagoTotalMensualBanco: pagoTotalMensualBanco.toFixed(2),
-      mantenimientoBanco: mantenimientoBanco.toFixed(2),
-      tasaTP: (TU_PRESTAMO_TASA_ANUAL * 100).toFixed(1),
-      pagoTotalMensualTP: pagoTotalMensualTP.toFixed(2),
-          setResultados({
       tasaBanco: (tasaBanco * 100).toFixed(1),
       pagoTotalMensualBanco: pagoTotalMensualBanco.toFixed(2),
       mantenimientoBanco: mantenimientoBanco.toFixed(2),
@@ -124,7 +126,7 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
 
   // Efecto para calcular automáticamente cuando los datos de la solicitud están listos
   useEffect(() => {
-    if (montoDeuda && tasaActual && plazo) {
+    if (montoDeuda && tasaActual && plazo && oportunidad) {
       handleCalcular();
     }
   }, [montoDeuda, tasaActual, plazo, oportunidad]); // Se recalcula si el usuario cambia los valores o la oportunidad cambia
@@ -196,89 +198,6 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
           <div className="one-time-costs">
             <h4>Costos Únicos al Desembolso</h4>
             <p><strong>Comisión por Originación:</strong> Bs. {resultados.costoOriginacion}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default SavingsCalculator;
-
-      ahorroTotal: ahorroTotal.toFixed(2),
-    });
-  };
-
-  // Efecto para calcular automáticamente cuando los datos de la solicitud están listos
-  useEffect(() => {
-    if (montoDeuda && tasaActual && plazo) {
-      handleCalcular();
-    }
-  }, [montoDeuda, tasaActual, plazo, oportunidad]); // Se recalcula si el usuario cambia los valores o la oportunidad cambia
-
-  return (
-    <div className="card savings-calculator">
-      <h2>Calcula tu Ahorro y ¡Decídete!</h2>
-      <p style={{textAlign: 'center', marginTop: '-10px', marginBottom: '20px'}}>Los datos de tu solicitud han sido pre-cargados, pero puedes modificarlos para simular otros escenarios.</p>
-      
-      <form onSubmit={handleCalcular} className="calculator-form">
-        <div className="input-wrapper">
-          <label htmlFor="montoDeuda">Monto de la deuda (Bs)</label>
-          <input type="number" id="montoDeuda" value={montoDeuda} onChange={(e) => setMontoDeuda(e.target.value)} required />
-        </div>
-        <div className="input-wrapper">
-          <label htmlFor="tasaActual">Tasa de tu Banco (%)</label>
-          <input type="number" id="tasaActual" value={tasaActual} onChange={(e) => setTasaActual(e.target.value)} required />
-        </div>
-        <div className="input-wrapper">
-          <label htmlFor="costoMantenimientoBanco">Mantenimiento Mensual (Bs)</label>
-          <input type="number" id="costoMantenimientoBanco" value={costoMantenimientoBanco} onChange={(e) => setCostoMantenimientoBanco(e.target.value)} required />
-        </div>
-        <div className="input-wrapper">
-          <label htmlFor="plazo">Plazo (meses)</label>
-          <select id="plazo" value={plazo} onChange={(e) => setPlazo(parseInt(e.target.value, 10))}>
-            <option value={12}>12</option>
-            <option value={24}>24</option>
-            <option value={36}>36</option>
-            <option value={48}>48</option>
-          </select>
-        </div>
-        <button type="submit" className="btn-submit">Recalcular</button>
-      </form>
-
-      {resultados && (
-        <div className="results-container">
-          <h3 className="results-title">Propuesta de Ahorro</h3>
-          <table className="comparison-table">
-            <thead>
-              <tr>
-                <th>Concepto</th>
-                <th>Con tu Banco</th>
-                <th className="tu-prestamo-header">Con Tu Préstamo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Tasa de Interés Anual</td>
-                <td>{resultados.tasaBanco}%</td>
-                <td className="tu-prestamo-data">{resultados.tasaTP}%</td>
-              </tr>
-              <tr>
-                <td>Costo Mantenimiento Mensual</td>
-                <td>Bs. {resultados.mantenimientoBanco}</td>
-                <td className="tu-prestamo-data">Bs. {resultados.mantenimientoTP}</td>
-              </tr>
-              <tr className="total-row">
-                <td><strong>Pago Mensual Total</strong></td>
-                <td><strong>Bs. {resultados.pagoTotalMensualBanco}</strong></td>
-                <td className="tu-prestamo-data"><strong>Bs. {resultados.pagoTotalMensualTP}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="total-savings">
-            <p className="total-savings-label">Ahorrarías un total de:</p>
-            <p className="total-savings-value">Bs. {resultados.ahorroTotal}</p>
-            <p className="total-savings-sublabel">durante los {plazo} meses del crédito</p>
           </div>
         </div>
       )}
