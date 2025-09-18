@@ -394,3 +394,165 @@
   font-size: 0.9em;
   color: #666;
 }
+
+/* --- New Document Manager Styles --- */
+
+.document-manager-container {
+  display: flex;
+  gap: 2rem;
+}
+
+.document-checklist {
+  flex: 1;
+  min-width: 300px;
+}
+
+.document-checklist h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease-in-out;
+}
+
+.checklist-item.completed {
+  background-color: #e6f7f5;
+  border-color: #26C2B2;
+}
+
+.checklist-item .icon {
+  font-size: 1.2rem;
+  margin-right: 1rem;
+  color: #adb5bd;
+}
+
+.checklist-item.completed .icon {
+  color: #26C2B2;
+}
+
+.checklist-item .name {
+  font-weight: 600;
+  color: #495057;
+}
+
+.document-uploader {
+  flex: 1.5;
+}
+
+.drop-zone {
+  border: 2px dashed #ced4da;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+}
+
+.drop-zone.dragging {
+  border-color: #26C2B2;
+  background-color: #e6f7f5;
+}
+
+.drop-zone p {
+  margin: 0;
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+.drop-zone .upload-icon {
+  font-size: 2.5rem;
+  color: #26C2B2;
+  margin-bottom: 1rem;
+}
+
+.file-list {
+  margin-top: 1.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.file-item .file-icon {
+  font-size: 2rem;
+  margin-right: 1rem;
+  color: #adb5bd;
+}
+
+.file-item .file-details {
+  flex-grow: 1;
+}
+
+.file-item .file-name {
+  font-weight: 600;
+  color: #343a40;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-bar-inner {
+  height: 100%;
+  background-color: #26C2B2;
+  transition: width 0.3s ease;
+}
+
+.file-item .file-status {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.file-item .file-status.uploading {
+  color: #007bff;
+}
+
+.file-item .file-status.completed {
+  color: #28a745;
+}
+
+.file-item .file-status.error {
+  color: #dc3545;
+}
+
+.file-item .remove-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #adb5bd;
+  transition: color 0.2s ease;
+}
+
+.file-item .remove-btn:hover {
+  color: #dc3545;
+}
+
+.upload-instructions {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 1rem;
+}

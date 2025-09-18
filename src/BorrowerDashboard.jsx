@@ -98,9 +98,79 @@ const StatusCard = ({ solicitud, oportunidad, cuotaRealPromedio }) => {
   );
 };
 
+const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect }) => {
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = React.useRef();
+
+  const handleDrag = (e, isOver) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(isOver);
+  };
+
+  const handleDrop = (e) => {
+    handleDrag(e, false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      onFileSelect(files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      onFileSelect(files[0]);
+    }
+  };
+
+  const status = isUploading
+    ? `Subiendo... ${progress}%`
+    : isUploaded
+    ? 'Completado'
+    : 'Pendiente';
+
+  return (
+    <div
+      className={`file-slot ${dragOver ? 'dragging' : ''} ${isUploaded ? 'completed' : ''}`}
+      onDragOver={(e) => handleDrag(e, true)}
+      onDragEnter={(e) => handleDrag(e, true)}
+      onDragLeave={(e) => handleDrag(e, false)}
+      onDrop={handleDrop}
+      onClick={() => !isUploading && !isUploaded && inputRef.current.click()}
+    >
+      <input
+        type="file"
+        ref={inputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+        accept="image/*,application/pdf"
+        disabled={isUploading || isUploaded}
+      />
+      <div className="file-slot-icon">
+        {isUploaded ? '✅' : '📄'}
+      </div>
+      <div className="file-slot-info">
+        <span className="file-slot-name">{doc.nombre}</span>
+        <span className={`file-slot-status status-${status.toLowerCase()}`}>{status}</span>
+        {isUploading && (
+          <div className="progress-bar">
+            <div className="progress-bar-inner" style={{ width: `${progress}%` }}></div>
+          </div>
+        )}
+        {error && <span className="file-slot-error">{error}</span>}
+      </div>
+      {!isUploaded && !isUploading && (
+        <div className="file-slot-action">
+          <span>+</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [errors, setErrors] = useState({});
 
   const getRequiredDocs = (situacionLaboral) => {
     const baseDocs = [
@@ -110,7 +180,6 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       { id: 'extracto_tarjeta', nombre: 'Extracto de la Tarjeta de Crédito a refinanciar' },
       { id: 'selfie_ci', nombre: 'Selfie sosteniendo tu Cédula de Identidad' },
     ];
-
     const situacionDocs = {
       'Dependiente': [
         { id: 'boleta_pago', nombre: 'Última Boleta de Pago' },
@@ -124,32 +193,39 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
         { id: 'boleta_jubilacion', nombre: 'Boleta de Pago de Jubilación' },
       ],
     };
-
     return [...baseDocs, ...(situacionDocs[situacionLaboral] || [])];
   };
 
-  const handleFileUpload = async (event, docId) => {
-    try {
-      setUploading(docId);
-      setError(null);
-      const file = event.target.files[0];
-      if (!file) {
-        throw new Error('No seleccionaste ningún archivo.');
-      }
+  const handleFileUpload = async (file, docId) => {
+    if (!file) return;
 
+    setUploadProgress(prev => ({ ...prev, [docId]: 0 }));
+    setErrors(prev => ({ ...prev, [docId]: null }));
+
+    try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}_${solicitud.id}_${docId}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
-      let { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documentos-prestatarios')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, {
+          upsert: true,
+          cacheControl: '3600',
+        });
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      // Registrar en la tabla 'documentos'
+      // Simulate progress for now, as Supabase JS v2 doesn't support progress handlers on upload
+      // In a real scenario with a different library or server, you'd get this from the request.
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        if (progress <= 100) {
+          setUploadProgress(prev => ({ ...prev, [docId]: progress }));
+        }
+      }, 100);
+
       const { error: dbError } = await supabase.from('documentos').upsert({
         solicitud_id: solicitud.id,
         user_id: user.id,
@@ -159,16 +235,16 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
         estado: 'subido'
       }, { onConflict: ['solicitud_id', 'tipo_documento'] });
 
-      if (dbError) {
-        throw dbError;
-      }
+      clearInterval(interval);
+      if (dbError) throw dbError;
 
-      onUpload(); // Refrescar la lista de documentos
+      setUploadProgress(prev => ({ ...prev, [docId]: 100 }));
+      onUpload();
+
     } catch (error) {
       console.error("Error al subir el archivo:", error);
-      setError(`Error: ${error.message}`);
-    } finally {
-      setUploading(false);
+      setErrors(prev => ({ ...prev, [docId]: `Error: ${error.message}` }));
+      setUploadProgress(prev => ({ ...prev, [docId]: undefined }));
     }
   };
 
@@ -177,34 +253,27 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
   return (
     <div className="card">
       <h2>Sube tu Documentación</h2>
-      <p>Para continuar, necesitamos que subas los siguientes documentos. Asegúrate de que sean legibles.</p>
-      {error && <p className="error-message">{error}</p>}
-      <ul className="document-list">
+      <p>Arrastra y suelta tus archivos en las casillas correspondientes o haz clic para seleccionarlos. Formatos aceptados: PDF, JPG, PNG.</p>
+      <div className="document-grid">
         {requiredDocs.map(doc => {
           const isUploaded = uploadedDocuments.some(d => d.tipo_documento === doc.id && d.estado === 'subido');
-          const isUploading = uploading === doc.id;
+          const progress = uploadProgress[doc.id];
+          const isUploading = typeof progress === 'number';
+          const error = errors[doc.id];
+
           return (
-            <li key={doc.id} className={`document-item ${isUploaded ? 'uploaded' : ''}`}>
-              <span className="document-name">{doc.nombre}</span>
-              <div className="document-status">
-                {isUploaded ? (
-                  <span className="status-label uploaded">✓ Subido</span>
-                ) : (
-                  <label className={`upload-button ${isUploading ? 'disabled' : ''}`}>
-                    {isUploading ? 'Subiendo...' : 'Seleccionar Archivo'}
-                    <input
-                      type="file"
-                      disabled={isUploading}
-                      onChange={(e) => handleFileUpload(e, doc.id)}
-                      accept="image/*,application/pdf"
-                    />
-                  </label>
-                )}
-              </div>
-            </li>
+            <FileSlot
+              key={doc.id}
+              doc={doc}
+              isUploaded={isUploaded}
+              isUploading={isUploading}
+              progress={progress}
+              error={error}
+              onFileSelect={(file) => handleFileUpload(file, doc.id)}
+            />
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 };

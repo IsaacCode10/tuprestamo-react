@@ -1,11 +1,11 @@
 # Estado del Proyecto: Tu Prestamo
 
-**Fecha del último trabajo:** miércoles, 17 de septiembre de 2025
+**Fecha del último trabajo:** jueves, 18 de septiembre de 2025
 
 ---
 
-## Pendiente para mañana:
+## Pendiente:
 
-*   **Arreglar la sección "Sube tu Documentación":** Restaurar la lógica interna del componente `DocumentManager` en `BorrowerDashboard.jsx` para que muestre correctamente la lista de documentos requeridos según el perfil del prestatario y permita su subida.
+*   **Validar la sección "Sube tu Documentación":** Isaac debe probar el flujo completo de subida de documentos en el dashboard del prestatario para asegurar que la lista de documentos es correcta y la carga de archivos funciona como se espera.
 
 ---
