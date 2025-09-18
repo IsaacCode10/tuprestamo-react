@@ -1,0 +1,166 @@
+/* FloatingFinan.css */
+
+.floating-finan-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+}
+
+.finan-cta-bubble {
+  position: absolute;
+  bottom: 75px; /* Encima del botón */
+  right: 0;
+  background-color: #343a40;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: fade-in 0.3s ease-out;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.finan-fab {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.finan-fab:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+}
+
+.finan-fab img {
+  width: 32px;
+  height: 32px;
+  filter: brightness(0) invert(1); /* Pone el SVG en blanco */
+}
+
+.finan-chat-window {
+  position: absolute;
+  bottom: 80px; /* 60px del botón + 20px de margen */
+  right: 0;
+  width: 320px;
+  max-height: 400px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-up 0.3s ease-out;
+}
+
+.finan-chat-header {
+  background-color: #f7f9fc;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e9ecef;
+  flex-shrink: 0;
+}
+
+.finan-chat-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.finan-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #888;
+}
+
+.finan-chat-body {
+  padding: 8px 16px 16px 16px;
+  overflow-y: auto; /* Permite scroll si hay muchas preguntas */
+}
+
+.finan-intro-text {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.finan-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.finan-faq-item {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.finan-faq-item:last-child {
+  border-bottom: none;
+}
+
+.finan-faq-question {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 12px 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.finan-faq-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.finan-faq-icon.open {
+  transform: rotate(45deg);
+}
+
+.finan-faq-answer {
+  padding: 0 8px 12px 8px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #555;
+  animation: fade-in 0.3s ease;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

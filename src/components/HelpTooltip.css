@@ -1,0 +1,66 @@
+/* HelpTooltip.css */
+
+.tooltip-container {
+  position: relative;
+  display: inline-flex; /* Para que no ocupe toda la línea */
+  margin-left: 8px; /* Espacio respecto al texto que acompaña */
+  cursor: pointer;
+}
+
+.tooltip-icon {
+  font-size: 0.9rem;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none; /* Para que el ícono no se pueda seleccionar */
+  transition: transform 0.2s ease;
+}
+
+.tooltip-container:hover .tooltip-icon {
+    transform: scale(1.1);
+}
+
+.tooltip-box {
+  position: absolute;
+  bottom: 125%; /* Se posiciona encima del ícono */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #343a40; /* Fondo oscuro */
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  width: 280px; /* Ancho fijo */
+  font-size: 0.9rem;
+  line-height: 1.5;
+  z-index: 1010; /* Por encima del FAB de FINAN */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: left;
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Flecha del tooltip */
+.tooltip-box::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #343a40 transparent transparent transparent;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
