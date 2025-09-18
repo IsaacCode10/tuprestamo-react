@@ -9,6 +9,10 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
   const [costoMantenimientoBanco, setCostoMantenimientoBanco] = useState('100');
   const [resultados, setResultados] = useState(null);
 
+  // Opciones de plazo dinámicas
+  const standardPlazos = [12, 24, 36, 48];
+  const [availablePlazos, setAvailablePlazos] = useState(standardPlazos);
+
   if (!oportunidad) {
     return <div>Cargando datos de la oportunidad...</div>;
   }
@@ -48,7 +52,15 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
     if (solicitud) {
       setMontoDeuda(solicitud.monto_solicitado || '');
       setTasaActual(solicitud.tasa_interes_tc || '');
-      setPlazo(solicitud.plazo_meses || 36);
+      
+      const initialPlazo = solicitud.plazo_meses || 36;
+      setPlazo(initialPlazo);
+
+      // Asegurarse de que el plazo de la solicitud esté en las opciones
+      if (!standardPlazos.includes(initialPlazo)) {
+        const newPlazos = [...standardPlazos, initialPlazo].sort((a, b) => a - b);
+        setAvailablePlazos(newPlazos);
+      }
     }
   }, [solicitud]);
 
@@ -107,11 +119,17 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
       <h2>Calcula tu Ahorro y ¡Decídete!</h2>
       <p style={{textAlign: 'center', marginTop: '-10px', marginBottom: '20px'}}>Los datos de tu solicitud han sido pre-cargados, pero puedes modificarlos para simular otros escenarios.</p>
       <form onSubmit={handleCalcular} className="calculator-form">
-        {/* Form inputs remain the same */}
         <div className="input-wrapper"><label htmlFor="montoDeuda">Monto de la deuda (Bs)</label><input type="number" id="montoDeuda" value={montoDeuda} onChange={(e) => setMontoDeuda(e.target.value)} required /></div>
         <div className="input-wrapper"><label htmlFor="tasaActual">Tasa de tu Banco (%)</label><input type="number" id="tasaActual" value={tasaActual} onChange={(e) => setTasaActual(e.target.value)} required /></div>
         <div className="input-wrapper"><label htmlFor="costoMantenimientoBanco">Mantenimiento y Seguros de tu Banco (Bs/mes)</label><input type="number" id="costoMantenimientoBanco" value={costoMantenimientoBanco} onChange={(e) => setCostoMantenimientoBanco(e.target.value)} required /></div>
-        <div className="input-wrapper"><label htmlFor="plazo">Plazo (meses)</label><select id="plazo" value={plazo} onChange={(e) => setPlazo(parseInt(e.target.value, 10))}><option value={12}>12</option><option value={24}>24</option><option value={36}>36</option><option value={48}>48</option></select></div>
+        <div className="input-wrapper">
+          <label htmlFor="plazo">Plazo (meses)</label>
+          <select id="plazo" value={plazo} onChange={(e) => setPlazo(parseInt(e.target.value, 10))}>
+            {availablePlazos.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
         <button type="submit" className="btn-submit">Recalcular</button>
       </form>
 
@@ -138,29 +156,14 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
             <p><strong>Comisión por Originación:</strong> Bs. {resultados.costoOriginacion}</p>
           </div>
 
-          {/* Nueva Sección de Transparencia Total */}
           <div className="transparency-details">
             <h4 className="transparency-title">Transparencia Total</h4>
             <p className="transparency-subtitle">Desglose final del crédito a {plazo} meses</p>
             <table className="comparison-table">
-              <thead>
-                <tr>
-                  <th>Concepto</th>
-                  <th>Con tu Banco</th>
-                  <th className="tu-prestamo-header">Con Tu Préstamo</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Concepto</th><th>Con tu Banco</th><th className="tu-prestamo-header">Con Tu Préstamo</th></tr></thead>
               <tbody>
-                <tr>
-                  <td>Costo del Crédito (Intereses + Comisiones)</td>
-                  <td>Bs. {resultados.costoTotalCreditoBanco}</td>
-                  <td className="tu-prestamo-data">Bs. {resultados.costoTotalCreditoTP}</td>
-                </tr>
-                <tr className="total-row">
-                  <td><strong>Total a Pagar (Capital + Costos)</strong></td>
-                  <td><strong>Bs. {resultados.totalAPagarBanco}</strong></td>
-                  <td className="tu-prestamo-data"><strong>Bs. {resultados.totalAPagarTP}</strong></td>
-                </tr>
+                <tr><td>Costo del Crédito (Intereses + Comisiones)</td><td>Bs. {resultados.costoTotalCreditoBanco}</td><td className="tu-prestamo-data">Bs. {resultados.costoTotalCreditoTP}</td></tr>
+                <tr className="total-row"><td><strong>Total a Pagar (Capital + Costos)</strong></td><td><strong>Bs. {resultados.totalAPagarBanco}</strong></td><td className="tu-prestamo-data"><strong>Bs. {resultados.totalAPagarTP}</strong></td></tr>
               </tbody>
             </table>
           </div>
