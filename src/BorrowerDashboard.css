@@ -395,164 +395,112 @@
   color: #666;
 }
 
-/* --- New Document Manager Styles --- */
+/* --- New Document Manager Styles (v2) --- */
 
-.document-manager-container {
-  display: flex;
-  gap: 2rem;
-}
-
-.document-checklist {
-  flex: 1;
-  min-width: 300px;
-}
-
-.document-checklist h3 {
-  font-size: 1.2rem;
-  color: #333;
-  margin-bottom: 1rem;
-}
-
-.checklist-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem;
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  transition: all 0.2s ease-in-out;
-}
-
-.checklist-item.completed {
-  background-color: #e6f7f5;
-  border-color: #26C2B2;
-}
-
-.checklist-item .icon {
-  font-size: 1.2rem;
-  margin-right: 1rem;
-  color: #adb5bd;
-}
-
-.checklist-item.completed .icon {
-  color: #26C2B2;
-}
-
-.checklist-item .name {
-  font-weight: 600;
-  color: #495057;
-}
-
-.document-uploader {
-  flex: 1.5;
-}
-
-.drop-zone {
-  border: 2px dashed #ced4da;
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: #f8f9fa;
-}
-
-.drop-zone.dragging {
-  border-color: #26C2B2;
-  background-color: #e6f7f5;
-}
-
-.drop-zone p {
-  margin: 0;
-  font-size: 1rem;
-  color: #6c757d;
-}
-
-.drop-zone .upload-icon {
-  font-size: 2.5rem;
-  color: #26C2B2;
-  margin-bottom: 1rem;
-}
-
-.file-list {
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
   margin-top: 1.5rem;
-  list-style: none;
-  padding: 0;
 }
 
-.file-item {
+.file-slot {
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
   display: flex;
   align-items: center;
-  padding: 1rem;
-  background-color: #fff;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
 }
 
-.file-item .file-icon {
+.file-slot:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.file-slot.dragging {
+  border-color: #26C2B2;
+  background-color: #e6f7f5;
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(38, 194, 178, 0.3);
+}
+
+.file-slot.completed {
+  border-style: solid;
+  border-color: #28a745;
+  background-color: #f0fff4;
+}
+
+.file-slot-icon {
   font-size: 2rem;
   margin-right: 1rem;
-  color: #adb5bd;
+  color: #868e96;
 }
 
-.file-item .file-details {
+.file-slot.completed .file-slot-icon {
+  color: #28a745;
+}
+
+.file-slot-info {
   flex-grow: 1;
 }
 
-.file-item .file-name {
+.file-slot-name {
   font-weight: 600;
   color: #343a40;
+  font-size: 0.95rem;
+}
+
+.file-slot-status {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.file-slot-status.status-subiendo {
+  color: #26C2B2;
+  font-weight: 600;
+}
+
+.file-slot-status.status-completado {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.file-slot-error {
+  color: #dc3545;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: block;
+  margin-top: 4px;
+}
+
+.file-slot-action {
+  font-size: 1.5rem;
+  color: #ced4da;
+  transition: transform 0.2s ease;
+}
+
+.file-slot:hover .file-slot-action {
+  transform: scale(1.2);
+  color: #26C2B2;
 }
 
 .progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
   width: 100%;
-  height: 8px;
-  background-color: #e9ecef;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-top: 0.5rem;
+  height: 5px;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .progress-bar-inner {
   height: 100%;
   background-color: #26C2B2;
-  transition: width 0.3s ease;
-}
-
-.file-item .file-status {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.file-item .file-status.uploading {
-  color: #007bff;
-}
-
-.file-item .file-status.completed {
-  color: #28a745;
-}
-
-.file-item .file-status.error {
-  color: #dc3545;
-}
-
-.file-item .remove-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #adb5bd;
-  transition: color 0.2s ease;
-}
-
-.file-item .remove-btn:hover {
-  color: #dc3545;
-}
-
-.upload-instructions {
-  font-size: 0.85rem;
-  color: #6c757d;
-  margin-top: 1rem;
+  transition: width 0.4s ease;
+  border-radius: 0 2px 2px 0;
 }
