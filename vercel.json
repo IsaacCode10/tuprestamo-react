@@ -2,5 +2,9 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "routes": [
+    { "src": "/src/(.*)", "dest": "/src/$1" },
+    { "src": "/node_modules/(.*)", "dest": "/node_modules/$1" }
   ]
 }
