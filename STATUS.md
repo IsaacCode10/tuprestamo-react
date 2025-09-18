@@ -4,8 +4,11 @@
 
 ---
 
-## Pendiente:
+## PENDIENTE DE VALIDACIÓN FINAL (E2E)
 
-*   **Validación final de UI en "Sube tu Documentación":** Isaac debe realizar la revisión final de la sección de carga de documentos, verificando que los tooltips explicativos y los nuevos colores de estado son correctos y cumplen con la visión del producto.
+*   **Acción para Isaac:** Realizar la prueba completa del flujo de análisis de documentos con IA en el entorno de producción/preview de Vercel.
+    *   Verificar que el estado "Analizando con IA..." aparece correctamente.
+    *   Confirmar que se crea una nueva fila en la tabla `analisis_documentos` de Supabase.
+    *   Revisar que los datos extraídos en la columna `raw_data` son correctos.
 
 ---
