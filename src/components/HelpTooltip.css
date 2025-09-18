@@ -9,14 +9,16 @@
 
 .tooltip-icon {
   font-size: 0.9rem;
-  background-color: #e9ecef;
+  background-color: #26C2B2; /* Main theme color */
+  color: white; /* White '?' for contrast */
+  font-weight: bold;
   border-radius: 50%;
   width: 18px;
   height: 18px;
   display: flex;
   justify-content: center;
   align-items: center;
-  user-select: none; /* Para que el ícono no se pueda seleccionar */
+  user-select: none;
   transition: transform 0.2s ease;
 }
 

@@ -406,7 +406,13 @@
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden; REMOVED to allow tooltip to show */
+}
+
+.file-slot-status.status-pendiente {
+  color: #6c757d !important; /* Neutral grey */
+  background-color: transparent !important;
+  font-weight: normal !important;
 }
 
 .file-slot:hover {
