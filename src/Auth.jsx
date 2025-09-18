@@ -28,12 +28,22 @@ const Auth = () => {
           },
         });
         if (error) throw error;
+
+        // --- NUEVO: Insertar/Actualizar perfil en la tabla 'profiles' ---
+        if (data.user) {
+          const { error: profileInsertError } = await supabase
+            .from('profiles')
+            .upsert({ id: data.user.id, role: role, email: email }); // Assuming 'email' is also in profiles table
+          if (profileInsertError) throw profileInsertError;
+        }
+        // --- FIN NUEVO ---
+
         alert('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
       } else {
         // Lógica de Inicio de Sesión
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate('/admin-dashboard');
+        // No direct navigation here. App.jsx will handle it based on profile.role
       }
     } catch (error) {
       setError(error.message);
