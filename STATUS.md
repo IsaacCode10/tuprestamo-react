@@ -6,6 +6,6 @@
 
 ## Pendiente:
 
-*   **Validar la sección "Sube tu Documentación":** Isaac debe probar el flujo completo de subida de documentos en el dashboard del prestatario para asegurar que la lista de documentos es correcta y la carga de archivos funciona como se espera.
+*   **Validar rediseño de "Sube tu Documentación":** Isaac debe probar la nueva interfaz de carga de documentos en el dashboard del prestatario. Verificar la funcionalidad de arrastrar y soltar, la selección de archivos y la experiencia de usuario en general.
 
 ---
