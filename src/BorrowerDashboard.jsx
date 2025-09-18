@@ -98,7 +98,7 @@ const StatusCard = ({ solicitud, oportunidad, cuotaRealPromedio }) => {
   );
 };
 
-const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect }) => {
+const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect }) => {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = React.useRef();
 
@@ -123,7 +123,9 @@ const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect 
     }
   };
 
-  const status = isUploading
+  const status = isAnalysing
+    ? 'Analizando con IA...'
+    : isUploading
     ? `Subiendo... ${progress}%`
     : isUploaded
     ? 'Completado'
@@ -131,7 +133,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect 
 
   return (
     <div
-      className={`file-slot ${dragOver ? 'dragging' : ''} ${isUploaded ? 'completed' : ''}`}
+      className={`file-slot ${dragOver ? 'dragging' : ''} ${isUploaded ? 'completed' : ''} ${isAnalysing ? 'analysing' : ''}`}
       onDragOver={(e) => handleDrag(e, true)}
       onDragEnter={(e) => handleDrag(e, true)}
       onDragLeave={(e) => handleDrag(e, false)}
@@ -147,14 +149,14 @@ const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect 
         disabled={isUploading || isUploaded}
       />
       <div className="file-slot-icon">
-        {isUploaded ? '✅' : '📄'}
+        {isUploaded ? '✅' : isAnalysing ? '🧠' : '📄'}
       </div>
       <div className="file-slot-info">
         <div className="file-slot-name">
           {doc.nombre}
           <HelpTooltip definition={doc.definition} />
         </div>
-        <span className={`file-slot-status status-${status.toLowerCase()}`}>{status}</span>
+        <span className={`file-slot-status status-${status.toLowerCase().replace(/\.\.\./g, '')}`}>{status}</span>
         {isUploading && (
           <div className="progress-bar">
             <div className="progress-bar-inner" style={{ width: `${progress}%` }}></div>
@@ -162,7 +164,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect 
         )}
         {error && <span className="file-slot-error">{error}</span>}
       </div>
-      {!isUploaded && !isUploading && (
+      {!isUploaded && !isUploading && !isAnalysing && (
         <div className="file-slot-action">
           <span>+</span>
         </div>
@@ -173,6 +175,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect 
 
 const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
   const [uploadProgress, setUploadProgress] = useState({});
+  const [analysing, setAnalysing] = useState({});
   const [errors, setErrors] = useState({});
 
   const getRequiredDocs = (situacionLaboral) => {
@@ -210,24 +213,15 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       const fileName = `${user.id}_${solicitud.id}_${docId}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
+      // 1. Sube el archivo a Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('documentos-prestatarios')
-        .upload(filePath, file, {
-          upsert: true,
-          cacheControl: '3600',
-        });
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
+      setUploadProgress(prev => ({ ...prev, [docId]: 100 }));
 
-      // Simulate progress for now, as Supabase JS v2 doesn't support progress handlers on upload
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        if (progress <= 100) {
-          setUploadProgress(prev => ({ ...prev, [docId]: progress }));
-        }
-      }, 100);
-
+      // 2. Registra en la tabla 'documentos'
       const { error: dbError } = await supabase.from('documentos').upsert({
         solicitud_id: solicitud.id,
         user_id: user.id,
@@ -237,16 +231,32 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
         estado: 'subido'
       }, { onConflict: ['solicitud_id', 'tipo_documento'] });
 
-      clearInterval(interval);
       if (dbError) throw dbError;
+      onUpload(); // Refresca la UI para mostrar el estado "Completado"
 
-      setUploadProgress(prev => ({ ...prev, [docId]: 100 }));
-      onUpload();
+      // 3. Llama al backend para iniciar el análisis con IA
+      setAnalysing(prev => ({ ...prev, [docId]: true }));
+      const response = await fetch('/api/analizar-documento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          filePath: filePath, 
+          documentType: docId,
+          solicitud_id: solicitud.id // <-- AÑADIDO
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'El análisis de IA falló.');
+      }
 
     } catch (error) {
-      console.error("Error al subir el archivo:", error);
+      console.error("Error en el proceso de carga y análisis:", error);
       setErrors(prev => ({ ...prev, [docId]: `Error: ${error.message}` }));
+    } finally {
       setUploadProgress(prev => ({ ...prev, [docId]: undefined }));
+      setAnalysing(prev => ({ ...prev, [docId]: false }));
     }
   };
 
@@ -261,6 +271,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
           const isUploaded = uploadedDocuments.some(d => d.tipo_documento === doc.id && d.estado === 'subido');
           const progress = uploadProgress[doc.id];
           const isUploading = typeof progress === 'number';
+          const isAnalysing = analysing[doc.id];
           const error = errors[doc.id];
 
           return (
@@ -269,6 +280,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
               doc={doc}
               isUploaded={isUploaded}
               isUploading={isUploading}
+              isAnalysing={isAnalysing}
               progress={progress}
               error={error}
               onFileSelect={(file) => handleFileUpload(file, doc.id)}
