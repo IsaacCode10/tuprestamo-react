@@ -200,15 +200,7 @@
   font-weight: 600;
 }
 
-.status-pending {
-  background-color: #fff0c2;
-  color: #856404;
-}
 
-.status-approved {
-  background-color: #d4edda;
-  color: #155724;
-}
 
 .document-actions .btn-upload {
   background-color: #26C2B2;
