@@ -150,7 +150,10 @@ const FileSlot = ({ doc, isUploaded, isUploading, progress, error, onFileSelect 
         {isUploaded ? '✅' : '📄'}
       </div>
       <div className="file-slot-info">
-        <span className="file-slot-name">{doc.nombre}</span>
+        <div className="file-slot-name">
+          {doc.nombre}
+          <HelpTooltip definition={doc.definition} />
+        </div>
         <span className={`file-slot-status status-${status.toLowerCase()}`}>{status}</span>
         {isUploading && (
           <div className="progress-bar">
@@ -174,23 +177,23 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
 
   const getRequiredDocs = (situacionLaboral) => {
     const baseDocs = [
-      { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)' },
-      { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)' },
-      { id: 'factura_servicio', nombre: 'Factura Servicio Básico (Luz, Agua, etc.)' },
-      { id: 'extracto_tarjeta', nombre: 'Extracto de la Tarjeta de Crédito a refinanciar' },
-      { id: 'selfie_ci', nombre: 'Selfie sosteniendo tu Cédula de Identidad' },
+      { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
+      { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
+      { id: 'factura_servicio', nombre: 'Factura Servicio Básico', definition: 'Para confirmar tu dirección de residencia actual. Puede ser una factura de luz, agua o gas de los últimos 3 meses.' },
+      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Esencial para verificar el monto total de tu deuda y la tasa de interés que pagas actualmente. Esto nos permite calcular con precisión cuánto ahorrarás. Solo necesitamos ver el encabezado y el resumen de la deuda.' },
+      { id: 'selfie_ci', nombre: 'Selfie con Cédula de Identidad', definition: 'Una medida de seguridad adicional para prevenir el fraude y asegurar que realmente eres tú quien solicita el préstamo. Sostén tu CI al lado de tu cara.' },
     ];
     const situacionDocs = {
       'Dependiente': [
-        { id: 'boleta_pago', nombre: 'Última Boleta de Pago' },
-        { id: 'certificado_gestora', nombre: 'Certificado de la Gestora Pública' },
+        { id: 'boleta_pago', nombre: 'Última Boleta de Pago', definition: 'Para verificar tus ingresos mensuales y tu relación laboral como dependiente.' },
+        { id: 'certificado_gestora', nombre: 'Certificado de la Gestora Pública', definition: 'Confirma tus aportes y nos ayuda a complementar el análisis de tus ingresos.' },
       ],
       'Independiente': [
-        { id: 'extracto_bancario_3m', nombre: 'Extracto Bancario (Últimos 3 meses)' },
-        { id: 'nit', nombre: 'Número de Identificación Tributaria (NIT)' },
+        { id: 'extracto_bancario_3m', nombre: 'Extracto Bancario (3 meses)', definition: 'Permite verificar la consistencia de tus ingresos como trabajador independiente durante los últimos 3 meses.' },
+        { id: 'nit', nombre: 'Número de Identificación Tributaria (NIT)', definition: 'Confirma tu actividad económica y el cumplimiento de tus obligaciones fiscales en Bolivia.' },
       ],
       'Jubilado': [
-        { id: 'boleta_jubilacion', nombre: 'Boleta de Pago de Jubilación' },
+        { id: 'boleta_jubilacion', nombre: 'Boleta de Pago de Jubilación', definition: 'Para verificar tus ingresos como jubilado y la regularidad de los mismos.' },
       ],
     };
     return [...baseDocs, ...(situacionDocs[situacionLaboral] || [])];
@@ -217,7 +220,6 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       if (uploadError) throw uploadError;
 
       // Simulate progress for now, as Supabase JS v2 doesn't support progress handlers on upload
-      // In a real scenario with a different library or server, you'd get this from the request.
       let progress = 0;
       const interval = setInterval(() => {
         progress += 10;
