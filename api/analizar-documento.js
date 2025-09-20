@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 // Initialize clients with environment variables
 // IMPORTANT: These variables must be set in your Vercel project settings
 const supabaseAdmin = createClient(
-  process.env.VITE_SUPABASE_URL, // Corrected to use VITE_ prefix
+  process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);

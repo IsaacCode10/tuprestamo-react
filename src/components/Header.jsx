@@ -79,10 +79,10 @@ const Header = () => {
           <nav className="header__nav">
             <ul className="header__nav-list">
               <li className="header__nav-item">
-                <NavButton to="prestatarios" text="QUIERO UN PRESTAMO" />
+                <NavButton to="prestatarios" text="REFINANCIAR TARJETA" />
               </li>
               <li className="header__nav-item">
-                <NavButton to="inversionistas" text="QUIERO PRESTAR" />
+                <NavButton to="inversionistas" text="QUIERO INVERTIR" />
               </li>
               <li className="header__nav-item">
                 <NavButton to="como-funciona" text="CÓMO FUNCIONA" />
