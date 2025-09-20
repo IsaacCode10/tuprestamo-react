@@ -232,7 +232,6 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       }, { onConflict: ['solicitud_id', 'tipo_documento'] });
 
       if (dbError) throw dbError;
-      onUpload(); // Refresca la UI para mostrar el estado "Completado"
 
       // 3. Llama al backend para iniciar el análisis con IA
       setAnalysing(prev => ({ ...prev, [docId]: true }));
@@ -242,14 +241,23 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
         body: JSON.stringify({ 
           filePath: filePath, 
           documentType: docId,
-          solicitud_id: solicitud.id // <-- AÑADIDO
+          solicitud_id: solicitud.id
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'El análisis de IA falló.');
+        // Intenta leer el error como JSON, si falla, usa el texto plano
+        let errorPayload;
+        try {
+          errorPayload = await response.json();
+        } catch (e) {
+          errorPayload = { error: await response.text() };
+        }
+        throw new Error(errorPayload.error || 'El análisis de IA falló.');
       }
+
+      // 4. Si todo fue exitoso (subida, registro y análisis), refresca la UI
+      onUpload();
 
     } catch (error) {
       console.error("Error en el proceso de carga y análisis:", error);

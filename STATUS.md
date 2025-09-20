@@ -1,32 +1,24 @@
 # Estado del Proyecto: Tu Prestamo
 
-**Fecha del último trabajo:** jueves, 18 de septiembre de 2025
+**Fecha del último trabajo:** viernes, 19 de septiembre de 2025
 
 ---
 
-## ALERTA DE SEGURIDAD CRÍTICA: LLAVES SECRETAS EXPUESTAS EN GITHUB
+## Tarea en Curso: Limpieza de Historial de Git por Llaves Secretas Expuestas
 
-**Situación Actual:**
-Se ha detectado que las llaves secretas de Google (GEMINI_API_KEY) y Supabase (SUPABASE_SERVICE_KEY) fueron accidentalmente subidas al repositorio de GitHub. Esto representa un riesgo de seguridad muy alto.
+**Resumen de la Situación:**
 
-**Acciones URGENTES y CRÍTICAS (a realizar por Isaac):**
+1.  **Vulnerabilidad Crítica RESUELTA:** Las llaves de API de Google y Supabase que estaban expuestas **han sido revocadas y reemplazadas**. Las nuevas llaves seguras se han configurado correctamente como variables de entorno en Vercel. La plataforma es segura y operativa.
 
-1.  **REVOCAR/REGENERAR LLAVES COMPROMETIDAS:**
-    *   **Google API Key:** Eliminar la clave expuesta en Google Cloud Console y generar una nueva.
-    *   **Supabase Service Key:** Regenerar la clave `service_role` en Supabase para invalidar la expuesta.
-
-2.  **LIMPIAR HISTORIAL DE GIT:**
-    *   Es CRÍTICO eliminar las llaves de todo el historial del repositorio de Git. Esto requiere herramientas como `git filter-repo` o `BFG Repo-Cleaner`.
-    *   **NO REALIZAR NINGÚN `git commit` O `git push` ADICIONAL HASTA QUE ESTO ESTÉ RESUELTO.**
-    *   Se guiará a Isaac en este proceso mañana.
-
-3.  **ACTUALIZAR VARIABLES DE ENTORNO EN VERCEL:**
-    *   Una vez generadas las nuevas llaves, actualizar los valores de `GEMINI_API_KEY` y `SUPABASE_SERVICE_KEY` en Vercel con las nuevas llaves seguras.
-
-4.  **PREVENCIÓN FUTURA:**
-    *   Nunca pegar llaves secretas directamente en archivos de texto o código. Siempre usar variables de entorno o archivos `.env` (excluidos por `.gitignore`).
+2.  **Limpieza de Historial de Git (BLOQUEADO):**
+    *   El plan era eliminar las llaves viejas del historial de Git para mantener una buena higiene de seguridad.
+    *   **Bloqueo:** Mi investigación del historial del archivo `api/analizar-documento.js` demuestra que las llaves **nunca** estuvieron escritas directamente en ese archivo.
+    *   No podemos encontrar el texto de la `GEMINI_API_KEY` vieja, ya que fue eliminada.
+    *   Sin saber el texto exacto de las llaves viejas o el archivo donde se filtraron, no se puede realizar la limpieza automática.
 
 ---
 
-**Próximo Paso:**
-Retomar la limpieza del historial de Git y la configuración de las nuevas llaves mañana.
+**Próximo Paso (Pendiente de Isaac):**
+
+*   Hacer memoria para intentar recordar en qué otro archivo o lugar se pudieron haber pegado las llaves (un archivo de configuración, un archivo `.env` subido por error, etc.).
+*   Buscar y proporcionar la `SUPABASE_SERVICE_KEY` **vieja y revocada**. Si la encontramos, puedo buscar esa llave específica en todo el historial del proyecto, lo que podría darnos una pista sobre la filtración.
