@@ -192,8 +192,10 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
         { id: 'certificado_gestora', nombre: 'Certificado de la Gestora Pública', definition: 'Confirma tus aportes y nos ayuda a complementar el análisis de tus ingresos.' },
       ],
       'Independiente': [
-        { id: 'extracto_bancario_3m', nombre: 'Extracto Bancario (3 meses)', definition: 'Permite verificar la consistencia de tus ingresos como trabajador independiente durante los últimos 3 meses.' },
-        { id: 'nit', nombre: 'Número de Identificación Tributaria (NIT)', definition: 'Confirma tu actividad económica y el cumplimiento de tus obligaciones fiscales en Bolivia.' },
+        { id: 'extracto_bancario_m1', nombre: 'Extracto Bancario (Mes 1)', definition: 'Tu extracto bancario más reciente. Permite verificar la consistencia de tus ingresos.' },
+        { id: 'extracto_bancario_m2', nombre: 'Extracto Bancario (Mes 2)', definition: 'Tu extracto bancario del mes anterior. Permite verificar la consistencia de tus ingresos.' },
+        { id: 'extracto_bancario_m3', nombre: 'Extracto Bancario (Mes 3)', definition: 'Tu extracto bancario de hace dos meses. Permite verificar la consistencia de tus ingresos.' },
+        { id: 'nit', nombre: 'NIT (Opcional)', definition: 'Si tienes NIT, súbelo para confirmar tu actividad económica. Si no, puedes dejar este campo vacío.' },
       ],
       'Jubilado': [
         { id: 'boleta_jubilacion', nombre: 'Boleta de Pago de Jubilación', definition: 'Para verificar tus ingresos como jubilado y la regularidad de los mismos.' },
@@ -246,14 +248,15 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       });
 
       if (!response.ok) {
-        // Intenta leer el error como JSON, si falla, usa el texto plano
-        let errorPayload;
+        const errorText = await response.text();
+        let errorMessage = errorText;
         try {
-          errorPayload = await response.json();
+          const errorPayload = JSON.parse(errorText);
+          errorMessage = errorPayload.error || errorText;
         } catch (e) {
-          errorPayload = { error: await response.text() };
+          // It wasn't JSON, so we just use the raw text we already got.
         }
-        throw new Error(errorPayload.error || 'El análisis de IA falló.');
+        throw new Error(errorMessage);
       }
 
       // 4. Si todo fue exitoso (subida, registro y análisis), refresca la UI
