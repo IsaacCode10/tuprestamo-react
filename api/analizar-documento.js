@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     const signedUrl = urlData.signedUrl;
 
     // 2. Get the correct prompt and prepare the model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     const prompt = getPromptForDocument(documentType);
     
     // Infer mimeType from file extension
