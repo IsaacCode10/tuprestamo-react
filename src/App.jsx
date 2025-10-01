@@ -15,6 +15,8 @@ import OpportunityDetail from '@/OpportunityDetail.jsx';
 import ConfirmAndSetPassword from '@/ConfirmAndSetPassword.jsx';
 import BorrowerDashboard from '@/BorrowerDashboard.jsx';
 import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
+import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
+import Profile from './Profile.jsx';
 
 // Componente "Guardia" específico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
@@ -31,7 +33,7 @@ const AdminRoute = ({ profile, loading, children }) => {
     return <Navigate to="/" replace />;
   }
   
-  return children;
+  return React.cloneElement(children, { profile });
 };
 
 // Componente "Guardia" específico para rutas de Inversionista
@@ -50,7 +52,7 @@ const InvestorRoute = ({ profile, loading, children }) => {
     return <Navigate to="/" replace />;
   }
   
-  return children;
+  return React.cloneElement(children, { profile });
 };
 
 // Componente "Guardia" específico para rutas de Prestatario
@@ -69,7 +71,7 @@ const BorrowerRoute = ({ profile, loading, children }) => {
     return <Navigate to="/" replace />;
   }
   
-  return children;
+  return React.cloneElement(children, { profile });
 };
 
 // Componente para redirigir si el usuario YA está autenticado
@@ -150,10 +152,26 @@ function App() {
             }
           />
           <Route 
+            path="/dashboard-analista"
+            element={
+              <AdminRoute profile={profile} loading={loading}>
+                <RiskAnalystDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route 
             path="/borrower-dashboard"
             element={
               <BorrowerRoute profile={profile} loading={loading}>
                 <BorrowerDashboard />
+              </BorrowerRoute>
+            }
+          />
+           <Route 
+            path="/perfil"
+            element={
+              <BorrowerRoute profile={profile} loading={loading}>
+                <Profile />
               </BorrowerRoute>
             }
           />

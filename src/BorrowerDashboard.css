@@ -8,6 +8,17 @@
   background-color: #f9f9f9;
 }
 
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align items to the top */
+  gap: 2rem;
+}
+
+.header-content {
+  flex-grow: 1; /* Allows this element to take up available space */
+}
+
 .dashboard-header h1 {
   font-size: 2rem;
   color: #333;
@@ -28,7 +39,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.card h2 {
+.card h2, .card h3 {
   font-size: 1.5rem;
   color: #333;
   margin-top: 0;
@@ -236,7 +247,7 @@
 .logout-button {
     display: block;
     width: fit-content;
-    margin: 2rem auto 0;
+    /* margin: 2rem auto 0; */ /* Reemplazado por el contenedor de acciones */
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 4px;
@@ -501,4 +512,147 @@
   background-color: #26C2B2;
   transition: width 0.4s ease;
   border-radius: 0 2px 2px 0;
+}
+
+
+/* --- STYLES FOR APPROVED LOAN VIEW --- */
+
+.borrower-dashboard.approved .dashboard-header p {
+  margin-bottom: 2.5rem;
+}
+
+.loan-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  /* align-items: start; <-- Eliminado para que las tarjetas tengan la misma altura */
+}
+
+.loan-summary-card {
+  background-color: #fff;
+  border-radius: 12px; /* Bordes más redondeados */
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07); /* Sombra más pronunciada */
+  border: 1px solid #eee;
+  border-top: 4px solid #26C2B2; /* Acento de color */
+  transition: all 0.3s ease;
+  display: flex; /* <-- Clave para centrar */
+  flex-direction: column; /* <-- Clave para centrar */
+  justify-content: center; /* <-- Clave para centrar */
+}
+
+.loan-summary-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.loan-summary-card.primary {
+  background-image: linear-gradient(45deg, #26C2B2, #2CD9C5); /* Gradiente sutil */
+  color: white;
+  border-top: 4px solid #ffffff;
+}
+
+.summary-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #666;
+}
+
+.loan-summary-card.primary .summary-card-title,
+.loan-summary-card.primary .summary-card-subtext {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.summary-card-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  color: #111;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+
+.loan-summary-card.primary .summary-card-value {
+  color: white;
+}
+
+.summary-card-subtext {
+  font-size: 0.9rem;
+  color: #888;
+  margin: 0.5rem 0 0 0;
+}
+
+.payment-cta-section {
+  text-align: center;
+  margin: 1rem 0 3rem 0;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.cta-button {
+  padding: 1rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+  background-color: #28a745;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.payment-cta-section p {
+  margin-top: 1rem;
+  color: #666;
+  font-size: 1rem;
+}
+
+.payment-history table, .amortization-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.payment-history th, .amortization-table th,
+.payment-history td, .amortization-table td {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.payment-history th, .amortization-table th {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 600;
+  background-color: #fcfcfc;
+}
+
+.payment-history td, .amortization-table td {
+  font-size: 1rem;
+  color: #333;
+}
+
+.payment-history tr:hover, .amortization-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.status-pagado {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.status-pendiente {
+  color: #ffc107;
+  font-weight: 600;
 }

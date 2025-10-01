@@ -109,7 +109,11 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Unhandled error in analysis function:', error);
-    res.status(500).json({ error: 'An unexpected error occurred.' });
+    // Return the actual error message and stack for debugging
+    res.status(500).json({ 
+      error: `Internal Server Error: ${error.message}`,
+      details: error.stack 
+    });
   }
 }
 

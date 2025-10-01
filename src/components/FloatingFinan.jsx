@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './FloatingFinan.css';
 import RobotAvatar from '@/assets/robot-avatar.svg';
 
-// Lista de Preguntas Frecuentes. Fácil de editar aquí.
-const faqs = [
+// Lista de Preguntas Frecuentes por defecto.
+const defaultFaqs = [
   {
     question: '¿Qué es la Tasa Anual Asignada?',
     answer: 'Es el costo que pagas por tu crédito cada año, expresado como un porcentaje. No incluye otros gastos como comisiones o seguros.'
@@ -22,7 +22,7 @@ const faqs = [
   }
 ];
 
-const FloatingFinan = () => {
+const FloatingFinan = ({ faqItems = defaultFaqs }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showCta, setShowCta] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
@@ -66,7 +66,7 @@ const FloatingFinan = () => {
           <div className="finan-chat-body">
             <p className="finan-intro-text">¡Hola! Soy FINAN. Aquí tienes respuestas a preguntas comunes.</p>
             <div className="finan-faq-list">
-              {faqs.map((faq, index) => (
+              {faqItems.map((faq, index) => (
                 <div key={index} className="finan-faq-item">
                   <button className="finan-faq-question" onClick={() => toggleFaq(index)}>
                     {faq.question}

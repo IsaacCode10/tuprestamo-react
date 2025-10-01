@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Link as ScrollLink } from 'react-scroll';
@@ -52,7 +51,14 @@ const Header = () => {
 
   // Determinar la ruta del panel de control basado en el rol del perfil
   let dashboardPath = '/'; // Fallback por defecto
+  let displayName = 'Mi Cuenta';
+
   if (profile) {
+    // Construir el nombre a mostrar con una lógica de fallbacks
+    const firstName = profile.nombre_completo?.split(' ')[0];
+    const emailUsername = profile.email?.split('@')[0];
+    displayName = `Hola, ${firstName || emailUsername || 'Usuario'}`;
+
     switch (profile.role) {
       case 'admin':
         dashboardPath = '/admin-dashboard';
@@ -64,7 +70,7 @@ const Header = () => {
         dashboardPath = '/borrower-dashboard';
         break;
       default:
-        dashboardPath = '/'; // Si el rol no es reconocido, va a la página principal
+        dashboardPath = '/';
     }
   }
 
@@ -96,17 +102,21 @@ const Header = () => {
             {profile ? (
               <div className="header__user-menu">
                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="header__user-button">
-                  Mi Cuenta <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`}>▼</span>
+                  {displayName} <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`}>▼</span>
                 </button>
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
                     <NavLink to={dashboardPath} className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       Panel de Control
                     </NavLink>
+                    <NavLink to="/perfil" className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                      Mi Perfil
+                    </NavLink>
+                    <div className="header__dropdown-separator"></div>
                     <button onClick={handleLogout} className="header__dropdown-item button">
                       Cerrar Sesión
                     </button>
-                                        {profile?.id === '8983b4fb-93c8-4951-b2db-c595f61fd3c4' && (
+                    {profile?.id === '8983b4fb-93c8-4951-b2db-c595f61fd3c4' && (
                       <>
                         <div className="header__dropdown-separator"></div>
                         <div className="header__dropdown-roleswitcher" onClick={(e) => e.stopPropagation()}>

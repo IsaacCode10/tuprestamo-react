@@ -20,8 +20,7 @@ const PendingInvestments = () => {
           id, 
           amount, 
           created_at,
-          opportunity_id,
-          profiles ( email )
+          opportunity_id
         `)
         .eq('status', 'pending');
 
@@ -178,10 +177,7 @@ const AdminDashboard = () => {
       // Unimos solicitudes con oportunidades para obtener el perfil de riesgo
       const { data: requestsData, error: requestsError } = await supabase
         .from('solicitudes')
-        .select(`
-          *,
-          oportunidades ( perfil_riesgo )
-        `)
+        .select('*')
         .eq('tipo_solicitud', 'prestatario');
 
       if (requestsError) throw requestsError;

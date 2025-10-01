@@ -12,6 +12,12 @@ const AdminNav = () => {
         >
           Centro de Operaciones
         </NavLink>
+        <NavLink 
+          to="/dashboard-analista"
+          className={({ isActive }) => isActive ? "active-link" : ""}
+        >
+          Análisis de Riesgo
+        </NavLink>
       </div>
     </nav>
   );
