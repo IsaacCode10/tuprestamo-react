@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Admin Client
@@ -55,7 +54,11 @@ export default async function handler(req, res) {
 
     if (upsertError) {
       console.error('Error upserting risk profile:', upsertError);
-      return res.status(500).json({ error: 'Failed to save synthesized profile.' });
+      // DEBUGGING: Send detailed error back to the client
+      return res.status(500).json({
+        error: 'Failed to save synthesized profile.',
+        details: upsertError
+      });
     }
 
     // 4. Return a success response

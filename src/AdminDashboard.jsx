@@ -261,7 +261,12 @@ const AdminDashboard = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Error desconocido del servidor');
+        // Construct a detailed error message for debugging
+        let errorMessage = result.error || 'Error desconocido del servidor';
+        if (result.details) {
+          errorMessage += `\n\nDetalles: ${JSON.stringify(result.details, null, 2)}`;
+        }
+        throw new Error(errorMessage);
       }
 
       alert('¡Perfil de riesgo sintetizado con éxito!');
