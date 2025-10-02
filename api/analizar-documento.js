@@ -59,9 +59,17 @@ export default async function handler(req, res) {
     const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
     const prompt = getPromptForDocument(documentType);
     
-    // Infer mimeType from file extension
+    // Infer mimeType from file extension and correct for JPG/JPEG
     const fileExt = filePath.split('.').pop().toLowerCase();
-    const mimeType = fileExt === 'pdf' ? 'application/pdf' : `image/${fileExt}`;
+    let mimeType;
+    if (fileExt === 'pdf') {
+      mimeType = 'application/pdf';
+    } else if (fileExt === 'jpg' || fileExt === 'jpeg') {
+      mimeType = 'image/jpeg';
+    } else {
+      // Default for other image types like png, gif, etc.
+      mimeType = `image/${fileExt}`;
+    }
 
     // 3. Fetch the file content from the signed URL
     const response = await fetch(signedUrl);
