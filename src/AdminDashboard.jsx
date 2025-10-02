@@ -167,6 +167,7 @@ const AdminDashboard = () => {
     perfilA: 0, perfilB: 0, perfilC: 0
   });
   const [synthesizing, setSynthesizing] = useState(null); // State to track which request is being synthesized
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
 
