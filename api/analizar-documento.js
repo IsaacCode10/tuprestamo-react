@@ -1,17 +1,84 @@
-
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize clients with environment variables
-// IMPORTANT: These variables must be set in your Vercel project settings
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// --- Helper function to check for completeness and trigger synthesis ---
+async function checkAndTriggerSynthesis(solicitud_id) {
+  console.log(`Checking completeness for solicitud_id: ${solicitud_id}`);
+
+  // 1. Get the applicant's employment situation from the 'solicitudes' table
+  const { data: solicitudData, error: solicitudError } = await supabaseAdmin
+    .from('solicitudes')
+    .select('situacion_laboral') // Corrected column name
+    .eq('id', solicitud_id)
+    .single();
+
+  if (solicitudError || !solicitudData) {
+    console.error('Could not retrieve solicitud details:', solicitudError);
+    return; // Exit if we can't determine the required docs
+  }
+
+  const { situacion_laboral } = solicitudData;
+
+  // 2. Define required documents based on employment situation
+  const commonDocs = ['ci_anverso', 'ci_reverso', 'factura_servicio', 'extracto_tarjeta', 'selfie_ci'];
+  let requiredDocs = [];
+
+  switch (situacion_laboral) {
+    case 'dependiente':
+      requiredDocs = [...commonDocs, 'boleta_pago', 'certificado_gestora'];
+      break;
+    case 'independiente':
+      requiredDocs = [...commonDocs, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3', 'nit'];
+      break;
+    case 'jubilado':
+      requiredDocs = [...commonDocs, 'boleta_jubilacion'];
+      break;
+    default:
+      console.error(`Unknown situacion_laboral: ${situacion_laboral}`);
+      return; // Exit if the employment situation is unknown
+  }
+
+  // 3. Get all documents already analyzed for this applicant
+  const { data: analyzedDocs, error: analyzedDocsError } = await supabaseAdmin
+    .from('analisis_documentos')
+    .select('document_type')
+    .eq('solicitud_id', solicitud_id);
+
+  if (analyzedDocsError) {
+    console.error('Could not retrieve analyzed docs:', analyzedDocsError);
+    return;
+  }
+
+  const uploadedDocTypes = new Set(analyzedDocs.map(doc => doc.document_type));
+
+  // 4. Check if all required documents are present
+  const isComplete = requiredDocs.every(docType => uploadedDocTypes.has(docType));
+
+  console.log(`Is complete? ${isComplete}. Required: ${requiredDocs.join(', ')}. Uploaded: ${[...uploadedDocTypes].join(', ')}`);
+
+  if (isComplete) {
+    console.log(`All documents are complete for ${solicitud_id}. Triggering synthesis.`);
+    // Fire-and-forget the synthesis call. We don't await it because we don't want
+    // to make the user wait for it to finish. The analysis of the current document is done.
+    fetch(`${process.env.VERCEL_URL}/api/sintetizar-perfil-riesgo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ solicitud_id: solicitud_id }),
+    }).catch(err => {
+      // Log any error from the fetch call itself, but don't block the main flow
+      console.error('Error triggering synthesis function:', err);
+    });
+  }
+}
+
+
 // --- Prompts Dictionary ---
-// This function returns the specific prompt for each document type.
 function getPromptForDocument(documentType) {
   const prompts = {
     ci_anverso: "Analiza la imagen del anverso de la cédula de identidad boliviana. Extrae la siguiente información: número de cédula, fecha de emisión y fecha de expiración. Devuelve los datos estrictamente en formato JSON con las claves 'numero_cedula', 'fecha_emision', y 'fecha_expiracion'. Si un campo no es visible, su valor debe ser null.",
@@ -112,7 +179,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to save analysis to database.' });
     }
 
-    // 5. Return a success response
+    // 6. (NEW) Check for completeness and trigger synthesis if needed
+    // We do this without awaiting so we can return the response to the user immediately.
+    checkAndTriggerSynthesis(solicitud_id);
+
+    // 7. Return a success response for the document that was just analyzed
     res.status(200).json({ success: true, data: extractedData });
 
   } catch (error) {
@@ -124,4 +195,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

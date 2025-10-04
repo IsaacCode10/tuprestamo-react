@@ -166,7 +166,6 @@ const AdminDashboard = () => {
     totalPendientes: 0, totalPreAprobados: 0, totalRechazados: 0,
     perfilA: 0, perfilB: 0, perfilC: 0
   });
-  const [synthesizing, setSynthesizing] = useState(null); // State to track which request is being synthesized
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
@@ -247,40 +246,6 @@ const AdminDashboard = () => {
     return () => supabase.removeChannel(subscription);
   }, []);
 
-  const handleSynthesize = async (solicitudId) => {
-    setSynthesizing(solicitudId);
-    try {
-      const response = await fetch('/api/sintetizar-perfil-riesgo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ solicitud_id: solicitudId }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        // Construct a detailed error message for debugging
-        let errorMessage = result.error || 'Error desconocido del servidor';
-        if (result.details) {
-          errorMessage += `\n\nDetalles: ${JSON.stringify(result.details, null, 2)}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      alert('¡Perfil de riesgo sintetizado con éxito!');
-      // Re-fetch data to show updated profile info
-      fetchDashboardData(); 
-
-    } catch (error) {
-      console.error('Error al sintetizar el perfil:', error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setSynthesizing(null);
-    }
-  };
-
   const filteredRequests = useMemo(() => {
     if (filter === 'todos') return requests;
     return requests.filter(req => req.estado === filter);
@@ -330,7 +295,6 @@ const AdminDashboard = () => {
               <th>Deudas Mensuales</th>
               <th>Perfil Riesgo</th>
               <th>Estado</th>
-              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -349,15 +313,6 @@ const AdminDashboard = () => {
                   ) : '--'}
                 </td>
                 <td><span className={`status status-${req.estado}`}>{req.estado}</span></td>
-                <td>
-                  <button 
-                    onClick={() => handleSynthesize(req.id)} 
-                    className="confirm-btn"
-                    disabled={synthesizing === req.id}
-                  >
-                    {synthesizing === req.id ? 'Sintetizando...' : 'Sintetizar Perfil'}
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
