@@ -66,7 +66,7 @@ async function checkAndTriggerSynthesis(solicitud_id) {
     console.log(`All documents are complete for ${solicitud_id}. Triggering synthesis.`);
     // Fire-and-forget the synthesis call. We don't await it because we don't want
     // to make the user wait for it to finish. The analysis of the current document is done.
-    fetch(`${process.env.VERCEL_URL}/api/sintetizar-perfil-riesgo`, {
+    fetch(`https://${process.env.VERCEL_URL}/api/sintetizar-perfil-riesgo`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ solicitud_id: solicitud_id }),
