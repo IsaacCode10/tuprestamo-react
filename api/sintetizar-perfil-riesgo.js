@@ -46,7 +46,6 @@ export default async function handler(req, res) {
         {
           solicitud_id: solicitud_id,
           perfil_sintetizado: perfil_sintetizado,
-          updated_at: new Date(),
         },
         { onConflict: 'solicitud_id' }
       )
