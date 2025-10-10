@@ -28,7 +28,7 @@
 
 .tooltip-box {
   position: absolute;
-  bottom: 125%; /* Se posiciona encima del ícono */
+  top: 140%; /* Se posiciona debajo del ícono, con un poco más de espacio */
   left: 50%;
   transform: translateX(-50%);
   background-color: #343a40; /* Fondo oscuro */
@@ -38,25 +38,25 @@
   width: 280px; /* Ancho fijo */
   font-size: 0.9rem;
   line-height: 1.5;
-  z-index: 1010; /* Por encima del FAB de FINAN */
+  z-index: 9999; /* Valor muy alto para asegurar que esté por encima de todo */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   text-align: left;
-  animation: fade-in 0.2s ease-out;
+  animation: fade-in-down 0.2s ease-out;
 }
 
-/* Flecha del tooltip */
+/* Flecha del tooltip (apuntando hacia arriba) */
 .tooltip-box::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 100%; /* Se posiciona en la parte superior del cuadro */
   left: 50%;
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: #343a40 transparent transparent transparent;
+  border-color: transparent transparent #343a40 transparent;
 }
 
-@keyframes fade-in {
+@keyframes fade-in-down {
   from {
     opacity: 0;
     transform: translateX(-50%) translateY(-10px);

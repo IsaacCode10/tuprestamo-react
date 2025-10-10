@@ -1,0 +1,28 @@
+/* Estilos para la versión minimalista del footer en los dashboards */
+.footer.footer--minimal {
+  padding: 1rem 0; /* Reduce el padding vertical */
+  min-height: auto; /* Altura mínima automática */
+  background-color: #f8f9fa; /* Un fondo ligeramente diferente si es necesario */
+}
+
+.footer--minimal .footer__top,
+.footer--minimal .footer__links {
+  display: none; /* Oculta la sección de redes sociales, eslogan y enlaces */
+}
+
+.footer--minimal .footer__inner {
+  /* Centra el contenido restante verticalmente si es necesario */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer--minimal .footer__bottom {
+  margin-top: 0; /* Elimina cualquier margen superior */
+  text-align: center; /* Asegura que el texto esté centrado */
+}
+
+.footer--minimal .footer__text {
+  margin: 0; /* Elimina márgenes del párrafo */
+  font-size: 0.875rem; /* Ligeramente más pequeño */
+}

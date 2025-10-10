@@ -1,8 +1,16 @@
 import React from 'react';
+import './Footer.css'; // Importar los nuevos estilos
 
-const Footer = () => {
+const Footer = ({ isDashboard }) => {
+  // Construir las clases dinámicamente
+  const footerClasses = [
+    'footer',
+    'footer--custom',
+    isDashboard ? 'footer--minimal' : ''
+  ].join(' ').trim();
+
   return (
-    <footer className="footer footer--custom">
+    <footer className={footerClasses}>
       <div className="container footer__inner">
         {/* Bloque superior: redes sociales + mensaje breve */}
         <div className="footer__top footer__top--custom">

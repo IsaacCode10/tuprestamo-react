@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize clients with environment variables
@@ -5,7 +6,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 
 // --- Helper function to check for completeness and trigger synthesis ---
 async function checkAndTriggerSynthesis(solicitud_id) {
@@ -123,6 +124,7 @@ export default async function handler(req, res) {
     const signedUrl = urlData.signedUrl;
 
     // 2. Get the correct prompt and prepare the model
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
     const prompt = getPromptForDocument(documentType);
     

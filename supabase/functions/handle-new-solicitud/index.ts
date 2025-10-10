@@ -1,10 +1,9 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 
-console.log('Function handle-new-solicitud (V4.3 - Debugging Update) starting up.');
+console.log('Function handle-new-solicitud (V5.2 - Rely on DB Trigger for Profile) starting up.');
 
 // --- Modelo de Riesgo y Precios ---
 
@@ -70,7 +69,7 @@ const runRiskScorecard = (solicitud) => {
   return PRICING_MODEL.Rechazado;
 };
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+const resend = new Resend(Deno.env.get('RESEND_API_KEY')!);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -116,21 +115,63 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: 'Solicitud rechazada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     } else {
       console.log(`Solicitud ${solicitud_id}: Iniciando flujo de pre-aprobación.`);
-      const { data: user, error: userError } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true, user_metadata: { full_name: nombre_completo, role: 'prestatario' } });
+      
+      const { data: user, error: userError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        user_metadata: { full_name: nombre_completo, role: 'prestatario' }
+      });
+
       if (userError) {
         if (userError.message.includes('User already registered')) {
             console.error('Error de usuario ya registrado:', userError.message);
+            return new Response(JSON.stringify({ message: 'El usuario ya existe.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 });
         } else {
             throw userError;
         }
       }
-      const user_id = user?.user?.id || (await supabaseAdmin.auth.admin.getUserByEmail(email)).data.user.id;
-      console.log(`Solicitud ${solicitud_id}: user_id obtenido: ${user_id}`);
 
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: 'recovery', email });
-      if (linkError) throw linkError;
-      const inviteLink = linkData.properties.action_link;
-      console.log(`Solicitud ${solicitud_id}: Enlace de invitación generado.`);
+      const user_id = user.user.id;
+      console.log(`Solicitud ${solicitud_id}: user_id creado: ${user_id}`);
+      console.log(`Solicitud ${solicitud_id}: Confiando en el trigger de la DB para crear el perfil.`);
+
+      // Generar link de activación manualmente
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: email,
+        options: {
+          redirectTo: 'https://tuprestamobo.com/confirmar'
+        }
+      });
+
+      if (linkError) {
+        console.error(`Error al generar link para ${email}:`, linkError);
+        throw linkError;
+      }
+      const magicLink = linkData.properties.action_link;
+      console.log(`Solicitud ${solicitud_id}: Magic Link generado.`);
+
+      // Enviar correo de bienvenida con Resend
+      await resend.emails.send({
+        from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+        to: [email],
+        subject: '¡Bienvenido a Tu Préstamo! Activa tu cuenta.',
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
+            <h2>¡Hola ${nombre_completo}, bienvenido a Tu Préstamo!</h2>
+            <p>Tu solicitud de préstamo ha sido pre-aprobada. El siguiente paso es activar tu cuenta para poder continuar con el proceso.</p>
+            <p>Por favor, haz clic en el siguiente enlace para confirmar tu correo y establecer tu contraseña:</p>
+            <p style="text-align: center;">
+              <a href="${magicLink}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Activar Mi Cuenta</a>
+            </p>
+            <p>Si tienes problemas con el botón, copia y pega la siguiente URL en tu navegador:</p>
+            <p><code>${magicLink}</code></p>
+            <br>
+            <p>El equipo de Tu Préstamo</p>
+          </div>
+        `,
+      });
+      console.log(`Solicitud ${solicitud_id}: Correo de bienvenida enviado a ${email} via Resend.`);
 
       console.log(`Solicitud ${solicitud_id}: Iniciando inserción de oportunidad.`);
       const { data: oppData, error: oppError } = await supabaseAdmin.from('oportunidades').insert([{
@@ -142,10 +183,10 @@ serve(async (req) => {
         tasa_interes_anual: riskProfile.tasa_interes_prestatario,
         tasa_interes_prestatario: riskProfile.tasa_interes_prestatario,
         tasa_rendimiento_inversionista: riskProfile.tasa_rendimiento_inversionista,
-        comision_originacion_porcentaje: 3.5, // Actualizado a 3.5%
-        seguro_desgravamen_porcentaje: 0.05, // Actualizado a 0.05%
-        comision_administracion_porcentaje: 0.1, // Nuevo campo
-        comision_servicio_inversionista_porcentaje: 1.5, // Este es para el inversionista, no el prestatario
+        comision_originacion_porcentaje: 3.5,
+        seguro_desgravamen_porcentaje: 0.05,
+        comision_administracion_porcentaje: 0.1,
+        comision_servicio_inversionista_porcentaje: 1.5,
         estado: 'disponible',
       }]).select().single();
       if (oppError) {
@@ -155,36 +196,17 @@ serve(async (req) => {
       console.log(`Solicitud ${solicitud_id}: Oportunidad insertada con ID: ${oppData.id}`);
 
       console.log(`Solicitud ${solicitud_id}: Iniciando actualización de solicitud a 'pre-aprobado'.`);
-      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id, opportunity_id: oppData.id }).eq('id', solicitud_id);
+      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id }).eq('id', solicitud_id);
       if (updateError) {
         console.error(`Error al actualizar solicitud ${solicitud_id} a 'pre-aprobado':`, updateError);
         throw updateError;
       }
       console.log(`Solicitud ${solicitud_id}: Actualización a 'pre-aprobado' finalizada.`);
 
-      await resend.emails.send({
-        from: 'Tu Prestamo <contacto@tuprestamobo.com>',
-        to: [email],
-        subject: `¡Felicidades! Tu solicitud en Tu Préstamo ha sido pre-aprobada`,
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-            <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
-            <h2>¡Felicidades, ${nombre_completo}!</h2>
-            <p>Tu solicitud de préstamo ha sido <strong>pre-aprobada</strong>.</p>
-            <p>Este es el primer paso para obtener el financiamiento que necesitas. Ahora, para que podamos realizar el análisis final, necesitamos que completes tu perfil y subas la documentación requerida.</p>
-            <p>Por favor, haz clic en el siguiente enlace para crear tu cuenta y subir tus documentos:</p>
-            <a href="${inviteLink}" style="background-color: #00445A; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">Completar mi Solicitud</a>
-            <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-            <br>
-            <p>El equipo de Tu Préstamo</p>
-          </div>
-        `,
-      });
-
-      return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada, correo de activación enviado manualmente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
   } catch (error) {
-    console.error(`Error en handle-new-solicitud (V4.3): ${error.message}`);
+    console.error(`Error en handle-new-solicitud (V5.2): ${error.message}`);
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile.js';
 
 import '@/style.css';
@@ -102,6 +102,20 @@ const RedirectIfAuth = ({ profile, loading, children }) => {
 function App() {
   const { profile, loading, authEvent } = useProfile(); // Obtenemos el authEvent
   const navigate = useNavigate();
+  const location = useLocation(); // Hook para obtener la ubicación
+
+  // Lista de rutas que se consideran dashboards
+  const dashboardPaths = [
+    '/admin-dashboard',
+    '/investor-dashboard',
+    '/admin/manage-investors',
+    '/dashboard-analista',
+    '/borrower-dashboard',
+    '/perfil'
+  ];
+
+  // Comprobar si la ruta actual es una de las de dashboard
+  const isDashboardPage = dashboardPaths.some(path => location.pathname.startsWith(path));
 
   useEffect(() => {
     // Si el evento es PASSWORD_RECOVERY, redirigimos a la página de creación de contraseña
@@ -142,6 +156,7 @@ function App() {
           />
           <Route path="/oportunidades" element={<Opportunities />} />
           <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
+          <Route path="/confirmar" element={<ConfirmAndSetPassword />} /> {/* Ruta para el magic link */}
           <Route path="/confirmar-y-crear-perfil" element={<ConfirmAndSetPassword />} />
           <Route 
             path="/admin/manage-investors"
@@ -175,10 +190,10 @@ function App() {
               </BorrowerRoute>
             }
           />
-          <Route path="/prestatario-activar-cuenta" element={<BorrowerActivateAccount />} />
+          <Route path="/activar-cuenta-prestatario" element={<BorrowerActivateAccount />} />
         </Routes>
       </main>
-      <Footer />
+      <Footer isDashboard={isDashboardPage} />
     </div>
   );
 }

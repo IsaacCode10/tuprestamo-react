@@ -15,6 +15,8 @@
   border-right: 1px solid #d9d9d9;
   display: flex;
   flex-direction: column;
+  position: relative; /* Necesario para que z-index funcione */
+  z-index: 10;       /* Eleva este panel por encima de sus hermanos */
 }
 
 .lista-perfiles header {
@@ -275,4 +277,26 @@ section h2 {
 
 .no-perfil-seleccionado h2 {
   font-size: 1.5rem;
+}
+
+/* --- Mensajes Centrados (Carga, Error, Vacío) --- */
+.centered-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  color: #595959;
+  padding: 20px;
+  text-align: center;
+}
+
+.centered-message h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.centered-message.error {
+  color: #cf1322;
 }

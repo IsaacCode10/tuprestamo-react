@@ -27,7 +27,7 @@ serve(async (req) => {
     }
 
     const { new_role } = await req.json();
-    const validRoles = ['admin', 'inversionista', 'prestatario'];
+    const validRoles = ['admin', 'inversionista', 'prestatario', 'analista_riesgo'];
     if (!new_role || !validRoles.includes(new_role)) {
       return new Response(`Invalid role specified. Must be one of: ${validRoles.join(', ')}`, { status: 400, headers: corsHeaders });
     }

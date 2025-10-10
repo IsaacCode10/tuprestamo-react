@@ -21,6 +21,7 @@ const RoleSwitcher = () => {
       if (newRole === 'admin') targetDashboard = '/admin-dashboard';
       if (newRole === 'inversionista') targetDashboard = '/investor-dashboard';
       if (newRole === 'prestatario') targetDashboard = '/borrower-dashboard';
+      if (newRole === 'analista_riesgo') targetDashboard = '/dashboard-analista';
 
       setTimeout(() => {
         window.location.href = targetDashboard;
@@ -41,6 +42,7 @@ const RoleSwitcher = () => {
         <button onClick={() => switchRole('admin')} disabled={loading}>Ver como Admin</button>
         <button onClick={() => switchRole('inversionista')} disabled={loading}>Ver como Inversionista</button>
         <button onClick={() => switchRole('prestatario')} disabled={loading}>Ver como Prestatario</button>
+        <button onClick={() => switchRole('analista_riesgo')} disabled={loading}>Ver como Analista de Riesgo</button>
       </div>
       {message && <p style={{ marginTop: '10px', color: message.includes('Error') ? 'red' : 'green' }}>{message}</p>}
     </div>
