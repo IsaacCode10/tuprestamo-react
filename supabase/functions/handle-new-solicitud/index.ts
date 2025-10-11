@@ -3,14 +3,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 
-console.log('Function handle-new-solicitud (V5.2 - Rely on DB Trigger for Profile) starting up.');
+console.log('Function handle-new-solicitud (V6.0 - Business Model v3.0) starting up.');
 
-// --- Modelo de Riesgo y Precios ---
+// --- Modelo de Negocio v3.0 ---
 
 const PRICING_MODEL = {
-  A: { label: 'A', tasa_interes_prestatario: 15.0, tasa_rendimiento_inversionista: 10.0 },
-  B: { label: 'B', tasa_interes_prestatario: 17.0, tasa_rendimiento_inversionista: 12.0 },
-  C: { label: 'C', tasa_interes_prestatario: 20.0, tasa_rendimiento_inversionista: 15.0 },
+  A: { label: 'A', tasa_interes_prestatario: 15.0, tasa_rendimiento_inversionista: 10.0, comision_originacion_porcentaje: 3.0 },
+  B: { label: 'B', tasa_interes_prestatario: 17.0, tasa_rendimiento_inversionista: 12.0, comision_originacion_porcentaje: 4.0 },
+  C: { label: 'C', tasa_interes_prestatario: 20.0, tasa_rendimiento_inversionista: 15.0, comision_originacion_porcentaje: 5.0 },
   Rechazado: { label: 'Rechazado' },
 };
 
@@ -164,8 +164,9 @@ serve(async (req) => {
             <p style="text-align: center;">
               <a href="${magicLink}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Activar Mi Cuenta</a>
             </p>
-            <p>Si tienes problemas con el botón, copia y pega la siguiente URL en tu navegador:</p>
-            <p><code>${magicLink}</code></p>
+            <p style="font-size: 12px; color: #888888; text-align: center; margin-top: 20px;">
+              Si el botón no funciona, copia y pega esta URL en tu navegador:<br>${magicLink}
+            </p>
             <br>
             <p>El equipo de Tu Préstamo</p>
           </div>
@@ -183,10 +184,10 @@ serve(async (req) => {
         tasa_interes_anual: riskProfile.tasa_interes_prestatario,
         tasa_interes_prestatario: riskProfile.tasa_interes_prestatario,
         tasa_rendimiento_inversionista: riskProfile.tasa_rendimiento_inversionista,
-        comision_originacion_porcentaje: 3.5,
-        seguro_desgravamen_porcentaje: 0.05,
-        comision_administracion_porcentaje: 0.1,
-        comision_servicio_inversionista_porcentaje: 1.5,
+        comision_originacion_porcentaje: riskProfile.comision_originacion_porcentaje,
+        seguro_desgravamen_porcentaje: 0.05, // Parte de la comisión de servicio y seguro de 0.15%
+        comision_administracion_porcentaje: 0.1, // Parte de la comisión de servicio y seguro de 0.15%
+        comision_servicio_inversionista_porcentaje: 1.0,
         estado: 'disponible',
       }]).select().single();
       if (oppError) {
