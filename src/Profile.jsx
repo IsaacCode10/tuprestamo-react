@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import { profileUpdateSchema } from './schemas'; // <-- 1. IMPORT SCHEMA
 import './Profile.css';
 
 const Profile = () => {
@@ -38,14 +39,24 @@ const Profile = () => {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setMessage('');
 
+    // --- 2. ZOD VALIDATION ---
+    const result = profileUpdateSchema.safeParse({ telefono: phone });
+    if (!result.success) {
+      setError(result.error.errors[0].message);
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+    // --- END VALIDATION ---
+
+    setLoading(true);
     try {
+      // Use validated data from Zod
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ telefono: phone })
+        .update({ telefono: result.data.telefono })
         .eq('id', profile.id);
 
       if (updateError) throw updateError;

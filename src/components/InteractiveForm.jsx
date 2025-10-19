@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import './InteractiveForm.css';
 
-const InteractiveForm = ({ questions, onSubmit }) => {
+const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos el schema
   const [answers, setAnswers] = useState({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentValue, setCurrentValue] = useState('');
-  const [error, setError] = useState(''); // State for validation errors
+  const [error, setError] = useState('');
 
   const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
-    setError(''); // Clear error when question changes
+    setError('');
     const answerForCurrentQuestion = answers[currentQuestion.clave];
     if (currentQuestion.tipo === 'checkbox') {
       setCurrentValue(answerForCurrentQuestion || false);
@@ -25,37 +25,25 @@ const InteractiveForm = ({ questions, onSubmit }) => {
   };
 
   const handleNext = () => {
-    setError(''); // Clear previous errors
+    setError('');
 
-    const { validation, required } = currentQuestion;
+    // --- NUEVA LÓGICA DE VALIDACIÓN CON ZOD ---
+    if (schema) {
+      // 1. Creamos un validador solo para el campo actual
+      const fieldSchema = schema.pick({ [currentQuestion.clave]: true });
+      
+      // 2. Validamos el valor actual contra ese sub-esquema
+      const result = fieldSchema.safeParse({ [currentQuestion.clave]: currentValue });
 
-    // Required field validation
-    if (required && !currentValue) {
-      setError('Este campo es obligatorio.');
-      return;
-    }
-
-    // Regex validation (only if there's a value to test)
-    if (validation && validation.regex && currentValue) {
-      const regex = new RegExp(validation.regex);
-      if (!regex.test(currentValue)) {
-        setError(validation.errorMessage);
+      // 3. Si la validación falla, mostramos el error y detenemos el avance
+      if (!result.success) {
+        // Extraemos el primer mensaje de error para el campo
+        const errorMessage = result.error.errors[0].message;
+        setError(errorMessage);
         return;
       }
     }
-
-    // Min/Max validation for numbers
-    if (currentQuestion.tipo === 'number' && validation && currentValue) {
-        const numericValue = parseFloat(currentValue);
-        if (!isNaN(numericValue)) {
-            const min = validation.min;
-            const max = validation.max;
-            if ((min !== undefined && numericValue < min) || (max !== undefined && numericValue > max)) {
-                setError(validation.errorMessage || `El valor debe estar entre ${min} y ${max}.`);
-                return;
-            }
-        }
-    }
+    // --- FIN DE LA NUEVA LÓGICA ---
 
     const newAnswers = { ...answers, [currentQuestion.clave]: currentValue };
     setAnswers(newAnswers);
@@ -63,12 +51,27 @@ const InteractiveForm = ({ questions, onSubmit }) => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
+      // Antes de hacer el submit final, validamos el objeto completo de respuestas
+      if (schema) {
+        const finalResult = schema.safeParse(newAnswers);
+        if (!finalResult.success) {
+          // Si algo falla en la validación final (aunque no debería si validamos paso a paso),
+          // lo mostramos en consola y evitamos el envío.
+          console.error("Error de validación final:", finalResult.error.flatten().fieldErrors);
+          setError("Hubo un error inesperado al validar el formulario. Por favor, recarga la página.");
+          return;
+        }
+        // Enviamos los datos ya validados y parseados por Zod
+        onSubmit(finalResult.data);
+        return;
+      }
+      // Fallback si no hay schema
       onSubmit(newAnswers);
     }
   };
 
   const handlePrev = () => {
-    setError(''); // Clear error when going back
+    setError('');
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
@@ -95,7 +98,7 @@ const InteractiveForm = ({ questions, onSubmit }) => {
       default:
         return (
           <input
-            key={clave} // <-- LA SOLUCIÓN
+            key={clave}
             type={tipo}
             id={clave}
             name={clave}
@@ -120,7 +123,6 @@ const InteractiveForm = ({ questions, onSubmit }) => {
         {renderInput()}
       </div>
 
-      {/* Display Validation Error */}
       {error && <p style={{ color: '#c73e1d', marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>{error}</p>}
 
       <div className="navigation-buttons">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '@/supabaseClient';
 import InteractiveForm from '@/components/InteractiveForm.jsx'; // Importamos el nuevo componente
+import { solicitudPrestatarioSchema } from '@/schemas.js'; // Importamos el esquema de validación
 import '@/Modal.css';
 
 // Definimos las preguntas para el formulario de prestatario
@@ -64,14 +65,12 @@ const LoanRequestForm = ({ onClose, role }) => {
     setLoading(true);
     setError(null);
 
+    // Zod ya nos entrega los datos parseados, por lo que esta función es menos necesaria,
+    // pero la mantenemos como un fallback de saneamiento.
     const parseToNumberOrNull = (value) => {
       if (value === '' || value === null || value === undefined) return null;
-
-      // Sanitize the input: remove anything that is not a digit or a dot.
-            const cleanedValue = String(value).replace(/[^0-9.]/g, '');
-
+      const cleanedValue = String(value).replace(/[^0-9.]/g, '');
       if (cleanedValue === '') return null;
-
       const parsed = parseFloat(cleanedValue);
       return isNaN(parsed) ? null : parsed;
     };
@@ -79,7 +78,8 @@ const LoanRequestForm = ({ onClose, role }) => {
     const dataToInsert = {
       ...answers,
       tipo_solicitud: role,
-      estado: 'pendiente', // El estado ahora es pendiente, la Edge Function decidirá
+      estado: 'pendiente',
+      // Aseguramos que los campos numéricos sean números
       ingreso_mensual: parseToNumberOrNull(answers.ingreso_mensual),
       saldo_deuda_tc: parseToNumberOrNull(answers.saldo_deuda_tc),
       tasa_interes_tc: parseToNumberOrNull(answers.tasa_interes_tc),
@@ -98,8 +98,24 @@ const LoanRequestForm = ({ onClose, role }) => {
       setSuccess(true);
 
     } catch (error) {
-      setError('Hubo un problema al enviar tu solicitud. Por favor, inténtalo de nuevo más tarde.');
-      console.error('Error submitting form:', error.message);
+      console.error('Error submitting form:', error);
+
+      // --- NUEVO MANEJO DE ERRORES ESPECÍFICOS ---
+      if (error.code === '23505') { // Código de error para violación de unicidad
+        if (error.message.includes('solicitudes_cedula_identidad_key')) {
+          setError('El número de Cédula de Identidad ya está registrado en una solicitud.');
+        } else if (error.message.includes('solicitudes_email_key')) {
+          setError('El correo electrónico ya está registrado en una solicitud.');
+        } else if (error.message.includes('solicitudes_telefono_key')) {
+          setError('El número de teléfono ya está registrado en una solicitud.');
+        } else {
+          setError('Ya existe una solicitud con algunos de los datos introducidos.');
+        }
+      } else {
+        setError('Hubo un problema al enviar tu solicitud. Por favor, inténtalo de nuevo más tarde.');
+      }
+      // --- FIN MANEJO DE ERRORES ---
+
     } finally {
       setLoading(false);
     }
@@ -130,6 +146,7 @@ const LoanRequestForm = ({ onClose, role }) => {
             <InteractiveForm
                 questions={borrowerQuestions}
                 onSubmit={handleFormSubmit}
+                schema={solicitudPrestatarioSchema} // Pasamos el esquema como prop
             />
         )}
       </div>

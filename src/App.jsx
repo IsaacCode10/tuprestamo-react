@@ -18,6 +18,7 @@ import BorrowerDashboard from '@/BorrowerDashboard.jsx';
 import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
 import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
 import Profile from './Profile.jsx';
+import NotAvailable from './NotAvailable.jsx'; // <-- IMPORTAMOS LA NUEVA PÁGINA
 
 // Componente "Guardia" específico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
@@ -131,6 +132,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/calculadora" element={<CalculatorPage />} />
+          <Route path="/no-disponible" element={<NotAvailable />} /> {/* <-- AÑADIMOS LA RUTA */}
           <Route 
             path="/auth" 
             element={
