@@ -8,7 +8,8 @@ const OpportunityCard = ({ opp }) => {
   const rendimientoBruto = opp.tasa_rendimiento_inversionista;
   const comisionServicio = opp.comision_servicio_inversionista_porcentaje;
   const navigate = useNavigate(); // ADDED THIS LINE
-  const rendimientoNeto = rendimientoBruto - (rendimientoBruto * (comisionServicio / 100));
+  // NEW v3.0 CALCULATION: Net Rate ≈ (Gross Rate * 0.99) - 1%
+  const rendimientoNeto = (rendimientoBruto * (1 - (comisionServicio / 100))) - comisionServicio;
 
   const handleViewDetails = () => { // ADDED THIS FUNCTION
     navigate(`/oportunidades/${opp.id}`); // Navigate to a detail page

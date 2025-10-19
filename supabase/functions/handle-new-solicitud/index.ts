@@ -3,9 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 
-console.log('Function handle-new-solicitud (V6.0 - Business Model v3.0) starting up.');
+console.log('Function handle-new-solicitud (V8.0 - Business Model v3.1) starting up.');
 
-// --- Modelo de Negocio v3.0 ---
+// --- Modelo de Negocio v3.1 ---
 
 const PRICING_MODEL = {
   A: { label: 'A', tasa_interes_prestatario: 15.0, tasa_rendimiento_inversionista: 10.0, comision_originacion_porcentaje: 3.0 },
@@ -13,6 +13,56 @@ const PRICING_MODEL = {
   C: { label: 'C', tasa_interes_prestatario: 20.0, tasa_rendimiento_inversionista: 15.0, comision_originacion_porcentaje: 5.0 },
   Rechazado: { label: 'Rechazado' },
 };
+
+// --- NUEVA FUNCIÓN DE CÁLCULO DE COSTOS CENTRALIZADA ---
+const calculateLoanCosts = (principal, annualRate, termMonths, originacion_porcentaje) => {
+  console.log(`Calculando costos para: P=${principal}, R=${annualRate}%, T=${termMonths}m, O=${originacion_porcentaje}%`);
+  const monthlyRate = annualRate / 100 / 12;
+  const serviceFeeRate = 0.0015; // 0.15%
+  const minServiceFee = 10; // 10 Bs minimum
+
+  let balance = principal;
+  let totalInterest = 0;
+  let totalServiceFee = 0;
+
+  const pmt = (balance * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -termMonths));
+
+  if (!isFinite(pmt)) {
+    console.log('Tasa de interés es 0 o inválida. Calculando como préstamo sin interés.');
+    const principalPayment = principal / termMonths;
+    for (let i = 0; i < termMonths; i++) {
+      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+      totalServiceFee += serviceFee;
+      balance -= principalPayment;
+    }
+  } else {
+    for (let i = 0; i < termMonths; i++) {
+      const interestPayment = balance * monthlyRate;
+      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+      const principalPayment = pmt - interestPayment;
+
+      totalInterest += interestPayment;
+      totalServiceFee += serviceFee;
+      balance -= principalPayment;
+    }
+  }
+
+  const comision_originacion = principal * (originacion_porcentaje / 100);
+  const costo_total_credito = totalInterest + totalServiceFee + comision_originacion;
+  const total_a_pagar = principal + costo_total_credito;
+  const cuota_promedio = total_a_pagar / termMonths;
+
+  const results = {
+    interes_total: parseFloat(totalInterest.toFixed(2)),
+    comision_servicio_seguro_total: parseFloat(totalServiceFee.toFixed(2)),
+    costo_total_credito: parseFloat(costo_total_credito.toFixed(2)),
+    cuota_promedio: parseFloat(cuota_promedio.toFixed(2)),
+  };
+
+  console.log('Resultados del cálculo de costos:', results);
+  return results;
+};
+
 
 // Lógica del Scorecard de Riesgo
 const runRiskScorecard = (solicitud) => {
@@ -154,27 +204,37 @@ serve(async (req) => {
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
-        subject: '¡Bienvenido a Tu Préstamo! Activa tu cuenta.',
+        subject: '¡Tu solicitud ha sido pre-aprobada!',
         html: `
-          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
-            <h2>¡Hola ${nombre_completo}, bienvenido a Tu Préstamo!</h2>
-            <p>Tu solicitud de préstamo ha sido pre-aprobada. El siguiente paso es activar tu cuenta para poder continuar con el proceso.</p>
-            <p>Por favor, haz clic en el siguiente enlace para confirmar tu correo y establecer tu contraseña:</p>
-            <p style="text-align: center;">
-              <a href="${magicLink}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Activar Mi Cuenta</a>
-            </p>
-            <p style="font-size: 12px; color: #888888; text-align: center; margin-top: 20px;">
-              Si el botón no funciona, copia y pega esta URL en tu navegador:<br>${magicLink}
-            </p>
-            <br>
-            <p>El equipo de Tu Préstamo</p>
+            <h2 style="color: #333;">¡Felicidades, ${nombre_completo}! Tu solicitud ha sido pre-aprobada.</h2>
+            <p>Estamos un paso más cerca de refinanciar tu deuda. El siguiente paso es activar tu cuenta para poder continuar con el proceso.</p>
+            <p>Por favor, haz clic en el siguiente botón para confirmar tu correo y establecer tu contraseña:</p>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center" style="padding: 20px 0;">
+                  <a href="${magicLink}" target="_blank" style="background-color: #28a745; color: #ffffff; padding: 15px 30px; font-size: 18px; text-decoration: none; border-radius: 5px; display: inline-block;">Activar Mi Cuenta</a>
+                </td>
+              </tr>
+            </table>
+            <p>Atentamente,<br>El equipo de Tu Préstamo</p>
           </div>
         `,
       });
       console.log(`Solicitud ${solicitud_id}: Correo de bienvenida enviado a ${email} via Resend.`);
 
-      console.log(`Solicitud ${solicitud_id}: Iniciando inserción de oportunidad.`);
+      // --- ¡AQUÍ OCURRE LA MAGIA! ---
+      // 1. Calcular todos los costos usando la nueva función centralizada
+      const loanCosts = calculateLoanCosts(
+        monto_solicitado,
+        riskProfile.tasa_interes_prestatario,
+        plazo_meses,
+        riskProfile.comision_originacion_porcentaje
+      );
+
+      console.log(`Solicitud ${solicitud_id}: Iniciando inserción de oportunidad con costos calculados.`);
+      // 2. Insertar la oportunidad con los costos ya calculados
       const { data: oppData, error: oppError } = await supabaseAdmin.from('oportunidades').insert([{
         solicitud_id,
         user_id,
@@ -185,11 +245,13 @@ serve(async (req) => {
         tasa_interes_prestatario: riskProfile.tasa_interes_prestatario,
         tasa_rendimiento_inversionista: riskProfile.tasa_rendimiento_inversionista,
         comision_originacion_porcentaje: riskProfile.comision_originacion_porcentaje,
-        seguro_desgravamen_porcentaje: 0.05, // Parte de la comisión de servicio y seguro de 0.15%
-        comision_administracion_porcentaje: 0.1, // Parte de la comisión de servicio y seguro de 0.15%
+        cargo_servicio_seguro_porcentaje: 0.15,
         comision_servicio_inversionista_porcentaje: 1.0,
         estado: 'disponible',
+        // --- NUEVOS CAMPOS CON VALORES CALCULADOS ---
+        ...loanCosts,
       }]).select().single();
+
       if (oppError) {
         console.error(`Error al insertar oportunidad para solicitud ${solicitud_id}:`, oppError);
         throw oppError;
@@ -207,7 +269,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada, correo de activación enviado manualmente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
   } catch (error) {
-    console.error(`Error en handle-new-solicitud (V5.2): ${error.message}`);
+    console.error(`Error en handle-new-solicitud (V8.0): ${error.message}`);
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });

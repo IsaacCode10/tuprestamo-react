@@ -36,12 +36,25 @@ const InteractiveForm = ({ questions, onSubmit }) => {
     }
 
     // Regex validation (only if there's a value to test)
-    if (validation && currentValue) {
+    if (validation && validation.regex && currentValue) {
       const regex = new RegExp(validation.regex);
       if (!regex.test(currentValue)) {
         setError(validation.errorMessage);
         return;
       }
+    }
+
+    // Min/Max validation for numbers
+    if (currentQuestion.tipo === 'number' && validation && currentValue) {
+        const numericValue = parseFloat(currentValue);
+        if (!isNaN(numericValue)) {
+            const min = validation.min;
+            const max = validation.max;
+            if ((min !== undefined && numericValue < min) || (max !== undefined && numericValue > max)) {
+                setError(validation.errorMessage || `El valor debe estar entre ${min} y ${max}.`);
+                return;
+            }
+        }
     }
 
     const newAnswers = { ...answers, [currentQuestion.clave]: currentValue };

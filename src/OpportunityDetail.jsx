@@ -132,7 +132,8 @@ const OpportunityDetail = () => {
 
   const rendimientoBruto = opportunity.tasa_rendimiento_inversionista;
   const comisionServicio = opportunity.comision_servicio_inversionista_porcentaje;
-  const rendimientoNeto = rendimientoBruto - (rendimientoBruto * (comisionServicio / 100));
+  // NEW v3.0 CALCULATION: Net Rate ≈ (Gross Rate * 0.99) - 1%
+  const rendimientoNeto = (rendimientoBruto * (1 - (comisionServicio / 100))) - comisionServicio;
 
   // Calculations for the progress bar
   const totalFunded = opportunity.total_funded || 0;

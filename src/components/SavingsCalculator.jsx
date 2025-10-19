@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import './InteractiveForm.css'; // Reutilizamos estilos para consistencia
 import '../BorrowerDashboard.css'; // Usamos estilos del dashboard para la tabla
 
-const SavingsCalculator = ({ solicitud, oportunidad }) => {
-  const [montoDeuda, setMontoDeuda] = useState('');
-  const [tasaActual, setTasaActual] = useState('');
-  const [plazo, setPlazo] = useState(36);
-  const [costoMantenimientoBanco, setCostoMantenimientoBanco] = useState('100');
+const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
+  // Los valores ahora vienen del prop `simulation`
+  const { montoDeuda, tasaActual, plazo, costoMantenimientoBanco } = simulation;
+  
   const [resultados, setResultados] = useState(null);
 
   // Opciones de plazo dinámicas
-  const standardPlazos = [12, 24, 36, 48];
+  const standardPlazos = [12, 18, 24];
   const [availablePlazos, setAvailablePlazos] = useState(standardPlazos);
 
   if (!oportunidad) {
@@ -18,79 +17,91 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
   }
 
   const TU_PRESTAMO_TASA_ANUAL = oportunidad.tasa_interes_prestatario / 100;
-  const TU_PRESTAMO_COMISION_ADMIN_PORCENTAJE = oportunidad.comision_administracion_porcentaje / 100;
-  const TU_PRESTAMO_SEGURO_DESGRAVAMEN_PORCENTAJE = oportunidad.seguro_desgravamen_porcentaje / 100;
-  const TU_PRESTAMO_COMISION_ORIGINACION_PORCENTAJE = oportunidad.comision_originacion_porcentaje / 100;
-  const TU_PRESTAMO_MANTENIMIENTO_MENSUAL_MINIMO = 10;
 
-  const calcularPagoMensual = (monto, tasaAnual, plazoMeses) => {
-    if (monto <= 0 || plazoMeses <= 0) return 0;
-    if (tasaAnual <= 0) return monto / plazoMeses;
-    const tasaMensual = tasaAnual / 12;
-    const factor = Math.pow(1 + tasaMensual, plazoMeses);
-    const pago = monto * (tasaMensual * factor) / (factor - 1);
-    return pago;
-  };
-
-  const generateAmortizationSchedule = (principal, annualRate, months, adminFeeRate, desgravamenRate, adminFeeMin) => {
-    let outstandingBalance = principal;
-    const monthlyRate = annualRate / 12;
-    const pmt = calcularPagoMensual(principal, annualRate, months);
-    let totalAdminFees = 0;
-    let totalDesgravamenFees = 0;
-    for (let i = 0; i < months; i++) {
-      const adminFee = Math.max(outstandingBalance * adminFeeRate, adminFeeMin);
-      const desgravamenFee = outstandingBalance * desgravamenRate;
-      outstandingBalance -= (pmt - (outstandingBalance * monthlyRate));
-      totalAdminFees += adminFee;
-      totalDesgravamenFees += desgravamenFee;
-    }
-    return { totalAdminFees, totalDesgravamenFees };
-  };
-
+  // Efecto para asegurar que el plazo actual siempre sea una opción visible
   useEffect(() => {
-    if (solicitud) {
-      setMontoDeuda(solicitud.monto_solicitado || '');
-      setTasaActual(solicitud.tasa_interes_tc || '');
-      
-      const initialPlazo = solicitud.plazo_meses || 36;
-      setPlazo(initialPlazo);
-
-      // Asegurarse de que el plazo de la solicitud esté en las opciones
-      if (!standardPlazos.includes(initialPlazo)) {
-        const newPlazos = [...standardPlazos, initialPlazo].sort((a, b) => a - b);
+      if (!standardPlazos.includes(plazo)) {
+        const newPlazos = [...standardPlazos, plazo].sort((a, b) => a - b);
         setAvailablePlazos(newPlazos);
       }
-    }
-  }, [solicitud]);
+  }, [plazo]);
 
-  const handleCalcular = (e) => {
-    if (e) e.preventDefault();
+  const handleCalcular = () => {
     const deuda = parseFloat(montoDeuda);
     const tasaBanco = parseFloat(tasaActual) / 100;
     const mantenimientoMensualBanco = parseFloat(costoMantenimientoBanco);
     if (isNaN(deuda) || isNaN(tasaBanco) || isNaN(mantenimientoMensualBanco) || deuda <= 0) {
-      alert('Por favor, introduce valores numéricos válidos.');
+      setResultados(null); // Limpiar resultados si los datos son inválidos
       return;
     }
 
-    const pagoAmortizacionBanco = calcularPagoMensual(deuda, tasaBanco, plazo);
+    // --- CÁLCULO BANCO TRADICIONAL ---
+    const calcularPagoMensualBanco = (monto, tasaAnual, plazoMeses) => {
+        if (monto <= 0 || plazoMeses <= 0) return 0;
+        if (tasaAnual <= 0) return monto / plazoMeses;
+        const tasaMensual = tasaAnual / 12;
+        const factor = Math.pow(1 + tasaMensual, plazoMeses);
+        return monto * (tasaMensual * factor) / (factor - 1);
+    };
+    const pagoAmortizacionBanco = calcularPagoMensualBanco(deuda, tasaBanco, plazo);
     const interesTotalBanco = (pagoAmortizacionBanco * plazo) - deuda;
     const mantenimientoTotalBanco = mantenimientoMensualBanco * plazo;
     const costoTotalDelCreditoBanco = interesTotalBanco + mantenimientoTotalBanco;
     const totalAPagarBanco = deuda + costoTotalDelCreditoBanco;
+    const pagoTotalMensualBanco = pagoAmortizacionBanco + mantenimientoMensualBanco;
 
-    const pagoAmortizacionTP = calcularPagoMensual(deuda, TU_PRESTAMO_TASA_ANUAL, plazo);
-    const interesTotalTP = (pagoAmortizacionTP * plazo) - deuda;
-    const { totalAdminFees, totalDesgravamenFees } = generateAmortizationSchedule(deuda, TU_PRESTAMO_TASA_ANUAL, plazo, TU_PRESTAMO_COMISION_ADMIN_PORCENTAJE, TU_PRESTAMO_SEGURO_DESGRAVAMEN_PORCENTAJE, TU_PRESTAMO_MANTENIMIENTO_MENSUAL_MINIMO);
-    const costoOriginacion = deuda * TU_PRESTAMO_COMISION_ORIGINACION_PORCENTAJE;
-    const costoTotalDelCreditoTP = interesTotalTP + totalAdminFees + totalDesgravamenFees + costoOriginacion;
-    const totalAPagarTP = deuda + costoTotalDelCreditoTP;
+    // --- CÁLCULO TU PRÉSTAMO (V3.1 - con lógica de backend espejada) ---
+    const calcularCostoTotalCreditoV3_1 = (principal, annualRate, termMonths, originacion_porcentaje) => {
+        const monthlyRate = annualRate / 12;
+        const serviceFeeRate = 0.0015; // 0.15%
+        const minServiceFee = 10; // 10 Bs minimum
+        let balance = principal;
+        let totalInterest = 0;
+        let totalServiceFee = 0;
+
+        const pmt = (balance * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -termMonths));
+
+        if (!isFinite(pmt)) {
+            const principalPayment = principal / termMonths;
+            for (let i = 0; i < termMonths; i++) {
+                const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+                totalServiceFee += serviceFee;
+                balance -= principalPayment;
+            }
+        } else {
+            for (let i = 0; i < termMonths; i++) {
+                const interestPayment = balance * monthlyRate;
+                const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+                const principalPayment = pmt - interestPayment;
+                totalInterest += interestPayment;
+                totalServiceFee += serviceFee;
+                balance -= principalPayment;
+            }
+        }
+        
+        const comision_originacion = principal * (originacion_porcentaje / 100);
+        const costo_total_credito = totalInterest + totalServiceFee + comision_originacion;
+        const total_a_pagar = principal + costo_total_credito;
+
+        return {
+            interesTotal: totalInterest,
+            comisionServicioTotal: totalServiceFee,
+            costoOriginacion: comision_originacion,
+            costoTotalCredito: costo_total_credito,
+            totalAPagar: total_a_pagar,
+        };
+    };
+
+    const {
+        costoTotalCredito: costoTotalDelCreditoTP,
+        totalAPagar: totalAPagarTP,
+        comisionServicioTotal: comisionServicioTotalTP,
+        costoOriginacion,
+    } = calcularCostoTotalCreditoV3_1(deuda, TU_PRESTAMO_TASA_ANUAL, plazo, oportunidad.comision_originacion_porcentaje);
 
     const ahorroTotal = costoTotalDelCreditoBanco - costoTotalDelCreditoTP;
-
-    const pagoTotalMensualBanco = pagoAmortizacionBanco + mantenimientoMensualBanco;
-    const pagoTotalMensualTP = (pagoAmortizacionTP * plazo + totalAdminFees + totalDesgravamenFees) / plazo;
+    const pagoTotalMensualTP = totalAPagarTP / plazo;
+    const mantenimientoTP = comisionServicioTotalTP / plazo;
 
     setResultados({
       tasaBanco: (tasaBanco * 100).toFixed(1),
@@ -98,7 +109,7 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
       mantenimientoBanco: mantenimientoMensualBanco.toFixed(2),
       tasaTP: (TU_PRESTAMO_TASA_ANUAL * 100).toFixed(1),
       pagoTotalMensualTP: pagoTotalMensualTP.toFixed(2),
-      mantenimientoTP: ((totalAdminFees + totalDesgravamenFees) / plazo).toFixed(2),
+      mantenimientoTP: mantenimientoTP.toFixed(2),
       ahorroTotal: ahorroTotal.toFixed(2),
       costoOriginacion: costoOriginacion.toFixed(2),
       costoTotalCreditoBanco: costoTotalDelCreditoBanco.toFixed(2),
@@ -108,29 +119,30 @@ const SavingsCalculator = ({ solicitud, oportunidad }) => {
     });
   };
 
+  // Recalcular cada vez que los datos de la simulación cambian
   useEffect(() => {
-    if (montoDeuda && tasaActual && plazo && oportunidad) {
-      handleCalcular();
-    }
-  }, [montoDeuda, tasaActual, plazo, oportunidad]);
+    handleCalcular();
+  }, [simulation, oportunidad]); // Depende del objeto de simulación completo
 
   return (
     <div className="card savings-calculator">
       <h2>Calcula tu Ahorro y ¡Decídete!</h2>
       <p style={{textAlign: 'center', marginTop: '-10px', marginBottom: '20px'}}>Los datos de tu solicitud han sido pre-cargados, pero puedes modificarlos para simular otros escenarios.</p>
-      <form onSubmit={handleCalcular} className="calculator-form">
-        <div className="input-wrapper"><label htmlFor="montoDeuda">Monto de la deuda (Bs)</label><input type="number" id="montoDeuda" value={montoDeuda} onChange={(e) => setMontoDeuda(e.target.value)} required /></div>
-        <div className="input-wrapper"><label htmlFor="tasaActual">Tasa de tu Banco (%)</label><input type="number" id="tasaActual" value={tasaActual} onChange={(e) => setTasaActual(e.target.value)} required /></div>
-        <div className="input-wrapper"><label htmlFor="costoMantenimientoBanco">Mantenimiento y Seguros de tu Banco (Bs/mes)</label><input type="number" id="costoMantenimientoBanco" value={costoMantenimientoBanco} onChange={(e) => setCostoMantenimientoBanco(e.target.value)} required /></div>
+      {/* El formulario ya no necesita un manejador de envío */}
+      <form className="calculator-form">
+        {/* Los inputs ahora llaman a onSimulationChange para actualizar el estado del padre */}
+        <div className="input-wrapper"><label htmlFor="montoDeuda">Monto de la deuda (Bs)</label><input type="number" id="montoDeuda" value={montoDeuda} onChange={(e) => onSimulationChange({ montoDeuda: e.target.value })} required /></div>
+        <div className="input-wrapper"><label htmlFor="tasaActual">Tasa de tu Banco (%)</label><input type="number" id="tasaActual" value={tasaActual} onChange={(e) => onSimulationChange({ tasaActual: e.target.value })} required /></div>
+        <div className="input-wrapper"><label htmlFor="costoMantenimientoBanco">Mantenimiento y Seguros de tu Banco (Bs/mes)</label><input type="number" id="costoMantenimientoBanco" value={costoMantenimientoBanco} onChange={(e) => onSimulationChange({ costoMantenimientoBanco: e.target.value })} required /></div>
         <div className="input-wrapper">
           <label htmlFor="plazo">Plazo (meses)</label>
-          <select id="plazo" value={plazo} onChange={(e) => setPlazo(parseInt(e.target.value, 10))}>
+          <select id="plazo" value={plazo} onChange={(e) => onSimulationChange({ plazo: parseInt(e.target.value, 10) })}>
             {availablePlazos.map(p => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
         </div>
-        <button type="submit" className="btn-submit">Recalcular</button>
+        {/* El botón de Recalcular ha sido eliminado */}
       </form>
 
       {resultados && (

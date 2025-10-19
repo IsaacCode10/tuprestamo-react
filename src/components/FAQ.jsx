@@ -33,7 +33,7 @@ const FAQ = () => {
           </FaqItem>
 
           <FaqItem question="Además del interés, ¿qué comisiones cobra Tu Préstamo Bolivia?">
-            <p>Además de la tasa de interés, se aplica una <strong>comisión de originación del 3.5%</strong> sobre el monto desembolsado (se descuenta al inicio), y una pequeña <strong>comisión de administración de Bs 10 mensuales</strong>. También se requiere un <strong>seguro de desgravamen</strong> (0.05% mensual sobre saldo deudor).</p>
+            <p>Creemos en la transparencia total. A diferencia de los bancos, <strong>no cobramos un 'cargo de mantenimiento' mensual</strong>. Nuestros costos son: 1) Una <strong>Comisión por Originación</strong> que varía según tu perfil de riesgo (desde 3.0% para los mejores perfiles). 2) Una pequeña <strong>Comisión por Servicio y Seguro</strong> (0.15% mensual) que se calcula sobre tu saldo deudor, por lo que disminuye cada mes.</p>
           </FaqItem>
 
           <FaqItem question="¿Cómo funciona el proceso de evaluación crediticia?">
@@ -46,7 +46,7 @@ const FAQ = () => {
 
           <h3 style={{ marginTop: '30px' }}>Para Inversionistas</h3>
           <FaqItem question="¿Cuál es el rendimiento anual al invertir en préstamos P2P en Bolivia?">
-            <p>Podrás obtener un rendimiento anual fijo atractivo, significativamente superior al 3.5% de los DPFs. Aunque la tasa bruta del préstamo es mayor, nosotros cobramos una comisión de gestión del 1% anual sobre tu inversión para cubrir nuestros servicios y tú recibes la tasa neta prometida.</p>
+            <p>Podrás obtener un rendimiento anual bruto de hasta el 15%, significativamente superior al 3.5% de los DPFs. Nuestra comisión es simple y transparente: cobramos el <strong>1% sobre cada pago que recibes</strong> (capital + interés). Esto alinea nuestro éxito con el tuyo y te permite obtener un rendimiento neto muy superior al de los productos tradicionales.</p>
           </FaqItem>
 
           <FaqItem question="¿Es seguro invertir en Tu Préstamo? ¿Cómo minimizan el riesgo?">

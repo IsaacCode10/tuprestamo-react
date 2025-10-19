@@ -9,7 +9,7 @@ import Testimonio from './Testimonio';
 import FAQ from './FAQ';
 import Contacto from './Contacto';
 import LoanRequestForm from '../LoanRequestForm';
-import InvestorInterestForm from '../InvestorInterestForm'; // Importar el nuevo componente
+import InvestorInterestForm from '../InvestorInterestForm';
 
 const LandingPage = () => {
   const [modalRole, setModalRole] = useState(null); // null, 'prestatario', o 'inversionista'
@@ -30,8 +30,8 @@ const LandingPage = () => {
       </Helmet>
       <Hero />
       <Beneficios />
-      <Prestatarios onSolicitudClick={handleOpenModal} />
-      <Inversionistas onSolicitudClick={handleOpenModal} />
+      <Prestatarios onSolicitudClick={() => handleOpenModal('prestatario')} />
+      <Inversionistas onSolicitudClick={() => handleOpenModal('inversionista')} />
       <ComoFunciona />
       <Testimonio />
       <FAQ />

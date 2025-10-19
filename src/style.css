@@ -62,7 +62,7 @@ body {
 /* ========================
    HEADER / NAVEGACIÓN (TAMAÑO REDUCIDO)
    ======================== */
-header {
+header.header {
   background: var(--white);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
   position: sticky;

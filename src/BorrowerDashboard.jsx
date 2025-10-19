@@ -182,13 +182,31 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
 // --- VISTA PARA SOLICITUD EN PROGRESO ---
 
 const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLogout, fetchData }) => {
-    let cuotaRealPromedio = null;
-    if (solicitud && solicitud.oportunidades) {
-        const oportunidad = solicitud.oportunidades;
-        const pagoAmortizacionTP = calcularPagoMensual(solicitud.monto_solicitado, oportunidad.tasa_interes_prestatario, solicitud.plazo_meses);
-        const { totalAdminFees, totalDesgravamenFees } = generateAmortizationSchedule(solicitud.monto_solicitado, oportunidad.tasa_interes_prestatario, solicitud.plazo_meses, oportunidad.comision_administracion_porcentaje / 100, oportunidad.seguro_desgravamen_porcentaje / 100, 10);
-        cuotaRealPromedio = (pagoAmortizacionTP * solicitud.plazo_meses + totalAdminFees + totalDesgravamenFees) / solicitud.plazo_meses;
-    }
+    const oportunidadObj = Array.isArray(solicitud.oportunidades) && solicitud.oportunidades.length > 0
+        ? solicitud.oportunidades[0]
+        : null;
+
+    // --- STATE LIFTING: Central state for the simulation ---
+    const [simulation, setSimulation] = useState({
+        montoDeuda: solicitud.monto_solicitado || '',
+        tasaActual: solicitud.tasa_interes_tc || '',
+        plazo: solicitud.plazo_meses || 24,
+        costoMantenimientoBanco: '100', // Default value
+    });
+
+    // Handler to update simulation state from child components
+    const handleSimulationChange = (newValues) => {
+        setSimulation(prev => ({ ...prev, ...newValues }));
+    };
+
+    // --- CENTRALIZED CALCULATION ---
+    const { totalAPagar } = calcularCostosTuPrestamo(
+        parseFloat(simulation.montoDeuda),
+        oportunidadObj?.tasa_interes_prestatario,
+        simulation.plazo,
+        oportunidadObj?.comision_originacion_porcentaje
+    );
+    const pagoTotalMensualTP = totalAPagar > 0 ? totalAPagar / simulation.plazo : 0;
 
     return (
         <div className="borrower-dashboard">
@@ -197,10 +215,23 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
                 <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
             </div>
             <ProgressStepper currentStep={solicitud.estado} />
-            <StatusCard solicitud={solicitud} oportunidad={solicitud.oportunidades} cuotaRealPromedio={cuotaRealPromedio} />
+            
+            {/* StatusCard now receives simulation data */}
+            <StatusCard 
+                solicitud={solicitud} 
+                oportunidad={oportunidadObj} 
+                simulation={simulation}
+                pagoTotalMensualTP={pagoTotalMensualTP}
+            />
+
             {solicitud.estado === 'pre-aprobado' && (
                 <>
-                    <SavingsCalculator solicitud={solicitud} oportunidad={solicitud.oportunidades} />
+                    {/* SavingsCalculator is now a controlled component */}
+                    <SavingsCalculator 
+                        oportunidad={oportunidadObj}
+                        simulation={simulation}
+                        onSimulationChange={handleSimulationChange}
+                    />
                     <DocumentManager solicitud={solicitud} user={user} uploadedDocuments={documents} onUpload={fetchData} />
                 </>
             )}
@@ -210,30 +241,6 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
 }
 
 // (Todos los componentes y helpers de la vista original se mantienen aquí)
-const calcularPagoMensual = (monto, tasaAnual, plazoMeses) => {
-  if (monto <= 0 || plazoMeses <= 0) return 0;
-  if (tasaAnual <= 0) return monto / plazoMeses;
-  const tasaMensual = tasaAnual / 100 / 12;
-  const factor = Math.pow(1 + tasaMensual, plazoMeses);
-  const pago = monto * (tasaMensual * factor) / (factor - 1);
-  return pago;
-};
-
-const generateAmortizationSchedule = (principal, annualRate, months, adminFeeRate, desgravamenRate, adminFeeMin) => {
-  let outstandingBalance = principal;
-  const monthlyRate = annualRate / 100 / 12;
-  const pmt = calcularPagoMensual(principal, annualRate, months);
-  let totalAdminFees = 0;
-  let totalDesgravamenFees = 0;
-  for (let i = 0; i < months; i++) {
-    const adminFee = Math.max(outstandingBalance * adminFeeRate, adminFeeMin);
-    const desgravamenFee = outstandingBalance * desgravamenRate;
-    outstandingBalance -= (pmt - (outstandingBalance * monthlyRate));
-    totalAdminFees += adminFee;
-    totalDesgravamenFees += desgravamenFee;
-  }
-  return { totalAdminFees, totalDesgravamenFees };
-};
 
 const getProfileMessage = (profile) => {
   switch (profile) {
@@ -260,7 +267,47 @@ const ProgressStepper = ({ currentStep }) => {
   );
 };
 
-const StatusCard = ({ solicitud, oportunidad, cuotaRealPromedio }) => {
+const calcularCostosTuPrestamo = (principal, annualRate, termMonths, originacion_porcentaje) => {
+    if (!principal || !annualRate || !termMonths || !originacion_porcentaje) {
+        return { totalAPagar: 0 };
+    }
+    const monthlyRate = annualRate / 100 / 12;
+    const serviceFeeRate = 0.0015; // 0.15%
+    const minServiceFee = 10; // 10 Bs minimum
+    let balance = principal;
+    let totalInterest = 0;
+    let totalServiceFee = 0;
+
+    const pmt = (balance * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -termMonths));
+
+    if (!isFinite(pmt)) {
+        const principalPayment = principal / termMonths;
+        for (let i = 0; i < termMonths; i++) {
+            const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+            totalServiceFee += serviceFee;
+            balance -= principalPayment;
+        }
+    } else {
+        for (let i = 0; i < termMonths; i++) {
+            const interestPayment = balance * monthlyRate;
+            const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+            const principalPayment = pmt - interestPayment;
+            totalInterest += interestPayment;
+            totalServiceFee += serviceFee;
+            balance -= principalPayment;
+        }
+    }
+    
+    const comision_originacion = principal * (originacion_porcentaje / 100);
+    const costo_total_credito = totalInterest + totalServiceFee + comision_originacion;
+    const total_a_pagar = principal + costo_total_credito;
+
+    return {
+        totalAPagar: total_a_pagar,
+    };
+};
+
+const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => {
   const tasaAnual = oportunidad?.tasa_interes_prestatario || 'N/A';
   const profileMessage = oportunidad?.perfil_riesgo ? getProfileMessage(oportunidad.perfil_riesgo) : null;
 
@@ -272,43 +319,51 @@ const StatusCard = ({ solicitud, oportunidad, cuotaRealPromedio }) => {
         <div className="loan-details">
           <div>
             <span className="detail-label">Monto Solicitado</span>
-            <span className="detail-value">Bs {solicitud.monto_solicitado}</span>
+            {/* This now comes from the simulation state */}
+            <span className="detail-value">Bs {simulation.montoDeuda}</span>
           </div>
           <div>
             <span className="detail-label">Tasa Anual Asignada
-              <HelpTooltip definition="Es el costo anual del crédito, expresado como un porcentaje. No incluye comisiones ni otros gastos." />
+              <HelpTooltip text="Es el costo anual del crédito, expresado como un porcentaje. No incluye comisiones ni otros gastos." />
             </span>
             <span className="detail-value">{tasaAnual !== 'N/A' ? tasaAnual.toFixed(1) : 'N/A'}%</span>
             {profileMessage && <span className="profile-badge">{profileMessage}</span>}
           </div>
           <div>
             <span className="detail-label">Cuota Mensual (Promedio)
-              <HelpTooltip definition="Es el monto aproximado que pagarás cada mes. Incluye el capital, intereses, costo administrativo y seguro de desgravamen." />
+              <HelpTooltip text="Es el monto aproximado que pagarás cada mes. Incluye el capital, intereses, costo administrativo y seguro de desgravamen." />
             </span>
-            <span className="detail-value">Bs {cuotaRealPromedio ? cuotaRealPromedio.toFixed(2) : 'N/A'}</span>
+            {/* This is now passed as a prop */}
+            <span className="detail-value">Bs {pagoTotalMensualTP ? pagoTotalMensualTP.toFixed(2) : 'N/A'}</span>
           </div>
           <div>
             <span className="detail-label">Plazo</span>
-            <span className="detail-value">{solicitud.plazo_meses} meses</span>
+            {/* This now comes from the simulation state */}
+            <span className="detail-value">{simulation.plazo} meses</span>
           </div>
         </div>
+        <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '15px', textAlign: 'center', padding: '0 1rem' }}>
+          *Estos son cálculos preliminares. El monto final y las cuotas se confirmarán después de la verificación de tus documentos.
+        </p>
       </div>
     </div>
   );
 };
 
-const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect }) => {
+const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled }) => {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = React.useRef();
 
   const handleDrag = (e, isOver) => {
     e.preventDefault();
     e.stopPropagation();
+    if (disabled) return;
     setDragOver(isOver);
   };
 
   const handleDrop = (e) => {
     handleDrag(e, false);
+    if (disabled) return;
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       onFileSelect(files[0]);
@@ -316,6 +371,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
   };
 
   const handleFileChange = (e) => {
+    if (disabled) return;
     const files = e.target.files;
     if (files && files.length > 0) {
       onFileSelect(files[0]);
@@ -332,12 +388,12 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
 
   return (
     <div
-      className={`file-slot ${dragOver ? 'dragging' : ''} ${isUploaded ? 'completed' : ''} ${isAnalysing ? 'analysing' : ''}`}
+      className={`file-slot ${dragOver ? 'dragging' : ''} ${isUploaded ? 'completed' : ''} ${isAnalysing ? 'analysing' : ''} ${disabled ? 'disabled' : ''}`}
       onDragOver={(e) => handleDrag(e, true)}
       onDragEnter={(e) => handleDrag(e, true)}
       onDragLeave={(e) => handleDrag(e, false)}
       onDrop={handleDrop}
-      onClick={() => !isUploading && !isUploaded && inputRef.current.click()}
+      onClick={() => !isUploading && !isUploaded && !disabled && inputRef.current.click()}
     >
       <input
         type="file"
@@ -345,17 +401,16 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
         style={{ display: 'none' }}
         onChange={handleFileChange}
         accept="image/*,application/pdf"
-        disabled={isUploading || isUploaded}
+        disabled={isUploading || isUploaded || disabled}
       />
       <div className="file-slot-icon">
-        {isUploaded ? '✅' : isAnalysing ? '🧠' : '📄'}
+        {isUploaded ? '✅' : isAnalysing ? '🧠' : isUploading ? '...': '📄'}
       </div>
       <div className="file-slot-info">
-        <div className="file-slot-name">
-          {doc.nombre}
-          <HelpTooltip definition={doc.definition} />
-        </div>
-        <span className={`file-slot-status status-${status.toLowerCase().replace(/\.\.\./g, '')}`}>{status}</span>
+                  <div className="file-slot-name">
+                    {doc.nombre}
+                    <HelpTooltip text={doc.definition} />
+                  </div>        <span className={`file-slot-status status-${status.toLowerCase().replace(/\.\.\./g, '')}`}>{status}</span>
         {isUploading && (
           <div className="progress-bar">
             <div className="progress-bar-inner" style={{ width: `${progress}%` }}></div>
@@ -363,7 +418,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
         )}
         {error && <span className="file-slot-error">{error}</span>}
       </div>
-      {!isUploaded && !isUploading && !isAnalysing && (
+      {!isUploaded && !isUploading && !isAnalysing && !disabled && (
         <div className="file-slot-action">
           <span>+</span>
         </div>
@@ -376,13 +431,14 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [analysing, setAnalysing] = useState({});
   const [errors, setErrors] = useState({});
+  const [isUploadingGlobal, setIsUploadingGlobal] = useState(false);
 
   const getRequiredDocs = (situacionLaboral) => {
     const baseDocs = [
       { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
       { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
       { id: 'factura_servicio', nombre: 'Factura Servicio Básico', definition: 'Para confirmar tu dirección de residencia actual. Puede ser una factura de luz, agua o gas de los últimos 3 meses.' },
-      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Esencial para verificar el monto total de tu deuda y la tasa de interés que pagas actualmente. Esto nos permite calcular con precisión cuánto ahorrarás. Solo necesitamos ver el encabezado y el resumen de la deuda.' },
+      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.' },
       { id: 'selfie_ci', nombre: 'Selfie con Cédula de Identidad', definition: 'Una medida de seguridad adicional para prevenir el fraude y asegurar que realmente eres tú quien solicita el préstamo. Sostén tu CI al lado de tu cara.' },
     ];
     const situacionDocs = {
@@ -406,6 +462,12 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
   const handleFileUpload = async (file, docId) => {
     if (!file) return;
 
+    if (isUploadingGlobal) {
+      setErrors(prev => ({ ...prev, [docId]: "Espera a que la subida actual termine." }));
+      return;
+    }
+
+    setIsUploadingGlobal(true);
     setUploadProgress(prev => ({ ...prev, [docId]: 0 }));
     setErrors(prev => ({ ...prev, [docId]: null }));
 
@@ -422,12 +484,18 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       if (dbError) throw dbError;
 
       setAnalysing(prev => ({ ...prev, [docId]: true }));
-      const response = await fetch('/api/analizar-documento', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filePath: filePath, documentType: docId, solicitud_id: solicitud.id }), });
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = errorText;
-        try { const errorPayload = JSON.parse(errorText); errorMessage = errorPayload.error || errorText; } catch (e) { /* Not JSON */ }
-        throw new Error(errorMessage);
+
+      // Invoke the Supabase Edge Function instead of the old Vercel-style API
+      const { error: functionError } = await supabase.functions.invoke('analizar-documento-v2', {
+        body: {
+          filePath: filePath,
+          documentType: docId,
+          solicitud_id: solicitud.id
+        },
+      });
+
+      if (functionError) {
+        throw functionError;
       }
 
       onUpload();
@@ -438,6 +506,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
     } finally {
       setUploadProgress(prev => ({ ...prev, [docId]: undefined }));
       setAnalysing(prev => ({ ...prev, [docId]: false }));
+      setIsUploadingGlobal(false);
     }
   };
 
@@ -465,6 +534,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
               progress={progress}
               error={error}
               onFileSelect={(file) => handleFileUpload(file, doc.id)}
+              disabled={isUploadingGlobal && !isUploading}
             />
           );
         })}
@@ -493,7 +563,7 @@ const BorrowerDashboard = () => {
       if (!user) { navigate('/auth'); return; }
       setUser(user);
 
-      const { data: solData, error: solError } = await supabase.from('solicitudes').select(`*, oportunidades!solicitudes_opportunity_id_fkey(*)`).eq('email', user.email).order('created_at', { ascending: false }).limit(1);
+      const { data: solData, error: solError } = await supabase.from('solicitudes').select(`*, oportunidades(*)`).eq('email', user.email).order('created_at', { ascending: false }).limit(1);
       if (solError) throw solError;
       if (!solData.length) { setError('No se encontró una solicitud de préstamo para tu cuenta.'); return; }
       const currentSolicitud = solData[0];

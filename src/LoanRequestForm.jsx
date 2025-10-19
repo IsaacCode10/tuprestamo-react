@@ -6,7 +6,7 @@ import '@/Modal.css';
 // Definimos las preguntas para el formulario de prestatario
 const borrowerQuestions = [
   { id: 1, texto: '¡Hola! Para empezar, ¿cuál es tu nombre completo?', tipo: 'text', clave: 'nombre_completo', required: true },
-  { id: 2, texto: 'Gracias. Ahora, tu correo electrónico.', tipo: 'email', clave: 'email', required: true },
+  { id: 2, texto: 'Gracias. Ahora, tu correo electrónico.', tipo: 'email', clave: 'email', required: true, validation: { regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, errorMessage: 'Por favor, introduce un correo electrónico válido.' } },
   { id: 3, texto: '¿Y tu número de celular (WhatsApp)?', tipo: 'tel', clave: 'telefono', required: true },
   { id: 4, texto: '¿En qué departamento de Bolivia resides?', tipo: 'select', clave: 'departamento', required: true, opciones: [
       { value: 'La Paz', label: 'La Paz' },
@@ -33,13 +33,22 @@ const borrowerQuestions = [
   { id: 11, texto: 'Ahora, sobre tus tarjetas de crédito. ¿En qué banco(s) las tienes?', tipo: 'text', clave: 'bancos_deuda' },
   { id: 12, texto: '¿Cuál es el saldo total aproximado de tu deuda en esas tarjetas? (en Bs)', tipo: 'number', clave: 'saldo_deuda_tc', required: true },
   { id: 13, texto: '¿Recuerdas la tasa de interés anual que pagas? (ej. 24 para 24%)', tipo: 'number', clave: 'tasa_interes_tc', required: true },
-  { id: 14, texto: '¿Qué monto te gustaría refinanciar con nosotros? (en Bs)', tipo: 'number', clave: 'monto_solicitado', required: true },
+  { 
+    id: 14, 
+    texto: '¿Qué monto te gustaría refinanciar con nosotros? (en Bs)', 
+    tipo: 'number', 
+    clave: 'monto_solicitado', 
+    required: true,
+    validation: {
+      min: 5000,
+      max: 70000,
+      errorMessage: 'El monto debe estar entre 5,000 Bs. y 70,000 Bs.'
+    } 
+  },
   { id: 15, texto: '¿En qué plazo te gustaría pagarlo?', tipo: 'select', clave: 'plazo_meses', required: true, opciones: [
       { value: '12', label: '12 meses' },
       { value: '18', label: '18 meses' },
       { value: '24', label: '24 meses' },
-      { value: '36', label: '36 meses' },
-      { value: '48', label: '48 meses' },
   ]},
   { id: 17, texto: 'Para evaluar tu solicitud, necesitamos tu autorización para consultar tu historial en Infocred.', tipo: 'checkbox', clave: 'autoriza_infocred' },
   { id: 18, texto: 'Finalmente, ¿aceptas que te contactemos por WhatsApp o email para dar seguimiento a tu solicitud?', tipo: 'checkbox', clave: 'acepta_contacto', required: true },
@@ -111,7 +120,7 @@ const LoanRequestForm = ({ onClose, role }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="modal-close-button" onClick={onClose}>&times;</button>
+        <button className="modal-close-button" onClick={onClose}><b>X</b></button>
         <h2>Solicitud para Prestatarios</h2>
         
         {loading && <p>Enviando...</p>}

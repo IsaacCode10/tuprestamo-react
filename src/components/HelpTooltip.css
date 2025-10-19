@@ -27,10 +27,7 @@
 }
 
 .tooltip-box {
-  position: absolute;
-  top: 140%; /* Se posiciona debajo del ícono, con un poco más de espacio */
-  left: 50%;
-  transform: translateX(-50%);
+  /* position, top, left, and transform are now set by JS inline style */
   background-color: #343a40; /* Fondo oscuro */
   color: white;
   padding: 10px 15px;
@@ -41,7 +38,7 @@
   z-index: 9999; /* Valor muy alto para asegurar que esté por encima de todo */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   text-align: left;
-  animation: fade-in-down 0.2s ease-out;
+  animation: fade-in 0.2s ease-out; /* Simplified animation */
 }
 
 /* Flecha del tooltip (apuntando hacia arriba) */
@@ -56,13 +53,11 @@
   border-color: transparent transparent #343a40 transparent;
 }
 
-@keyframes fade-in-down {
+@keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
   }
 }

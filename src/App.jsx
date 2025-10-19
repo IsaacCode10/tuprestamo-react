@@ -6,6 +6,7 @@ import '@/style.css';
 import Header from '@/components/Header.jsx';
 import Footer from '@/components/Footer.jsx';
 import LandingPage from '@/components/LandingPage.jsx';
+import CalculatorPage from '@/CalculatorPage.jsx'; // <-- NUEVA PÁGINA
 import Auth from '@/Auth.jsx';
 import AdminDashboard from '@/AdminDashboard.jsx';
 import InvestorDashboard from '@/InvestorDashboard.jsx';
@@ -100,9 +101,9 @@ const RedirectIfAuth = ({ profile, loading, children }) => {
 
 
 function App() {
-  const { profile, loading, authEvent } = useProfile(); // Obtenemos el authEvent
+  const { profile, loading, authEvent } = useProfile();
   const navigate = useNavigate();
-  const location = useLocation(); // Hook para obtener la ubicación
+  const location = useLocation();
 
   // Lista de rutas que se consideran dashboards
   const dashboardPaths = [
@@ -118,11 +119,10 @@ function App() {
   const isDashboardPage = dashboardPaths.some(path => location.pathname.startsWith(path));
 
   useEffect(() => {
-    // Si el evento es PASSWORD_RECOVERY, redirigimos a la página de creación de contraseña
     if (authEvent === 'PASSWORD_RECOVERY') {
       navigate('/confirmar-y-crear-perfil');
     }
-  }, [authEvent, navigate]); // El efecto se ejecuta cuando authEvent cambia
+  }, [authEvent, navigate]);
 
   return (
     <div className="App">
@@ -130,6 +130,7 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/calculadora" element={<CalculatorPage />} />
           <Route 
             path="/auth" 
             element={
@@ -156,7 +157,7 @@ function App() {
           />
           <Route path="/oportunidades" element={<Opportunities />} />
           <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
-          <Route path="/confirmar" element={<ConfirmAndSetPassword />} /> {/* Ruta para el magic link */}
+          <Route path="/confirmar" element={<ConfirmAndSetPassword />} />
           <Route path="/confirmar-y-crear-perfil" element={<ConfirmAndSetPassword />} />
           <Route 
             path="/admin/manage-investors"

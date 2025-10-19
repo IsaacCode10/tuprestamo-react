@@ -19,7 +19,7 @@ const Prestatarios = ({ onSolicitudClick }) => {
             Evaluación Justa: No eres solo un número en un sistema. Un analista de crédito experto revisará tu perfil para ofrecerte las mejores condiciones.
           </li>
           <li className="features-list__item">
-            Transparencia: Te cobraremos una única comisión al inicio y una pequeña comisión fija de administración mensual. Sabrás el costo total desde el primer día.
+            Transparencia Radical: Olvídate de los costos fijos mensuales. Solo pagas una comisión por originación que depende de tu perfil (premiamos a los buenos pagadores) y una comisión de servicio y seguro que disminuye con tu deuda. Simple y claro.
           </li>
         </ul>
         <div className="button-container">

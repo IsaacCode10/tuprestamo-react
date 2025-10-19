@@ -91,7 +91,9 @@ const Header = () => {
                 <NavButton to="inversionistas" text="QUIERO INVERTIR" />
               </li>
               <li className="header__nav-item">
-                <NavButton to="como-funciona" text="CÓMO FUNCIONA" />
+                <NavLink to="/calculadora" className="header__nav-button">
+                  CALCULADORA DE AHORRO
+                </NavLink>
               </li>
             </ul>
           </nav>

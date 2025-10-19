@@ -6,7 +6,7 @@
 /* Estilos Generales del Header */
 .header {
   background-color: #fff;
-  padding: 0.5rem 2rem; /* Reducimos padding vertical para compensar logo grande */
+  padding: 0.25rem 2rem; /* Reducido para un header más compacto */
   border-bottom: 1px solid #e0e0e0;
   position: sticky;
   top: 0;
@@ -26,7 +26,7 @@
 }
 
 .header__logo {
-  height: 120px; /* Revertido a tamaño anterior */
+  height: 80px; /* Reducido para un header más compacto */
   transition: transform 0.3s ease;
 }
 
@@ -47,6 +47,7 @@
   margin: 0;
   padding: 0;
   gap: 1rem;
+  align-items: center;
 }
 
 /* Botones de Navegación */
@@ -62,6 +63,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
+    text-decoration: none;
 }
 
 .header__nav-button:hover {

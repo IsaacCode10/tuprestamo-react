@@ -1,86 +1,130 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { create } from 'https://deno.land/x/djwt@v2.2/mod.ts'
 
-// --- Helper para CORS ---
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // En producción, sería mejor restringirlo a tu dominio
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+import { corsHeaders } from '../_shared/cors.ts'
+
+console.log(`Function "analizar-documento-v2" up and running!`)
+
+// --- Tipos y Interfaces ---
+interface RequestBody {
+  filePath: string
+  documentType: string
+  solicitud_id: string
 }
 
-// --- Lógica Principal de la API en Vercel ---
-export default async function handler(req, res) {
-  setCorsHeaders(res);
-
+// --- Lógica Principal ---
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { filePath, documentType, solicitud_id } = req.body;
+    const { filePath, documentType, solicitud_id }: RequestBody = await req.json()
     if (!filePath || !documentType || !solicitud_id) {
-      return res.status(400).json({ error: 'filePath, documentType y solicitud_id son requeridos.' });
+      throw new Error('filePath, documentType y solicitud_id son requeridos.')
     }
 
     // 1. Crear cliente de Supabase con rol de servicio
-    // Las variables de entorno se leen con process.env en Vercel/Node.js
     const supabaseAdmin = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
     // 2. Crear una URL firmada y segura para el archivo
     const { data: urlData, error: urlError } = await supabaseAdmin.storage
       .from('documentos-prestatarios')
-      .createSignedUrl(filePath, 3600); // Válida por 1 hora
+      .createSignedUrl(filePath, 3600) // Válida por 1 hora
 
-    if (urlError) throw urlError;
-    const signedUrl = urlData.signedUrl;
+    if (urlError) throw urlError
+    const signedUrl = urlData.signedUrl
 
     // 3. Obtener el contenido del archivo desde la URL firmada
-    const fileResponse = await fetch(signedUrl);
-    if (!fileResponse.ok) throw new Error(`Fallo al obtener el archivo: ${fileResponse.statusText}`);
-    const fileBuffer = await fileResponse.arrayBuffer();
+    const fileResponse = await fetch(signedUrl)
+    if (!fileResponse.ok) throw new Error(`Fallo al obtener el archivo: ${fileResponse.statusText}`)
+    const fileBuffer = await fileResponse.arrayBuffer()
     
-    // Conversión a Base64 en Node.js
-    const base64File = Buffer.from(fileBuffer).toString('base64');
+    // Safer Base64 conversion
+    let binary = '';
+    const bytes = new Uint8Array(fileBuffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64File = btoa(binary);
     const fileMimeType = fileResponse.headers.get('Content-Type') || 'application/octet-stream';
 
-    // 4. Llamar directamente a la API REST de Gemini
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY no está configurada.');
+    // 4. Authenticate with Google using Service Account and get Access Token
+    const credsJson = Deno.env.get('GOOGLE_CREDENTIALS');
+    if (!credsJson) throw new Error('El secreto GOOGLE_CREDENTIALS no está configurado.');
+    const creds = JSON.parse(credsJson);
 
-    // Usamos el modelo más moderno, ya que en Vercel no deberíamos tener el problema de la API v1beta
-    const modelName = 'gemini-1.5-flash-latest';
-    const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
-    
+    const iat = Math.floor(Date.now() / 1000); // Issued at time (now)
+    const exp = iat + 3600; // Expiration time (1 hour from now)
+
+    const jwt = await create({ alg: "RS256", typ: "JWT" }, {
+      iss: creds.client_email,
+      scope: "https://www.googleapis.com/auth/cloud-platform",
+      aud: creds.token_uri,
+      iat: iat,
+      exp: exp,
+    }, creds.private_key);
+
+    const tokenResponse = await fetch(creds.token_uri, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorBody = await tokenResponse.text();
+      throw new Error(`Error obteniendo el token de autenticación de Google: ${tokenResponse.status} - ${errorBody}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    // 5. Call the Vertex AI API with the access token
+    const modelName = 'gemini-1.5-flash-001'; // Use the current, active model
+    // Note: Using the Vertex AI endpoint which is standard for service account auth.
+    const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${creds.project_id}/locations/us-central1/publishers/google/models/${modelName}:generateContent`;
+
     const prompt = getPromptForDocument(documentType);
 
     const requestBody = {
-      contents: [{
-        parts: [
-          { text: prompt },
-          { inline_data: { mime_type: fileMimeType, data: base64File } }
-        ]
-      }],
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: fileMimeType,
+                data: base64File
+              }
+            }
+          ]
+        }
+      ],
       generationConfig: {
         temperature: 0.1,
         topP: 0.95,
         topK: 40,
         maxOutputTokens: 8192,
-        response_mime_type: "application/json",
       }
     };
 
+    console.log('Paso 1: Llamando a la API de Gemini...');
     const geminiResponse = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
       body: JSON.stringify(requestBody)
     });
+    console.log('Paso 2: Respuesta de Gemini recibida.');
 
     if (!geminiResponse.ok) {
       const errorBody = await geminiResponse.text();
@@ -88,24 +132,28 @@ export default async function handler(req, res) {
     }
 
     const result = await geminiResponse.json();
+    console.log('Paso 3: Respuesta JSON de Gemini parseada.');
     
     // 5. Extraer y procesar la respuesta de la IA
+    // La respuesta de la API REST viene en una estructura diferente a la del SDK
     if (!result.candidates || !result.candidates[0].content || !result.candidates[0].content.parts || !result.candidates[0].content.parts[0].text) {
-      const errorDetails = JSON.stringify(result, null, 2);
-      console.error("Respuesta inesperada de la IA:", errorDetails);
       throw new Error('La respuesta de la IA no tiene la estructura esperada.');
     }
     const responseText = result.candidates[0].content.parts[0].text;
+    console.log('Paso 4: Texto extraído de la respuesta de la IA.');
 
-    const jsonStart = responseText.indexOf('{');
-    const jsonEnd = responseText.lastIndexOf('}');
+    // Extraer el bloque JSON de la respuesta de la IA
+    const jsonStart = responseText.indexOf('{')
+    const jsonEnd = responseText.lastIndexOf('}')
     if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('La respuesta de la IA no contiene un objeto JSON válido.');
+      throw new Error('La respuesta de la IA no contiene un objeto JSON válido.')
     }
-    const jsonString = responseText.substring(jsonStart, jsonEnd + 1);
-    const extractedData = JSON.parse(jsonString);
+    const jsonString = responseText.substring(jsonStart, jsonEnd + 1)
+    const extractedData = JSON.parse(jsonString)
+    console.log('Paso 5: JSON extraído y parseado desde el texto.');
 
     // 6. Guardar los datos extraídos en la tabla 'analisis_documentos'
+    console.log('Paso 6: Intentando insertar en la base de datos...');
     const { error: dbError } = await supabaseAdmin
       .from('analisis_documentos')
       .insert({
@@ -113,25 +161,30 @@ export default async function handler(req, res) {
         document_type: documentType,
         raw_data: extractedData,
         analysed_at: new Date(),
-      });
+      })
 
-    if (dbError) throw dbError;
+    if (dbError) throw dbError
+    console.log('Paso 7: Inserción en la base de datos exitosa.');
 
     // 7. Verificar si todos los documentos están completos y disparar la síntesis
-    await checkAndTriggerSynthesis(supabaseAdmin, solicitud_id);
+    await checkAndTriggerSynthesis(supabaseAdmin, solicitud_id)
 
     // 8. Retornar éxito
-    return res.status(200).json({ success: true, data: extractedData });
+    console.log('Paso 8: Retornando respuesta exitosa.');
 
   } catch (error) {
-    console.error(`Error fatal en 'api/analizar-documento': ${error.message}`);
-    return res.status(500).json({ error: error.message });
+    console.error(`Error fatal en 'analizar-documento-v2': ${error.message}`)
+    return new Response(JSON.stringify({ error: error.message, details: error.stack }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    })
   }
-}
+})
 
-// --- Funciones de Soporte (movidas aquí) ---
+// --- Funciones de Soporte ---
 
-function getPromptForDocument(documentType) {
+// Diccionario de Prompts
+function getPromptForDocument(documentType: string): string {
     const prompts = {
     ci_anverso: "Analiza la imagen del anverso de la cédula de identidad boliviana. Extrae la siguiente información: número de cédula, fecha de emisión y fecha de expiración. Devuelve los datos estrictamente en formato JSON con las claves 'numero_cedula', 'fecha_emision', y 'fecha_expiracion'. Si un campo no es visible, su valor debe ser null.",
     ci_reverso: "Analiza la imagen del reverso de la cédula de identidad boliviana. Extrae el nombre completo, fecha de nacimiento, domicilio y profesión u ocupación. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_completo', 'fecha_nacimiento', 'domicilio', y 'profesion'.",
@@ -149,51 +202,51 @@ function getPromptForDocument(documentType) {
   return prompts[documentType] || "Analiza el documento y extrae la información más relevante en formato JSON.";
 }
 
-async function checkAndTriggerSynthesis(supabaseAdmin, solicitud_id) {
-  console.log(`Verificando completitud para solicitud_id: ${solicitud_id}`);
+// Verificación de completitud y disparo de la síntesis
+async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string) {
+  console.log(`Verificando completitud para solicitud_id: ${solicitud_id}`)
 
   const { data: solicitudData, error: solicitudError } = await supabaseAdmin
     .from('solicitudes')
     .select('situacion_laboral')
     .eq('id', solicitud_id)
-    .single();
+    .single()
 
   if (solicitudError || !solicitudData) {
-    console.error('No se pudo obtener la solicitud para verificar completitud:', solicitudError);
-    return;
+    console.error('No se pudo obtener la solicitud para verificar completitud:', solicitudError)
+    return
   }
 
-  const { situacion_laboral } = solicitudData;
-  const commonDocs = ['ci_anverso', 'ci_reverso', 'factura_servicio', 'extracto_tarjeta', 'selfie_ci'];
+  const { situacion_laboral } = solicitudData
+  const commonDocs = ['ci_anverso', 'ci_reverso', 'factura_servicio', 'extracto_tarjeta', 'selfie_ci']
   const requiredDocs = {
     dependiente: [...commonDocs, 'boleta_pago', 'certificado_gestora'],
     independiente: [...commonDocs, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3', 'nit'],
     jubilado: [...commonDocs, 'boleta_jubilacion'],
-  }[situacion_laboral] || commonDocs;
+  }[situacion_laboral] || commonDocs
 
   const { data: analyzedDocs, error: analyzedDocsError } = await supabaseAdmin
     .from('analisis_documentos')
     .select('document_type')
-    .eq('solicitud_id', solicitud_id);
+    .eq('solicitud_id', solicitud_id)
 
   if (analyzedDocsError) {
-    console.error('No se pudieron obtener los documentos analizados:', analyzedDocsError);
-    return;
+    console.error('No se pudieron obtener los documentos analizados:', analyzedDocsError)
+    return
   }
 
-  const uploadedDocTypes = new Set(analyzedDocs.map(doc => doc.document_type));
-  const isComplete = requiredDocs.every(docType => uploadedDocTypes.has(docType));
+  const uploadedDocTypes = new Set(analyzedDocs.map(doc => doc.document_type))
+  const isComplete = requiredDocs.every(docType => uploadedDocTypes.has(docType))
 
-  console.log(`Completitud: ${isComplete}. Requeridos: ${requiredDocs.join(', ')}. Subidos: ${[...uploadedDocTypes].join(', ')}`);
+  console.log(`Completitud: ${isComplete}. Requeridos: ${requiredDocs.join(', ')}. Subidos: ${[...uploadedDocTypes].join(', ')}`)
 
   if (isComplete) {
-    console.log(`¡Completo! Disparando función de síntesis para ${solicitud_id}`);
-    // La invocación a otra función de Supabase debería funcionar sin problemas desde Vercel
+    console.log(`¡Completo! Disparando función de síntesis para ${solicitud_id}`)
     const { error: invokeError } = await supabaseAdmin.functions.invoke('sintetizar-perfil-riesgo', {
       body: { solicitud_id },
-    });
+    })
     if (invokeError) {
-      console.error('Error al invocar la función de síntesis:', invokeError);
+      console.error('Error al invocar la función de síntesis:', invokeError)
     }
   }
 }
