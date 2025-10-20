@@ -82,7 +82,7 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
     switch (tipo) {
       case 'select':
         return (
-          <select key={clave} id={clave} name={clave} value={currentValue} onChange={handleInputChange} className="interactive-input">
+          <select key={clave} id={clave} name={clave} value={currentValue} onChange={handleInputChange} className={`interactive-input ${error ? 'input-error' : ''}`}>
             <option value="" disabled>Selecciona una opción...</option>
             {opciones.map(op => <option key={op.value} value={op.value}>{op.label}</option>)}
           </select>
@@ -103,7 +103,7 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
             name={clave}
             value={currentValue}
             onChange={handleInputChange}
-            className="interactive-input"
+            className={`interactive-input ${error ? 'input-error' : ''}`}
             placeholder="Escribe tu respuesta aquí..."
             autoComplete="off"
           />
