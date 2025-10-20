@@ -563,7 +563,7 @@ const BorrowerDashboard = () => {
       if (!user) { navigate('/auth'); return; }
       setUser(user);
 
-      const { data: solData, error: solError } = await supabase.from('solicitudes').select(`*, oportunidades(*)`).eq('email', user.email).order('created_at', { ascending: false }).limit(1);
+      const { data: solData, error: solError } = await supabase.from('solicitudes').select(`*, oportunidades!solicitudes_opportunity_id_fkey(*)`).eq('email', user.email).order('created_at', { ascending: false }).limit(1);
       if (solError) throw solError;
       if (!solData.length) { setError('No se encontró una solicitud de préstamo para tu cuenta.'); return; }
       const currentSolicitud = solData[0];

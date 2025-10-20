@@ -259,7 +259,7 @@ serve(async (req) => {
       console.log(`Solicitud ${solicitud_id}: Oportunidad insertada con ID: ${oppData.id}`);
 
       console.log(`Solicitud ${solicitud_id}: Iniciando actualización de solicitud a 'pre-aprobado'.`);
-      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id }).eq('id', solicitud_id);
+      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id, opportunity_id: oppData.id }).eq('id', solicitud_id);
       if (updateError) {
         console.error(`Error al actualizar solicitud ${solicitud_id} a 'pre-aprobado':`, updateError);
         throw updateError;

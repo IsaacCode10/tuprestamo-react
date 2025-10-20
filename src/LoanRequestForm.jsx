@@ -32,7 +32,19 @@ const borrowerQuestions = [
   { id: 9, texto: '¿Cuántos meses de antigüedad tienes en tu trabajo o actividad actual?', tipo: 'number', clave: 'antiguedad_laboral', required: true },
   { id: 10, texto: '¿Cuál es tu ingreso mensual promedio (neto) en Bolivianos (Bs)?', tipo: 'number', clave: 'ingreso_mensual', required: true },
   { id: 11, texto: 'Ahora, sobre tus tarjetas de crédito. ¿En qué banco(s) las tienes?', tipo: 'text', clave: 'bancos_deuda' },
-  { id: 12, texto: '¿Cuál es el saldo total aproximado de tu deuda en esas tarjetas? (en Bs)', tipo: 'number', clave: 'saldo_deuda_tc', required: true },
+    { 
+    id: 12, 
+    texto: '¿Cuál es el saldo total aproximado de tu deuda en esas tarjetas? (en Bs)', 
+    tipo: 'number', 
+    clave: 'saldo_deuda_tc', 
+    required: true,
+    validation: {
+      min: 5000,
+      max: 70000,
+      errorMessage: 'El saldo debe estar entre 5,000 Bs. y 70,000 Bs.'
+    },
+    helperText: 'Monto mínimo: 5,000 Bs. y máximo: 70,000 Bs.'
+  },
   { id: 13, texto: '¿Recuerdas la tasa de interés anual que pagas? (ej. 24 para 24%)', tipo: 'number', clave: 'tasa_interes_tc', required: true },
   { 
     id: 14, 
@@ -44,7 +56,8 @@ const borrowerQuestions = [
       min: 5000,
       max: 70000,
       errorMessage: 'El monto debe estar entre 5,000 Bs. y 70,000 Bs.'
-    } 
+    },
+    helperText: 'Monto mínimo: 5,000 Bs. y máximo: 70,000 Bs.'
   },
   { id: 15, texto: '¿En qué plazo te gustaría pagarlo?', tipo: 'select', clave: 'plazo_meses', required: true, opciones: [
       { value: '12', label: '12 meses' },

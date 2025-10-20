@@ -10,7 +10,6 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
   const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
-    setError('');
     const answerForCurrentQuestion = answers[currentQuestion.clave];
     if (currentQuestion.tipo === 'checkbox') {
       setCurrentValue(answerForCurrentQuestion || false);
@@ -20,6 +19,7 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
   }, [currentQuestionIndex, questions, answers, currentQuestion.clave, currentQuestion.tipo]);
 
   const handleInputChange = (e) => {
+    setError('');
     const { type, value, checked } = e.target;
     setCurrentValue(type === 'checkbox' ? checked : value);
   };
@@ -121,10 +121,9 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
             </label>
         )}
         {renderInput()}
+        {currentQuestion.helperText && <p className="helper-text">{currentQuestion.helperText}</p>}
+        {error && <p style={{ color: '#c73e1d', marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>{error}</p>}
       </div>
-
-      {error && <p style={{ color: '#c73e1d', marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>{error}</p>}
-
       <div className="navigation-buttons">
         {currentQuestionIndex > 0 && (
           <button onClick={handlePrev} className="btn btn--secondary">Anterior</button>

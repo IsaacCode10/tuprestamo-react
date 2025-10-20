@@ -21,7 +21,7 @@ export const solicitudPrestatarioSchema = z.object({
   bancos_deuda: z.string().optional(),
   saldo_deuda_tc: z.preprocess(
     (val) => Number(String(val).replace(/[^0-9.]/g, '')),
-    z.number({ invalid_type_error: "El saldo debe ser un número." }).min(1, "El saldo de la deuda debe ser mayor a cero")
+    z.number({ invalid_type_error: "El saldo debe ser un número." }).min(5000, "El saldo mínimo es 5,000 Bs.").max(70000, "El saldo máximo es 70,000 Bs.")
   ),
   tasa_interes_tc: z.preprocess(
     (val) => Number(String(val).replace(/[^0-9.]/g, '')),

@@ -1,3 +1,32 @@
+# Estado al 19 de Octubre de 2025 (Fin del Día)
+
+### Tarea Principal: Diagnóstico y Corrección del Flujo de Pre-Aprobación Automática
+
+**Contexto:** Tras un despliegue, se detectó un error crítico donde el dashboard del prestatario no mostraba los datos de la pre-aprobación (tasa, cuota, etc.), a pesar de que el usuario recibía el correo de bienvenida. Esto se debía a que la `oportunidad` no se enlazaba correctamente con la `solicitud`.
+
+**Resumen de la Sesión de Debugging:**
+
+Se realizó una depuración profunda que reveló y corrigió una cascada de problemas de arquitectura:
+
+1.  **Relación de Base de Datos:** Se estableció la `foreign key` correcta entre las tablas `solicitudes` y `oportunidades` para permitir la unión de datos.
+2.  **Ambigüedad en Consulta:** Se especificó en el código del `BorrowerDashboard.jsx` qué relación usar, eliminando un error de ambigüedad.
+3.  **Diagnóstico del Motor de Decisión:** Se confirmó que el código de la Edge Function `handle-new-solicitud` era conceptualmente correcto, pero no se estaba ejecutando como se esperaba.
+4.  **Análisis de Logs:** Gracias a los logs provistos por Isaac, se identificó el bug principal: la función creaba la `oportunidad` pero **no guardaba el ID de esta en la `solicitud` original**, dejando el enlace roto.
+5.  **Corrección del Motor de Decisión:** Se modificó la función `handle-new-solicitud` para que realice este enlace crucial y se desplegó en Supabase.
+6.  **Diagnóstico y Corrección del Perfil de Usuario:** Se detectó un error final donde el perfil público del usuario no se creaba. Se implementó un 'trigger' en la base de datos para automatizar la creación de perfiles, solucionando el problema de raíz.
+7.  **Actualización de Documentación:** Se actualizó el `ROADMAP_BACKEND_PRESTATARIO.md` para que refleje el flujo automático actual, eliminando la confusión con documentación obsoleta.
+
+**Estado Actual:**
+
+*   Todos los arreglos en el código y la base de datos han sido completados y desplegados.
+*   El último script SQL para el 'trigger' de perfiles fue ejecutado con éxito por Isaac.
+
+**Próximo Paso Crítico (Responsable: Isaac):**
+
+*   Queda pendiente realizar la **prueba completa (end-to-end)** con un usuario de prueba nuevo (borrando los datos anteriores) para verificar que el flujo de pre-aprobación y el dashboard funcionan correctamente de principio a fin.
+
+---
+
 # Estado al 19 de Octubre de 2025
 
 ## Tarea Principal: Finalización de la Página de Calculadora de Ahorro y Correcciones en Formulario Interactivo
