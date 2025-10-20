@@ -4,16 +4,44 @@ import './RiskAnalystDashboard.css';
 import HelpTooltip from './components/HelpTooltip';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
+// --- Objeto de prueba para desarrollo ---
+const mockProfile = {
+  id: '12345-abcde',
+  nombre_completo: 'Isaac Alfaro (Prueba)',
+  ci: '1234567 LP',
+  ingresos_mensuales: 12000,
+  deuda_total_declarada: 25000,
+  dti: '35%',
+  score_confianza: 85,
+  estado: 'listo_para_revision',
+  documentos_validados: [
+    { tipo_documento: 'CI Anverso', estado: 'Verificado' },
+    { tipo_documento: 'CI Reverso', estado: 'Verificado' },
+    { tipo_documento: 'Factura Servicio Básico', estado: 'Verificado' },
+    { tipo_documento: 'Boleta Tarjeta Crédito', estado: 'Pendiente' },
+    { tipo_documento: 'Foto Selfie con CI', estado: 'Rechazado' },
+  ]
+};
+// --------------------------------------
+
 const RiskAnalystDashboard = () => {
-  const [perfiles, setPerfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // --- Estados con datos de prueba ---
+  const [perfiles, setPerfiles] = useState([mockProfile]);
+  const [loading, setLoading] = useState(false); // Inicia en false
   const [error, setError] = useState(null);
-  const [perfilSeleccionado, setPerfilSeleccionado] = useState(null);
+  const [perfilSeleccionado, setPerfilSeleccionado] = useState(mockProfile);
+  // ----------------------------------
 
   // State para el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [decisionType, setDecisionType] = useState(null); // 'Aprobado' or 'Rechazado'
 
+  // State para el cálculo de gross-up
+  const [saldoDeudorVerificado, setSaldoDeudorVerificado] = useState('');
+  const [montoTotalPrestamo, setMontoTotalPrestamo] = useState(null);
+  const TASA_COMISION = 0.08; // 8%
+
+  /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -42,9 +70,24 @@ const RiskAnalystDashboard = () => {
   useEffect(() => {
     fetchPerfiles();
   }, [fetchPerfiles]);
+  */
+
+  // Efecto para calcular el Gross-Up
+  useEffect(() => {
+    const saldo = parseFloat(saldoDeudorVerificado);
+    if (saldo > 0) {
+      const montoCalculado = saldo / (1 - TASA_COMISION);
+      setMontoTotalPrestamo(montoCalculado.toFixed(2));
+    } else {
+      setMontoTotalPrestamo(null);
+    }
+  }, [saldoDeudorVerificado]);
 
   const handleSelectPerfil = (perfil) => {
     setPerfilSeleccionado(perfil);
+    // Limpiar los campos de cálculo al cambiar de perfil
+    setSaldoDeudorVerificado('');
+    setMontoTotalPrestamo(null);
   };
 
   // Abre el modal para tomar la decisión
@@ -55,46 +98,12 @@ const RiskAnalystDashboard = () => {
 
   // Se ejecuta al confirmar la decisión en el modal
   const handleSubmitDecision = async (decisionData) => {
-    if (!perfilSeleccionado) return;
-
-    const { profileId, decision, motivo, notas } = decisionData;
-
-    // 1. Insertar la decisión en la tabla 'decisiones_de_riesgo'
-    const { error: decisionError } = await supabase
-      .from('decisiones_de_riesgo')
-      .insert({
-        perfil_de_riesgo_id: profileId,
-        decision: decision,
-        motivo: motivo,
-        notas: notas,
-      });
-
-    if (decisionError) {
-      setError(`Error al guardar la decisión: ${decisionError.message}`);
-      throw decisionError; // Propagate error to stop the process
-    }
-
-    // 2. Actualizar el estado del perfil en 'perfiles_de_riesgo'
-    const { error: profileError } = await supabase
-      .from('perfiles_de_riesgo')
-      .update({ estado: 'Revisado' })
-      .eq('id', profileId);
-
-    if (profileError) {
-      setError(`Error al actualizar el perfil: ${profileError.message}`);
-      // Aquí podríamos tener lógica para revertir la decisión si falla la actualización
-      throw profileError;
-    }
-
-    // 3. Actualizar la UI
-    const nuevosPerfiles = perfiles.filter(p => p.id !== profileId);
-    setPerfiles(nuevosPerfiles);
-    
-    if (perfilSeleccionado && perfilSeleccionado.id === profileId) {
-      setPerfilSeleccionado(nuevosPerfiles.length > 0 ? nuevosPerfiles[0] : null);
-    }
-    
-    setIsModalOpen(false); // Cerrar el modal
+    // --- Lógica de guardado desactivada en modo de prueba ---
+    alert("Modo de prueba: La decisión no se guardará en la base de datos.");
+    console.log("Decisión a guardar:", decisionData);
+    setIsModalOpen(false);
+    return;
+    // ------------------------------------------------------
   };
   
   const renderContent = () => {
@@ -181,6 +190,30 @@ const RiskAnalystDashboard = () => {
                     </li>
                   ))}
                 </ul>
+              </section>
+
+              {/* Nueva sección para verificación manual y cálculo */}
+              <section className="verificacion-manual">
+                <h2>Verificación y Cálculo Final</h2>
+                <div className="metrica">
+                  <label htmlFor="saldo-verificado" className="metrica-titulo">Saldo Deudor Verificado (del extracto)</label>
+                  <input
+                    type="number"
+                    id="saldo-verificado"
+                    className="metrica-input"
+                    value={saldoDeudorVerificado}
+                    onChange={(e) => setSaldoDeudorVerificado(e.target.value)}
+                    placeholder="Ej: 5500.50"
+                  />
+                  <HelpTooltip text="Ingrese aquí el saldo deudor exacto que figura en el extracto de la tarjeta de crédito del cliente." />
+                </div>
+                {montoTotalPrestamo && (
+                  <div className="metrica-calculada">
+                    <span className="metrica-titulo">Monto Total del Préstamo (Gross-Up)</span>
+                    <span className="metrica-valor-calculado">Bs. {montoTotalPrestamo}</span>
+                    <HelpTooltip text={`Este es el monto total que se solicitará a los inversionistas. Se calcula como: Saldo Verificado / (1 - ${TASA_COMISION * 100}% de comisión).`} />
+                  </div>
+                )}
               </section>
 
               {/* La vieja zona de decisión se reemplaza por estos botones que abren el modal */}

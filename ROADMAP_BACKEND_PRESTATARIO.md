@@ -2,9 +2,15 @@
 
 Este documento detalla los procesos del lado del servidor que dan soporte al viaje del prestatario, reflejando el modelo de decisión automática.
 
+**Leyenda de Estados:**
+*   `[✅ Completado]`
+*   `[🚧 En Progreso]`
+*   `[🔒 Bloqueado]`
+*   `[❌ Pendiente]`
+
 ---
 
-### **Etapa 1: Solicitud y Decisión Automática (Motor de Decisión)**
+### **Etapa 1: Solicitud y Decisión Automática (Motor de Decisión) [✅ Completado]**
 
 Esta etapa se inicia cuando el usuario anónimo envía el primer formulario y se resuelve en segundos.
 
@@ -30,7 +36,7 @@ Esta etapa se inicia cuando el usuario anónimo envía el primer formulario y se
 
 ---
 
-### **Etapa 2: Activación de Usuario**
+### **Etapa 2: Activación de Usuario [✅ Completado]**
 
 1.  **Manejo de Contraseña**
     *   El frontend (`BorrowerActivateAccount.jsx`) se comunica con Supabase Auth.
@@ -38,7 +44,7 @@ Esta etapa se inicia cuando el usuario anónimo envía el primer formulario y se
 
 ---
 
-### **Etapa 3: Análisis de Documentos (Proceso Asíncrono)**
+### **Etapa 3: Análisis de Documentos (Proceso Asíncrono) [🚧 En Progreso]**
 
 Ocurre a medida que el usuario sube sus documentos en su dashboard.
 
@@ -46,10 +52,11 @@ Ocurre a medida que el usuario sube sus documentos en su dashboard.
     *   Cada subida de archivo desde el `BorrowerDashboard.jsx` dispara la función `analizar-documento`.
     *   La IA extrae la información relevante del documento.
     *   El resultado se guarda en la tabla `analisis_documentos`.
+    *   *Nota: La implementación de la IA para la extracción de datos aún está en desarrollo.*
 
 ---
 
-### **Etapa 4: Síntesis del Perfil de Riesgo**
+### **Etapa 4: Síntesis del Perfil de Riesgo [🚧 En Progreso / 🔒 Bloqueado]**
 
 Se activa automáticamente cuando todos los documentos requeridos han sido analizados.
 
@@ -61,17 +68,19 @@ Se activa automáticamente cuando todos los documentos requeridos han sido anali
     *   La función une todos los datos de `analisis_documentos` y `solicitudes`.
     *   Calcula métricas finales (DTI verificado, etc.).
     *   Inserta una única fila en la tabla `perfiles_de_riesgo` con estado `listo_para_revision`.
+    *   ***Nota: La Edge Function está desarrollada, pero su despliegue y pruebas están bloqueados por inestabilidad de la plataforma Supabase (timeouts y gestión de secretos).***
 
 ---
 
-### **Etapa 5: Decisión Humana Final y Activación del Préstamo**
+### **Etapa 5: Decisión Humana Final y Activación del Préstamo [✅ Completado]**
 
 Aquí interviene el analista de riesgo para la aprobación definitiva.
 
 1.  **Revisión y Decisión del Analista**
     *   El analista revisa el perfil completo en su `RiskAnalystDashboard.jsx`.
     *   Registra la decisión final ("Aprobar" / "Rechazar") en la tabla `decisiones_de_riesgo`.
+    *   ***Nota: Implementado a través del Scorecard Digital en el frontend, que escribe directamente en la tabla `decisiones_de_riesgo` y actualiza el estado en `perfiles_de_riesgo` a 'Revisado'.***
 
-2.  **Activación de la Oportunidad**
+2.  **Activación de la Oportunidad [❌ Pendiente]**
     *   Si la decisión fue "Aprobar", el sistema actualiza el estado de la `oportunidad` (creada en la Etapa 1) a `aprobado` o `financiado`.
     *   Esta acción hace que el préstamo sea visible para los inversionistas y da inicio al proceso de desembolso.

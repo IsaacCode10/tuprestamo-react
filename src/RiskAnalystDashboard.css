@@ -300,3 +300,53 @@ section h2 {
 .centered-message.error {
   color: #cf1322;
 }
+
+/* --- Verificación Manual y Cálculo --- */
+.verificacion-manual {
+  background-color: #f0f8ff; /* AliceBlue, un color suave para destacar */
+  border: 1px solid #b0c4de; /* LightSteelBlue */
+}
+
+.verificacion-manual .metrica {
+  gap: 10px; /* Espacio entre label e input */
+}
+
+.metrica-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  box-sizing: border-box; /* Importante para que el padding no afecte el ancho */
+  transition: all 0.3s ease;
+}
+
+.metrica-input:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.metrica-calculada {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.metrica-calculada .metrica-titulo {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #0050b3;
+}
+
+.metrica-valor-calculado {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #003a8c;
+  margin-top: 8px;
+}
