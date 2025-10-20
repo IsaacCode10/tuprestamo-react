@@ -36,8 +36,11 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
 
       // 3. Si la validación falla, mostramos el error y detenemos el avance
       if (!result.success) {
-        // Extraemos el primer mensaje de error para el campo
-        const errorMessage = result.error.errors[0].message;
+        // Extraemos el primer mensaje de error para el campo, con un chequeo de seguridad.
+        const errorMessage =
+          result.error && Array.isArray(result.error.errors) && result.error.errors.length > 0
+            ? result.error.errors[0].message
+            : 'Por favor, introduce un valor válido.'; // Mensaje genérico de fallback
         setError(errorMessage);
         return;
       }
