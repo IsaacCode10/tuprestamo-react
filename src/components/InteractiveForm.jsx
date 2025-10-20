@@ -19,7 +19,6 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
   }, [currentQuestionIndex, questions, answers, currentQuestion.clave, currentQuestion.tipo]);
 
   const handleInputChange = (e) => {
-    setError('');
     const { type, value, checked } = e.target;
     setCurrentValue(type === 'checkbox' ? checked : value);
   };
