@@ -127,7 +127,7 @@ function App() {
 
   return (
     <div className="App">
-      <Header />
+      {!isDashboardPage && <Header />}
       <main>
         <Routes>
           <Route path="/" element={<LandingPage />} />

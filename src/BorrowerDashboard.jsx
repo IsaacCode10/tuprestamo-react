@@ -7,6 +7,7 @@ import SavingsCalculator from '@/components/SavingsCalculator.jsx';
 import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
+import Header from './components/Header';
 
 // --- LISTAS DE FAQs CONTEXTUALES ---
 const approvedLoanFaqs = [
@@ -209,24 +210,24 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
     const pagoTotalMensualTP = totalAPagar > 0 ? totalAPagar / simulation.plazo : 0;
 
     return (
-        <div className="borrower-dashboard">
-            <div className="dashboard-header">
-                <h1>Hola, {user?.user_metadata?.full_name || 'Prestatario'}</h1>
-                <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
-            </div>
-            <ProgressStepper currentStep={solicitud.estado} />
-            
-            {/* StatusCard now receives simulation data */}
-            <StatusCard 
-                solicitud={solicitud} 
-                oportunidad={oportunidadObj} 
-                simulation={simulation}
-                pagoTotalMensualTP={pagoTotalMensualTP}
-            />
+        <>
+            <Header />
+            <div className="borrower-dashboard">
+                <div className="dashboard-header">
+                    <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
+                </div>
+                <ProgressStepper currentStep={solicitud.estado} />
+                
+                {/* StatusCard now receives simulation data */}
+                <StatusCard 
+                    solicitud={solicitud} 
+                    oportunidad={oportunidadObj} 
+                    simulation={simulation}
+                    pagoTotalMensualTP={pagoTotalMensualTP}
+                />
 
-            {solicitud.estado === 'pre-aprobado' && (
+                {/* FIX: Always show calculator and document manager in this view for development */}
                 <>
-                    {/* SavingsCalculator is now a controlled component */}
                     <SavingsCalculator 
                         oportunidad={oportunidadObj}
                         simulation={simulation}
@@ -234,9 +235,9 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
                     />
                     <DocumentManager solicitud={solicitud} user={user} uploadedDocuments={documents} onUpload={fetchData} />
                 </>
-            )}
-            <FloatingFinan faqItems={inProgressFaqs} />
-        </div>
+                <FloatingFinan faqItems={inProgressFaqs} />
+            </div>
+        </>
     );
 }
 

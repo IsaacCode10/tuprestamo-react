@@ -52,6 +52,16 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
 
     // --- CÁLCULO TU PRÉSTAMO (V3.1 - con lógica de backend espejada) ---
     const calcularCostoTotalCreditoV3_1 = (principal, annualRate, termMonths, originacion_porcentaje) => {
+        // FIX: Add guard clause to prevent NaN calculations if data is missing
+        if (!principal || !annualRate || !termMonths || !originacion_porcentaje) {
+            return {
+                interesTotal: 0,
+                comisionServicioTotal: 0,
+                costoOriginacion: 0,
+                costoTotalCredito: 0,
+                totalAPagar: 0,
+            };
+        }
         const monthlyRate = annualRate / 12;
         const serviceFeeRate = 0.0015; // 0.15%
         const minServiceFee = 10; // 10 Bs minimum
