@@ -604,4 +604,5 @@ const BorrowerDashboard = () => {
   return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onUpload={fetchData} onLogout={handleLogout} fetchData={fetchData} />;
 };
 
+// Force refresh for Vercel cache
 export default BorrowerDashboard;
