@@ -35,16 +35,19 @@ El sistema ya tiene los datos básicos del prospecto y lo invita a crear su cuen
 
 ---
 
-### **Etapa 3: Perfilamiento y Carga de Documentos (Usuario Autenticado) [✅ Completado]**
+### **Etapa 3: Dashboard Provisional y Carga de Documentos (Conversión) [🚧 En Progreso]**
 
-El usuario ya tiene acceso a su propio panel de control.
+El usuario ya tiene acceso a su panel de control, que ahora actúa como una herramienta de conversión.
 
-1.  **Primer Vistazo al Dashboard (`BorrowerDashboard.jsx`)**
-    *   El usuario inicia sesión y ve su panel de control personal.
-    *   Se le muestra un estado claro y la lista de documentos que debe subir.
+1.  **Dashboard de Conversión (`BorrowerDashboard.jsx`)**
+    *   Al iniciar sesión, el usuario ve un dashboard diseñado para motivarlo a completar el proceso.
+    *   **Cálculos Provisionales:** Se le presenta una **cuota mensual promedio estimada** y visualizaciones de ahorro potencial, calculadas a partir de los datos que él mismo proveyó.
+    *   **Disclaimer de Transparencia:** Para gestionar sus expectativas, se muestra un aviso claro:
+        > *"LA CUOTA MENSUAL FINAL SE DEFINIRÁ CUANDO CONFIRMEMOS TU SALDO DEUDOR"*
 
-2.  **Carga de Documentos (`BorrowerDashboard.jsx`)**
-    *   El usuario sube los archivos requeridos. La interfaz le confirma la carga de cada uno y actualiza la lista de pendientes.
+2.  **Llamada a la Acción: Carga de Documentos (`BorrowerDashboard.jsx`)**
+    *   El objetivo del dashboard es llevar al usuario a la sección de carga de documentos.
+    *   La interfaz muestra la lista de documentos requeridos y permite su subida, confirmando cada éxito y actualizando los pendientes.
 
 ---
 

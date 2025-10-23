@@ -559,18 +559,53 @@ const BorrowerDashboard = () => {
   const navigate = useNavigate();
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate('/auth'); return; }
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
       setUser(user);
 
-      const { data: solData, error: solError } = await supabase.from('solicitudes').select(`*, oportunidades!solicitudes_opportunity_id_fkey(*)`).eq('email', user.email).order('created_at', { ascending: false }).limit(1);
-      if (solError) throw solError;
-      if (!solData.length) { setError('No se encontró una solicitud de préstamo para tu cuenta.'); return; }
-      const currentSolicitud = solData[0];
-      setSolicitud(currentSolicitud);
+      // 1. Fetch la solicitud principal
+      const { data: solData, error: solError } = await supabase
+        .from('solicitudes')
+        .select('*')
+        .eq('email', user.email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single(); // .single() para obtener un objeto, no un array
 
-      const { data: docsData, error: docsError } = await supabase.from('documentos').select('*').eq('solicitud_id', currentSolicitud.id);
+      if (solError) throw solError;
+      if (!solData) {
+        setError('No se encontró una solicitud de préstamo para tu cuenta.');
+        setLoading(false);
+        return;
+      }
+
+      let finalSolicitud = { ...solData, oportunidades: [] };
+
+      // 2. Si hay un opportunity_id, fetch la oportunidad correspondiente
+      if (solData.opportunity_id) {
+        const { data: oppData, error: oppError } = await supabase
+          .from('oportunidades')
+          .select('*')
+          .eq('id', solData.opportunity_id)
+          .single();
+
+        if (oppError) {
+          console.warn('Se encontró un opportunity_id, pero hubo un error al cargar la oportunidad:', oppError);
+        } else if (oppData) {
+          // 3. Combina los datos
+          finalSolicitud.oportunidades = [oppData];
+        }
+      }
+      
+      setSolicitud(finalSolicitud);
+
+      // Fetch de documentos (sin cambios)
+      const { data: docsData, error: docsError } = await supabase.from('documentos').select('*').eq('solicitud_id', solData.id);
       if (docsError) throw docsError;
       setDocuments(docsData);
 

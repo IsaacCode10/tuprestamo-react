@@ -18,14 +18,13 @@ Este documento describe el flujo de usuario y técnico completo, desde la solici
 
 ---
 
-## Fase 2: Carga de Documentos y Síntesis de Perfil [🚧 En Progreso]
+## Fase 2: Dashboard Provisional y Carga de Documentos [🚧 En Progreso]
 
-1.  **Acceso al Dashboard:** El usuario ingresa a su `BorrowerDashboard.jsx`.
-2.  **Carga de Documentos:** El usuario sube los documentos requeridos (CI, extracto de tarjeta, etc.).
-3.  **Síntesis de Perfil (Automático):** `[🚧 En Progreso / 🔒 Bloqueado por Supabase]` Una vez completada la carga, se dispara la Edge Function `sintetizar-perfil-riesgo`.
-    *   Esta función recopila toda la información de `solicitudes` y `documentos`.
-    *   Calcula métricas clave (DTI, score de confianza).
-    *   Crea una nueva fila en la tabla `perfiles_de_riesgo` con el estado `listo_para_revision`.
+1.  **Acceso al Dashboard de Conversión:** El usuario ingresa a su `BorrowerDashboard.jsx`, que le muestra una **simulación de su cuota y ahorro potencial** basada en los datos estimados que proveyó.
+2.  **Objetivo: Motivar la Carga:** El propósito de este dashboard es actuar como una **herramienta de conversión**, mostrando los beneficios para incentivar al usuario a completar el siguiente paso.
+3.  **Transparencia:** Junto a los cálculos provisionales, se muestra un aviso legal claro: *"LA CUOTA MENSUAL FINAL SE DEFINIRÁ CUANDO CONFIRMEMOS TU SALDO DEUDOR"*.
+4.  **Carga de Documentos:** El usuario sube los documentos requeridos (CI, extracto de tarjeta, etc.) a través del mismo dashboard.
+5.  **Síntesis de Perfil (Automático):** `[🚧 En Progreso / 🔒 Bloqueado por Supabase]` Una vez completada la carga, se dispara la Edge Function `sintetizar-perfil-riesgo` para consolidar la información y prepararla para la revisión del analista.
 
 ---
 

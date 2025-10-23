@@ -24,11 +24,11 @@ Esta etapa se inicia cuando el usuario anónimo envía el primer formulario y se
     *   Se abren dos posibles caminos:
 
     **A) Si es Pre-Aprobado (Perfil A, B, o C):**
-    1.  **Cálculo de Costos:** Se calculan todos los costos del crédito (intereses, comisiones, cuota promedio) basados en el perfil de riesgo.
-    2.  **Creación de la Oportunidad:** Se inserta una nueva fila en la tabla `oportunidades` con el `solicitud_id`, el perfil de riesgo, la tasa asignada y todos los costos ya calculados.
+    1.  **Cálculo de Costos Provisionales:** Se realiza un cálculo de costos (cuota promedio, etc.) basado en el **monto estimado** por el cliente. El propósito de este cálculo es alimentar el **dashboard de conversión** inicial.
+    2.  **Creación de la Oportunidad:** Se inserta una nueva fila en la tabla `oportunidades` con el `solicitud_id`, el perfil de riesgo, y los costos **provisionales** calculados.
     3.  **Creación de Usuario:** Se crea una nueva cuenta para el prestatario en Supabase Auth.
-    4.  **Envío de Correo de Activación:** Se genera un "magic link" y se envía un correo de bienvenida y pre-aprobación, invitando al usuario a establecer su contraseña.
-    5.  **Actualización de la Solicitud:** Se actualiza la fila original en `solicitudes` al estado `pre-aprobado` y se le asigna el `user_id` recién creado.
+    4.  **Envío de Correo de Activación:** Se genera un "magic link" y se envía un correo de bienvenida, invitando al usuario a activar su cuenta y ver su dashboard provisional.
+    5.  **Actualización de la Solicitud:** Se actualiza la fila original en `solicitudes` al estado `pre-aprobado`, enlazando el `user_id` y el `opportunity_id` recién creados.
 
     **B) Si es Rechazado:**
     1.  **Actualización de la Solicitud:** Se actualiza la fila en `solicitudes` al estado `rechazado`.

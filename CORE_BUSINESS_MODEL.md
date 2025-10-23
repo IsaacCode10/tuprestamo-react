@@ -62,3 +62,15 @@ Comparación del rendimiento anual de invertir 10,000 Bs contra un DPF bancario 
 | - Comisión por Servicio         | 0 Bs                      | ~107 Bs (1% del flujo)|
 | **GANANCIA NETA ANUAL**         | **350 Bs**                | **~555 Bs**           |
 | **GANANCIA ADICIONAL**          |                           | **+58%** y Flujo Mensual|
+
+#### **5. Flujo de Experiencia del Prestatario (Pre-Aprobación a Conversión)**
+
+Para maximizar la conversión de prospectos pre-aprobados a solicitantes completos, se define un flujo de experiencia específico:
+
+1.  **Dashboard Provisional como Herramienta de Conversión:** Tras la pre-aprobación automática, el usuario accede a un dashboard que muestra los beneficios del refinanciamiento basados en los datos **estimados** que proveyó. Se le presenta una **cuota mensual promedio estimada** y visualizaciones de su **ahorro potencial**.
+
+2.  **Transparencia y Gestión de Expectativas:** Para ser transparentes, junto a la cuota estimada, se muestra un descargo de responsabilidad claro: *"LA CUOTA MENSUAL FINAL SE DEFINIRÁ CUANDO CONFIRMEMOS TU SALDO DEUDOR"*.
+
+3.  **Objetivo Estratégico:** El propósito de este dashboard provisional es **motivar al usuario a completar el proceso de carga de documentos** al mostrarle de forma tangible e inmediata el valor de nuestro producto.
+
+4.  **Cálculo Final:** El cálculo oficial y definitivo (incluyendo el "Gross-Up") se realiza únicamente después de que un analista **verifica el saldo deudor real** en los documentos del cliente.

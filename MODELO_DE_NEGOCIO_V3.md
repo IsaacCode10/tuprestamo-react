@@ -55,3 +55,14 @@ Para resolver esto, el **Monto Total del Préstamo** debe ser una cifra "bruta" 
 3.  **Cálculo:** El sistema aplica el "gross-up" para obtener el **monto total del préstamo** (el bruto).
 4.  **Aprobación:** Se aprueba el préstamo por el monto bruto.
 5.  **Desembolso:** Se transfiere el monto neto al banco acreedor.
+
+## Flujo de Experiencia del Prestatario (Pre-Aprobación)
+
+Para maximizar la conversión, el flujo operativo se enriquece con una experiencia de usuario diseñada para motivar al prestatario a completar el proceso.
+
+1.  **Cálculo y Dashboard Provisional:** Tras la **Solicitud** (Paso 1 del flujo operativo), el sistema realiza un **cálculo provisional** basado en el monto **estimado**. Al activar su cuenta, el prestatario ve un dashboard con una **cuota mensual promedio estimada** y visualizaciones de su ahorro potencial.
+
+2.  **Disclaimer para Transparencia:** Para gestionar expectativas, este dashboard incluye un aviso legal prominente:
+    > *"LA CUOTA MENSUAL FINAL SE DEFINIRÁ CUANDO CONFIRMEMOS TU SALDO DEUDOR"*
+
+3.  **Puente a la Verificación:** Este dashboard provisional actúa como una herramienta de conversión, incentivando al usuario a proceder con la carga de documentos para llegar a la **Verificación** (Paso 2 del flujo operativo) y obtener su oferta final.
