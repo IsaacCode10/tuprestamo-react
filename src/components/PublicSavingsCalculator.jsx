@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
 import './PublicSavingsCalculator.css';
 
 // --- MOTOR DE CÁLCULO REALISTA (REPLICA DEL BACKEND) ---
@@ -54,6 +55,31 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
   const [bankMonthlyFee, setBankMonthlyFee] = useState('100');
   const [term, setTerm] = useState(24); // Default a 24 meses
   const [results, setResults] = useState(null);
+  const analytics = useAnalytics(); // Inicializamos el hook
+
+  // Función centralizada para manejar cambios y enviar eventos
+  const handleInputChange = (inputName, value) => {
+    analytics.capture('interacted_with_calculator', {
+      input_changed: inputName,
+    });
+
+    switch (inputName) {
+      case 'debtAmount':
+        setDebtAmount(value);
+        break;
+      case 'interestRate':
+        setInterestRate(value);
+        break;
+      case 'bankMonthlyFee':
+        setBankMonthlyFee(value);
+        break;
+      case 'term':
+        setTerm(value);
+        break;
+      default:
+        break;
+    }
+  };
 
   // useEffect para calcular automáticamente
   useEffect(() => {
@@ -99,6 +125,17 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
     });
   }, [debtAmount, interestRate, bankMonthlyFee, term]);
 
+  // --- Evento de Analítica: Resultado de cálculo ---
+  useEffect(() => {
+    if (results) {
+      analytics.capture('calculated_loan_result', {
+        result_amount: results.totalSaving,
+        result_term: results.term,
+        monthly_payment: results.tpPaymentA,
+      });
+    }
+  }, [results, analytics]);
+
   // --- RENDERIZADO ---
   return (
     <div className="calculator-layout">
@@ -116,7 +153,7 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
               max="70000" 
               step="1000"
               value={debtAmount} 
-              onChange={(e) => setDebtAmount(e.target.value)} 
+              onChange={(e) => handleInputChange('debtAmount', e.target.value)} 
             />
             <span className="slider-value">Bs. {Number(debtAmount).toLocaleString('es-BO')}</span>
           </div>
@@ -130,7 +167,7 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
               max="50" 
               step="1"
               value={interestRate} 
-              onChange={(e) => setInterestRate(e.target.value)} 
+              onChange={(e) => handleInputChange('interestRate', e.target.value)} 
             />
             <span className="slider-value">{interestRate}%</span>
           </div>
@@ -144,7 +181,7 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
               max="200" 
               step="10"
               value={bankMonthlyFee} 
-              onChange={(e) => setBankMonthlyFee(e.target.value)} 
+              onChange={(e) => handleInputChange('bankMonthlyFee', e.target.value)} 
             />
             <span className="slider-value">Bs. {Number(bankMonthlyFee).toLocaleString('es-BO')}</span>
           </div>
@@ -156,7 +193,7 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
                 <button 
                   key={t} 
                   className={`term-button ${term === t ? 'selected' : ''}`}
-                  onClick={() => setTerm(t)}
+                  onClick={() => handleInputChange('term', t)}
                   type="button"
                 >
                   {t} meses

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
+import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
 import './Opportunities.css';
 
 // --- Componente de Tarjeta de Oportunidad Individual ---
@@ -54,8 +55,11 @@ const Opportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const analytics = useAnalytics(); // Inicializamos el hook
 
   useEffect(() => {
+    analytics.capture('viewed_marketplace'); // Capturamos el evento
+
     const fetchOpportunities = async () => {
       setLoading(true);
       setError(null);
@@ -79,7 +83,7 @@ const Opportunities = () => {
     };
 
     fetchOpportunities();
-  }, []);
+  }, [analytics]);
 
   if (loading) {
     return <p>Cargando oportunidades...</p>;

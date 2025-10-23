@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Maestro del Proyecto - Tu Préstamo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&display=swap');
+
+        :root {
+            --azul-corporativo: #00445A;
+            --turquesa-acento: #26C2B2;
+            --naranja-destaque: #FFA800;
+            --azul-oscuro-fondo: #002F3A;
+            --gris-claro-fondo: #F8F8F8;
+            --blanco: #FFFFFF;
+            --texto-principal: #333;
+            --texto-secundario: #555;
+            --borde-color: #E0E0E0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gris-claro-fondo);
+            color: var(--texto-principal);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--blanco);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--azul-corporativo);
+            color: var(--blanco);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin: 0;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: #f1f1f1;
+        }
+
+        .tab-button {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            background-color: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 20px;
+            transition: 0.3s;
+            font-size: 1rem;
+            flex-grow: 1;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button:hover {
+            background-color: #ddd;
+        }
+
+        .tab-button.active {
+            background-color: var(--blanco);
+            border-bottom: 3px solid var(--turquesa-acento);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0;} 
+            to {opacity: 1;}
+        }
+
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--azul-corporativo);
+            border-bottom: 2px solid var(--gris-claro-fondo);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--gris-claro-fondo);
+            border: 1px solid var(--borde-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .card h3 {
+            font-family: 'Montserrat', sans-serif;
+            margin-top: 0;
+            color: var(--azul-oscuro-fondo);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--borde-color);
+        }
+
+        th {
+            background-color: var(--azul-corporativo);
+            color: var(--blanco);
+        }
+
+        /* Flowchart Styles */
+        .flowchart {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .flow-phase {
+            border: 1px solid var(--borde-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .flow-phase h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .flow-step {
+            background-color: var(--blanco);
+            border: 1px solid var(--borde-color);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .flow-steps > .flow-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: var(--turquesa-acento);
+        }
+
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-tags {
+            margin-top: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .tag-frontend { background-color: #e6f7ff; color: #1890ff; }
+        .tag-backend { background-color: #fffbe6; color: #d46b08; }
+        .tag-admin { background-color: #f9f0ff; color: #722ed1; }
+        .tag-manual { background-color: #fff0f6; color: #eb2f96; }
+
+        .status-tag { font-size: 1.2rem; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Plan Maestro del Proyecto</h1>
+            <p>Tu Préstamo: Conectamos tus metas financieras con oportunidades reales.</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'modelo-negocio')">Modelo de Negocio</button>
+            <button class="tab-button" onclick="openTab(event, 'viaje-prestatario')">Viaje del Prestatario</button>
+            <button class="tab-button" onclick="openTab(event, 'viaje-inversionista')">Viaje del Inversionista</button>
+        </div>
+
+        <div id="modelo-negocio" class="tab-content" style="display: block;">
+            <h2>Modelo de Negocio: La Triple Ganancia</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Filosofía y Principios</h3>
+                    <p>Crear un ecosistema financiero <strong>justo, transparente y de triple ganancia (win-win-win)</strong>:</p>
+                    <ul>
+                        <li><strong>Prestatarios:</strong> Acceden a créditos más baratos que la banca tradicional.</li>
+                        <li><strong>Inversionistas:</strong> Obtienen un rendimiento superior al del mercado.</li>
+                        <li><strong>Tu Préstamo:</strong> Genera ingresos sostenibles para operar e innovar.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>El Cálculo Clave: Gross-Up</h3>
+                    <p>Garantizamos la liquidación del 100% de la deuda del prestatario calculando el préstamo con nuestra comisión ya incluida.</p>
+                    <p><strong>Fórmula:</strong> <code>Monto Total = Saldo a Pagar / (1 - Tasa Comisión)</code></p>
+                </div>
+            </div>
+            
+            <h2>Estructura de Precios y Comisiones</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Tasas por Nivel de Riesgo</h3>
+                    <table>
+                        <tr><th>Nivel</th><th>Tasa Prestatario</th><th>Rendimiento Inversionista</th></tr>
+                        <tr><td>A</td><td>15% Anual</td><td>10% Anual</td></tr>
+                        <tr><td>B</td><td>17% Anual</td><td>12% Anual</td></tr>
+                        <tr><td>C</td><td>20% Anual</td><td>15% Anual</td></tr>
+                    </table>
+                </div>
+                <div class="card">
+                    <h3>Comisiones</h3>
+                    <p><strong>Para el Prestatario:</strong></p>
+                    <ul>
+                        <li><strong>Originación (pago único):</strong> 3% a 5% según el riesgo.</li>
+                        <li><strong>Servicio y Seguro:</strong> 0.15% mensual sobre saldo.</li>
+                    </ul>
+                    <p><strong>Para el Inversionista:</strong></p>
+                    <ul>
+                        <li><strong>Servicio:</strong> 1% sobre cada pago recibido (capital + interés).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="viaje-prestatario" class="tab-content">
+            <h2>El Viaje del Prestatario</h2>
+            <div class="flowchart">
+                <div class="flow-phase">
+                    <h3><span class="status-tag">✅</span> Fase 1: Solicitud y Pre-Aprobación</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step"><div class="step-title">Llenado de Formulario</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Decisión de Pre-Aprobación</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Creación de Usuario y Notificación</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                    </div>
+                </div>
+                <div class="flow-phase">
+                    <h3><span class="status-tag">🚧</span> Fase 2: Carga y Síntesis de Perfil</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step"><div class="step-title">Carga de Documentos</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Síntesis de Perfil (Automático)</div><div class="step-tags"><span class="tag tag-backend">Backend</span><span class="tag tag-admin">🔒</span></div></div>
+                    </div>
+                </div>
+                <div class="flow-phase">
+                    <h3><span class="status-tag">🚧</span> Fase 3: Verificación y Aprobación</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step"><div class="step-title">Revisión en Scorecard</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Decisión Final (Aprobar/Rechazar)</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Guardar Decisión</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                    </div>
+                </div>
+                <div class="flow-phase">
+                    <h3><span class="status-tag">❌</span> Fase 4: Desembolso Dirigido</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step"><div class="step-title">Notificación al Prestatario</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Desembolso a Institución Financiera</div><div class="step-tags"><span class="tag tag-manual">Manual</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="viaje-inversionista" class="tab-content">
+            <h2>El Viaje del Inversionista</h2>
+            <div class="flowchart">
+                <div class="flow-phase">
+                    <h3><span class="status-tag">❌</span> Fase 1: Invitación y Registro</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step"><div class="step-title">Invitación por Admin</div><div class="step-tags"><span class="tag tag-admin">Admin</span></div></div>
+                        <div class="flow-step"><div class="step-title">Creación de Usuario y Envío de Correo</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Activación de Cuenta</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                    </div>
+                </div>
+                <div class="flow-phase">
+                    <h3><span class="status-tag">❌</span> Fase 2: Fondeo de Oportunidades (MVP)</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step"><div class="step-title">Explorar Oportunidades</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Notificar Intención de Fondeo</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Transferencia Bancaria</div><div class="step-tags"><span class="tag tag-manual">Manual</span></div></div>
+                        <div class="flow-step"><div class="step-title">Verificación y Activación</div><div class="step-tags"><span class="tag tag-admin">Admin</span></div></div>
+                    </div>
+                </div>
+                <div class="flow-phase">
+                    <h3><span class="status-tag">❌</span> Fase 3: Gestión de Portafolio y Retornos</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step"><div class="step-title">Recepción de Pago (Prestatario)</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Distribución de Retornos</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Actualización de Dashboard</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Solicitud de Retiro</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+
+</body>
+</html>

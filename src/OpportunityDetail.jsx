@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
+import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
 // import './OpportunityDetail.css'; // We can create this later if needed
 
 const OpportunityDetail = () => {
@@ -9,11 +10,22 @@ const OpportunityDetail = () => {
   const [opportunity, setOpportunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const analytics = useAnalytics(); // Inicializamos el hook
 
   // New state for the investment form
   const [investmentAmount, setInvestmentAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState({ type: '', text: '' });
+
+  // --- Evento de Analítica: Viewed Loan Details ---
+  useEffect(() => {
+    if (opportunity && opportunity.id) {
+      analytics.capture('viewed_loan_details', {
+        loan_id: opportunity.id,
+        loan_amount: opportunity.monto,
+      });
+    }
+  }, [opportunity, analytics]);
 
   const fetchOpportunity = async () => {
     setLoading(true);
@@ -90,6 +102,12 @@ const OpportunityDetail = () => {
       if (insertError) {
         throw insertError;
       }
+
+      // --- Evento de Analítica: Inversión completada ---
+      analytics.capture('completed_investment', {
+        investment_amount: amount,
+        loan_id: id,
+      });
       
       setFormMessage({ type: 'success', text: '¡Tu intención de inversión ha sido registrada con éxito! Actualizando...' });
       setInvestmentAmount('');

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
+import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
 import InteractiveForm from '@/components/InteractiveForm.jsx'; // Importamos el nuevo componente
 import { solicitudPrestatarioSchema } from '@/schemas.js'; // Importamos el esquema de validación
 import '@/Modal.css';
@@ -70,6 +71,13 @@ const borrowerQuestions = [
 
 
 const LoanRequestForm = ({ onClose, role }) => {
+  const analytics = useAnalytics(); // Inicializamos el hook de analítica
+
+  // Capturamos el evento cuando el componente se monta
+  useEffect(() => {
+    analytics.capture('viewed_loan_application_form');
+  }, [analytics]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -107,6 +115,12 @@ const LoanRequestForm = ({ onClose, role }) => {
       if (insertError) {
         throw insertError;
       }
+
+      // Evento de analítica: Solicitud enviada con éxito
+      analytics.capture('submitted_loan_application', {
+        loan_amount: dataToInsert.monto_solicitado,
+        loan_term: dataToInsert.plazo_meses,
+      });
 
       setSuccess(true);
 

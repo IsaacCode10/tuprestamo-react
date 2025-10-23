@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
+import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
 
 import './BorrowerDashboard.css';
 import SavingsCalculator from '@/components/SavingsCalculator.jsx';
@@ -429,6 +430,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
 };
 
 const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
+  const analytics = useAnalytics(); // Inicializamos el hook de analítica
   const [uploadProgress, setUploadProgress] = useState({});
   const [analysing, setAnalysing] = useState({});
   const [errors, setErrors] = useState({});
@@ -462,6 +464,11 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
 
   const handleFileUpload = async (file, docId) => {
     if (!file) return;
+
+    // Evento de analítica: Inicio de subida de documento
+    analytics.capture('started_document_upload', {
+      document_type: docId,
+    });
 
     if (isUploadingGlobal) {
       setErrors(prev => ({ ...prev, [docId]: "Espera a que la subida actual termine." }));
@@ -501,8 +508,20 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
 
       onUpload();
 
+      // Evento de analítica: Documento subido con éxito
+      analytics.capture('successfully_uploaded_document', {
+        document_type: docId,
+      });
+
     } catch (error) {
       console.error("Error en el proceso de carga y análisis:", error);
+
+      // Evento de analítica: Fallo en la subida de documento
+      analytics.capture('failed_document_upload', {
+        document_type: docId,
+        error_message: error.message,
+      });
+
       setErrors(prev => ({ ...prev, [docId]: `Error: ${error.message}` }));
     } finally {
       setUploadProgress(prev => ({ ...prev, [docId]: undefined }));
@@ -548,6 +567,8 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
 // --- Componente Principal del Dashboard ---
 
 const BorrowerDashboard = () => {
+  const analytics = useAnalytics(); // Inicializamos el hook de analítica
+
   // FORZAR ESTADO PARA SIMULACIÓN DE UI: 'en-progreso' o 'desembolsado'
   const [simulationStatus, setSimulationStatus] = useState('en-progreso');
 
@@ -557,6 +578,11 @@ const BorrowerDashboard = () => {
   const [error, setError] = useState(null);
   const [documents, setDocuments] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Capturamos el evento cuando el componente se monta
+    analytics.capture('viewed_borrower_dashboard');
+  }, [analytics]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -607,7 +633,6 @@ const BorrowerDashboard = () => {
       // Fetch de documentos (sin cambios)
       const { data: docsData, error: docsError } = await supabase.from('documentos').select('*').eq('solicitud_id', solData.id);
       if (docsError) throw docsError;
-      setDocuments(docsData);
 
     } catch (err) {
       console.error('Error cargando datos:', err);

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile.js';
+import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
 
 import '@/style.css';
 import Header from '@/components/Header.jsx';
@@ -105,6 +106,32 @@ function App() {
   const { profile, loading, authEvent } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
+  const analytics = useAnalytics(); // Inicializamos el hook
+
+  // --- Evento de Analítica: Campaign Lead ---
+  useEffect(() => {
+    // Solo se ejecuta una vez por sesión
+    if (sessionStorage.getItem('utm_event_fired')) {
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const utmSource = params.get('utm_source');
+    const utmMedium = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
+
+    const properties = {};
+    if (utmSource) properties.utm_source = utmSource;
+    if (utmMedium) properties.utm_medium = utmMedium;
+    if (utmCampaign) properties.utm_campaign = utmCampaign;
+
+    // Si encontramos al menos una propiedad UTM, disparamos el evento
+    if (Object.keys(properties).length > 0) {
+      analytics.capture('campaign_lead', properties);
+      // Marcamos que el evento ya se disparó en esta sesión
+      sessionStorage.setItem('utm_event_fired', 'true');
+    }
+  }, [location.search, analytics]);
 
   // Lista de rutas que se consideran dashboards
   const dashboardPaths = [

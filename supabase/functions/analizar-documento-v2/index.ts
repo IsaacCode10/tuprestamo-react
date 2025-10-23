@@ -53,43 +53,12 @@ Deno.serve(async (req) => {
     const base64File = btoa(binary);
     const fileMimeType = fileResponse.headers.get('Content-Type') || 'application/octet-stream';
 
-    // 4. Authenticate with Google using Service Account and get Access Token
-    const credsJson = Deno.env.get('GOOGLE_CREDENTIALS');
-    if (!credsJson) throw new Error('El secreto GOOGLE_CREDENTIALS no está configurado.');
-    const creds = JSON.parse(credsJson);
+    // 4. Llamar a la API de Gemini usando el método de API Key (el que funcionaba)
+    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!apiKey) throw new Error('El secreto GEMINI_API_KEY no está configurado.');
 
-    const iat = Math.floor(Date.now() / 1000); // Issued at time (now)
-    const exp = iat + 3600; // Expiration time (1 hour from now)
-
-    const jwt = await create({ alg: "RS256", typ: "JWT" }, {
-      iss: creds.client_email,
-      scope: "https://www.googleapis.com/auth/cloud-platform",
-      aud: creds.token_uri,
-      iat: iat,
-      exp: exp,
-    }, creds.private_key);
-
-    const tokenResponse = await fetch(creds.token_uri, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-        assertion: jwt,
-      }),
-    });
-
-    if (!tokenResponse.ok) {
-      const errorBody = await tokenResponse.text();
-      throw new Error(`Error obteniendo el token de autenticación de Google: ${tokenResponse.status} - ${errorBody}`);
-    }
-
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-
-    // 5. Call the Vertex AI API with the access token
-    const modelName = 'gemini-1.5-flash-001'; // Use the current, active model
-    // Note: Using the Vertex AI endpoint which is standard for service account auth.
-    const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${creds.project_id}/locations/us-central1/publishers/google/models/${modelName}:generateContent`;
+    const modelName = 'gemini-2.5-flash'; // Modelo confirmado por la API ListModels
+    const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
 
     const prompt = getPromptForDocument(documentType);
 
@@ -115,12 +84,11 @@ Deno.serve(async (req) => {
       }
     };
 
-    console.log('Paso 1: Llamando a la API de Gemini...');
+    console.log('Paso 1: Llamando a la API de Gemini (método API Key)...');
     const geminiResponse = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify(requestBody)
     });
