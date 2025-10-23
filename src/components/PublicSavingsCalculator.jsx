@@ -1,22 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import './PublicSavingsCalculator.css';
 
+// --- MOTOR DE CÁLCULO REALISTA (REPLICA DEL BACKEND) ---
+const calculateTuPrestamoCosts = (principal, annualRate, termMonths, originacion_porcentaje) => {
+  if (principal <= 0 || termMonths <= 0) return { pagoMensual: 0, ahorroTotal: 0 };
+
+  const monthlyRate = annualRate / 12;
+  const serviceFeeRate = 0.0015; // 0.15%
+  const minServiceFee = 10; // 10 Bs minimum
+
+  let balance = principal;
+  let totalInterest = 0;
+  let totalServiceFee = 0;
+
+  // Usamos la fórmula de PMT para una cuota fija teórica (solo para el bucle)
+  const pmt = (balance * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -termMonths));
+
+  if (!isFinite(pmt) || annualRate <= 0) {
+    const principalPayment = principal / termMonths;
+    for (let i = 0; i < termMonths; i++) {
+      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+      totalServiceFee += serviceFee;
+      balance -= principalPayment;
+    }
+  } else {
+    for (let i = 0; i < termMonths; i++) {
+      const interestPayment = balance * monthlyRate;
+      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+      // La cuota real varía ligeramente, pero para el cálculo total usamos la lógica de amortización
+      const principalPayment = pmt - interestPayment;
+      totalInterest += interestPayment;
+      totalServiceFee += serviceFee;
+      balance -= principalPayment;
+    }
+  }
+
+  const comision_originacion = principal * (originacion_porcentaje / 100);
+  const costo_total_credito = totalInterest + totalServiceFee + comision_originacion;
+  const total_a_pagar = principal + costo_total_credito;
+  const pagoMensualPromedio = total_a_pagar / termMonths;
+
+  return {
+    pagoMensual: pagoMensualPromedio,
+    costoTotal: costo_total_credito,
+    totalAPagar: total_a_pagar
+  };
+};
+
 const PublicSavingsCalculator = ({ onApplyClick }) => {
   // --- ESTADO ---
   const [debtAmount, setDebtAmount] = useState('10000');
   const [interestRate, setInterestRate] = useState('24');
   const [bankMonthlyFee, setBankMonthlyFee] = useState('100');
-  const [term, setTerm] = useState(12);
+  const [term, setTerm] = useState(24); // Default a 24 meses
   const [results, setResults] = useState(null);
-
-  // --- LÓGICA DE CÁLCULO ---
-  const calculateMonthlyPayment = (principal, annualRate, termMonths) => {
-    if (principal <= 0 || termMonths <= 0) return 0;
-    if (annualRate <= 0) return principal / termMonths;
-    const monthlyRate = annualRate / 12;
-    const factor = Math.pow(1 + monthlyRate, termMonths);
-    return principal * (monthlyRate * factor) / (factor - 1);
-  };
 
   // useEffect para calcular automáticamente
   useEffect(() => {
@@ -29,26 +66,33 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
       return;
     }
 
-    // Cálculo del banco
-    const bankInterestPayment = calculateMonthlyPayment(principal, bankAnnualRate, term);
+    // --- Cálculo del Banco (sin cambios) ---
+    const calculateBankMonthlyPayment = (p, r, t) => {
+        if (p <= 0 || t <= 0) return 0;
+        if (r <= 0) return p / t;
+        const monthlyRate = r / 12;
+        const factor = Math.pow(1 + monthlyRate, t);
+        return p * (monthlyRate * factor) / (factor - 1);
+    };
+    const bankInterestPayment = calculateBankMonthlyPayment(principal, bankAnnualRate, term);
     const bankTotalPayment = bankInterestPayment + monthlyFee;
 
-    // Cálculo de Tu Préstamo
-    const tuPrestamoRates = {
-      nivelA: 0.15, // 15%
-      nivelB: 0.17, // 17%
+    // --- Cálculo de Tu Préstamo (LÓGICA NUEVA Y REALISTA) ---
+    const tuPrestamoProfiles = {
+      mejorTasa: { rate: 0.15, originacion: 3.0 }, // Perfil A
+      tasaPromedio: { rate: 0.17, originacion: 4.0 }, // Perfil B
     };
 
-    const tpPaymentA = calculateMonthlyPayment(principal, tuPrestamoRates.nivelA, term);
-    const tpPaymentB = calculateMonthlyPayment(principal, tuPrestamoRates.nivelB, term);
+    const tpResultsA = calculateTuPrestamoCosts(principal, tuPrestamoProfiles.mejorTasa.rate, term, tuPrestamoProfiles.mejorTasa.originacion);
+    const tpResultsB = calculateTuPrestamoCosts(principal, tuPrestamoProfiles.tasaPromedio.rate, term, tuPrestamoProfiles.tasaPromedio.originacion);
     
-    // Cálculo del ahorro
-    const totalSaving = (bankTotalPayment - tpPaymentA) * term;
+    // --- Cálculo del Ahorro (basado en cuotas promedio) ---
+    const totalSaving = (bankTotalPayment - tpResultsA.pagoMensual) * term;
 
     setResults({
       bankPayment: bankTotalPayment,
-      tpPaymentA: tpPaymentA,
-      tpPaymentB: tpPaymentB,
+      tpPaymentA: tpResultsA.pagoMensual,
+      tpPaymentB: tpResultsB.pagoMensual,
       totalSaving: totalSaving,
       bankAnnualRate: bankAnnualRate,
       term: term,
@@ -154,13 +198,13 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
             <div className="savings-summary">
               <p className="savings-label">¡Ahorro Total en {results.term} meses!</p>
               <p className="savings-value">Bs. {results.totalSaving > 0 ? results.totalSaving.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</p>
-              <p className="no-maintenance-fee">¡Y sin costos de mantenimiento mensuales!</p>
+              <p className="no-maintenance-fee">¡Comisiones transparentes incluidas!</p>
             </div>
 
             <div className="apply-button-container">
               <button className="apply-now-button" onClick={onApplyClick}>¡Quiero este Ahorro!</button>
             </div>
-            <p className="results-disclaimer">*Ahorro calculado con nuestra mejor tasa. No incluye costos de originación. La tasa final depende de tu perfil.</p>
+            <p className="results-disclaimer">*El ahorro y la tasa final dependen de la evaluación de tu perfil de crédito.</p>
           </>
         ) : (
           <div className="results-placeholder">

@@ -1,26 +1,24 @@
-# Estado del Proyecto - 23 de Octubre de 2025
+# Estado del Proyecto - 23 de Octubre de 2025 (Fin del Día)
 
-**Misión Actual:** Solucionar bug en el Dashboard del Prestatario donde no se cargan los datos de la oportunidad (cálculos de cuota, ahorro, etc.) después de la pre-aprobación automática.
+**Misión Cumplida:** Se solucionó exitosamente el bug crítico que impedía la visualización de los datos de la oferta provisional (cuota, ahorro) en el Dashboard del Prestatario, que mostraba `N/A`.
 
-**Resumen de Hallazgos:**
+### Resumen del Proceso de Diagnóstico y Solución
 
-1.  **Causa Raíz Identificada:** El problema no es de caché, sino de enlace de datos. La `solicitud` de un nuevo prestatario no está siendo enlazada correctamente con la `oportunidad` que se crea automáticamente. El campo `opportunity_id` en la tabla `solicitudes` probablemente se queda en `NULL`.
+1.  **Problema Inicial:** El Dashboard del Prestatario no mostraba los cálculos del préstamo (`Cuota Mensual`, etc.) después de una pre-aprobación exitosa.
 
-2.  **Automatización Existente:** Se confirmó que la lógica de negocio para la pre-aprobación automática ya existe en la Edge Function `handle-new-solicitud`.
+2.  **Diagnóstico del Backend:**
+    *   Se descubrió que el `opportunity_id` no se estaba guardando en la tabla `solicitudes` cuando la Edge Function `handle-new-solicitud` se ejecutaba. La operación de `UPDATE` fallaba silenciosamente sin generar errores en los logs.
+    *   Se modificó temporalmente la Edge Function para añadir logs de depuración, los cuales confirmaron que la base de datos no devolvía los datos actualizados.
+    *   **Causa Raíz:** Se identificó que la causa era una **política de seguridad a nivel de fila (RLS)** que faltaba. La tabla `solicitudes` no tenía una política que permitiera explícitamente al rol de administrador (`service_role`), usado por las Edge Functions, realizar operaciones de `UPDATE`.
 
-3.  **Análisis de Logs (Caso de Prueba Solicitud 160):** Los logs de la función `handle-new-solicitud` y la data de la tabla `oportunidades` confirman que el flujo se ejecuta casi por completo:
-    *   Se asigna un perfil de riesgo ('A').
-    *   Se crea el usuario.
-    *   Se envía el email de bienvenida.
-    *   **Se crea la `oportunidad` en la base de datos (se confirmó la creación del ID 34).**
-    *   La función llega hasta el final, imprimiendo el log "Actualización a 'pre-aprobado' finalizada".
+3.  **Diagnóstico del Frontend:**
+    *   Una vez solucionado el problema del backend, se detectó un segundo problema: el frontend (`BorrowerDashboard.jsx`) seguía sin mostrar los datos.
+    *   **Causa Raíz:** Se descubrió que la lógica para obtener los datos (`fetchData`) usaba un método de "join" implícito (`oportunidades!foreign_key(*)`) que estaba fallando, probablemente por un nombre de relación incorrecto. No traía los datos de la tabla `oportunidades`.
 
-**El Misterio Pendiente:**
+4.  **Solución Implementada (Multi-capa):**
+    *   **Backend:** Isaac creó una nueva política de RLS en la tabla `solicitudes` otorgando permisos completos (`ALL`) al rol `service_role`. **Esto fue el arreglo fundamental.**
+    *   **Frontend:** Se refactorizó la función `fetchData` en `BorrowerDashboard.jsx`. La nueva lógica es más robusta: primero obtiene la `solicitud` y, si esta tiene un `opportunity_id`, realiza una segunda consulta explícita para obtener la `oportunidad` correspondiente antes de mostrar la página.
+    *   **Documentación:** Se actualizaron 5 documentos clave (`CORE_BUSINESS_MODEL`, `MODELO_DE_NEGOCIO_V3`, y los 3 roadmaps de prestatario) para reflejar la regla de negocio del "Dashboard Provisional de Conversión".
+    *   **Despliegue:** Se subieron todos los cambios a GitHub, lo que generó un nuevo despliegue en Vercel donde la solución fue verificada con éxito.
 
-El punto de fallo está en la última operación de la Edge Function: la actualización de la tabla `solicitudes`. A pesar de que el log indica que la operación finaliza, la evidencia sugiere que la actualización (específicamente, guardar el `opportunity_id` = 34 en la solicitud 160) no se está persistiendo en la base de datos. **La operación falla silenciosamente.**
-
-**Plan de Acción Inmediato:**
-
-1.  **Investigar RLS de `solicitudes`:** La primera sospecha es una política de seguridad (RLS) en la tabla `solicitudes` que podría estar bloqueando la operación de `UPDATE` desde la Edge Function (a pesar de usar la `service_role`). Se le pedirá a Isaac que comparta las políticas de esta tabla.
-
-2.  **Modificar la Edge Function para un Debugging Avanzado:** Si la RLS no es el problema, se modificará la línea de `update` en `handle-new-solicitud` para que además de actualizar, devuelva el dato modificado (`.select().single()`). Esto permitirá ver en los logs qué está devolviendo la base de datos exactamente después de la operación de actualización y confirmar si el `opportunity_id` está presente en ese momento.
+**Resultado Final:** El Dashboard del Prestatario ahora funciona según lo diseñado, mostrando los cálculos provisionales y sirviendo como una herramienta de conversión efectiva.
