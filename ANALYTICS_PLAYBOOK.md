@@ -68,3 +68,12 @@ Se implementarán los eventos definidos por el CEO, utilizando el `useAnalytics`
 **Eventos de Crecimiento (Growth Events):**
 
 - `campaign_lead` (Propiedades: `utm_source`, `utm_medium`, `utm_campaign`)
+
+---
+
+### Estado de Implementación
+
+**Tracking Plan v1:**
+* **Estado:** COMPLETADO
+* **Fecha:** 23 de Octubre de 2025
+* **Detalle:** Todos los eventos definidos en la v1 del plan de tracking han sido implementados y desplegados a producción. Esto incluye los funnels de Prestatario e Inversionista, la interacción con la calculadora y la captura de leads de campañas de marketing. El evento `added_funds_to_wallet` queda pendiente hasta el desarrollo de la funcionalidad de billetera.
