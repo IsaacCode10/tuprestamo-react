@@ -1,0 +1,76 @@
+# CODEX COPILOTO — Diario de Colaboración
+
+Fecha: 24/10/2025
+
+## Propósito
+Documento vivo para coordinar trabajo entre Isaac, Gemini Code Assist y Codex (este asistente), alineando decisiones técnicas, tareas y estándares. Aquí registramos recomendaciones, razones y el estado de implementación.
+
+## Equipo y Roles
+- Isaac (PM/Dev): define prioridades, decide sobre cambios de negocio, provee credenciales y acceso.
+- Gemini Code Assist: pares técnicos, exploración/brainstorm, propuestas de arquitectura y soporte en pruebas.
+- Codex (CLI): implementación ejecutiva, refactors quirúrgicos, hardening de seguridad, limpieza y documentación.
+
+## Estado Actual (resumen)
+- Analítica: Mixpanel ya inicializado (`src/analytics.js`, `src/main.jsx`), eventos de auth en `src/Auth.jsx` y logout en `src/components/Header.jsx`.
+- Inconsistencias: Quedan restos de PostHog en `src/hooks/useProfile.js` y un import roto `useAnalytics` en `src/App.jsx`.
+- Config: Token de Mixpanel hardcodeado en `src/analytics.js` (mover a env).
+- Seguridad: `supabase/functions/invite-investor-user/index.ts` no valida autenticación/rol antes de invitar.
+- Duplicación: `api/sintetizar-perfil-riesgo.js` y `supabase/functions/sintetizar-perfil-riesgo/` conviven.
+- Mantenibilidad: `src/BorrowerDashboard.jsx` es monolítico (múltiples subcomponentes internos).
+- Repo hygiene: Archivos comprimidos (`src.rar`, `supabase.rar`) y problemas de encoding (acentos mojibake) en varios archivos.
+
+## Decisiones Propuestas (para confirmar)
+1) Unificar analítica en Mixpanel y remover PostHog (código + deps + env).
+2) Externalizar `VITE_MIXPANEL_TOKEN` a `.env.local` y no hardcodear tokens.
+3) Endurecer seguridad de `invite-investor-user` exigiendo JWT válido y rol `admin`.
+4) Elegir 1 fuente de verdad para “sintetizar-perfil-riesgo” (Supabase Functions recomendado) y desactivar la otra.
+5) Extraer subcomponentes del dashboard de prestatario para mejorar testeo y mantenibilidad.
+6) Limpiar binarios comprimidos del repo y asegurar UTF‑8 en todo el proyecto.
+
+## Plan Inmediato (S-0 — cambios mínimos para build estable)
+- [ ] `src/App.jsx`: eliminar `useAnalytics` y usar `trackEvent('Campaign Lead', props)`.
+- [ ] `src/hooks/useProfile.js`: reemplazar PostHog por `identifyUser(...)` y `resetMixpanel()` de `src/analytics.js`.
+- [ ] `src/analytics.js`: leer `VITE_MIXPANEL_TOKEN` desde entorno y no hardcodear.
+- [ ] `.env.local`: agregar `VITE_MIXPANEL_TOKEN=` (Isaac provee valor real).
+
+Responsables: Codex implementa; Gemini revisa naming y propiedades de eventos; Isaac provee token y aprueba cambios.
+
+## Seguridad (S-1)
+- [ ] `supabase/functions/invite-investor-user/index.ts`: validar `Authorization` (JWT Supabase), obtener usuario con `auth.getUser()`, verificar rol en `profiles` sea `admin`. Responder 403 si no.
+- [ ] Revisar RLS para tablas sensibles involucradas en flujos de invitación y perfiles.
+
+## Analítica (S-1)
+- Estándar de nombres de eventos: Title Case (p.ej., "Signed Up", "Logged In", "Campaign Lead").
+- Propiedades comunes: `$email`, `role`, `utm_*` cuando aplique.
+- Backlog de eventos según `ANALYTICS_PLAYBOOK.md` y funnels en `STATUS.md`.
+
+## Arquitectura/Infra (S-2)
+- [ ] Decidir plataforma primaria para “sintetizar-perfil-riesgo”: Supabase Functions (recomendado). Documentar el otro endpoint como legado o eliminarlo.
+
+## Mantenibilidad (S-2)
+- [ ] Extraer `ProgressStepper`, `StatusCard`, `DocumentManager`, `FileSlot`, `AmortizationTable` desde `src/BorrowerDashboard.jsx` a `src/components/borrower/` y dejar `BorrowerDashboard.jsx` como orquestador.
+
+## Higiene del Repo (S-2)
+- [ ] Agregar a `.gitignore` binarios/archivos comprimidos y remover `src.rar`, `supabase.rar` del control de versiones.
+- [ ] Armonizar encoding UTF‑8 en editor y repo.
+
+## Flujo de Trabajo y Calidad
+- PR Checklist:
+  - [ ] Build pasa y no hay imports rotos.
+  - [ ] Sin secretos hardcodeados; env vars documentadas.
+  - [ ] Eventos de analítica siguen estándar de nombres/props.
+  - [ ] Endpoints protegidos (auth + rol). Sin PII en logs.
+  - [ ] Código consistente con estilo del repo.
+
+## Registro de Decisiones (ADR)
+- ADR-001: Unificar analítica en Mixpanel. Estado: Propuesto.
+- ADR-002: Validar rol admin en invitaciones. Estado: Propuesto.
+- ADR-003: Fuente de verdad para perfil de riesgo: Supabase Functions. Estado: Propuesto.
+
+## Próximos Pasos (confirmación)
+- Confirmar estas decisiones (1–3 críticas) y proceder con S-0.
+- Isaac: compartir `VITE_MIXPANEL_TOKEN` de producción/staging.
+- Gemini: sugerir propiedades de eventos adicionales para funnels prioritarios.
+
+— Fin del documento inicial —
+

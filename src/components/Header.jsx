@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Link as ScrollLink } from 'react-scroll';
 import { supabase } from '../supabaseClient';
+import { trackEvent, resetMixpanel } from '../analytics';
 import { useProfile } from '../hooks/useProfile';
 import RoleSwitcher from './RoleSwitcher';
 import logo from '../assets/Logo-Tu-Prestamo.png';
@@ -44,6 +45,8 @@ const Header = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    trackEvent('Logged Out');
+    resetMixpanel();
     await supabase.auth.signOut();
     setIsMenuOpen(false);
     navigate('/');

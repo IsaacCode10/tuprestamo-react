@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
+import { trackEvent, identifyUser } from './analytics';
 import './Auth.css';
 
 const Auth = () => {
@@ -30,6 +31,15 @@ const Auth = () => {
         if (error) throw error;
 
         if (data.user) {
+          // Identify the user in Mixpanel and set profile properties
+          identifyUser(data.user.id, {
+            $email: email,
+            'Signup Role': role,
+            full_name: 'Nuevo Usuario',
+          });
+          // Track the sign-up event
+          trackEvent('Signed Up', { 'Signup Role': role });
+
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({ id: data.user.id, role: role, email: email, full_name: 'Nuevo Usuario' });
@@ -40,12 +50,22 @@ const Auth = () => {
 
       } else {
         // --- LOGIN LOGIC ---
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        
+        if (error) {
+          trackEvent('Login Failed', { 'Error Message': error.message });
+          throw error;
+        }
+
+        if(data.user) {
+            identifyUser(data.user.id, { $email: email });
+            trackEvent('Logged In');
+        }
         // App.jsx will handle redirection based on the user's role from their profile
       }
     } catch (error) {
       setError(error.message);
+      // The login failure is already tracked where the error is thrown
     } finally {
       setLoading(false);
     }

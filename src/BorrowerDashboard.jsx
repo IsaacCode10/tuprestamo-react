@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import { trackEvent, resetMixpanel } from './analytics';
 import { Link, useNavigate } from 'react-router-dom';
-import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
 
 import './BorrowerDashboard.css';
 import SavingsCalculator from '@/components/SavingsCalculator.jsx';
@@ -9,6 +9,7 @@ import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import Header from './components/Header';
+import useAnalytics from '@/hooks/useAnalytics';
 
 // --- LISTAS DE FAQs CONTEXTUALES ---
 const approvedLoanFaqs = [
@@ -430,7 +431,6 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
 };
 
 const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
-  const analytics = useAnalytics(); // Inicializamos el hook de analítica
   const [uploadProgress, setUploadProgress] = useState({});
   const [analysing, setAnalysing] = useState({});
   const [errors, setErrors] = useState({});
@@ -466,7 +466,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
     if (!file) return;
 
     // Evento de analítica: Inicio de subida de documento
-    analytics.capture('started_document_upload', {
+    trackEvent('started_document_upload', {
       document_type: docId,
     });
 
@@ -645,6 +645,8 @@ const BorrowerDashboard = () => {
   useEffect(() => { fetchData(); }, [navigate]);
 
   const handleLogout = async () => {
+    trackEvent('Logged Out');
+    resetMixpanel();
     await supabase.auth.signOut();
     navigate('/auth');
   };

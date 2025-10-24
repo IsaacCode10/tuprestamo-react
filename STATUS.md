@@ -1,3 +1,32 @@
+# Estado del Proyecto - 24 de Octubre de 2025
+
+**Asunto:** Integración de Mixpanel para Analítica de Producto (En Progreso)
+
+**Resumen Ejecutivo:** Se ha completado la configuración inicial de Mixpanel y la instrumentación de los eventos de autenticación (`Login`, `Logout`, `Sign Up`, `Login Failed`). El trabajo se encuentra actualmente bloqueado por un error técnico persistente en mis herramientas que impide modificar el componente `BorrowerDashboard.jsx` para finalizar la migración de un sistema de analítica antiguo.
+
+---
+
+### Hitos Completados
+
+*   **Módulo de Analítica (`src/analytics.js`):** Creado y configurado con el token de producción de Mixpanel.
+*   **Inicialización:** Mixpanel se inicia correctamente al cargar la aplicación (`src/main.jsx`).
+*   **Eventos de Autenticación:**
+    *   `src/Auth.jsx`: Se registran los eventos `Signed Up`, `Logged In`, y `Login Failed`, identificando al usuario en el proceso.
+    *   `src/components/Header.jsx`: Se registra el evento `Logged Out`.
+    *   `src/BorrowerDashboard.jsx`: Se registra el evento `Logged Out` en su propia función de logout.
+
+### Bloqueo y Pasos Siguientes
+
+*   **BLOQUEO ACTUAL:** Estoy experimentando un error técnico con mi herramienta de reemplazo de código (`replace`) que me impide modificar el archivo `src/BorrowerDashboard.jsx`. Este error ha sido recurrente y me previene de completar la tarea.
+*   **Tarea Pendiente (Post-Bloqueo):** Una vez superado el error, los pasos para finalizar la limpieza son:
+    1.  **Eliminar Código Obsoleto:** Quitar todas las llamadas a `analytics.capture()` y la inicialización del hook `useAnalytics()` en los componentes `BorrowerDashboard` y `DocumentManager`.
+    2.  **Estandarizar Llamadas:** Reemplazar las llamadas eliminadas por la función estandarizada `trackEvent()`.
+    3.  **Continuar Implementación:** Proceder con la instrumentación del resto de eventos definidos en el `ANALYTICS_PLAYBOOK.md`.
+
+---
+---
+*Contenido Anterior del STATUS.md:*
+
 # Estado del Proyecto - 23 de Octubre de 2025 (Fin del Día)
 
 **Misión Cumplida:** Se ha implementado y desplegado a producción la **versión 1 del Plan de Analítica de Producto** utilizando PostHog.
