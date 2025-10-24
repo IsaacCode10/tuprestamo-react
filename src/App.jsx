@@ -127,7 +127,7 @@ function App() {
 
     // Si encontramos al menos una propiedad UTM, disparamos el evento
     if (Object.keys(properties).length > 0) {
-      analytics.capture('campaign_lead', properties);
+      analytics.capture('Campaign Lead', properties);
       // Marcamos que el evento ya se disparó en esta sesión
       sessionStorage.setItem('utm_event_fired', 'true');
     }

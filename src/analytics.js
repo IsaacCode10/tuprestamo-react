@@ -15,6 +15,8 @@ export const initMixpanel = () => {
     debug: import.meta.env.MODE === 'development',
     track_pageview: true,
     persistence: 'localStorage',
+    autocapture: true,
+    record_sessions_percent: 100,
   });
   initialized = true;
 };
