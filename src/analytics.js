@@ -18,6 +18,9 @@ export const initMixpanel = () => {
     autocapture: true,
     record_sessions_percent: 100,
   });
+  if (typeof mixpanel.start_session_recording === 'function') {
+    try { mixpanel.start_session_recording(); } catch (_) { /* noop */ }
+  }
   initialized = true;
 };
 
