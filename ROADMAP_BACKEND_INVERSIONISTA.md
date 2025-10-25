@@ -1,64 +1,70 @@
-# Roadmap de Backend del Inversionista
+# Roadmap de Backend del Inversionista (Self‑Service, sin fricción)
 
-Este documento detalla los procesos del lado del servidor, funciones, triggers y políticas de seguridad que dan soporte al viaje del inversionista.
+Este documento define los procesos del lado del servidor, funciones, triggers y políticas de seguridad que soportan el viaje del inversionista bajo un modelo 100% automático (sin invitaciones manuales).
 
-**Leyenda de Estados:**
-*   `[✅ Completado]`
-*   `[🚧 En Progreso]`
-*   `[❌ Pendiente]`
-
----
-
-### Etapa 1: Onboarding y Seguridad `[❌ Pendiente]`
-
-Creación y configuración segura del usuario inversionista.
-
-1.  **Función de Invitación (`Edge Function: invite-investor-user`):
-    *   **Disparo:** Invocada manualmente por un administrador a través de una herramienta interna.
-    *   **Acción:** Recibe el email del inversionista. Crea un nuevo usuario en `Supabase Auth` y le asigna el rol personalizado `inversionista`.
-    *   **Salida:** Envía un correo de activación (magic link) al inversionista para que establezca su contraseña.
-
-2.  **Políticas de Seguridad a Nivel de Fila (RLS):
-    *   **Tabla `oportunidades`:** Los usuarios con rol `inversionista` solo pueden leer (`SELECT`) las filas cuyo estado sea `aprobado`.
-    *   **Tabla `perfiles_de_riesgo`:** Los inversionistas pueden leer una versión anonimizada de los perfiles vinculados a las oportunidades aprobadas.
-    *   **Tablas de Portafolio (`inversiones`, `transacciones_inversionista`):** Se debe asegurar que cada inversionista solo pueda leer o escribir las filas que le pertenecen (donde `inversiones.user_id == auth.uid()`).
+Leyenda de estados:
+- [✔ Completado]
+- [⏳ En Progreso]
+- [🟡 Pendiente]
 
 ---
 
-### Etapa 2: Lógica de Fondeo (MVP) `[❌ Pendiente]`
+### Etapa 1: Onboarding y Seguridad [⏳ En Progreso]
 
-Coordinación del flujo de capital desde el inversionista hasta el prestatario.
+Creación y configuración segura del usuario inversionista (self‑service).
 
-1.  **Intención de Fondeo (Iniciada por Frontend):
-    *   El frontend actualiza el `estado` de una fila en la tabla `oportunidades` a `fondeo_pendiente`.
-    *   Se inserta una notificación en una tabla `notificaciones_admin` para alertar al equipo de Operaciones.
+1) Registro self‑service (Supabase Auth)
+- El usuario se registra directamente en la app eligiendo rol inversionista.
+- Verificación de email estándar de Supabase.
+- Edge Function/RPC segura asigna el rol en `profiles` (no confiar en el cliente para roles).
 
-2.  **Confirmación del Fondeo (Proceso de Admin):
-    *   Un administrador, fuera de la plataforma, verifica la recepción de la transferencia bancaria del inversionista.
-    *   Una vez verificado, el administrador usa una interfaz de admin para cambiar el estado de la `oportunidad` a `financiado`.
+2) Post‑signup y bienvenida
+- Trigger/Function de post‑signup crea el registro en `profiles` y envía correo de bienvenida (`send-welcome-email`).
 
-3.  **Disparo del Desembolso (Trigger):
-    *   Un trigger en la base de datos (`on_opportunity_funded`) se activa cuando una oportunidad cambia su estado a `financiado`.
-    *   **Acción:** Este trigger inicia el proceso de desembolso al prestatario (que puede ser una notificación a Operaciones para realizar la transferencia manual al banco del prestatario).
+3) Políticas de Seguridad (RLS)
+- `oportunidades`: los inversionistas leen (`SELECT`) oportunidades con estado `aprobado`/`disponible`.
+- `perfiles_de_riesgo`: lectura anonimizada vinculada a oportunidades aprobadas.
+- `inversiones`, `transacciones_inversionista`: cada inversionista accede solo a sus filas (`user_id == auth.uid()`).
 
 ---
 
-### Etapa 3: Procesamiento de Retornos y Comisiones `[❌ Pendiente]`
+### Etapa 2: Lógica de Fondeo (MVP) [🟡 Pendiente]
 
-Distribución automática de las ganancias generadas por los pagos de los prestatarios.
+1) Intención de Fondeo (Frontend)
+- El inversionista registra una intención en `inversiones` (estado `intencion`) y recibe una referencia de pago.
+- Se muestra la instrucción de transferencia con referencia única.
 
-1.  **Recepción del Pago del Prestatario:
-    *   Otro proceso registra el pago de una cuota de un prestatario en una tabla `pagos_prestatario`.
+2) Conciliación automática de depósito
+- Job/servicio de conciliación busca depósitos entrantes y los asocia por referencia/monto.
+- Al conciliar: actualizar `inversiones` → `recibido`, sumar al progreso de la oportunidad.
 
-2.  **Trigger de Distribución (`on_borrower_payment`):
-    *   Un trigger en la tabla `pagos_prestatario` detecta un nuevo pago exitoso.
-    *   **Acción:** Invoca la Edge Function `distribute_investor_returns`, pasándole los detalles del pago.
+3) Marcado de oportunidad financiada
+- Cuando la suma recibida alcanza el objetivo, la oportunidad cambia a `financiado`.
+- Trigger `on_opportunity_funded` inicia el proceso de desembolso dirigido al banco del prestatario.
 
-3.  **Función de Distribución (`Edge Function: distribute_investor_returns`):
-    *   Recibe los datos del pago.
-    *   Identifica al inversionista que fondeó el préstamo correspondiente.
-    *   Calcula el desglose del pago: capital, interés.
-    *   Calcula la comisión del 1% para Tu Préstamo sobre el total recibido.
-    *   Calcula el monto neto para el inversionista.
-    *   Inserta una nueva fila en la tabla `transacciones_inversionista` con el detalle de la ganancia.
-    *   Actualiza el campo `fondos_disponibles` en el perfil del inversionista.
+---
+
+### Etapa 3: Retornos y Comisiones [🟡 Pendiente]
+
+1) Recepción de pagos del prestatario
+- Registrar pago en `pagos_prestatario` (proceso externo o edge function).
+
+2) Trigger de distribución (`on_borrower_payment`)
+- Al detectar un pago, invoca `distribute_investor_returns`.
+
+3) Edge Function `distribute_investor_returns`
+- Calcula desglose: capital, interés.
+- Calcula comisión 1% para Tu Préstamo sobre el total recibido.
+- Inserta `transacciones_inversionista` y actualiza `fondos_disponibles` del inversionista.
+
+---
+
+### MEJORAS POST MVP
+
+- Deprecación: `Edge Function: invite-investor-user` (onboarding ahora self‑service). Retirar en próxima PR si no hay llamadas activas.
+- Conciliación automática de depósitos (servicio/job) atada a referencias de intención.
+- RPC/Function segura para asignación de rol y creación de `profiles` post‑signup (evitar confiar en el cliente).
+- Límites de inversión por usuario y alertas antifraude básicas.
+- Integración con PSP/Webhooks para fondeo automático cuando sea viable.
+- KYC avanzado con proveedor externo cuando suba el volumen.
+

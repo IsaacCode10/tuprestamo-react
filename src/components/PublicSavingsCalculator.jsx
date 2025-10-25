@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
+import { trackEvent } from '@/analytics.js';
 import './PublicSavingsCalculator.css';
 
 // --- MOTOR DE CÁLCULO REALISTA (REPLICA DEL BACKEND) ---
@@ -55,11 +55,11 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
   const [bankMonthlyFee, setBankMonthlyFee] = useState('100');
   const [term, setTerm] = useState(24); // Default a 24 meses
   const [results, setResults] = useState(null);
-  const analytics = useAnalytics(); // Inicializamos el hook
+  // Analítica centralizada via trackEvent
 
   // Función centralizada para manejar cambios y enviar eventos
   const handleInputChange = (inputName, value) => {
-    analytics.capture('interacted_with_calculator', {
+    trackEvent('Interacted With Calculator', {
       input_changed: inputName,
     });
 
@@ -128,13 +128,13 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
   // --- Evento de Analítica: Resultado de cálculo ---
   useEffect(() => {
     if (results) {
-      analytics.capture('calculated_loan_result', {
+      trackEvent('Calculated Loan Result', {
         result_amount: results.totalSaving,
         result_term: results.term,
         monthly_payment: results.tpPaymentA,
       });
     }
-  }, [results, analytics]);
+  }, [results]);
 
   // --- RENDERIZADO ---
   return (
@@ -254,3 +254,4 @@ const PublicSavingsCalculator = ({ onApplyClick }) => {
 };
 
 export default PublicSavingsCalculator;
+
