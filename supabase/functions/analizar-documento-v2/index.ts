@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) throw new Error('El secreto GEMINI_API_KEY no está configurado.');
 
-    const modelName = (Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash'); // Modelo confirmado por la API ListModels
+    let modelName = (Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash');\n    if (modelName.endsWith('-latest')) { modelName = modelName.replace(/-latest$/, ''); }\n    console.log(Gemini model resolved: );
     const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
 
     const prompt = getPromptForDocument(documentType);
@@ -226,6 +226,7 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
     }
   }
 }
+
 
 
 
