@@ -1,4 +1,4 @@
-﻿
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { create } from 'https://deno.land/x/djwt@v2.2/mod.ts'
 
@@ -13,7 +13,7 @@ interface RequestBody {
   solicitud_id: string
 }
 
-// --- LÃ³gica Principal ---
+// --- Lógica Principal ---
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     // 2. Crear una URL firmada y segura para el archivo
     const { data: urlData, error: urlError } = await supabaseAdmin.storage
       .from('documentos-prestatarios')
-      .createSignedUrl(filePath, 3600) // VÃ¡lida por 1 hora
+      .createSignedUrl(filePath, 3600) // Válida por 1 hora
 
     if (urlError) throw urlError
     const signedUrl = urlData.signedUrl
@@ -53,12 +53,11 @@ Deno.serve(async (req) => {
     const base64File = btoa(binary);
     const fileMimeType = fileResponse.headers.get('Content-Type') || 'application/octet-stream';
 
-    // 4. Llamar a la API de Gemini usando el mÃ©todo de API Key (el que funcionaba)
+    // 4. Llamar a la API de Gemini usando el método de API Key (el que funcionaba)
     const apiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!apiKey) throw new Error('El secreto GEMINI_API_KEY no estÃ¡ configurado.');
+    if (!apiKey) throw new Error('El secreto GEMINI_API_KEY no está configurado.');
 
-    const modelName = (Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash');
-    console.log(`Gemini model resolved to: ${modelName}`);
+    let modelName = (Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash');\n    if (modelName.endsWith('-latest')) { modelName = modelName.replace(/-latest$/, ''); }\n    console.log(Gemini model resolved: );
     const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
 
     const prompt = getPromptForDocument(documentType);
@@ -85,7 +84,7 @@ Deno.serve(async (req) => {
       }
     };
 
-    console.log('Paso 1: Llamando a la API de Gemini (mÃ©todo API Key)...');
+    console.log('Paso 1: Llamando a la API de Gemini (método API Key)...');
     const geminiResponse = await fetch(url, {
       method: 'POST',
       headers: {
@@ -109,19 +108,19 @@ Deno.serve(async (req) => {
       throw new Error('La respuesta de la IA no tiene la estructura esperada.');
     }
     const responseText = result.candidates[0].content.parts[0].text;
-    console.log('Paso 4: Texto extraÃ­do de la respuesta de la IA.');
+    console.log('Paso 4: Texto extraído de la respuesta de la IA.');
 
     // Extraer el bloque JSON de la respuesta de la IA
     const jsonStart = responseText.indexOf('{')
     const jsonEnd = responseText.lastIndexOf('}')
     if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('La respuesta de la IA no contiene un objeto JSON vÃ¡lido.')
+      throw new Error('La respuesta de la IA no contiene un objeto JSON válido.')
     }
     const jsonString = responseText.substring(jsonStart, jsonEnd + 1)
     const extractedData = JSON.parse(jsonString)
-    console.log('Paso 5: JSON extraÃ­do y parseado desde el texto.');
+    console.log('Paso 5: JSON extraído y parseado desde el texto.');
 
-    // 6. Guardar los datos extraÃ­dos en la tabla 'analisis_documentos'
+    // 6. Guardar los datos extraídos en la tabla 'analisis_documentos'
     console.log('Paso 6: Intentando insertar en la base de datos...');
     const { error: dbError } = await supabaseAdmin
       .from('analisis_documentos')
@@ -133,12 +132,12 @@ Deno.serve(async (req) => {
       })
 
     if (dbError) throw dbError
-    console.log('Paso 7: InserciÃ³n en la base de datos exitosa.');
+    console.log('Paso 7: Inserción en la base de datos exitosa.');
 
-    // 7. Verificar si todos los documentos estÃ¡n completos y disparar la sÃ­ntesis
+    // 7. Verificar si todos los documentos están completos y disparar la síntesis
     await checkAndTriggerSynthesis(supabaseAdmin, solicitud_id)
 
-    // 8. Retornar éxito
+    // 8. Retornar �xito
     console.log('Paso 8: Retornando respuesta exitosa.');
     return new Response(JSON.stringify({ ok: true, data: extractedData }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
 
@@ -163,23 +162,23 @@ Deno.serve(async (req) => {
 // Diccionario de Prompts
 function getPromptForDocument(documentType: string): string {
     const prompts = {
-    ci_anverso: "Analiza la imagen del anverso de la cÃ©dula de identidad boliviana. Extrae la siguiente informaciÃ³n: nÃºmero de cÃ©dula, fecha de emisiÃ³n y fecha de expiraciÃ³n. Devuelve los datos estrictamente en formato JSON con las claves 'numero_cedula', 'fecha_emision', y 'fecha_expiracion'. Si un campo no es visible, su valor debe ser null.",
-    ci_reverso: "Analiza la imagen del reverso de la cÃ©dula de identidad boliviana. Extrae el nombre completo, fecha de nacimiento, domicilio y profesiÃ³n u ocupaciÃ³n. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_completo', 'fecha_nacimiento', 'domicilio', y 'profesion'.",
-    factura_servicio: "Analiza la factura de servicio. Extrae el nombre del titular del servicio y la direcciÃ³n. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_titular' y 'direccion'.",
-    extracto_tarjeta: "Analiza el extracto de tarjeta de crÃ©dito. Extrae los siguientes datos y devuÃ©lvelos en un Ãºnico objeto JSON: nombre del banco emisor ('banco'), como 'BNB', 'BCP', 'Mercantil Santa Cruz', e ignora las marcas de la tarjeta como 'VISA' o 'Mastercard', el cual a menudo se puede inferir del logo o de la direcciÃ³n web; nombre del titular ('nombre_titular'); lÃ­mite de crÃ©dito ('limite_credito'); deuda total a la fecha de cierre ('deuda_total'); pago mÃ­nimo requerido ('pago_minimo'); tasa de interÃ©s anual efectiva ('tasa_interes_anual'); saldo del perÃ­odo anterior ('saldo_anterior'); total de pagos realizados en el perÃ­odo ('pagos_realizados'); el monto de intereses por mora o punitorios ('intereses_punitorios'); y el valor numÃ©rico del cargo por 'mantenimiento_cuenta'. Todos los valores numÃ©ricos deben ser nÃºmeros sin sÃ­mbolos de moneda. Si un campo no es visible, su valor debe ser null.",
-    selfie_ci: "Analiza la imagen de una selfie que contiene el anverso de una cÃ©dula de identidad. Extrae Ãºnicamente el nÃºmero de cÃ©dula visible. Adicionalmente, compara la cara de la persona en la selfie con la cara de la foto en la cÃ©dula y responde true o false si parecen ser la misma persona. Devuelve los datos estrictamente en formato JSON con las claves `numero_cedula_selfie` y `verificacion_facial`. Si el nÃºmero de cÃ©dula no es claramente legible, su valor debe ser null. No inventes ni infieras ningÃºn otro dato.",
-    boleta_pago: "Analiza la boleta de pago. Extrae el salario lÃ­quido pagable ('salario_neto'), el nombre completo del empleador ('nombre_empleador'), el mes al que corresponde el pago ('mes_pago'), y, si estÃ¡n detallados, el total ganado ('total_ganado'), el total de descuentos de ley ('total_descuentos'), y el total de ingresos variables como bonos o comisiones ('ingresos_variables'). Todos los valores deben ser nÃºmeros sin sÃ­mbolos. Si un campo no es visible, su valor debe ser null.",
-    certificado_gestora: "Analiza el certificado de la Gestora PÃºblica (o AFP). Extrae el nombre completo del titular ('nombre_titular'), el total de aportes acumulados ('total_aportes'), y la fecha de emisiÃ³n del certificado ('fecha_emision_certificado'). El total de aportes debe ser un nÃºmero sin sÃ­mbolos. Si un campo no es visible, su valor debe ser null.",
-    extracto_bancario_m1: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser nÃºmeros sin sÃ­mbolos de moneda.",
-    extracto_bancario_m2: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser nÃºmeros sin sÃ­mbolos de moneda.",
-    extracto_bancario_m3: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser nÃºmeros sin sÃ­mbolos de moneda.",
-    nit: "Analiza el certificado de NIT. Extrae el nombre o razÃ³n social y el nÃºmero de NIT. Devuelve los datos en formato JSON con las claves 'razon_social' y 'numero_nit'.",
-    boleta_jubilacion: "Analiza la boleta de pago de jubilaciÃ³n. Extrae el lÃ­quido pagable ('ingreso_neto_jubilacion'), el nombre completo del titular ('nombre_titular'), y el ente gestor que emite el pago ('ente_gestor'), por ejemplo, 'SENASIR'. Si un campo no es visible, su valor debe ser null.",
+    ci_anverso: "Analiza la imagen del anverso de la cédula de identidad boliviana. Extrae la siguiente información: número de cédula, fecha de emisión y fecha de expiración. Devuelve los datos estrictamente en formato JSON con las claves 'numero_cedula', 'fecha_emision', y 'fecha_expiracion'. Si un campo no es visible, su valor debe ser null.",
+    ci_reverso: "Analiza la imagen del reverso de la cédula de identidad boliviana. Extrae el nombre completo, fecha de nacimiento, domicilio y profesión u ocupación. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_completo', 'fecha_nacimiento', 'domicilio', y 'profesion'.",
+    factura_servicio: "Analiza la factura de servicio. Extrae el nombre del titular del servicio y la dirección. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_titular' y 'direccion'.",
+    extracto_tarjeta: "Analiza el extracto de tarjeta de crédito. Extrae los siguientes datos y devuélvelos en un único objeto JSON: nombre del banco emisor ('banco'), como 'BNB', 'BCP', 'Mercantil Santa Cruz', e ignora las marcas de la tarjeta como 'VISA' o 'Mastercard', el cual a menudo se puede inferir del logo o de la dirección web; nombre del titular ('nombre_titular'); límite de crédito ('limite_credito'); deuda total a la fecha de cierre ('deuda_total'); pago mínimo requerido ('pago_minimo'); tasa de interés anual efectiva ('tasa_interes_anual'); saldo del período anterior ('saldo_anterior'); total de pagos realizados en el período ('pagos_realizados'); el monto de intereses por mora o punitorios ('intereses_punitorios'); y el valor numérico del cargo por 'mantenimiento_cuenta'. Todos los valores numéricos deben ser números sin símbolos de moneda. Si un campo no es visible, su valor debe ser null.",
+    selfie_ci: "Analiza la imagen de una selfie que contiene el anverso de una cédula de identidad. Extrae únicamente el número de cédula visible. Adicionalmente, compara la cara de la persona en la selfie con la cara de la foto en la cédula y responde true o false si parecen ser la misma persona. Devuelve los datos estrictamente en formato JSON con las claves `numero_cedula_selfie` y `verificacion_facial`. Si el número de cédula no es claramente legible, su valor debe ser null. No inventes ni infieras ningún otro dato.",
+    boleta_pago: "Analiza la boleta de pago. Extrae el salario líquido pagable ('salario_neto'), el nombre completo del empleador ('nombre_empleador'), el mes al que corresponde el pago ('mes_pago'), y, si están detallados, el total ganado ('total_ganado'), el total de descuentos de ley ('total_descuentos'), y el total de ingresos variables como bonos o comisiones ('ingresos_variables'). Todos los valores deben ser números sin símbolos. Si un campo no es visible, su valor debe ser null.",
+    certificado_gestora: "Analiza el certificado de la Gestora Pública (o AFP). Extrae el nombre completo del titular ('nombre_titular'), el total de aportes acumulados ('total_aportes'), y la fecha de emisión del certificado ('fecha_emision_certificado'). El total de aportes debe ser un número sin símbolos. Si un campo no es visible, su valor debe ser null.",
+    extracto_bancario_m1: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser números sin símbolos de moneda.",
+    extracto_bancario_m2: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser números sin símbolos de moneda.",
+    extracto_bancario_m3: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser números sin símbolos de moneda.",
+    nit: "Analiza el certificado de NIT. Extrae el nombre o razón social y el número de NIT. Devuelve los datos en formato JSON con las claves 'razon_social' y 'numero_nit'.",
+    boleta_jubilacion: "Analiza la boleta de pago de jubilación. Extrae el líquido pagable ('ingreso_neto_jubilacion'), el nombre completo del titular ('nombre_titular'), y el ente gestor que emite el pago ('ente_gestor'), por ejemplo, 'SENASIR'. Si un campo no es visible, su valor debe ser null.",
   };
-  return prompts[documentType] || "Analiza el documento y extrae la informaciÃ³n mÃ¡s relevante en formato JSON.";
+  return prompts[documentType] || "Analiza el documento y extrae la información más relevante en formato JSON.";
 }
 
-// VerificaciÃ³n de completitud y disparo de la sÃ­ntesis
+// Verificación de completitud y disparo de la síntesis
 async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string) {
   console.log(`Verificando completitud para solicitud_id: ${solicitud_id}`)
 
@@ -218,16 +217,15 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
   console.log(`Completitud: ${isComplete}. Requeridos: ${requiredDocs.join(', ')}. Subidos: ${[...uploadedDocTypes].join(', ')}`)
 
   if (isComplete) {
-    console.log(`Â¡Completo! Disparando funciÃ³n de sÃ­ntesis para ${solicitud_id}`)
+    console.log(`¡Completo! Disparando función de síntesis para ${solicitud_id}`)
     const { error: invokeError } = await supabaseAdmin.functions.invoke('sintetizar-perfil-riesgo', {
       body: { solicitud_id },
     })
     if (invokeError) {
-      console.error('Error al invocar la funciÃ³n de sÃ­ntesis:', invokeError)
+      console.error('Error al invocar la función de síntesis:', invokeError)
     }
   }
 }
-
 
 
 

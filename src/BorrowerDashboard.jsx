@@ -633,6 +633,7 @@ const BorrowerDashboard = () => {
       // Fetch de documentos (sin cambios)
       const { data: docsData, error: docsError } = await supabase.from('documentos').select('*').eq('solicitud_id', solData.id);
       if (docsError) throw docsError;
+      setDocuments(docsData); // <--- FIX: Update the state with the fetched documents
 
     } catch (err) {
       console.error('Error cargando datos:', err);
