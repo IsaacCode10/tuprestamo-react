@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
+import { trackEvent } from '@/analytics.js';
 // import './OpportunityDetail.css'; // We can create this later if needed
 
 const OpportunityDetail = () => {
@@ -10,7 +10,7 @@ const OpportunityDetail = () => {
   const [opportunity, setOpportunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const analytics = useAnalytics(); // Inicializamos el hook
+  // Analítica centralizada via trackEvent
 
   // New state for the investment form
   const [investmentAmount, setInvestmentAmount] = useState('');
@@ -19,13 +19,13 @@ const OpportunityDetail = () => {
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
-    if (opportunity && opportunity.id) {
-      analytics.capture('viewed_loan_details', {
+  if (opportunity && opportunity.id) {
+      trackEvent('Viewed Loan Details', {
         loan_id: opportunity.id,
         loan_amount: opportunity.monto,
       });
     }
-  }, [opportunity, analytics]);
+  }, [opportunity]);
 
   const fetchOpportunity = async () => {
     setLoading(true);
@@ -104,7 +104,7 @@ const OpportunityDetail = () => {
       }
 
       // --- Evento de Analítica: Inversión completada ---
-      analytics.capture('completed_investment', {
+      trackEvent('Completed Investment', {
         investment_amount: amount,
         loan_id: id,
       });
@@ -235,3 +235,5 @@ const OpportunityDetail = () => {
 };
 
 export default OpportunityDetail;
+
+

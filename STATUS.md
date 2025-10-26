@@ -1,3 +1,21 @@
+# Estado del Proyecto - 24 de Octubre de 2025 (Actualización Noche)
+
+Asunto: Mixpanel operativo en producción con Autocapture y Session Replay
+
+Resumen: Se completó la migración a Mixpanel y se verificó en producción (tuprestamo.com) la recepción de eventos en Live View, así como la reproducción de sesiones. Se resolvió el bug de inicialización ausente y se protegieron llamadas cuando el SDK no está inicializado.
+
+Hitos de hoy
+- Migración técnica: uso de `mixpanel-browser` con token vía `VITE_MIXPANEL_TOKEN` y guardas para no romper si falta el token.
+- Autocapture + Session Replay: habilitados y confirmados en Mixpanel.
+- Evento UTM: estandarizado a “Campaign Lead” y probado con `utm_source`, `utm_medium`, `utm_campaign`.
+- Verificación E2E: login/logout y navegación en producción generan eventos; sesiones visibles en Replays.
+
+Pendientes (mañana)
+- Estándar de nombres de eventos en toda la app (Title Case) y revisar propiedades comunes.
+- Quitar claves PostHog residuales de `.env` y documentación.
+- Endurecer seguridad en `invite-investor-user` (validación JWT + rol admin).
+
+---
 # Estado del Proyecto - 24 de Octubre de 2025
 
 **Asunto:** Integración de Mixpanel para Analítica de Producto (En Progreso)

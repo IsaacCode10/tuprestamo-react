@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) throw new Error('El secreto GEMINI_API_KEY no está configurado.');
 
-    const modelName = 'gemini-2.5-flash'; // Modelo confirmado por la API ListModels
+    let modelName = (Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash');\n    if (modelName.endsWith('-latest')) { modelName = modelName.replace(/-latest$/, ''); }\n    console.log(Gemini model resolved: );
     const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
 
     const prompt = getPromptForDocument(documentType);
@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
           parts: [
             { text: prompt },
             {
-              inline_data: {
-                mime_type: fileMimeType,
+              inlineData: {
+                mimeType: fileMimeType,
                 data: base64File
               }
             }
@@ -137,15 +137,23 @@ Deno.serve(async (req) => {
     // 7. Verificar si todos los documentos están completos y disparar la síntesis
     await checkAndTriggerSynthesis(supabaseAdmin, solicitud_id)
 
-    // 8. Retornar éxito
+    // 8. Retornar �xito
     console.log('Paso 8: Retornando respuesta exitosa.');
+    return new Response(JSON.stringify({ ok: true, data: extractedData }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
 
   } catch (error) {
     console.error(`Error fatal en 'analizar-documento-v2': ${error.message}`)
-    return new Response(JSON.stringify({ error: error.message, details: error.stack }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    const msg = (error as Error)?.message || String(error);
+    console.error(`Error fatal en 'analizar-documento-v2': ${msg}`);
+    let status = 500; let code = 'INTERNAL_ERROR'; let cause = msg; let action = 'Intenta nuevamente. Si persiste, contacta a soporte.';
+    if (msg.includes('son requeridos')) { status = 400; code = 'BAD_REQUEST'; action = 'Verifica filePath, documentType y solicitud_id.'; }
+    else if (msg.includes('GEMINI_API_KEY')) { status = 500; code = 'CONFIG_MISSING'; action = 'Define GEMINI_API_KEY y GEMINI_MODEL en Secrets de Supabase.'; }
+    else if (msg.startsWith('Fallo al obtener el archivo')) { status = 502; code = 'STORAGE_FETCH_FAILED'; action = 'Revisa el path en Storage y permisos del bucket.'; }
+    else if (msg.includes('Error en la API de Gemini')) { status = 502; code = 'GEMINI_API_ERROR'; action = 'Revisa GEMINI_MODEL y cuota; prueba gemini-1.5-flash.'; }
+    else if (msg.includes('estructura esperada') || msg.includes('objeto JSON')) { status = 502; code = 'GEMINI_PARSE_ERROR'; action = 'Sube un documento legible; intenta otra imagen o PDF.'; }
+    else if ((error as any)?.code || (error as any)?.details) { status = 500; code = 'DB_ERROR'; action = 'Verifica esquema y RLS de analisis_documentos.'; }
+    const payload = { error: { code, message: 'Fallo al analizar documento', cause, action } };
+    return new Response(JSON.stringify(payload), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status })
   }
 })
 
@@ -218,3 +226,8 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
     }
   }
 }
+
+
+
+
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import { trackEvent, resetMixpanel } from './analytics';
+import { resetMixpanel } from './analytics';
 import { Link, useNavigate } from 'react-router-dom';
 
 import './BorrowerDashboard.css';
@@ -9,7 +9,7 @@ import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import Header from './components/Header';
-import useAnalytics from '@/hooks/useAnalytics';
+import { trackEvent } from '@/analytics.js';
 
 // --- LISTAS DE FAQs CONTEXTUALES ---
 const approvedLoanFaqs = [
@@ -466,7 +466,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
     if (!file) return;
 
     // Evento de analítica: Inicio de subida de documento
-    trackEvent('started_document_upload', {
+    trackEvent('Started Document Upload', {
       document_type: docId,
     });
 
@@ -509,7 +509,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       onUpload();
 
       // Evento de analítica: Documento subido con éxito
-      analytics.capture('successfully_uploaded_document', {
+      trackEvent('Successfully Uploaded Document', {
         document_type: docId,
       });
 
@@ -517,7 +517,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
       console.error("Error en el proceso de carga y análisis:", error);
 
       // Evento de analítica: Fallo en la subida de documento
-      analytics.capture('failed_document_upload', {
+      trackEvent('Failed Document Upload', {
         document_type: docId,
         error_message: error.message,
       });
@@ -567,7 +567,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload }) => {
 // --- Componente Principal del Dashboard ---
 
 const BorrowerDashboard = () => {
-  const analytics = useAnalytics(); // Inicializamos el hook de analítica
+  // Analítica centralizada via trackEvent
 
   // FORZAR ESTADO PARA SIMULACIÓN DE UI: 'en-progreso' o 'desembolsado'
   const [simulationStatus, setSimulationStatus] = useState('en-progreso');
@@ -581,8 +581,8 @@ const BorrowerDashboard = () => {
 
   useEffect(() => {
     // Capturamos el evento cuando el componente se monta
-    analytics.capture('viewed_borrower_dashboard');
-  }, [analytics]);
+    trackEvent('Viewed Borrower Dashboard');
+  }, );
 
   const fetchData = async () => {
     setLoading(true);
@@ -668,3 +668,8 @@ const BorrowerDashboard = () => {
 
 // Force refresh for Vercel cache
 export default BorrowerDashboard;
+
+
+
+
+

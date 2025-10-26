@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
+import { trackEvent } from '@/analytics.js';
 import './InteractiveForm.css';
 
 const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos el schema
@@ -8,7 +8,7 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
   const [currentValue, setCurrentValue] = useState('');
   const [error, setError] = useState('');
   const [hasStarted, setHasStarted] = useState(false); // Estado para rastrear el inicio del formulario
-  const analytics = useAnalytics(); // Inicializamos el hook
+  // Analítica centralizada via trackEvent
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -24,7 +24,7 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
   const handleInputChange = (e) => {
     // Capturamos el evento solo la primera vez que el usuario interactúa
     if (!hasStarted) {
-      analytics.capture('started_loan_application');
+      trackEvent('Started Loan Application');
       setHasStarted(true); // Marcamos que el usuario ya ha comenzado
     }
 

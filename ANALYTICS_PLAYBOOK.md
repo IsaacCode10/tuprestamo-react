@@ -1,79 +1,66 @@
-# Playbook de Analítica de Producto de "TU PRESTAMO"
+# Playbook de Analítica de Producto — TU PRESTAMO (Mixpanel)
 
-**Filosofía:** No volamos a ciegas. Medimos cada interacción del usuario para entender su comportamiento, eliminar la fricción y construir un producto que la gente ame y por el que pague.
-
----
-
-### Herramienta Seleccionada
-
-- **PostHog:** Solución todo-en-uno que combina analítica de producto, funnels, tendencias, grabaciones de sesiones y más. Su generosa capa gratuita es ideal para nuestra fase de MVP y crecimiento.
+Filosofía: medimos lo esencial para tomar decisiones y crecer, sin inflar costos. Mantener una taxonomía clara, eventos limpios y propiedades útiles.
 
 ---
 
-### Estrategia de Implementación Técnica (CTO-Approved)
+### Herramienta
+- Mixpanel Browser SDK con autocapture y Session Replay muestreado.
+- Producción únicamente por defecto. En `dev/preview` no se envían eventos.
 
-Para asegurar una implementación limpia, escalable y fácil de mantener, se seguirá una estrategia de **servicio centralizado**.
+### Arquitectura Técnica
+- Servicio central: `src/analytics.js` expone `initMixpanel`, `trackEvent`, `identifyUser`, `setSuperProperties`.
+- Reglas globales en el wrapper:
+  - Deduplicación de eventos por nombre en ventana de 2s.
+  - Batching activo (`batch_requests`, `batch_size: 20`).
+  - Session Replay muestreado por ruta (públicas vs dashboards).
+  - Active Ping opcional (apagado por defecto) con límites estrictos.
 
-1.  **Servicio Centralizado:** En lugar de realizar llamadas directas a `posthog.capture()` desde múltiples componentes, se creará un hook o servicio único (ej: `useAnalytics.js`). Todos los eventos se dispararán a través de este servicio. 
-    *   **Ventaja 1 (Cero Errores):** Se evita la dispersión y los errores de tipeo en los nombres de los eventos.
-    *   **Ventaja 2 (Mantenimiento Sencillo):** Si en el futuro se decide cambiar de proveedor de analítica, solo se deberá modificar este archivo central.
+### UTMs y Atribución
+- En init: se registran `referrer_domain`, `landing_page` y UTMs con dos modalidades:
+  - First-touch: `utm_first_*`, `first_gclid`, `first_fbclid` (via `register_once`).
+  - Last-touch: `utm_last_*`, `last_gclid`, `last_fbclid` (via `register`).
+- Enriquecimiento automático de eventos clave: `Campaign Lead` y `Signed Up` adjuntan UTMs actuales.
+- Buenas prácticas: mantener lista corta y consistente de `utm_source` y nombres de campaña.
 
-2.  **Variables de Entorno:** Las credenciales de PostHog (API Key y Host) se gestionarán como variables de entorno (`VITE_PUBLIC_POSTHOG_KEY`, `VITE_PUBLIC_POSTHOG_HOST`) y se configurarán como secretos en Vercel y Supabase, nunca se escribirán directamente en el código.
+### Session Replay y Costos
+- Muestreo recomendado (ajustable por .env):
+  - Públicos: 5% (`VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT`).
+  - Dashboards autenticados: 15% (`VITE_MIXPANEL_REPLAY_AUTH_PERCENT`).
+- Active Ping (opcional): medir “tiempo activo” real cada 60s solo con pestaña visible e interacción reciente, máximo 5 pings/sesión. Apagado por defecto (`VITE_MIXPANEL_ENABLE_ACTIVE_PING=false`).
 
----
+### Taxonomía de Eventos (Title Case)
+- Autenticación: `Signed Up`, `Logged In`, `Logged Out`, `Login Failed`.
+- Growth: `Campaign Lead` (con UTMs).
+- Prestatario:
+  - `Viewed Loan Application Form`
+  - `Started Loan Application`
+  - `Submitted Loan Application` { loan_amount, loan_term }
+  - `Viewed Borrower Dashboard`
+  - Documentos: `Started Document Upload`, `Successfully Uploaded Document`, `Failed Document Upload` { document_type, error_message }
+- Inversionista:
+  - `Viewed Marketplace`
+  - `Viewed Loan Details` { loan_id, loan_amount }
+  - `Completed Investment` { investment_amount, loan_id }
+- Calculadora (pública):
+  - `Interacted With Calculator` { input_changed }
+  - `Calculated Loan Result` { result_amount, result_term, monthly_payment }
 
-### Plan de Implementación por Fases
+### Higiene de Datos
+- Meta: 5–15 eventos por sesión. Evitar ruido de formularios `onChange` salvo acciones clave.
+- Propiedades comunes: rol (`borrower`/`investor`), dispositivo, `utm_*`, `referrer_domain`.
+- Identidad: `identifyUser(user_id, { $email, role })` tras login/registro.
+- Reset en logout: `resetMixpanel()` limpia superprops y sesión.
 
-**Fase 1: Instalación y Configuración**
+### Variables de Entorno útiles (.env.local)
+- `VITE_MIXPANEL_TOKEN=...`
+- `VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT=5`
+- `VITE_MIXPANEL_REPLAY_AUTH_PERCENT=15`
+- `VITE_MIXPANEL_ENABLE_ACTIVE_PING=false`
+- `VITE_MIXPANEL_ACTIVE_PING_INTERVAL_MS=60000`
+- `VITE_MIXPANEL_ACTIVE_PING_MAX=5`
 
-1.  **Instalar SDK:** Añadir `posthog-js` al `package.json`.
-2.  **Configurar Credenciales:** Solicitar al CEO (Isaac) la API Key y el Host de PostHog y configurarlos como secretos.
-3.  **Inicializar PostHog:** Crear un archivo `PostHogProvider.jsx` que inicialice el cliente de PostHog y lo haga disponible para toda la aplicación de React.
+### Escalamiento de Plan
+- Empezar con Starter/Free: volumen estimado del MVP (<150k eventos/trim) cabe bien.
+- Subir a Growth si: superas límites del free de forma sostenida, requieres retención extendida/exports/Groups/SSO, o crece el equipo y la gobernanza.
 
-**Fase 2: Identificación de Usuario y Servicio Central**
-
-1.  **Identificar Usuarios:** En el punto del código donde se gestiona la sesión del usuario (ej: `useAuth` hook), se añadirá la llamada `posthog.identify()` para asociar los eventos a un `user_id` y `email` específicos.
-2.  **Crear Hook de Analítica:** Desarrollar el hook `useAnalytics.js` que expondrá una función `captureEvent(eventName, properties)` para ser usada en toda la aplicación.
-
-**Fase 3: Implementación del "Tracking Plan"**
-
-Se implementarán los eventos definidos por el CEO, utilizando el `useAnalytics` hook en los componentes correspondientes.
-
----
-
-### Tracking Plan Inicial v1
-
-**Eventos del Prestatario (Borrower Events):**
-
-- `viewed_loan_application_form`
-- `started_loan_application`
-- `submitted_loan_application` (Propiedades: `loan_amount`, `loan_term`)
-- `viewed_borrower_dashboard`
-- `started_document_upload` (Propiedades: `document_type`)
-- `successfully_uploaded_document` (Propiedades: `document_type`)
-- `failed_document_upload` (Propiedades: `document_type`, `error_message`)
-
-**Eventos del Inversionista (Investor Events):**
-
-- `viewed_marketplace`
-- `viewed_loan_details` (Propiedades: `loan_id`, `loan_amount`)
-- `added_funds_to_wallet` (Propiedades: `amount`)
-- `completed_investment` (Propiedades: `investment_amount`, `loan_id`)
-
-**Eventos de Features Clave (Feature Events):**
-
-- `interacted_with_calculator` (Propiedades: `input_changed`)
-- `calculated_loan_result` (Propiedades: `result_amount`, `result_term`, `monthly_payment`)
-
-**Eventos de Crecimiento (Growth Events):**
-
-- `campaign_lead` (Propiedades: `utm_source`, `utm_medium`, `utm_campaign`)
-
----
-
-### Estado de Implementación
-
-**Tracking Plan v1:**
-* **Estado:** COMPLETADO
-* **Fecha:** 23 de Octubre de 2025
-* **Detalle:** Todos los eventos definidos en la v1 del plan de tracking han sido implementados y desplegados a producción. Esto incluye los funnels de Prestatario e Inversionista, la interacción con la calculadora y la captura de leads de campañas de marketing. El evento `added_funds_to_wallet` queda pendiente hasta el desarrollo de la funcionalidad de billetera.

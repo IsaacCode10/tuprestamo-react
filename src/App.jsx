@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile.js';
-import useAnalytics from '@/hooks/useAnalytics'; // Importamos el hook de analítica
+import { trackEvent } from '@/analytics.js';
+
 
 import '@/style.css';
 import Header from '@/components/Header.jsx';
@@ -106,7 +107,8 @@ function App() {
   const { profile, loading, authEvent } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
-  const analytics = useAnalytics(); // Inicializamos el hook
+  // analytics wrapper via trackEvent
+
 
   // --- Evento de Analítica: Campaign Lead ---
   useEffect(() => {
@@ -127,11 +129,11 @@ function App() {
 
     // Si encontramos al menos una propiedad UTM, disparamos el evento
     if (Object.keys(properties).length > 0) {
-      analytics.capture('Campaign Lead', properties);
+      trackEvent('Campaign Lead', properties);
       // Marcamos que el evento ya se disparó en esta sesión
       sessionStorage.setItem('utm_event_fired', 'true');
     }
-  }, [location.search, analytics]);
+  }, [location.search ]);
 
   // Lista de rutas que se consideran dashboards
   const dashboardPaths = [
@@ -229,3 +231,8 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
