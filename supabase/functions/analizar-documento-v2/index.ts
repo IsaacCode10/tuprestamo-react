@@ -111,15 +111,53 @@ Deno.serve(async (req) => {
     const responseText = result.candidates[0].content.parts[0].text;
     console.log('Paso 4: Texto extraÃ­do de la respuesta de la IA.');
 
-    // Extraer el bloque JSON de la respuesta de la IA
-    const jsonStart = responseText.indexOf('{')
-    const jsonEnd = responseText.lastIndexOf('}')
-    if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('La respuesta de la IA no contiene un objeto JSON vÃ¡lido.')
+    // --- INICIO: Lógica de parseo de JSON robusta ---
+    let extractedData;
+    let jsonString = '';
+    const responseForError = responseText.substring(0, 500); // Truncar respuesta para no llenar el log
+
+    // 1. Intenta encontrar un bloque de código JSON Markdown
+    const markdownStart = responseText.indexOf('```json');
+    if (markdownStart !== -1) {
+      const jsonBlock = responseText.substring(markdownStart + 7);
+      const markdownEnd = jsonBlock.indexOf('```');
+      if (markdownEnd !== -1) {
+        jsonString = jsonBlock.substring(0, markdownEnd).trim();
+      }
     }
-    const jsonString = responseText.substring(jsonStart, jsonEnd + 1)
-    const extractedData = JSON.parse(jsonString)
-    console.log('Paso 5: JSON extraÃ­do y parseado desde el texto.');
+
+    // 2. Si no hay bloque Markdown, busca un JSON simple entre llaves
+    if (!jsonString) {
+      const jsonStart = responseText.indexOf('{');
+      const jsonEnd = responseText.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        jsonString = responseText.substring(jsonStart, jsonEnd + 1);
+      }
+    }
+
+    // 3. Intenta parsear el string JSON encontrado
+    if (jsonString) {
+      try {
+        extractedData = JSON.parse(jsonString);
+        console.log('Paso 5: JSON extraído y parseado desde el texto.');
+      } catch (parseError) {
+        console.warn('Fallo al parsear el JSON extraído. Se guardará como error.', parseError.message);
+        extractedData = {
+          error: "json_invalido",
+          mensaje: "La IA retornó un JSON bien formado pero inválido.",
+          respuesta_ia: responseForError
+        };
+      }
+    } else {
+      // 4. Si no se encuentra ningún JSON, se guarda un error estructurado
+      console.warn('No se encontró JSON en la respuesta de la IA. Se guardará como error.');
+      extractedData = {
+        error: "json_no_encontrado",
+        mensaje: "La IA no retornó un objeto JSON.",
+        respuesta_ia: responseForError
+      };
+    }
+    // --- FIN: Lógica de parseo de JSON robusta ---
 
     // 6. Guardar los datos extraÃ­dos en la tabla 'analisis_documentos'
     console.log('Paso 6: Intentando insertar en la base de datos...');
@@ -169,7 +207,7 @@ function getPromptForDocument(documentType: string): string {
     extracto_tarjeta: "Analiza el extracto de tarjeta de crÃ©dito. Extrae los siguientes datos y devuÃ©lvelos en un Ãºnico objeto JSON: nombre del banco emisor ('banco'), como 'BNB', 'BCP', 'Mercantil Santa Cruz', e ignora las marcas de la tarjeta como 'VISA' o 'Mastercard', el cual a menudo se puede inferir del logo o de la direcciÃ³n web; nombre del titular ('nombre_titular'); lÃ­mite de crÃ©dito ('limite_credito'); deuda total a la fecha de cierre ('deuda_total'); pago mÃ­nimo requerido ('pago_minimo'); tasa de interÃ©s anual efectiva ('tasa_interes_anual'); saldo del perÃ­odo anterior ('saldo_anterior'); total de pagos realizados en el perÃ­odo ('pagos_realizados'); el monto de intereses por mora o punitorios ('intereses_punitorios'); y el valor numÃ©rico del cargo por 'mantenimiento_cuenta'. Todos los valores numÃ©ricos deben ser nÃºmeros sin sÃ­mbolos de moneda. Si un campo no es visible, su valor debe ser null.",
     selfie_ci: "Analiza la imagen de una selfie que contiene el anverso de una cÃ©dula de identidad. Extrae Ãºnicamente el nÃºmero de cÃ©dula visible. Adicionalmente, compara la cara de la persona en la selfie con la cara de la foto en la cÃ©dula y responde true o false si parecen ser la misma persona. Devuelve los datos estrictamente en formato JSON con las claves `numero_cedula_selfie` y `verificacion_facial`. Si el nÃºmero de cÃ©dula no es claramente legible, su valor debe ser null. No inventes ni infieras ningÃºn otro dato.",
     boleta_pago: "Analiza la boleta de pago. Extrae el salario lÃ­quido pagable ('salario_neto'), el nombre completo del empleador ('nombre_empleador'), el mes al que corresponde el pago ('mes_pago'), y, si estÃ¡n detallados, el total ganado ('total_ganado'), el total de descuentos de ley ('total_descuentos'), y el total de ingresos variables como bonos o comisiones ('ingresos_variables'). Todos los valores deben ser nÃºmeros sin sÃ­mbolos. Si un campo no es visible, su valor debe ser null.",
-    certificado_gestora: "Analiza el certificado de la Gestora PÃºblica (o AFP). Extrae el nombre completo del titular ('nombre_titular'), el total de aportes acumulados ('total_aportes'), y la fecha de emisiÃ³n del certificado ('fecha_emision_certificado'). El total de aportes debe ser un nÃºmero sin sÃ­mbolos. Si un campo no es visible, su valor debe ser null.",
+    certificado_gestora: "Analiza el certificado de la Gestora PÃºblica (o AFP). Extrae el nombre completo del titular ('nombre_titular'), el total de aportes acumulados ('total_aportes'), y la fecha de emisiÃ³n del certificado ('fecha_emision_certificado'). El total de aportes debe ser un nÃºmero sin sÃ­mbolos. Si un campo no es visible, su valor debe ser null. Devuelve los datos estrictamente en formato JSON.",
     extracto_bancario_m1: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser nÃºmeros sin sÃ­mbolos de moneda.",
     extracto_bancario_m2: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser nÃºmeros sin sÃ­mbolos de moneda.",
     extracto_bancario_m3: "Analiza el extracto bancario. Extrae el total de ingresos, el total de egresos y el saldo final del mes. Devuelve los datos estrictamente en formato JSON con las claves 'total_ingresos', 'total_egresos' y 'saldo_final'. Los valores deben ser nÃºmeros sin sÃ­mbolos de moneda.",
