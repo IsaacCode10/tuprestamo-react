@@ -652,6 +652,20 @@ const BorrowerDashboard = () => {
     navigate('/auth');
   };
 
+  const handleUploadSuccess = async () => {
+    if (!solicitud) return;
+    try {
+        const { data: docsData, error: docsError } = await supabase
+            .from('documentos')
+            .select('*')
+            .eq('solicitud_id', solicitud.id);
+        if (docsError) throw docsError;
+        setDocuments(docsData);
+    } catch (err) {
+        console.error('Error refrescando documentos:', err);
+    }
+  };
+
   if (loading) return <div className="borrower-dashboard">Cargando tu panel...</div>;
   if (error) return <div className="borrower-dashboard" style={{ color: 'red' }}>Error: {error}</div>;
   
@@ -664,7 +678,7 @@ const BorrowerDashboard = () => {
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;
 
-  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onUpload={fetchData} onLogout={handleLogout} fetchData={fetchData} />;
+  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onUpload={handleUploadSuccess} onLogout={handleLogout} fetchData={fetchData} />;
 };
 
 // Force refresh for Vercel cache
