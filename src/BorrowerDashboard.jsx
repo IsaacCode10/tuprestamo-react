@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { resetMixpanel } from './analytics';
 import { Link, useNavigate } from 'react-router-dom';
@@ -148,7 +148,75 @@ const calcularCostosTuPrestamo = (principal, annualRate, termMonths, originacion
 };
 
 const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => { /* ... */ };
-const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled }) => { /* ... */ };
+const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled }) => {
+  const inputRef = useRef(null);
+
+  const handleClick = () => {
+    if (disabled) return;
+    inputRef.current?.click();
+  };
+
+  const handleChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      onFileSelect(file);
+    }
+    // Reset input value to allow re-uploading the same file name
+    e.target.value = '';
+  };
+
+  const statusClass = isUploading
+    ? 'status-subiendo'
+    : isUploaded
+    ? 'status-completado'
+    : 'status-pendiente';
+
+  const statusText = error
+    ? 'Error al subir'
+    : isUploading
+    ? `Subiendo... ${Math.max(0, Math.min(100, Number(progress) || 0))}%`
+    : isAnalysing
+    ? 'Analizando documento...'
+    : isUploaded
+    ? 'Completado'
+    : 'Pendiente';
+
+  return (
+    <div
+      className={`file-slot ${isUploaded ? 'completed' : ''} ${disabled ? 'disabled' : ''}`}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') handleClick();
+      }}
+    >
+      <div className="file-slot-icon">📄</div>
+      <div className="file-slot-info">
+        <div className="file-slot-name">{doc.nombre}</div>
+        <div className={`file-slot-status ${statusClass}`}>{statusText}</div>
+        {error && <span className="file-slot-error">{error}</span>}
+      </div>
+      <div className="file-slot-action">➔</div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        style={{ display: 'none' }}
+        onChange={handleChange}
+        disabled={disabled}
+      />
+      {isUploading && (
+        <div className="progress-bar">
+          <div
+            className="progress-bar-inner"
+            style={{ width: `${Math.max(0, Math.min(100, Number(progress) || 0))}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 // --- DOCUMENT MANAGER CONECTADO A LA NUEVA EDGE FUNCTION ---
 const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, requiredDocs }) => {
