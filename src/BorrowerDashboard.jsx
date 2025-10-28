@@ -247,9 +247,10 @@ const BorrowerDashboard = () => {
       if (!user) { navigate('/auth'); return; }
       setUser(user);
 
+      // 1) Traer la solicitud sin embeds para evitar ambigüedad
       const { data: solData, error: solError } = await supabase
         .from('solicitudes')
-        .select('*, oportunidades(*)')
+        .select('*')
         .eq('email', user.email)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -261,10 +262,21 @@ const BorrowerDashboard = () => {
         setLoading(false);
         return;
       }
-      
-      setSolicitud(solData);
+      // 2) Traer oportunidades asociadas en una segunda consulta (sin ambigüedad)
+      const { data: oppsData, error: oppsError } = await supabase
+        .from('oportunidades')
+        .select('*')
+        .eq('solicitud_id', solData.id)
+        .order('created_at', { ascending: false });
+      if (oppsError) throw oppsError;
 
-      const { data: docsData, error: docsError } = await supabase.from('documentos').select('*').eq('solicitud_id', solData.id);
+      const solicitudConOpps = { ...solData, oportunidades: oppsData || [] };
+      setSolicitud(solicitudConOpps);
+
+      const { data: docsData, error: docsError } = await supabase
+        .from('documentos')
+        .select('*')
+        .eq('solicitud_id', solData.id);
       if (docsError) throw docsError;
       setDocuments(docsData || []);
 
