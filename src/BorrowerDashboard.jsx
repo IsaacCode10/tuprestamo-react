@@ -247,18 +247,31 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
       setUploadProgress(prev => ({ ...prev, [docId]: 100 }));
 
       await supabase.from('documentos').upsert({ solicitud_id: solicitud.id, user_id: user.id, tipo_documento: docId, nombre_archivo: fileName, url_archivo: filePath, estado: 'subido' }, { onConflict: ['solicitud_id', 'tipo_documento'] });
-      setAnalysing(prev => ({ ...prev, [docId]: true }));
 
-      await supabase.functions.invoke('analizar-documento-v2', {
-        body: { filePath: filePath, documentType: docId, solicitud_id: solicitud.id },
-      });
-
-      const { error: notifyError } = await supabase.functions.invoke('notify-uploads-complete', {
-        body: { solicitud_id: solicitud.id }
-      });
-      if (notifyError) console.warn('Error calling notify-uploads-complete:', notifyError);
-
+      // Refrescar inmediatamente tras persistir el documento
       onUpload();
+
+      // Ejecutar análisis en segundo plano
+      setAnalysing(prev => ({ ...prev, [docId]: true }));
+      supabase.functions
+        .invoke('analizar-documento-v2', {
+          body: { filePath: filePath, documentType: docId, solicitud_id: solicitud.id },
+        })
+        .then(async ({ error }) => {
+          if (error) console.warn('Error en analizar-documento-v2:', error);
+          const { error: notifyError } = await supabase.functions.invoke('notify-uploads-complete', {
+            body: { solicitud_id: solicitud.id }
+          });
+          if (notifyError) console.warn('Error calling notify-uploads-complete:', notifyError);
+        })
+        .catch(err => {
+          console.warn('Fallo invocando analizar-documento-v2:', err);
+        })
+        .finally(() => {
+          setAnalysing(prev => ({ ...prev, [docId]: false }));
+          // Refrescar al terminar el análisis
+          onUpload();
+        });
       trackEvent('Successfully Uploaded Document', { document_type: docId });
 
     } catch (error) {
@@ -267,7 +280,6 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
       setErrors(prev => ({ ...prev, [docId]: `Error: ${error.message}` }));
     } finally {
       setUploadProgress(prev => ({ ...prev, [docId]: undefined }));
-      setAnalysing(prev => ({ ...prev, [docId]: false }));
       setIsUploadingGlobal(false);
     }
   };
