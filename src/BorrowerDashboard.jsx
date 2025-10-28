@@ -290,7 +290,8 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
       <p>Arrastra y suelta tus archivos en las casillas correspondientes o haz clic para seleccionarlos. Formatos aceptados: PDF, JPG, PNG.</p>
       <div className="document-grid">
         {requiredDocs.map(doc => {
-          const isUploaded = uploadedDocuments.some(d => d.tipo_documento === doc.id && d.estado === 'subido');
+          // Considerar documento "subido" si existe registro, sin depender del estado específico
+          const isUploaded = uploadedDocuments.some(d => d.tipo_documento === doc.id);
           return (
             <FileSlot
               key={doc.id}
@@ -372,6 +373,21 @@ const BorrowerDashboard = () => {
     trackEvent('Viewed Borrower Dashboard');
     fetchData(); 
   }, [navigate]);
+
+  // Suscripción en tiempo real a cambios de 'documentos' para esta solicitud
+  useEffect(() => {
+    if (!solicitud?.id) return;
+    const channel = supabase
+      .channel(`documentos-solicitud-${solicitud.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      try { supabase.removeChannel(channel); } catch (_) {}
+    };
+  }, [solicitud?.id]);
 
   const handleLogout = async () => {
     trackEvent('Logged Out');
