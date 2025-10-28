@@ -147,7 +147,42 @@ const calcularCostosTuPrestamo = (principal, annualRate, termMonths, originacion
     return isFinite(totalAPagar) ? { totalAPagar } : { totalAPagar: 0 };
 };
 
-const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => { /* ... */ };
+const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => {
+  const monto = Number(simulation.montoDeuda) || 0;
+  const tasaBancoAnual = Number(simulation.tasaActual) || 0;
+  const plazo = Number(simulation.plazo) || 0;
+  const costoMant = Number(simulation.costoMantenimientoBanco) || 0;
+
+  const monthlyRateBank = tasaBancoAnual / 100 / 12;
+  const cuotaBanco = monthlyRateBank > 0 && plazo > 0
+    ? (monto * monthlyRateBank) / (1 - Math.pow(1 + monthlyRateBank, -plazo)) + costoMant
+    : 0;
+
+  const tasaTP = oportunidad?.tasa_interes_prestatario ?? null;
+  const comisionOriginacion = oportunidad?.comision_originacion_porcentaje ?? null;
+
+  return (
+    <div className="card">
+      <h2>Resumen de tu Solicitud</h2>
+      <div className="status-card-content">
+        <p className="status-highlight">Tu solicitud está en proceso. Revisa los datos clave:</p>
+        <div className="summary-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+          gap: '1rem',
+          textAlign: 'left'
+        }}>
+          <div className="summary-item"><strong>Monto Solicitado</strong><div>Bs. {monto.toLocaleString()}</div></div>
+          <div className="summary-item"><strong>Tasa Banco (anual)</strong><div>{tasaBancoAnual ? `${tasaBancoAnual.toFixed(1)}%` : '—'}</div></div>
+          <div className="summary-item"><strong>Tasa Propuesta (anual)</strong><div>{tasaTP != null ? `${Number(tasaTP).toFixed(1)}%` : '—'}</div></div>
+          <div className="summary-item"><strong>Cuota Mensual Banco</strong><div>Bs. {cuotaBanco > 0 ? cuotaBanco.toFixed(2) : '—'}</div></div>
+          <div className="summary-item"><strong>Cuota Mensual Tu Préstamo</strong><div>Bs. {pagoTotalMensualTP > 0 ? pagoTotalMensualTP.toFixed(2) : '—'}</div></div>
+          <div className="summary-item"><strong>Comisión de Originación</strong><div>{comisionOriginacion != null ? `${Number(comisionOriginacion).toFixed(1)}%` : '—'}</div></div>
+        </div>
+      </div>
+    </div>
+  );
+};
 const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled }) => {
   const inputRef = useRef(null);
 
@@ -248,10 +283,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
 
       await supabase.from('documentos').upsert({ solicitud_id: solicitud.id, user_id: user.id, tipo_documento: docId, nombre_archivo: fileName, url_archivo: filePath, estado: 'subido' }, { onConflict: ['solicitud_id', 'tipo_documento'] });
 
-      // Refrescar inmediatamente tras persistir el documento
-      onUpload();
-
-      // Ejecutar análisis en segundo plano
+      // Ejecutar análisis en segundo plano (dejamos que Realtime refresque la UI)
       setAnalysing(prev => ({ ...prev, [docId]: true }));
       supabase.functions
         .invoke('analizar-documento-v2', {
@@ -269,8 +301,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
         })
         .finally(() => {
           setAnalysing(prev => ({ ...prev, [docId]: false }));
-          // Refrescar al terminar el análisis
-          onUpload();
+          // No forzamos refresco; Realtime gestiona las actualizaciones
         });
       trackEvent('Successfully Uploaded Document', { document_type: docId });
 
@@ -379,9 +410,7 @@ const BorrowerDashboard = () => {
     if (!solicitud?.id) return;
     const channel = supabase
       .channel(`documentos-solicitud-${solicitud.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, () => {
-        fetchData();
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, () => fetchData())
       .subscribe();
 
     return () => {
