@@ -10,12 +10,10 @@ const Contacto = () => {
         </p>
 
         <div className="contact-options">
-          <a href="https://wa.me/59178271936?text=Hola%20Tu%20Pr%C3%A9stamo%2C%20tengo%20una%20consulta%20sobre%20refinanciamiento."
-             target="_blank"
-             rel="noopener noreferrer"
-             className="contact-btn whatsapp-btn">
-            <span className="icon">📱</span>
-            Contáctanos por WhatsApp
+          <a href="mailto:contacto@tuprestamobo.com"
+             className="contact-btn email-btn">
+            <span className="icon">📧</span>
+            Escríbenos un Correo
           </a>
         </div>
       </div>

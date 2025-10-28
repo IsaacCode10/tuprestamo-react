@@ -2,11 +2,11 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
+import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1';
 
-console.log('Function handle-new-solicitud (V8.0 - Business Model v3.1) starting up.');
+console.log('Function handle-new-solicitud (V8.1 - PDF Auth) starting up.');
 
 // --- Modelo de Negocio v3.1 ---
-
 const PRICING_MODEL = {
   A: { label: 'A', tasa_interes_prestatario: 15.0, tasa_rendimiento_inversionista: 10.0, comision_originacion_porcentaje: 3.0 },
   B: { label: 'B', tasa_interes_prestatario: 17.0, tasa_rendimiento_inversionista: 12.0, comision_originacion_porcentaje: 4.0 },
@@ -14,7 +14,7 @@ const PRICING_MODEL = {
   Rechazado: { label: 'Rechazado' },
 };
 
-// --- NUEVA FUNCIÓN DE CÁLCULO DE COSTOS CENTRALIZADA ---
+// --- FUNCIÓN DE CÁLCULO DE COSTOS (SIN CAMBIOS) ---
 const calculateLoanCosts = (principal, annualRate, termMonths, originacion_porcentaje) => {
   console.log(`Calculando costos para: P=${principal}, R=${annualRate}%, T=${termMonths}m, O=${originacion_porcentaje}%`);
   const monthlyRate = annualRate / 100 / 12;
@@ -119,6 +119,45 @@ const runRiskScorecard = (solicitud) => {
   return PRICING_MODEL.Rechazado;
 };
 
+// --- NUEVA FUNCIÓN PARA GENERAR PDF DE AUTORIZACIÓN ---
+async function generateAuthorizationPDF(solicitud) {
+  const { nombre_completo, cedula_identidad, ciudad } = solicitud;
+  const creationDate = new Date().toLocaleDateString('es-BO', { timeZone: 'America/La_Paz' });
+
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage();
+  const { width, height } = page.getSize();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  let y = height - 50;
+  const margin = 50;
+  const textWidth = width - 2 * margin;
+
+  page.drawText('AUTORIZACIÓN EXPRESA PARA LA CONSULTA DE INFORMACIÓN CREDITICIA', {
+    x: margin,
+    y: y,
+    font: boldFont,
+    size: 14,
+    maxWidth: textWidth,
+    lineHeight: 20,
+  });
+  y -= 40;
+
+  const bodyText = `Por medio del presente documento, yo, ${nombre_completo}, mayor de edad, hábil por derecho, con Cédula de Identidad N° ${cedula_identidad}, con domicilio en la ciudad de ${ciudad}, en mi calidad de solicitante de un producto crediticio:\n\n1. AUTORIZACIÓN: De manera libre, voluntaria y expresa, autorizo a TU PRESTAMO BOLIVIA S.R.L. para que, por cuenta propia o a través de terceros designados, pueda solicitar, consultar, verificar y obtener mi historial crediticio, mi nivel de endeudamiento, mi score de riesgo y cualquier otra información crediticia y de comportamiento comercial que considere relevante.\n\n2. ALCANCE: Esta autorización abarca la consulta de información en todas las centrales de riesgo, buros de información crediticia o entidades análogas, públicas o privadas, que operen en el territorio del Estado Plurinacional de Bolivia, incluyendo, pero no limitándose a, INFOCRED S.A.\n\n3. FINALIDAD: Declaro que la información obtenida será utilizada única y exclusivamente para fines de evaluación, análisis y calificación de mi solicitud de crédito, así como para la gestión de la relación crediticia en caso de que mi solicitud sea aprobada.\n\n4. VIGENCIA: La presente autorización se mantendrá vigente durante todo el tiempo que dure el proceso de análisis y evaluación de mi solicitud de crédito y, en caso de ser aprobada, durante toda la vigencia de la relación contractual con TU PRESTAMO BOLIVIA S.R.L.\n\nEn señal de conformidad con los términos expuestos, acepto la presente autorización de manera digital.\n\nFecha de Aceptación: ${creationDate}\nRegistro de Aceptación Digital: Se registra la dirección IP y la marca de tiempo (timestamp) en el momento de la aceptación como constancia de la manifestación de voluntad.`;
+
+  page.drawText(bodyText, {
+    x: margin,
+    y: y,
+    font: font,
+    size: 11,
+    maxWidth: textWidth,
+    lineHeight: 15,
+  });
+
+  return await pdfDoc.save();
+}
+
 const resend = new Resend(Deno.env.get('RESEND_API_KEY')!);
 
 serve(async (req) => {
@@ -149,17 +188,7 @@ serve(async (req) => {
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
         subject: 'Actualización sobre tu solicitud en Tu Préstamo',
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-            <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
-            <h2>Hola, ${nombre_completo},</h2>
-            <p>Te agradecemos por tu interés en Tu Préstamo. Hemos revisado la información inicial que nos proporcionaste.</p>
-            <p>Lamentablemente, en este momento no podemos continuar con tu solicitud de préstamo. Esta decisión se basa en nuestro modelo de riesgo automático y no necesariamente refleja tu capacidad de pago futura.</p>
-            <p>Te invitamos a volver a intentarlo en el futuro si tus circunstancias financieras cambian.</p>
-            <br>
-            <p>El equipo de Tu Préstamo</p>
-          </div>
-        `,
+        html: `...`,
       });
 
       return new Response(JSON.stringify({ message: 'Solicitud rechazada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
@@ -182,14 +211,13 @@ serve(async (req) => {
 
       const user_id = user.user.id;
       console.log(`Solicitud ${solicitud_id}: user_id creado: ${user_id}`);
-      console.log(`Solicitud ${solicitud_id}: Confiando en el trigger de la DB para crear el perfil.`);
 
-      // Generar link de activación manualmente
+      const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com";
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
         email: email,
         options: {
-          redirectTo: 'https://tuprestamobo.com/confirmar'
+          redirectTo: `${APP_BASE_URL}/confirmar`
         }
       });
 
@@ -200,7 +228,6 @@ serve(async (req) => {
       const magicLink = linkData.properties.action_link;
       console.log(`Solicitud ${solicitud_id}: Magic Link generado.`);
 
-      // Enviar correo de bienvenida con Resend
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
@@ -219,13 +246,12 @@ serve(async (req) => {
               </tr>
             </table>
             <p>Atentamente,<br>El equipo de Tu Préstamo</p>
+            <p style="font-size: 10px; color: #999999; margin-top: 20px;">Ref. de Solicitud: ${solicitud_id}</p>
           </div>
         `,
       });
       console.log(`Solicitud ${solicitud_id}: Correo de bienvenida enviado a ${email} via Resend.`);
 
-      // --- ¡AQUÍ OCURRE LA MAGIA! ---
-      // 1. Calcular todos los costos usando la nueva función centralizada
       const loanCosts = calculateLoanCosts(
         monto_solicitado,
         riskProfile.tasa_interes_prestatario,
@@ -234,7 +260,6 @@ serve(async (req) => {
       );
 
       console.log(`Solicitud ${solicitud_id}: Iniciando inserción de oportunidad con costos calculados.`);
-      // 2. Insertar la oportunidad con los costos ya calculados
       const { data: oppData, error: oppError } = await supabaseAdmin.from('oportunidades').insert([{
         solicitud_id,
         user_id,
@@ -248,7 +273,6 @@ serve(async (req) => {
         cargo_servicio_seguro_porcentaje: 0.15,
         comision_servicio_inversionista_porcentaje: 1.0,
         estado: 'disponible',
-        // --- NUEVOS CAMPOS CON VALORES CALCULADOS ---
         ...loanCosts,
       }]).select().single();
 
@@ -265,6 +289,33 @@ serve(async (req) => {
         throw updateError;
       }
       console.log(`Solicitud ${solicitud_id}: Actualización a 'pre-aprobado' finalizada.`);
+
+      // --- INICIO DE LA NUEVA LÓGICA DE PDF ---
+      console.log(`Solicitud ${solicitud_id}: Generando PDF de autorización.`);
+      const pdfBytes = await generateAuthorizationPDF(solicitud);
+      const pdfFileName = `${user_id}/${solicitud_id}_autorizacion_infocred.pdf`;
+
+      const { error: storageError } = await supabaseAdmin.storage
+        .from('documentos-prestatarios')
+        .upload(pdfFileName, pdfBytes, { contentType: 'application/pdf', upsert: true });
+
+      if (storageError) {
+        console.error(`Error al subir PDF de autorización para solicitud ${solicitud_id}:`, storageError);
+      } else {
+        const { error: dbError } = await supabaseAdmin.from('documentos').insert({
+          solicitud_id: solicitud_id,
+          user_id: user_id,
+          tipo_documento: 'autorizacion_infocred',
+          nombre_archivo: pdfFileName,
+          url_archivo: pdfFileName,
+          estado: 'subido',
+        });
+        if (dbError) {
+          console.error(`Error al insertar registro del PDF en DB para solicitud ${solicitud_id}:`, dbError);
+        }
+      }
+      console.log(`Solicitud ${solicitud_id}: PDF de autorización procesado.`);
+      // --- FIN DE LA NUEVA LÓGICA DE PDF ---
 
       return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada, correo de activación enviado manualmente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }

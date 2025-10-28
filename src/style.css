@@ -977,99 +977,6 @@ header.header {
   font-size: 0.85rem;
 }
 
-/* Ajustes responsivos */
-@media (max-width: 576px) {
-  .footer__socials a {
-    font-size: 1.3rem;
-    margin: 0 0.3rem;
-  }
-  .footer__links {
-    gap: 1rem;
-  }
-  .footer__link {
-    font-size: 0.85rem;
-  }
-  .footer__slogan {
-    font-size: 0.9rem;
-  }
-}
-/* ========================
-   FOOTER – iconos SVG
-   ======================== */
-.footer--custom .footer__socials a {
-  color: var(--primary-color);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-/* Tamaño de cada ícono SVG */
-.footer--custom .footer__socials .social-icon {
-  width: 24px;
-  height: 24px;
-}
-
-/* Hover: cambiamos el color del SVG */
-.footer--custom .footer__socials a:hover .social-icon {
-  color: var(--accent-color-2);
-}
-
-/* ========================
-   Resto del CSS de footer (si lo aplicaste antes)
-   ======================== */
-
-/* (este bloque ya lo pegaste antes; lo incluyo aquí solo como referencia) */
-.footer--custom {
-  background: var(--light-alt-bg);
-  padding: 2rem 0;
-  color: var(--primary-color);
-  text-align: center;
-}
-
-.footer__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.footer__top--custom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.footer__slogan {
-  font-size: 0.95rem;
-  text-align: center;
-  max-width: 600px;
-}
-
-.footer__links {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.footer__link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
-}
-.footer__link:hover {
-  color: var(--accent-color-2);
-  text-decoration: underline;
-}
-
-.footer__bottom--custom {
-  margin-top: 0.5rem;
-}
-.footer__text {
-  font-size: 0.85rem;
-}
-
 @media (max-width: 576px) {
   .footer__socials .social-icon {
     width: 20px;
@@ -1127,4 +1034,27 @@ header.header {
   min-height: 700px;
   border: 1px solid #DDD;
   border-radius: var(--radius);
+}
+
+/* --- ESTILOS PARA EL NUEVO BOTÓN DE EMAIL --- */
+.email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem; /* Texto más grande */
+  font-weight: bold;
+  background: var(--accent-color);
+  color: var(--white); /* Texto blanco */
+  padding: 0.8rem 1.8rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.email-btn:hover {
+  background: #1faca0;
+}
+
+.email-btn .icon {
+  font-size: 1.4rem;
 }
