@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Link as ScrollLink } from 'react-scroll';
 import { supabase } from '../supabaseClient';
@@ -48,6 +48,7 @@ const Header = () => {
   const location = useLocation();
   const [kpiLoading, setKpiLoading] = useState(false);
   const [kpis, setKpis] = useState({ totalInvested: 0, positions: 0 });
+  const centerNavRef = useRef(null);
 
   const handleLogout = async () => {
     trackEvent('Logged Out');
@@ -104,6 +105,18 @@ const Header = () => {
     no_iniciado: 'No iniciado',
   }[verificationStatus] || 'No iniciado';
 
+  // Cerrar menú central al hacer click fuera
+  useEffect(() => {
+    const handleDocClick = (e) => {
+      try {
+        if (centerNavRef.current && centerNavRef.current.contains(e.target)) return;
+      } catch (_) {}
+      if (openCenterMenu) setOpenCenterMenu(null);
+    };
+    document.addEventListener('click', handleDocClick);
+    return () => document.removeEventListener('click', handleDocClick);
+  }, [openCenterMenu]);
+
   return (
     <header className="header">
       <div className="header__container">
@@ -128,7 +141,7 @@ const Header = () => {
                 </li>
               </ul>
             ) : (
-              <ul className="header__nav-list" style={{ justifyContent: 'center', gap: '0.5rem' }}>
+              <ul ref={centerNavRef} className="header__nav-list" style={{ justifyContent: 'center', gap: '0.5rem' }}>
                 <li className="header__nav-item">
                   <button
                     className="header__nav-button"
