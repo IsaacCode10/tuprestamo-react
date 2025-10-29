@@ -147,6 +147,17 @@ function App() {
   // Ocultar solo en confirmación para mantener branding consistente en dashboards
   const isHeaderHidden = hideHeaderPaths.some(path => location.pathname.startsWith(path));
 
+  // Determinar si la ruta actual es un dashboard para ajustar el Footer (estilo minimal)
+  const dashboardPaths = [
+    '/admin-dashboard',
+    '/investor-dashboard',
+    '/admin/manage-investors',
+    '/dashboard-analista',
+    '/borrower-dashboard',
+    '/perfil'
+  ];
+  const isDashboardPage = dashboardPaths.some(path => location.pathname.startsWith(path));
+
   useEffect(() => {
     if (authEvent === 'PASSWORD_RECOVERY') {
       navigate('/confirmar-y-crear-perfil');
