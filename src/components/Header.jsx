@@ -208,7 +208,7 @@ const Header = () => {
           <div className="header__actions">
             {isInvestorArea && (
               <div style={{ marginRight: 8 }}>
-                <NotificationBell />
+                <NotificationBell notifications={[]} />
               </div>
             )}
             {profile ? (
