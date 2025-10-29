@@ -27,8 +27,8 @@
 }
 
 .header__logo {
-  /* Incrementamos el logo para darle mayor presencia sin aumentar el alto total del header */
-  height: 88px;
+  /* Tamaño balanceado con tipografía del menú */
+  height: 72px;
   transition: transform 0.3s ease;
 }
 
@@ -194,8 +194,8 @@
     display: none; /* Ocultamos todo el grupo en móvil por simplicidad */
   }
   .header__logo {
-    /* En móvil lo hacemos un poco más grande manteniendo proporción */
-    height: 56px;
+    /* Mobile */
+    height: 52px;
   }
   /* Aquí se necesitaría un botón de hamburguesa para móvil */
 }
