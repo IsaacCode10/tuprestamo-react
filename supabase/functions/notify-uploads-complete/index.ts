@@ -30,16 +30,22 @@ serve(async (req) => {
       throw new Error("Falta solicitud_id en el cuerpo de la solicitud.");
     }
 
-    // Se usa el SERVICE_ROLE_KEY para tener permisos de escritura en la tabla 'solicitudes'
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? '',
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ''
-    );
+    // Prefer service role when available; otherwise forward the caller's JWT
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? '';
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '';
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? '';
+    const authHeader = req.headers.get("Authorization") ?? '';
+
+    const supabaseDb = serviceKey
+      ? createClient(supabaseUrl, serviceKey)
+      : createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
 
     // 1. Obtener la solicitud y verificar su estado actual para evitar trabajo duplicado.
-    const { data: solicitud, error: solError } = await supabaseAdmin
+    const { data: solicitud, error: solError } = await supabaseDb
       .from('solicitudes')
-      .select('id, estado, situacion_laboral, user_id, user:user_id(email, raw_user_meta_data)')
+      .select('id, estado, situacion_laboral, user_id')
       .eq('id', solicitud_id)
       .single();
 
@@ -55,7 +61,7 @@ serve(async (req) => {
 
     // 2. Determinar documentos requeridos y los que ya se subieron
     const requiredDocs = getRequiredDocs(solicitud.situacion_laboral);
-    const { data: uploadedDocs, error: docsError } = await supabaseAdmin
+    const { data: uploadedDocs, error: docsError } = await supabaseDb
       .from('documentos')
       .select('tipo_documento')
       .eq('solicitud_id', solicitud_id)
@@ -63,7 +69,7 @@ serve(async (req) => {
 
     if (docsError) throw docsError;
 
-    const uploadedDocTypes = uploadedDocs.map(doc => doc.tipo_documento);
+    const uploadedDocTypes = (uploadedDocs ?? []).map((doc: any) => doc.tipo_documento);
     const allDocsUploaded = requiredDocs.every(docId => uploadedDocTypes.includes(docId));
 
     // 3. Si aún faltan documentos, terminar la ejecución silenciosamente.
@@ -71,38 +77,49 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: "Aún faltan documentos por subir." }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 4. ¡ÉXITO! Todos los documentos están. Actualizar estado e invocar el correo.
+    // 4. ÉXITO! Todos los documentos están. Actualizar estado e invocar el correo.
     console.log(`Todos los docs para solicitud ${solicitud_id} subidos. Actualizando estado y enviando correo.`);
 
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await supabaseDb
       .from('solicitudes')
       .update({ estado: 'documentos-en-revision' })
       .eq('id', solicitud_id);
 
     if (updateError) throw updateError;
 
-    // Invocar la función de envío de correo que ya modificamos
-    const { error: functionError } = await supabaseAdmin.functions.invoke('send-final-confirmation-email', {
-      body: { 
-        email: solicitud.user.email, 
-        nombre_completo: solicitud.user.raw_user_meta_data?.full_name || ''
-      },
-    });
-
-    if (functionError) {
-      console.error("Error al invocar send-final-confirmation-email:", functionError);
-      // No lanzamos un error fatal, la actualización de estado es más importante.
+    // Intentar enviar email solo si hay service role configurado
+    if (serviceKey) {
+      try {
+        const adminClient = createClient(supabaseUrl, serviceKey);
+        const { data: userRes, error: adminErr } = await adminClient.auth.admin.getUserById(solicitud.user_id);
+        if (adminErr) throw adminErr;
+        const email = userRes?.user?.email ?? '';
+        const nombre_completo = (userRes?.user?.user_metadata as any)?.full_name ?? '';
+        if (email) {
+          const { error: functionError } = await adminClient.functions.invoke('send-final-confirmation-email', {
+            body: { email, nombre_completo },
+          });
+          if (functionError) {
+            console.error("Error al invocar send-final-confirmation-email:", functionError);
+          }
+        } else {
+          console.warn('No se pudo obtener el email del usuario para enviar confirmación.');
+        }
+      } catch (e) {
+        console.error('Fallo al intentar enviar el correo de confirmación:', e);
+      }
     }
 
-    return new Response(JSON.stringify({ message: "¡Éxito! La solicitud ha sido actualizada a 'documentos-en-revision' y se ha notificado al usuario." }), {
+    return new Response(JSON.stringify({ message: "Éxito! La solicitud ha sido actualizada a 'documentos-en-revision' y se ha notificado al usuario." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     });
   }
 });
+

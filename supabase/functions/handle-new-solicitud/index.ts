@@ -169,6 +169,53 @@ serve(async (req) => {
     const { record: solicitud } = await req.json();
     const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses } = solicitud;
 
+    // Flujo AUTOMÁTICO para INVERSIONISTA: generar invitación y enviar correo de bienvenida
+    if (tipo_solicitud === 'inversionista') {
+      console.log(`Solicitud ${solicitud_id}: Iniciando flujo inversionista (auto-invite).`);
+      const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
+      const APP_BASE_URL = Deno.env.get('APP_BASE_URL') || 'https://www.tuprestamobo.com';
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'invite',
+        email: email,
+        options: {
+          redirectTo: `${APP_BASE_URL}/confirmar-y-crear-perfil`,
+          data: { nombre_completo, role: 'inversionista' },
+        },
+      });
+      if (linkError) {
+        console.error(`Solicitud ${solicitud_id}: Error al generar link de invitación:`, linkError);
+        throw linkError;
+      }
+      const inviteLink = linkData.properties.action_link;
+
+      const resendResponse = await resend.emails.send({
+        from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+        to: [email],
+        subject: `¡Bienvenido ${nombre_completo} a Tu Préstamo! Activa tu cuenta de inversionista`,
+        html: `
+          <h1>¡Bienvenido ${nombre_completo} a Tu Préstamo!</h1>
+          <p>Estás a un paso de acceder a oportunidades de inversión exclusivas.</p>
+          <p>Por favor, haz clic en el siguiente enlace para configurar tu contraseña y activar tu cuenta:</p>
+          <p style="margin:20px 0">
+            <a href="${inviteLink}" style="background-color:#26C2B2; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">Activar Mi Cuenta</a>
+          </p>
+          <p>Si no solicitaste este acceso, puedes ignorar este correo.</p>
+          <p style="margin-top:20px">Atentamente,<br>El equipo de Tu Préstamo</p>
+        `,
+        text: `Hola ${nombre_completo},\n\nBienvenido a Tu Préstamo. Para activar tu cuenta de inversionista, abre este enlace: ${inviteLink}\n\nSi no solicitaste este acceso, ignora este correo.\n\nAtentamente,\nEl equipo de Tu Préstamo`,
+        reply_to: 'contacto@tuprestamobo.com',
+      });
+      console.log('Resend response (investor):', resendResponse);
+      console.log(`Solicitud ${solicitud_id}: Correo de bienvenida inversionista enviado a ${email}.`);
+
+      try {
+        await supabaseAdmin.from('solicitudes').update({ estado: 'contactado' }).eq('id', solicitud_id);
+      } catch (_) {}
+
+      return new Response(JSON.stringify({ message: 'Invitación enviada a inversionista.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
     if (tipo_solicitud !== 'prestatario') {
       console.log(`Procesando otro tipo de solicitud: ${tipo_solicitud}`);
       return new Response(JSON.stringify({ message: 'Solicitud no procesable por esta función.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
