@@ -36,7 +36,7 @@ const InvestorDashboard = ({ profile }) => {
       case 'requiere_revision_manual':
         return (
           <>
-            <div style={{ background: '#ffe6e6', border: '1px solid '#ffb3b3', color: '#8b0000', padding: '12px', borderRadius: 8 }}>
+            <div style={{ background: '#ffe6e6', border: '1px solid #ffb3b3', color: '#8b0000', padding: '12px', borderRadius: 8 }}>
               No pudimos confirmar tu verificación de identidad. Revisa y vuelve a intentarlo.
             </div>
             <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
