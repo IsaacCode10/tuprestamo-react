@@ -46,6 +46,8 @@ const Header = () => {
   const [openCenterMenu, setOpenCenterMenu] = useState(null); // 'invertir' | 'portafolio' | 'cuenta' | null
   const navigate = useNavigate();
   const location = useLocation();
+  const [kpiLoading, setKpiLoading] = useState(false);
+  const [kpis, setKpis] = useState({ totalInvested: 0, positions: 0 });
 
   const handleLogout = async () => {
     trackEvent('Logged Out');
@@ -133,12 +135,48 @@ const Header = () => {
                 <li className="header__nav-item">
                   <button
                     className="header__nav-button"
-                    onClick={() => setOpenCenterMenu(openCenterMenu === 'portafolio' ? null : 'portafolio')}
+                    onClick={async () => {
+                      const next = openCenterMenu === 'portafolio' ? null : 'portafolio';
+                      setOpenCenterMenu(next);
+                      if (next === 'portafolio' && profile) {
+                        try {
+                          setKpiLoading(true);
+                          const { data: { user } } = await supabase.auth.getUser();
+                          if (user) {
+                            const { data, error } = await supabase
+                              .from('inversiones')
+                              .select('amount, opportunity_id')
+                              .eq('investor_id', user.id);
+                            if (!error && Array.isArray(data)) {
+                              const totalInvested = data.reduce((acc, r) => acc + Number(r.amount || 0), 0);
+                              const positions = new Set(data.map(r => r.opportunity_id)).size;
+                              setKpis({ totalInvested, positions });
+                            }
+                          }
+                        } catch (_) { /* noop */ } finally { setKpiLoading(false); }
+                      }
+                    }}
                   >
                     Portafolio ▾
                   </button>
                   {openCenterMenu === 'portafolio' && (
-                    <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
+                    <div className="header__dropdown-menu" style={{ minWidth: 260 }}>
+                      <div className="header__dropdown-item" style={{ cursor: 'default', paddingBottom: 8 }}>
+                        {kpiLoading ? (
+                          <span>Cargando resumen…</span>
+                        ) : (
+                          <div style={{ display: 'flex', gap: 12 }}>
+                            <div style={{ minWidth: 110 }}>
+                              <div style={{ fontSize: 12, opacity: 0.7 }}>Total Invertido</div>
+                              <div style={{ fontWeight: 700 }}>Bs. {Number(kpis.totalInvested || 0).toLocaleString('es-BO')}</div>
+                            </div>
+                            <div style={{ minWidth: 110 }}>
+                              <div style={{ fontSize: 12, opacity: 0.7 }}>Oportunidades</div>
+                              <div style={{ fontWeight: 700 }}>{kpis.positions || 0}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/mis-inversiones'); }}>Mis Inversiones</button>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/retiro'); }}>Retiros</button>
                     </div>
