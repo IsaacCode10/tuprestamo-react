@@ -180,7 +180,8 @@ serve(async (req) => {
         email: email,
         options: {
           redirectTo: `${APP_BASE_URL}/confirmar-y-crear-perfil`,
-          data: { nombre_completo, role: 'inversionista' },
+          // Incluir "full_name" para que el Dashboard de Supabase muestre Display Name
+          data: { nombre_completo, full_name: nombre_completo, role: 'inversionista' },
         },
       });
       if (linkError) {

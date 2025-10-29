@@ -62,6 +62,20 @@ const ConfirmAndSetPassword = () => {
       const desiredNombre = user?.user_metadata?.nombre_completo || user?.user_metadata?.full_name || null;
       const email = user?.email || null;
 
+      // También actualizar metadata del usuario para que Supabase muestre el Display Name
+      try {
+        if (desiredNombre || desiredRole) {
+          await supabase.auth.updateUser({
+            data: {
+              ...(desiredNombre ? { full_name: desiredNombre, nombre_completo: desiredNombre } : {}),
+              ...(desiredRole ? { role: desiredRole } : {}),
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('No se pudo actualizar user metadata (full_name/role):', e);
+      }
+
       // Intentar obtener el perfil existente (puede no existir aún para flujo de invitación)
       const { data: existingProfile, error: fetchErr } = await supabase
         .from('profiles')
