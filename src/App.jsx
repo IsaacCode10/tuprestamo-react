@@ -161,6 +161,17 @@ function App() {
   ];
   const isDashboardPage = dashboardPaths.some(path => location.pathname.startsWith(path));
 
+  // Mostrar footer completo en el área del inversionista (no usar versión minimal)
+  const investorAreaPaths = [
+    '/investor-dashboard',
+    '/mis-inversiones',
+    '/retiro',
+    '/oportunidades',
+    '/verificar-cuenta'
+  ];
+  const isInvestorArea = investorAreaPaths.some(path => location.pathname.startsWith(path));
+  const isDashboardFooterMinimal = isDashboardPage && !isInvestorArea;
+
   useEffect(() => {
     if (authEvent === 'PASSWORD_RECOVERY') {
       navigate('/confirmar-y-crear-perfil');
@@ -265,7 +276,7 @@ function App() {
           <Route path="/activar-cuenta-prestatario" element={<BorrowerActivateAccount />} />
         </Routes>
       </main>
-      <Footer isDashboard={isDashboardPage} />
+      <Footer isDashboard={isDashboardFooterMinimal} />
     </div>
   );
 }
