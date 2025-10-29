@@ -5,16 +5,16 @@
 }
 
 .footer__inner {
-  padding: 16px 0; /* compacto */
-  line-height: 1.3; /* reduce alturas de línea */
+  padding: 10px 0; /* más compacto */
+  line-height: 1.2; /* líneas más cerradas */
 }
 
 .footer__top {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column; /* apilar y centrar */
   align-items: center;
-  gap: 8px; /* compacto */
-  margin-bottom: 8px; /* compacto */
+  gap: 4px; /* muy compacto entre filas */
+  margin-bottom: 4px; /* muy compacto */
 }
 
 .footer__socials {
@@ -45,12 +45,14 @@
 .footer__slogan {
   font-size: 0.9rem; /* compacto */
   color: #465;
+  margin: 0; /* elimina espacios verticales extra del <p> */
 }
 
 .footer__links {
   display: flex;
-  gap: 8px; /* compacto */
-  margin: 4px 0 8px 0; /* compacto */
+  justify-content: center; /* centrar enlaces */
+  gap: 6px; /* aún más compacto */
+  margin: 2px 0 4px 0; /* muy compacto */
 }
 
 .footer__link {
@@ -64,8 +66,8 @@
 
 .footer__bottom {
   border-top: 1px solid #e6e7ea;
-  margin-top: 8px; /* compacto */
-  padding-top: 8px; /* compacto */
+  margin-top: 4px; /* muy compacto */
+  padding-top: 4px; /* muy compacto */
 }
 
 .footer__text {
