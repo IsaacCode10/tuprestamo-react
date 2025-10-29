@@ -1,7 +1,15 @@
 import React from 'react';
+import InvestorBackBar from '@/components/InvestorBackBar.jsx';
+import { useProfile } from '@/hooks/useProfile.js';
 
-const PrivacyPolicy = () => (
+const PrivacyPolicy = () => {
+  const { profile } = useProfile();
+  const showInvestorBack = profile && (profile.role === 'inversionista' || profile.role === 'admin');
+  return (
   <div className="container" style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
+    {showInvestorBack && (
+      <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
+    )}
     <h1 style={{ marginBottom: 8 }}>Política de Privacidad</h1>
     <p style={{ color: '#555', marginBottom: 24 }}>Última actualización: [dd/mm/aaaa]</p>
 
@@ -47,7 +55,7 @@ const PrivacyPolicy = () => (
     <h2>14. Contacto</h2>
     <p>contacto@tuprestamobo.com</p>
   </div>
-);
+  );
+};
 
 export default PrivacyPolicy;
-
