@@ -83,7 +83,16 @@ const Header = () => {
   }
 
   // Área del inversionista (para personalizar el header)
-  const investorAreaPaths = ['/investor-dashboard', '/mis-inversiones', '/retiro', '/oportunidades', '/verificar-cuenta'];
+  const investorAreaPaths = [
+    '/investor-dashboard',
+    '/mis-inversiones',
+    '/retiro',
+    '/oportunidades',
+    '/verificar-cuenta',
+    '/faq-inversionista',
+    '/terminos',
+    '/privacidad'
+  ];
   const isInvestorArea = investorAreaPaths.some((p) => location.pathname.startsWith(p));
   const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
   const statusLabel = {

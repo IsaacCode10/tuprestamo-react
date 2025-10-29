@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
+import InvestorBackBar from '@/components/InvestorBackBar.jsx';
 
 const MyInvestmentsList = () => {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ const MyInvestmentsList = () => {
 
   return (
     <div className="portfolio-container" style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
+      <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
       <h2>Mis Inversiones</h2>
       {!hasRows ? (
         <div>
