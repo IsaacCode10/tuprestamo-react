@@ -99,11 +99,11 @@ const Header = () => {
   const isInvestorArea = isInvestorLogged && investorAreaPaths.some((p) => location.pathname.startsWith(p));
   const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
   const statusLabel = {
-    verificado: 'Verificado',
+    verificado: 'Verificada',
     pendiente_revision: 'En revisión',
     requiere_revision_manual: 'Requiere revisión',
-    no_iniciado: 'No iniciado',
-  }[verificationStatus] || 'No iniciado';
+    no_iniciado: 'Pendiente',
+  }[verificationStatus] || 'Pendiente';
 
   // Cerrar menú central al hacer click fuera
   useEffect(() => {
@@ -223,7 +223,7 @@ const Header = () => {
                   {openCenterMenu === 'cuenta' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 240 }}>
                       <div className="header__dropdown-item" style={{ cursor: 'default', opacity: 0.8 }}>
-                        Estado KYC: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
+                        Verificación de identidad: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
                       </div>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
