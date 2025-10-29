@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import './Footer.css'; // Importar los nuevos estilos
 
 const Footer = ({ isDashboard }) => {
@@ -45,7 +46,9 @@ const Footer = ({ isDashboard }) => {
 
         {/* Bloque medio: enlaces rápidos */}
         <div className="footer__links">
-          <a href="#faq" className="footer__link">FAQ</a>
+          <NavLink to="/faq-inversionista" className="footer__link">FAQ</NavLink>
+          <NavLink to="/terminos" className="footer__link">Términos y Condiciones</NavLink>
+          <NavLink to="/privacidad" className="footer__link">Política de Privacidad</NavLink>
         </div>
 
         {/* Bloque inferior: derechos reservados */}

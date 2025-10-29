@@ -20,6 +20,8 @@ import Opportunities from '@/Opportunities.jsx';
 import OpportunityDetail from '@/OpportunityDetail.jsx';
 import ConfirmAndSetPassword from '@/ConfirmAndSetPassword.jsx';
 import InvestorFAQ from '@/InvestorFAQ.jsx';
+import LegalTerms from '@/LegalTerms.jsx';
+import PrivacyPolicy from '@/PrivacyPolicy.jsx';
 import BorrowerDashboard from '@/BorrowerDashboard.jsx';
 import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
 import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
@@ -224,6 +226,8 @@ function App() {
           <Route path="/oportunidades" element={<Opportunities />} />
           <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
           <Route path="/faq-inversionista" element={<InvestorFAQ />} />
+          <Route path="/terminos" element={<LegalTerms />} />
+          <Route path="/privacidad" element={<PrivacyPolicy />} />
           <Route path="/confirmar" element={<ConfirmAndSetPassword />} />
           <Route path="/confirmar-y-crear-perfil" element={<ConfirmAndSetPassword />} />
           <Route 
