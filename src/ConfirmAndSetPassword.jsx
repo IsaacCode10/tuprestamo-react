@@ -57,30 +57,57 @@ const ConfirmAndSetPassword = () => {
     } else {
       setMessage('¡Contraseña establecida con éxito! Redirigiendo a tu dashboard...');
 
-      // Now that the user is fully authenticated, get their profile from the DB to redirect
-      const { data: profile, error: profileError } = await supabase
+      // Asegurar que exista el perfil y que tenga nombre/rol desde los metadatos del usuario invitado
+      const desiredRole = user?.user_metadata?.role || 'inversionista';
+      const desiredNombre = user?.user_metadata?.nombre_completo || user?.user_metadata?.full_name || null;
+      const email = user?.email || null;
+
+      // Intentar obtener el perfil existente (puede no existir aún para flujo de invitación)
+      const { data: existingProfile, error: fetchErr } = await supabase
+        .from('profiles')
+        .select('id, role, nombre_completo, email')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (fetchErr) {
+        // Continuar pero registrar el error en consola
+        console.warn('No se pudo leer perfil existente, se intentará crear/actualizar:', fetchErr);
+      }
+
+      if (!existingProfile) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          role: desiredRole,
+          nombre_completo: desiredNombre,
+          email,
+        });
+      } else {
+        // Completar campos faltantes si es necesario
+        const patch = {};
+        if (!existingProfile.role && desiredRole) patch.role = desiredRole;
+        if (!existingProfile.nombre_completo && desiredNombre) patch.nombre_completo = desiredNombre;
+        if (!existingProfile.email && email) patch.email = email;
+        if (Object.keys(patch).length > 0) {
+          await supabase.from('profiles').update(patch).eq('id', user.id);
+        }
+      }
+
+      // Leer rol final para decidir redirección
+      const { data: finalProfile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
 
-      if (profileError) {
-        setError("Tuvimos un problema al cargar tu perfil. Por favor, intenta iniciar sesión manualmente.");
-        setLoading(false);
-        return;
-      }
-
-      // Smart redirection based on user role
       setTimeout(() => {
-        if (profile?.role === 'prestatario') {
+        if (finalProfile?.role === 'prestatario') {
           navigate('/borrower-dashboard');
-        } else if (profile?.role === 'inversionista') {
+        } else if (finalProfile?.role === 'inversionista') {
           navigate('/investor-dashboard');
         } else {
-          // Fallback to the main page if no role is found
-          navigate('/'); 
+          navigate('/');
         }
-      }, 2000);
+      }, 1200);
     }
   };
 

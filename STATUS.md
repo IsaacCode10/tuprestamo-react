@@ -18,6 +18,54 @@ Con esto, el sistema ahora es más resiliente y nos notificará proactivamente d
 *   Actualizar el manual de `LECCIONES_APRENDIDAS.md`.
 *   Subir toda la documentación actualizada a GitHub.
 
+# Estado del Proyecto - 28 de Octubre de 2025
+
+Resumen ejecutivo (flujo INVERSIONISTA: avance y endurecimiento)
+
+- Portafolio MVP (frontend):
+  - Agregado `src/MyInvestmentsList.jsx` (lista inversiones del usuario desde `inversiones` + join mínimo con `oportunidades`).
+  - Rutas protegidas nuevas: `/mis-inversiones` y `/retiro` en `src/App.jsx` usando `InvestorRoute`.
+
+- Solicitud de retiro (MVP):
+  - Agregado `src/WithdrawalForm.jsx` (inserta en `solicitudes` con `tipo_solicitud='retiro'`, registra monto y nota).
+
+- Formulario de interés de inversionista (KYC mínimo y saneo):
+  - Endurecido `src/InvestorInterestForm.jsx` con zod: email válido, teléfono solo dígitos (7–12), selección cerrada de 9 departamentos.
+  - Cambio de mapeo `ciudad` → `departamento` al insertar en `solicitudes`.
+  - Evento analítico: `Submitted Investor Interest`.
+
+- Backend: onboarding automático de inversionistas (sin invitación manual):
+  - Extendida `supabase/functions/handle-new-solicitud/index.ts` para manejar `tipo_solicitud='inversionista'`:
+    - Genera link de invitación (Auth admin.generateLink type `invite`) con redirect a `/confirmar-y-crear-perfil`.
+    - Envía correo de bienvenida vía Resend y marca `solicitudes.estado='contactado'`.
+    - Ajustes de entregabilidad: `to: [email]`, `from: contacto@tuprestamobo.com`, adiciona `text` y `reply_to`, y loggea la respuesta (`Resend response (investor)`).
+
+- Despliegue:
+  - Redeploy realizado de `handle-new-solicitud` (pendiente prueba de entrega de correo con Resend Activity).
+
+Qué falta / próximos pasos sugeridos (mañana)
+
+- Verificar correo al inversionista:
+  - Probar envío real (landing → “Quiero Invertir”), revisar logs `Resend response (investor)` y Resend Activity (deliver/bounce/blocked).
+  - Confirmar dominio en Resend (SPF/DKIM) y Suppressions para el destinatario si fuera necesario.
+
+- UI navegación:
+  - Agregar CTAs en `src/InvestorDashboard.jsx` a `/mis-inversiones` y `/retiro` (archivo presenta caracteres de encoding; hacer ajuste con cuidado).
+
+- RLS a confirmar:
+  - `inversiones (SELECT)` por `investor_id = auth.uid()`.
+  - `solicitudes (INSERT)` para inversionistas (con `user_id` si autenticado) y para retiros.
+
+- Roles y perfiles:
+  - Evitar seteo de rol desde cliente en `src/Auth.jsx` y mover asignación a function/trigger seguro post‑signup.
+
+URLs útiles
+
+- Portafolio: `/mis-inversiones`
+- Retiros: `/retiro`
+- Formulario de interés (landing): `/` → “Quiero Invertir”
+- Edge Function: `handle-new-solicitud`
+
 ---
 
 # Estado del Proyecto - 26 de Octubre de 2025

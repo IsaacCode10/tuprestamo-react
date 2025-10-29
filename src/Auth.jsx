@@ -128,31 +128,6 @@ const Auth = () => {
       <div className="auth-form-section">
         <h2>Crear una Cuenta</h2>
         <form onSubmit={handleAuthAction}>
-          <div className="role-selection">
-            <p>Selecciona tu objetivo principal:</p>
-            <label className={role === 'prestatario' ? 'active' : ''}>
-              <input
-                type="radio"
-                name="role"
-                value="prestatario"
-                checked={role === 'prestatario'}
-                onChange={(e) => setRole(e.target.value)}
-              />
-              <span>Refinanciar Tarjeta</span>
-              <small>Para consolidar deudas y mejorar mis finanzas.</small>
-            </label>
-            <label className={role === 'inversionista' ? 'active' : ''}>
-              <input
-                type="radio"
-                name="role"
-                value="inversionista"
-                checked={role === 'inversionista'}
-                onChange={(e) => setRole(e.target.value)}
-              />
-              <span>Quiero Invertir</span>
-              <small>Para obtener rendimientos atractivos apoyando a otros.</small>
-            </label>
-          </div>
           <div>
             <label htmlFor="email">Email</label>
             <input

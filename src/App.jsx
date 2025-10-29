@@ -12,6 +12,9 @@ import CalculatorPage from '@/CalculatorPage.jsx'; // <-- NUEVA PÁGINA
 import Auth from '@/Auth.jsx';
 import AdminDashboard from '@/AdminDashboard.jsx';
 import InvestorDashboard from '@/InvestorDashboard.jsx';
+import MyInvestmentsList from '@/MyInvestmentsList.jsx';
+import WithdrawalForm from '@/WithdrawalForm.jsx';
+import InvestorVerification from './InvestorVerification.jsx';
 import InvestorManagementDashboard from '@/InvestorManagementDashboard.jsx';
 import Opportunities from '@/Opportunities.jsx';
 import OpportunityDetail from '@/OpportunityDetail.jsx';
@@ -142,7 +145,10 @@ function App() {
     '/admin/manage-investors',
     '/dashboard-analista',
     '/borrower-dashboard',
-    '/perfil'
+    '/perfil',
+    // Ocultar Header en flujos de confirmación/recuperación para evitar ver menú antes de fijar contraseña
+    '/confirmar',
+    '/confirmar-y-crear-perfil'
   ];
 
   // Comprobar si la ruta actual es una de las de dashboard
@@ -183,6 +189,30 @@ function App() {
             element={
               <InvestorRoute profile={profile} loading={loading}>
                 <InvestorDashboard />
+              </InvestorRoute>
+            }
+          />
+          <Route 
+            path="/mis-inversiones" 
+            element={
+              <InvestorRoute profile={profile} loading={loading}>
+                <MyInvestmentsList />
+              </InvestorRoute>
+            }
+          />
+          <Route 
+            path="/retiro" 
+            element={
+              <InvestorRoute profile={profile} loading={loading}>
+                <WithdrawalForm />
+              </InvestorRoute>
+            }
+          />
+          <Route 
+            path="/verificar-cuenta"
+            element={
+              <InvestorRoute profile={profile} loading={loading}>
+                <InvestorVerification />
               </InvestorRoute>
             }
           />
