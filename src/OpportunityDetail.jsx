@@ -90,6 +90,27 @@ const OpportunityDetail = () => {
         return;
     }
 
+    // Gate de verificación: solo exigir verificación al momento de invertir
+    try {
+      const { data: prof, error: pErr } = await supabase
+        .from('profiles')
+        .select('estado_verificacion')
+        .eq('id', user.id)
+        .single();
+      if (pErr) throw pErr;
+      if (!prof || prof.estado_verificacion !== 'verificado') {
+        setFormMessage({ type: 'error', text: 'Para invertir, primero verifica tu identidad. Te llevaremos al centro de verificación.' });
+        setIsSubmitting(false);
+        setTimeout(() => navigate('/verificar-cuenta'), 1000);
+        return;
+      }
+    } catch (e) {
+      console.error('Error checking verification status:', e);
+      setFormMessage({ type: 'error', text: 'No pudimos validar tu verificación. Intenta nuevamente.' });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const { error: insertError } = await supabase
         .from('inversiones')

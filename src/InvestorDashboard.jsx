@@ -24,21 +24,41 @@ const InvestorDashboard = ({ profile }) => {
         );
       case 'pendiente_revision':
         return (
-          <p>Tu solicitud de verificación ha sido enviada. Estamos revisando tus datos y te notificaremos pronto. El proceso puede tardar hasta 24 horas hábiles.</p>
+          <>
+            <div style={{ background: '#fff9e6', border: '1px solid #ffe08a', color: '#8a6d3b', padding: '12px', borderRadius: 8 }}>
+              Tu verificación está en revisión. Te notificaremos pronto.
+            </div>
+            <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
+              <button className="btn" onClick={() => navigate('/mis-inversiones')}>Mis Inversiones</button>
+            </div>
+          </>
         );
       case 'requiere_revision_manual':
         return (
           <>
-            <p>Hubo un problema al verificar tus documentos. Por favor, revisa tus datos y vuelve a intentarlo. Si el problema persiste, contacta a soporte.</p>
-            <button className="btn btn--primary" onClick={() => navigate('/verificar-cuenta')}>Revisar Verificación</button>
+            <div style={{ background: '#ffe6e6', border: '1px solid #ffb3b3', color: '#8b0000', padding: '12px', borderRadius: 8 }}>
+              No pudimos validar tu verificación. Por favor revisa y vuelve a intentarlo.
+            </div>
+            <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
+              <button className="btn" onClick={() => navigate('/mis-inversiones')}>Mis Inversiones</button>
+              <button className="btn" onClick={() => navigate('/verificar-cuenta')}>Revisar Verificación</button>
+            </div>
           </>
         );
       case 'no_iniciado':
       default:
         return (
           <>
-            <p>Para poder invertir, el último paso es verificar tu identidad. Es un proceso rápido y seguro.</p>
-            <button className="btn btn--primary" onClick={() => navigate('/verificar-cuenta')}>Verificar mi Cuenta</button>
+            <div style={{ background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b', padding: '12px', borderRadius: 8 }}>
+              Recomendado: verifica tu identidad para agilizar retiros y aumentar límites. Puedes hacerlo más tarde al invertir.
+            </div>
+            <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
+              <button className="btn" onClick={() => navigate('/mis-inversiones')}>Mis Inversiones</button>
+              <button className="btn" onClick={() => navigate('/verificar-cuenta')}>Verificar mi Cuenta</button>
+            </div>
           </>
         );
     }

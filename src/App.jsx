@@ -138,21 +138,14 @@ function App() {
     }
   }, [location.search ]);
 
-  // Lista de rutas que se consideran dashboards
-  const dashboardPaths = [
-    '/admin-dashboard',
-    '/investor-dashboard',
-    '/admin/manage-investors',
-    '/dashboard-analista',
-    '/borrower-dashboard',
-    '/perfil',
-    // Ocultar Header en flujos de confirmación/recuperación para evitar ver menú antes de fijar contraseña
+  // Rutas donde deseamos ocultar el Header (solo confirmación)
+  const hideHeaderPaths = [
     '/confirmar',
     '/confirmar-y-crear-perfil'
   ];
 
-  // Comprobar si la ruta actual es una de las de dashboard
-  const isDashboardPage = dashboardPaths.some(path => location.pathname.startsWith(path));
+  // Ocultar solo en confirmación para mantener branding consistente en dashboards
+  const isHeaderHidden = hideHeaderPaths.some(path => location.pathname.startsWith(path));
 
   useEffect(() => {
     if (authEvent === 'PASSWORD_RECOVERY') {
@@ -162,7 +155,7 @@ function App() {
 
   return (
     <div className="App">
-      {!isDashboardPage && <Header />}
+      {!isHeaderHidden && <Header />}
       <main>
         <Routes>
           <Route path="/" element={<LandingPage />} />
