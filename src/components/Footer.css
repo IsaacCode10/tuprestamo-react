@@ -1,3 +1,77 @@
+/* Estilos base del footer */
+.footer {
+  background: #f8f9fa;
+  color: #223;
+}
+
+.footer__inner {
+  padding: 24px 0;
+}
+
+.footer__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.footer__socials {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer__socials a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #364152;
+}
+
+.footer__socials a:hover {
+  color: #26C2B2;
+}
+
+.social-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.footer__slogan {
+  font-size: 0.95rem;
+  color: #465;
+}
+
+.footer__links {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0 12px 0;
+}
+
+.footer__link {
+  color: #223;
+  text-decoration: none;
+}
+
+.footer__link:hover {
+  text-decoration: underline;
+}
+
+.footer__bottom {
+  border-top: 1px solid #e6e7ea;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.footer__text {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
 /* Estilos para la versión minimalista del footer en los dashboards */
 .footer.footer--minimal {
   padding: 1rem 0; /* Reduce el padding vertical */

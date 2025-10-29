@@ -40,6 +40,23 @@ body {
 }
 
 /* ========================
+   LAYOUT STICKY FOOTER
+   ======================== */
+html, body, #root {
+  height: 100%;
+}
+
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+/* ========================
    CONTENEDOR CENTRADO (la mayoría de secciones)
    ======================== */
 .container {
