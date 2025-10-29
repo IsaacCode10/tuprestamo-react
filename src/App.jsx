@@ -22,6 +22,7 @@ import ConfirmAndSetPassword from '@/ConfirmAndSetPassword.jsx';
 import InvestorFAQ from '@/InvestorFAQ.jsx';
 import LegalTerms from '@/LegalTerms.jsx';
 import PrivacyPolicy from '@/PrivacyPolicy.jsx';
+import InvestorProfile from '@/InvestorProfile.jsx';
 import BorrowerDashboard from '@/BorrowerDashboard.jsx';
 import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
 import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
@@ -231,6 +232,14 @@ function App() {
             element={
               <InvestorRoute profile={profile} loading={loading}>
                 <InvestorVerification />
+              </InvestorRoute>
+            }
+          />
+          <Route 
+            path="/perfil-inversionista"
+            element={
+              <InvestorRoute profile={profile} loading={loading}>
+                <InvestorProfile />
               </InvestorRoute>
             }
           />

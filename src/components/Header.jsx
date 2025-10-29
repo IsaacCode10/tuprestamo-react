@@ -232,9 +232,15 @@ const Header = () => {
                     <NavLink to={dashboardPath} className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       Panel de Control
                     </NavLink>
-                    <NavLink to="/perfil" className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
-                      Mi Perfil
-                    </NavLink>
+                    {profile?.role === 'inversionista' ? (
+                      <NavLink to="/perfil-inversionista" className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                        Mi Perfil
+                      </NavLink>
+                    ) : (
+                      <NavLink to="/perfil" className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                        Mi Perfil
+                      </NavLink>
+                    )}
                     <div className="header__dropdown-separator"></div>
                     <button onClick={handleLogout} className="header__dropdown-item button">
                       Cerrar Sesión
