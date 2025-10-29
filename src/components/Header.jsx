@@ -93,7 +93,9 @@ const Header = () => {
     '/terminos',
     '/privacidad'
   ];
-  const isInvestorArea = investorAreaPaths.some((p) => location.pathname.startsWith(p));
+  // Solo aplicar header de inversionista si hay sesión y rol válido
+  const isInvestorLogged = !!profile && (profile.role === 'inversionista' || profile.role === 'admin');
+  const isInvestorArea = isInvestorLogged && investorAreaPaths.some((p) => location.pathname.startsWith(p));
   const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
   const statusLabel = {
     verificado: 'Verificado',
