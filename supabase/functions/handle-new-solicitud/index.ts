@@ -200,10 +200,9 @@ serve(async (req) => {
           <p style="margin:20px 0">
             <a href="${inviteLink}" style="background-color:#26C2B2; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">Activar Mi Cuenta</a>
           </p>
-          <p>Si no solicitaste este acceso, puedes ignorar este correo.</p>
           <p style="margin-top:20px">Atentamente,<br>El equipo de Tu Préstamo</p>
         `,
-        text: `Hola ${nombre_completo},\n\nBienvenido a Tu Préstamo. Para activar tu cuenta de inversionista, abre este enlace: ${inviteLink}\n\nSi no solicitaste este acceso, ignora este correo.\n\nAtentamente,\nEl equipo de Tu Préstamo`,
+        text: `Hola ${nombre_completo},\n\nBienvenido a Tu Préstamo. Para activar tu cuenta de inversionista, abre este enlace: ${inviteLink}\n\nAtentamente,\nEl equipo de Tu Préstamo`,
         reply_to: 'contacto@tuprestamobo.com',
       });
       console.log('Resend response (investor):', resendResponse);
