@@ -43,6 +43,7 @@ const Header = () => {
   const { profile } = useProfile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     trackEvent('Logged Out');
@@ -77,6 +78,10 @@ const Header = () => {
     }
   }
 
+  // Ocultar la calculadora en el área del inversionista para evitar distracciones
+  const investorAreaPaths = ['/investor-dashboard', '/mis-inversiones', '/retiro', '/oportunidades', '/verificar-cuenta'];
+  const isInvestorArea = investorAreaPaths.some((p) => location.pathname.startsWith(p));
+
   return (
     <header className="header">
       <div className="header__container">
@@ -94,9 +99,11 @@ const Header = () => {
                 <NavButton to="inversionistas" text="QUIERO INVERTIR" />
               </li>
               <li className="header__nav-item">
-                <NavLink to="/calculadora" className="header__nav-button">
-                  CALCULADORA DE AHORRO
-                </NavLink>
+                {!isInvestorArea && (
+                  <NavLink to="/calculadora" className="header__nav-button">
+                    CALCULADORA DE AHORRO
+                  </NavLink>
+                )}
               </li>
             </ul>
           </nav>
