@@ -99,3 +99,64 @@ Asunto: Mixpanel operativo en producciÃ³n con Autocapture y Session Replay
 
 Resumen: Se completÃ³ la migraciÃ³n a Mixpanel y se verificÃ³ en producciÃ³n (tuprestamo.com) la recepciÃ³n de eventos en Live View, asÃ­ como la reproducciÃ³n de sesiones. Se resolviÃ³ el bug de inicializaciÃ³n ausente y se protegieron llamadas cuando el SDK no estÃ¡ inicializado.
 
+
+# Estado del Proyecto - 29 de Octubre de 2025
+
+Resumen ejecutivo (flujo INVERSIONISTA: UX, navegación, legales, branding)
+
+- Email de invitación (Edge Function):
+  - Personalización con NOMBRE en asunto y saludo; cierre “Atentamente, El equipo de Tu Préstamo”.
+  - Removido el texto de descargo.
+  - Se incluye full_name en metadata para que Supabase muestre Display Name correctamente.
+
+- Confirmación y perfil:
+  - Ocultamos Header solo en páginas de confirmación; branding visible en dashboards.
+  - `ConfirmAndSetPassword`: asegura `profiles` (nombre/rol/email) y actualiza metadata (`full_name`).
+  - Nuevo perfil de inversionista: `/perfil-inversionista` (teléfono + cambio de contraseña). Menú “Mi Perfil” enruta por rol.
+
+- Navegación del inversionista (Header nuevo):
+  - Menús centrados: Invertir ? (Oportunidades, Buscar/Filtrar), Portafolio ? (Mis Inversiones, Retiros + KPIs), Cuenta ? (Verificación de identidad, Centro de Ayuda).
+  - Cierre por click fuera, cierre al cambiar de ruta, evita menús simultáneos; dropdown posicionados bajo cada botón.
+  - Ocultamos CTA de landing en área inversionista.
+
+- Páginas nuevas y consistencia:
+  - Centro de Ayuda inversionista: `/faq-inversionista` (+ evento `Viewed Investor FAQ`).
+  - Legales: `/terminos` y `/privacidad` (contenido base, con “Volver al Panel” si rol inversionista/admin).
+  - Breadcrumbs + barra “Volver” en Oportunidades, Detalle, Mis Inversiones, Retiros, Verificación y FAQ. También en Borrower y Admin.
+
+- Footer y visibilidad:
+  - Sticky footer; versión completa en área inversionista; compactado de espacios; redes en línea; enlaces a FAQ/Términos/Privacidad.
+
+- Copy y verificación:
+  - Sustituimos “Estado KYC” por “Verificación de identidad” y estados: Pendiente / En revisión / Requiere revisión / Verificada (Header y Dashboard).
+
+- Branding (logo):
+  - Logo transparente actualizado (public + src/assets). Header balanceado a 72px desktop / 52px mobile.
+
+- Correcciones:
+  - `NotificationBell` con `notifications=[]` para evitar TypeError.
+  - `App.jsx`: restaurado `isDashboardPage` y Footer completo en rutas inversionista.
+  - Header inversionista solo si hay sesión con rol válido.
+  - Fix de sintaxis en `InvestorDashboard.jsx` (compilación Vercel).
+
+Próximos pasos sugeridos
+
+- Verificación automática del inversionista:
+  - Confirmar trigger a `verificar-identidad-inversionista` al insertar en `documentos` (bucket inversionistas).
+  - Validar RLS de `documentos`/`inversiones`/`solicitudes` para rol inversionista.
+
+- Marketplace y filtros:
+  - Implementar filtros en `/oportunidades` (riesgo, plazo, tasa mínima) y mantener gating de verificación al invertir.
+
+- Entregabilidad de correos (Resend):
+  - Revisar activity/logs de `handle-new-solicitud`; validar SPF/DKIM.
+
+- UX/branding:
+  - Considerar SVG del logo para nitidez y “shrink on scroll”.
+
+Notas de despliegue
+
+- Frontend: cambios en `main` desplegados por Vercel.
+- Backend (cuando cambie redirect):
+  - `supabase secrets set APP_BASE_URL=https://www.tuprestamobo.com`
+  - `supabase functions deploy handle-new-solicitud`
