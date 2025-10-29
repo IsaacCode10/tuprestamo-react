@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient';
 import { trackEvent, resetMixpanel } from '../analytics';
 import { useProfile } from '../hooks/useProfile';
 import RoleSwitcher from './RoleSwitcher';
+import NotificationBell from './NotificationBell.jsx';
 import logo from '../assets/Logo-Tu-Prestamo.png';
 import './Header.css';
 
@@ -42,6 +43,7 @@ const NavButton = ({ to, text }) => {
 const Header = () => {
   const { profile } = useProfile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openCenterMenu, setOpenCenterMenu] = useState(null); // 'invertir' | 'portafolio' | 'cuenta' | null
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -78,9 +80,16 @@ const Header = () => {
     }
   }
 
-  // Ocultar la calculadora en el área del inversionista para evitar distracciones
+  // Área del inversionista (para personalizar el header)
   const investorAreaPaths = ['/investor-dashboard', '/mis-inversiones', '/retiro', '/oportunidades', '/verificar-cuenta'];
   const isInvestorArea = investorAreaPaths.some((p) => location.pathname.startsWith(p));
+  const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
+  const statusLabel = {
+    verificado: 'Verificado',
+    pendiente_revision: 'En revisión',
+    requiere_revision_manual: 'Requiere revisión',
+    no_iniciado: 'No iniciado',
+  }[verificationStatus] || 'No iniciado';
 
   return (
     <header className="header">
@@ -91,26 +100,79 @@ const Header = () => {
 
         <div className="header__nav-actions-group">
           <nav className="header__nav">
-            <ul className="header__nav-list">
-              <li className="header__nav-item">
-                <NavButton to="prestatarios" text="REFINANCIAR TARJETA" />
-              </li>
-              <li className="header__nav-item">
-                <NavButton to="inversionistas" text="QUIERO INVERTIR" />
-              </li>
-              <li className="header__nav-item">
-                {!isInvestorArea && (
+            {!isInvestorArea ? (
+              <ul className="header__nav-list">
+                <li className="header__nav-item">
+                  <NavButton to="prestatarios" text="REFINANCIAR TARJETA" />
+                </li>
+                <li className="header__nav-item">
+                  <NavButton to="inversionistas" text="QUIERO INVERTIR" />
+                </li>
+                <li className="header__nav-item">
                   <NavLink to="/calculadora" className="header__nav-button">
                     CALCULADORA DE AHORRO
                   </NavLink>
-                )}
-              </li>
-            </ul>
+                </li>
+              </ul>
+            ) : (
+              <ul className="header__nav-list" style={{ justifyContent: 'center', gap: '0.5rem' }}>
+                <li className="header__nav-item">
+                  <button
+                    className="header__nav-button"
+                    onClick={() => setOpenCenterMenu(openCenterMenu === 'invertir' ? null : 'invertir')}
+                  >
+                    Invertir ▾
+                  </button>
+                  {openCenterMenu === 'invertir' && (
+                    <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/oportunidades'); }}>Ver Oportunidades</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/oportunidades?filters=1'); }}>Buscar / Filtrar</button>
+                    </div>
+                  )}
+                </li>
+                <li className="header__nav-item">
+                  <button
+                    className="header__nav-button"
+                    onClick={() => setOpenCenterMenu(openCenterMenu === 'portafolio' ? null : 'portafolio')}
+                  >
+                    Portafolio ▾
+                  </button>
+                  {openCenterMenu === 'portafolio' && (
+                    <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/mis-inversiones'); }}>Mis Inversiones</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/retiro'); }}>Retiros</button>
+                    </div>
+                  )}
+                </li>
+                <li className="header__nav-item">
+                  <button
+                    className="header__nav-button"
+                    onClick={() => setOpenCenterMenu(openCenterMenu === 'cuenta' ? null : 'cuenta')}
+                  >
+                    Cuenta ▾
+                  </button>
+                  {openCenterMenu === 'cuenta' && (
+                    <div className="header__dropdown-menu" style={{ minWidth: 240 }}>
+                      <div className="header__dropdown-item" style={{ cursor: 'default', opacity: 0.8 }}>
+                        Estado KYC: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
+                      </div>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/oportunidades'); }}>Ayuda</button>
+                    </div>
+                  )}
+                </li>
+              </ul>
+            )}
           </nav>
 
           <div className="header__separator"></div>
 
           <div className="header__actions">
+            {isInvestorArea && (
+              <div style={{ marginRight: 8 }}>
+                <NotificationBell />
+              </div>
+            )}
             {profile ? (
               <div className="header__user-menu">
                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="header__user-button">
