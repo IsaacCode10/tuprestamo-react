@@ -9,6 +9,7 @@ import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import Header from './components/Header';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 import { trackEvent } from '@/analytics.js';
 
 // --- LISTAS DE FAQs CONTEXTUALES (SIN CAMBIOS) ---
@@ -87,6 +88,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
         <>
             <Header />
             <div className="borrower-dashboard">
+                <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Mi Solicitud' }]} />
                 <div className="dashboard-header">
                     <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
                 </div>

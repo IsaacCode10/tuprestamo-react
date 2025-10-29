@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient';
 import AdminNav from './components/AdminNav';
 import './LoanRequestsList.css';
 import './AdminDashboard.css';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 // --- Componente para Inversiones Pendientes ---
 const PendingInvestments = () => {
@@ -254,6 +255,7 @@ const AdminDashboard = () => {
   return (
     <div className="loan-requests-list admin-dashboard">
       <AdminNav />
+      <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/admin-dashboard' }, { label: 'Centro de Operaciones' }]} />
       <h2>Centro de Operaciones</h2>
       
       {loading ? <p>Cargando métricas...</p> : (
