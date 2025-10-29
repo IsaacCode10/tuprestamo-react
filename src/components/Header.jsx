@@ -152,7 +152,7 @@ const Header = () => {
                 <li className="header__nav-item">
                   <button
                     className="header__nav-button"
-                    onClick={() => setOpenCenterMenu(openCenterMenu === 'invertir' ? null : 'invertir')}
+                    onClick={() => { setIsMenuOpen(false); setOpenCenterMenu(openCenterMenu === 'invertir' ? null : 'invertir'); }}
                   >
                     Invertir ▾
                   </button>
@@ -216,7 +216,7 @@ const Header = () => {
                 <li className="header__nav-item">
                   <button
                     className="header__nav-button"
-                    onClick={() => setOpenCenterMenu(openCenterMenu === 'cuenta' ? null : 'cuenta')}
+                    onClick={() => { setIsMenuOpen(false); setOpenCenterMenu(openCenterMenu === 'cuenta' ? null : 'cuenta'); }}
                   >
                     Cuenta ▾
                   </button>
@@ -244,7 +244,7 @@ const Header = () => {
             )}
             {profile ? (
               <div className="header__user-menu">
-                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="header__user-button">
+                <button onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(!isMenuOpen); }} className="header__user-button">
                   {displayName} <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`}>▼</span>
                 </button>
                 {isMenuOpen && (
