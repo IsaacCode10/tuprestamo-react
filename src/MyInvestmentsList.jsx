@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
 import InvestorBackBar from '@/components/InvestorBackBar.jsx';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 const MyInvestmentsList = () => {
   const navigate = useNavigate();
@@ -63,6 +64,11 @@ const MyInvestmentsList = () => {
   return (
     <div className="portfolio-container" style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
       <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
+      <InvestorBreadcrumbs items={[
+        { label: 'Inicio', to: '/investor-dashboard' },
+        { label: 'Portafolio', to: '/mis-inversiones' },
+        { label: 'Mis Inversiones' },
+      ]} />
       <h2>Mis Inversiones</h2>
       {!hasRows ? (
         <div>

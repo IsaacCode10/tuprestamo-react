@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
 import InvestorBackBar from '@/components/InvestorBackBar.jsx';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 // import './OpportunityDetail.css'; // We can create this later if needed
 
 const OpportunityDetail = () => {
@@ -184,6 +185,11 @@ const OpportunityDetail = () => {
   return (
     <div className="opportunity-detail-container" style={{ maxWidth: '600px', margin: 'auto', padding: '20px' }}>
       <InvestorBackBar fallbackTo="/oportunidades" label="Volver a Oportunidades" />
+      <InvestorBreadcrumbs items={[
+        { label: 'Inicio', to: '/investor-dashboard' },
+        { label: 'Oportunidades', to: '/oportunidades' },
+        { label: 'Detalle' },
+      ]} />
       <h2>Detalles de la Oportunidad ID: {opportunity.id}</h2>
 
       <div className="funding-progress" style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>

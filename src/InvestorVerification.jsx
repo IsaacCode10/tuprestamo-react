@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import InvestorBackBar from '@/components/InvestorBackBar.jsx';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 const InvestorVerification = () => {
   const [loading, setLoading] = useState(true);
@@ -124,6 +125,11 @@ const InvestorVerification = () => {
   return (
     <div className="verification-container" style={{ maxWidth: '768px', margin: 'auto', padding: '2rem' }}>
       <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
+      <InvestorBreadcrumbs items={[
+        { label: 'Inicio', to: '/investor-dashboard' },
+        { label: 'Cuenta', to: '/verificar-cuenta' },
+        { label: 'Verificar' },
+      ]} />
       <h2>Centro de Verificación</h2>
       <p>Completa los siguientes pasos para verificar tu cuenta y poder empezar a invertir.</p>
       

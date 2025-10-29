@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
 import './Opportunities.css';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 // --- Componente de Tarjeta de Oportunidad Individual ---
 const OpportunityCard = ({ opp }) => {
@@ -95,6 +96,10 @@ const Opportunities = () => {
 
   return (
     <div className="opportunities-container">
+      <InvestorBreadcrumbs items={[
+        { label: 'Inicio', to: '/investor-dashboard' },
+        { label: 'Oportunidades' },
+      ]} />
       <h2>Oportunidades de Inversión</h2>
       {opportunities.length === 0 ? (
         <p>No hay oportunidades de inversión disponibles en este momento. ¡Vuelve pronto!</p>

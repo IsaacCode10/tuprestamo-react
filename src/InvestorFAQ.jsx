@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { trackEvent } from '@/analytics.js';
 import InvestorBackBar from '@/components/InvestorBackBar.jsx';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 const faqs = [
   {
@@ -108,6 +109,11 @@ const InvestorFAQ = () => {
   return (
     <div className="container" style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
       <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
+      <InvestorBreadcrumbs items={[
+        { label: 'Inicio', to: '/investor-dashboard' },
+        { label: 'Cuenta', to: '/investor-dashboard' },
+        { label: 'Centro de Ayuda' },
+      ]} />
       <h1 style={{ marginBottom: 8 }}>Centro de Ayuda para Inversionistas</h1>
       <p style={{ color: '#555', marginBottom: 24 }}>
         Encuentra respuestas a las preguntas más comunes sobre invertir con Tu Préstamo.

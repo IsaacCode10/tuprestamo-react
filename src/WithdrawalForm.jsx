@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
 import InvestorBackBar from '@/components/InvestorBackBar.jsx';
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 const WithdrawalForm = () => {
   const navigate = useNavigate();
@@ -80,6 +81,11 @@ const WithdrawalForm = () => {
   return (
     <div className="withdrawal-form-container" style={{ maxWidth: 560, margin: '0 auto', padding: 16 }}>
       <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
+      <InvestorBreadcrumbs items={[
+        { label: 'Inicio', to: '/investor-dashboard' },
+        { label: 'Portafolio', to: '/mis-inversiones' },
+        { label: 'Retiros' },
+      ]} />
       <h2>Solicitar Retiro</h2>
       <p>Envía una solicitud para retirar fondos disponibles a tu cuenta bancaria registrada.</p>
       <form onSubmit={handleSubmit}>
