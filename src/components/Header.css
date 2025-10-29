@@ -6,7 +6,8 @@
 /* Estilos Generales del Header */
 .header {
   background-color: #fff;
-  padding: 0.25rem 2rem; /* Reducido para un header más compacto */
+  /* Reducimos padding vertical a 0 para permitir un logo más grande sin crecer el header */
+  padding: 0 2rem;
   border-bottom: 1px solid #e0e0e0;
   position: sticky;
   top: 0;
@@ -26,7 +27,8 @@
 }
 
 .header__logo {
-  height: 80px; /* Reducido para un header más compacto */
+  /* Incrementamos el logo para darle mayor presencia sin aumentar el alto total del header */
+  height: 88px;
   transition: transform 0.3s ease;
 }
 
@@ -192,7 +194,8 @@
     display: none; /* Ocultamos todo el grupo en móvil por simplicidad */
   }
   .header__logo {
-    height: 50px; /* Ajustamos el logo para móvil */
+    /* En móvil lo hacemos un poco más grande manteniendo proporción */
+    height: 56px;
   }
   /* Aquí se necesitaría un botón de hamburguesa para móvil */
 }
