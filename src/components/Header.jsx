@@ -157,7 +157,7 @@ const Header = () => {
                         Estado KYC: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
                       </div>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/oportunidades'); }}>Ayuda</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
                     </div>
                   )}
                 </li>
