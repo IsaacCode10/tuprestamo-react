@@ -50,6 +50,11 @@
   align-items: center;
 }
 
+/* Cada item de nav sirve como ancla para su dropdown */
+.header__nav-item {
+  position: relative; /* asegura que el menú se posicione bajo el botón */
+}
+
 /* Botones de Navegación */
 .header__nav-button {
     font-family: inherit;
@@ -141,6 +146,12 @@
   flex-direction: column;
   padding: 0.5rem 0;
   z-index: 10;
+}
+
+/* En el centro (menú de navegación) abrimos el dropdown hacia la izquierda del item */
+.header__nav .header__nav-item .header__dropdown-menu {
+  left: 0;
+  right: auto;
 }
 
 .header__dropdown-item {
