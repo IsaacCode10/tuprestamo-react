@@ -117,6 +117,13 @@ const Header = () => {
     return () => document.removeEventListener('click', handleDocClick);
   }, [openCenterMenu]);
 
+  // Al cambiar de ruta, cerrar menús abiertos (user y central)
+  useEffect(() => {
+    if (isMenuOpen) setIsMenuOpen(false);
+    if (openCenterMenu) setOpenCenterMenu(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   return (
     <header className="header">
       <div className="header__container">
@@ -151,8 +158,8 @@ const Header = () => {
                   </button>
                   {openCenterMenu === 'invertir' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/oportunidades'); }}>Ver Oportunidades</button>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/oportunidades?filters=1'); }}>Buscar / Filtrar</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/oportunidades'); }}>Ver Oportunidades</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/oportunidades?filters=1'); }}>Buscar / Filtrar</button>
                     </div>
                   )}
                 </li>
@@ -201,8 +208,8 @@ const Header = () => {
                           </div>
                         )}
                       </div>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/mis-inversiones'); }}>Mis Inversiones</button>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/retiro'); }}>Retiros</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/mis-inversiones'); }}>Mis Inversiones</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/retiro'); }}>Retiros</button>
                     </div>
                   )}
                 </li>
@@ -218,8 +225,8 @@ const Header = () => {
                       <div className="header__dropdown-item" style={{ cursor: 'default', opacity: 0.8 }}>
                         Estado KYC: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
                       </div>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
                     </div>
                   )}
                 </li>
