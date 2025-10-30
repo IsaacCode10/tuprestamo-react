@@ -188,36 +188,49 @@
     background-color: #d9534f;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  /* Mantener visible la navegaci�n y acciones en m�vil */
-  .header__nav-actions-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1 1 auto;
-    justify-content: flex-end;
-  }
-  .header__logo {
-    height: 52px; /* Mobile */
-  }
-  .header__separator { display: none; }
-  /* Hacer el listado navegable en horizontal si no cabe */
-  .header__nav-list {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    white-space: nowrap;
-    padding: 0.25rem 0;
-  }
-  .header__nav-button {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-  }
-  .header__action-button, .header__user-button {
-    padding: 0.5rem 0.9rem;
-    font-size: 0.85rem;
-  }
+/* Responsive */`n@media (max-width: 768px) {`n  .header__mobile-toggle { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; }`n  .header__nav-actions-group { display: none; }`n  .header__separator { display: none; }`n  .header__logo { height: 52px; }`n}`n
+/* Botón hamburguesa (oculto por defecto, visible en móvil) */
+.header__mobile-toggle {
+  display: none;
+  background: none;
+  border: 0;
+  padding: 8px;
+  cursor: pointer;
+}
+.header__mobile-toggle .mobile-toggle-bar {
+  width: 24px;
+  height: 2px;
+  background: var(--header-primary-color);
+  display: block;
+  margin: 4px 0;
 }
 
+/* Overlay de menú móvil */
+.mobile-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1100;
+}
+.mobile-menu-panel {
+  position: absolute;
+  top: 64px;
+  right: 0;
+  left: 0;
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  padding: 12px 16px;
+}
+.mobile-menu-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px 8px;
+  border: 0;
+  background: none;
+  font-weight: 600;
+  color: #333;
+}
+.mobile-menu-item.primary { color: #fff; background: var(--header-primary-color); border-radius: 8px; }
+.mobile-menu-item.danger { color: #d9534f; }
+.mobile-menu-sep { height: 1px; background: #eee; margin: 8px 0; }

@@ -44,6 +44,7 @@ const Header = () => {
   const { profile } = useProfile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openCenterMenu, setOpenCenterMenu] = useState(null); // 'invertir' | 'portafolio' | 'cuenta' | null
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [kpiLoading, setKpiLoading] = useState(false);
@@ -121,6 +122,7 @@ const Header = () => {
   useEffect(() => {
     if (isMenuOpen) setIsMenuOpen(false);
     if (openCenterMenu) setOpenCenterMenu(null);
+    if (isMobileNavOpen) setIsMobileNavOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
@@ -130,6 +132,15 @@ const Header = () => {
         <NavLink to="/" className="header__logo-link">
           <img src={logo} alt="Logo Tu Préstamo" className="header__logo" />
         </NavLink>
+        <button
+          className="header__mobile-toggle"
+          aria-label="Abrir menú"
+          onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+        >
+          <span className="mobile-toggle-bar" />
+          <span className="mobile-toggle-bar" />
+          <span className="mobile-toggle-bar" />
+        </button>
 
         <div className="header__nav-actions-group">
           <nav className="header__nav">
@@ -284,6 +295,41 @@ const Header = () => {
           </div>
         </div>
       </div>
+      {isMobileNavOpen && (
+        <div className="mobile-menu-overlay" onClick={() => setIsMobileNavOpen(false)}>
+          <div className="mobile-menu-panel" onClick={(e) => e.stopPropagation()}>
+            {!profile ? (
+              <>
+                <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/'); setTimeout(() => document.getElementById('prestatarios')?.scrollIntoView({ behavior: 'smooth' }), 50); }}>Refinanciar tarjeta</button>
+                <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/'); setTimeout(() => document.getElementById('inversionistas')?.scrollIntoView({ behavior: 'smooth' }), 50); }}>Quiero invertir</button>
+                <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/calculadora'); }}>Calculadora de ahorro</button>
+                <div className="mobile-menu-sep" />
+                <button className="mobile-menu-item primary" onClick={() => { setIsMobileNavOpen(false); navigate('/auth'); }}>Ingresar</button>
+              </>
+            ) : (
+              <>
+                {isInvestorLogged && (
+                  <>
+                    <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/oportunidades'); }}>Oportunidades</button>
+                    <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/mis-inversiones'); }}>Mis inversiones</button>
+                    <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/retiro'); }}>Retiros</button>
+                    <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/verificar-cuenta'); }}>Verificar cuenta ({statusLabel})</button>
+                    <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
+                    <div className="mobile-menu-sep" />
+                  </>
+                )}
+                <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate(dashboardPath); }}>Panel</button>
+                {profile?.role === 'inversionista' ? (
+                  <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/perfil-inversionista'); }}>Mi Perfil</button>
+                ) : (
+                  <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/perfil'); }}>Mi Perfil</button>
+                )}
+                <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesión</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };
