@@ -121,6 +121,7 @@
   align-items: center;
   gap: 0.5rem;
   text-transform: uppercase;
+  position: relative;
 }
 
 .header__user-button:hover {
@@ -140,6 +141,17 @@
 
 .header__user-arrow.open {
   transform: rotate(-135deg);
+}
+
+/* Indicador de notificaciones en el botón de usuario */
+.user-notif-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #d9534f;
+  border-radius: 50%;
+  margin-left: 8px;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
 }
 
 .header__dropdown-menu {
