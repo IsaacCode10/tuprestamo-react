@@ -256,7 +256,7 @@ const Header = () => {
                     <div className="header__dropdown-menu" style={{ minWidth: 260 }}>
                       <div className="header__dropdown-item" style={{ cursor: 'default', paddingBottom: 8 }}>
                         {kpiLoading ? (
-                          <span>Cargando resumenâ€¦</span>
+                          <span>Cargando resumen...</span>
                         ) : (
                           <div style={{ display: 'flex', gap: 12 }}>
                             <div style={{ minWidth: 110 }}>
@@ -285,7 +285,7 @@ const Header = () => {
                   {openCenterMenu === 'cuenta' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 240 }}>
                       <div className="header__dropdown-item" style={{ cursor: 'default', opacity: 0.8 }}>
-                        VerificaciÃ³n de identidad: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
+                        Verificaci\\u00F3n de identidad: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
                       </div>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
@@ -379,7 +379,7 @@ const Header = () => {
                 ) : (
                   <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/perfil'); }}>Mi Perfil</button>
                 )}
-                <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesiÃ³n</button>
+                <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesi\\u00F3n</button>
               </>
             )}
           </div>
@@ -390,3 +390,4 @@ const Header = () => {
 };
 
 export default Header;
+
