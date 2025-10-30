@@ -94,6 +94,16 @@ const InvestorVerification = () => {
         });
       if (docInsertError) throw docInsertError;
       
+      // 4.1 Fallback: invocar Edge Function directamente para verificar automáticamente
+      try {
+        const { error: invokeError } = await supabase.functions.invoke('verificar-identidad-inversionista', {
+          body: { record: { user_id: user.id, url_archivo: filePath, tipo_documento: 'ci_inversionista_anverso' } },
+        });
+        if (invokeError) console.warn('verificar-identidad-inversionista invocation warning:', invokeError);
+      } catch (e) {
+        console.warn('Fallo invocando verificar-identidad-inversionista:', e?.message || e);
+      }
+      
       // 5. Finalmente, actualizar el estado de verificación del perfil
       const { error: finalStatusError } = await supabase
         .from('profiles')
