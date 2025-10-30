@@ -35,7 +35,8 @@ serve(async (req) => {
     )
 
     // 1) URL firmada (bucket privado)
-    const BUCKET_NAME = 'documentos-inversionistas'
+    // MVP: reutilizar el bucket existente de prestatarios para evitar pasos manuales
+    const BUCKET_NAME = 'documentos-prestatarios'
     const { data: signedData, error: signedErr } = await supabaseAdmin
       .storage
       .from(BUCKET_NAME)

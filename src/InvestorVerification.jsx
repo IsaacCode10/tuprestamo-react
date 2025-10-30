@@ -68,7 +68,7 @@ const InvestorVerification = () => {
       const fileName = `${Date.now()}_ci_anverso.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
       const { error: uploadError } = await supabase.storage
-        .from('documentos-inversionistas')
+        .from('documentos-prestatarios')
         .upload(filePath, ciFile);
       if (uploadError) throw uploadError;
 
