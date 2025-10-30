@@ -195,6 +195,17 @@
     background-color: #d9534f;
 }
 
+/* Contador compacto para notificaciones en dropdown */
+.notif-pill {
+  margin-left: auto;
+  background: #d9534f;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   /* Sólo logo + botón hamburguesa; ocultar navegación inline */

@@ -49,6 +49,9 @@ const Header = () => {
   const location = useLocation();
   const [kpiLoading, setKpiLoading] = useState(false);
   const [kpis, setKpis] = useState({ totalInvested: 0, positions: 0 });
+  // Placeholder de notificaciones (MVP). Integrar con backend luego.
+  const [notifications] = useState([]);
+  const unreadCount = notifications.filter(n => !n.read).length;
   const centerNavRef = useRef(null);
 
   const handleLogout = async () => {
@@ -255,9 +258,11 @@ const Header = () => {
                 </button>
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
-                    <div className="header__dropdown-item" style={{ cursor: 'default', paddingBottom: 8 }}>
-                      <NotificationBell notifications={[]} />
-                    </div>
+                    <button className="header__dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setIsMenuOpen(false)}>
+                      <NotificationBell notifications={notifications} />
+                      <span>Notificaciones</span>
+                      <span className="notif-pill">{unreadCount}</span>
+                    </button>
                     <NavLink to={dashboardPath} className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       Panel de Control
                     </NavLink>
