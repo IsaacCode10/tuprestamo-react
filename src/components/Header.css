@@ -190,12 +190,34 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  /* Mantener visible la navegaci�n y acciones en m�vil */
   .header__nav-actions-group {
-    display: none; /* Ocultamos todo el grupo en móvil por simplicidad */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 auto;
+    justify-content: flex-end;
   }
   .header__logo {
-    /* Mobile */
-    height: 52px;
+    height: 52px; /* Mobile */
   }
-  /* Aquí se necesitaría un botón de hamburguesa para móvil */
+  .header__separator { display: none; }
+  /* Hacer el listado navegable en horizontal si no cabe */
+  .header__nav-list {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    padding: 0.25rem 0;
+  }
+  .header__nav-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  .header__action-button, .header__user-button {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+  }
 }
+
