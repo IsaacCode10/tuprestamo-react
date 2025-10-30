@@ -248,11 +248,6 @@ const Header = () => {
           <div className="header__separator"></div>
 
           <div className="header__actions">
-            {isInvestorArea && (
-              <div style={{ marginRight: 8 }}>
-                <NotificationBell notifications={[]} />
-              </div>
-            )}
             {profile ? (
               <div className="header__user-menu">
                 <button onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(!isMenuOpen); }} className="header__user-button">
@@ -260,6 +255,9 @@ const Header = () => {
                 </button>
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
+                    <div className="header__dropdown-item" style={{ cursor: 'default', paddingBottom: 8 }}>
+                      <NotificationBell notifications={[]} />
+                    </div>
                     <NavLink to={dashboardPath} className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       Panel de Control
                     </NavLink>
