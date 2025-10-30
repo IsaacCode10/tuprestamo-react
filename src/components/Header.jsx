@@ -285,7 +285,7 @@ const Header = () => {
                   {openCenterMenu === 'cuenta' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 240 }}>
                       <div className="header__dropdown-item" style={{ cursor: 'default', opacity: 0.8 }}>
-                        Verificaci\\u00F3n de identidad: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
+                        Verificaci&oacute;n de identidad: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
                       </div>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
@@ -329,7 +329,7 @@ const Header = () => {
                     )}
                     <div className="header__dropdown-separator"></div>
                     <button onClick={handleLogout} className="header__dropdown-item button">
-                      Cerrar Sesion
+                      Cerrar sesi&oacute;n
                     </button>
                     {profile?.id === '8983b4fb-93c8-4951-b2db-c595f61fd3c4' && (
                       <>
@@ -379,7 +379,7 @@ const Header = () => {
                 ) : (
                   <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/perfil'); }}>Mi Perfil</button>
                 )}
-                <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesi\\u00F3n</button>
+                <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesi&oacute;n</button>
               </>
             )}
           </div>
