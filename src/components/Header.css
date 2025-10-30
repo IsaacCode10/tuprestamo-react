@@ -1,4 +1,4 @@
-﻿:root {
+﻿﻿:root {
   --header-primary-color: #00445A; /* Azul Oscuro */
   --header-accent-color: #26C2B2;  /* Turquesa */
 }
@@ -188,10 +188,4 @@
     background-color: #d9534f;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .header__mobile-toggle { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; margin-left: auto; }
-  header.header .header__nav-actions-group { display: none !important; }
-  .header__separator { display: none; }
-  .header__logo { height: 50px; }
-}
+/* Responsive */`n@media (max-width: 1024px) {`n  .header__mobile-toggle { display:inline-flex !important; margin-left:auto; }`n  header.header .header__nav-actions-group { display:none !important; }`n  header.header .header__actions { display:none !important; }`n  .header__separator { display:none; }`n  .header__logo { height:50px; }`n}`n
