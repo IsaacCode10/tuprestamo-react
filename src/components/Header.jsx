@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Link as ScrollLink } from 'react-scroll';
 import { supabase } from '../supabaseClient';
@@ -23,7 +23,7 @@ const NavButton = ({ to, text }) => {
     }, 100);
   };
 
-  // Si estamos en la página principal, usamos ScrollLink para un scroll suave
+  // Si estamos en la pÃ¡gina principal, usamos ScrollLink para un scroll suave
   if (location.pathname === '/') {
     return (
       <ScrollLink to={to} smooth={true} duration={500} offset={-80} className="header__nav-button">
@@ -32,7 +32,7 @@ const NavButton = ({ to, text }) => {
     );
   }
 
-  // Si estamos en otra página, navegamos primero y luego hacemos scroll
+  // Si estamos en otra pÃ¡gina, navegamos primero y luego hacemos scroll
   return (
     <button onClick={handleNavigateAndScroll} className="header__nav-button">
       {text}
@@ -64,7 +64,7 @@ const Header = () => {
   let displayName = 'Mi Cuenta';
 
   if (profile) {
-    // Construir el nombre a mostrar con una lógica de fallbacks
+    // Construir el nombre a mostrar con una lÃ³gica de fallbacks
     const firstName = profile.nombre_completo?.split(' ')[0];
     const emailUsername = profile.email?.split('@')[0];
     displayName = `Hola, ${firstName || emailUsername || 'Usuario'}`;
@@ -84,7 +84,7 @@ const Header = () => {
     }
   }
 
-  // Área del inversionista (para personalizar el header)
+  // Ãrea del inversionista (para personalizar el header)
   const investorAreaPaths = [
     '/investor-dashboard',
     '/mis-inversiones',
@@ -95,18 +95,18 @@ const Header = () => {
     '/terminos',
     '/privacidad'
   ];
-  // Solo aplicar header de inversionista si hay sesión y rol válido
+  // Solo aplicar header de inversionista si hay sesiÃ³n y rol vÃ¡lido
   const isInvestorLogged = !!profile && (profile.role === 'inversionista' || profile.role === 'admin');
   const isInvestorArea = isInvestorLogged && investorAreaPaths.some((p) => location.pathname.startsWith(p));
   const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
   const statusLabel = {
     verificado: 'Verificada',
-    pendiente_revision: 'En revisión',
-    requiere_revision_manual: 'Requiere revisión',
+    pendiente_revision: 'En revisiÃ³n',
+    requiere_revision_manual: 'Requiere revisiÃ³n',
     no_iniciado: 'Pendiente',
   }[verificationStatus] || 'Pendiente';
 
-  // Cerrar menú central al hacer click fuera
+  // Cerrar menÃº central al hacer click fuera
   useEffect(() => {
     const handleDocClick = (e) => {
       try {
@@ -118,7 +118,7 @@ const Header = () => {
     return () => document.removeEventListener('click', handleDocClick);
   }, [openCenterMenu]);
 
-  // Al cambiar de ruta, cerrar menús abiertos (user y central)
+  // Al cambiar de ruta, cerrar menÃºs abiertos (user y central)
   useEffect(() => {
     if (isMenuOpen) setIsMenuOpen(false);
     if (openCenterMenu) setOpenCenterMenu(null);
@@ -130,11 +130,11 @@ const Header = () => {
     <header className="header">
       <div className="header__container">
         <NavLink to="/" className="header__logo-link">
-          <img src={logo} alt="Logo Tu Préstamo" className="header__logo" />
+          <img src={logo} alt="Logo Tu PrÃ©stamo" className="header__logo" />
         </NavLink>
         <button
           className="header__mobile-toggle"
-          aria-label="Abrir menú"
+          aria-label="Abrir menÃº"
           onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
         >
           <span className="mobile-toggle-bar" />
@@ -165,7 +165,7 @@ const Header = () => {
                     className="header__nav-button"
                     onClick={() => { setIsMenuOpen(false); setOpenCenterMenu(openCenterMenu === 'invertir' ? null : 'invertir'); }}
                   >
-                    Invertir ▾
+                    Invertir â–¾
                   </button>
                   {openCenterMenu === 'invertir' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
@@ -199,13 +199,13 @@ const Header = () => {
                       }
                     }}
                   >
-                    Portafolio ▾
+                    Portafolio â–¾
                   </button>
                   {openCenterMenu === 'portafolio' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 260 }}>
                       <div className="header__dropdown-item" style={{ cursor: 'default', paddingBottom: 8 }}>
                         {kpiLoading ? (
-                          <span>Cargando resumen…</span>
+                          <span>Cargando resumenâ€¦</span>
                         ) : (
                           <div style={{ display: 'flex', gap: 12 }}>
                             <div style={{ minWidth: 110 }}>
@@ -229,12 +229,12 @@ const Header = () => {
                     className="header__nav-button"
                     onClick={() => { setIsMenuOpen(false); setOpenCenterMenu(openCenterMenu === 'cuenta' ? null : 'cuenta'); }}
                   >
-                    Cuenta ▾
+                    Cuenta â–¾
                   </button>
                   {openCenterMenu === 'cuenta' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 240 }}>
                       <div className="header__dropdown-item" style={{ cursor: 'default', opacity: 0.8 }}>
-                        Verificación de identidad: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
+                        VerificaciÃ³n de identidad: <strong style={{ marginLeft: 6 }}>{statusLabel}</strong>
                       </div>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/verificar-cuenta'); }}>Verificar mi Cuenta</button>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
@@ -256,7 +256,7 @@ const Header = () => {
             {profile ? (
               <div className="header__user-menu">
                 <button onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(!isMenuOpen); }} className="header__user-button">
-                  {displayName} <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`}>▼</span>
+                  {displayName} <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`}>â–¼</span>
                 </button>
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
@@ -274,7 +274,7 @@ const Header = () => {
                     )}
                     <div className="header__dropdown-separator"></div>
                     <button onClick={handleLogout} className="header__dropdown-item button">
-                      Cerrar Sesión
+                      Cerrar SesiÃ³n
                     </button>
                     {profile?.id === '8983b4fb-93c8-4951-b2db-c595f61fd3c4' && (
                       <>
@@ -324,7 +324,7 @@ const Header = () => {
                 ) : (
                   <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/perfil'); }}>Mi Perfil</button>
                 )}
-                <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesión</button>
+                <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesiÃ³n</button>
               </>
             )}
           </div>

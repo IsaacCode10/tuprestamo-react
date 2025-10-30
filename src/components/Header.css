@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿:root {
+﻿﻿﻿﻿﻿﻿:root {
   --header-primary-color: #00445A; /* Azul Oscuro */
   --header-accent-color: #26C2B2;  /* Turquesa */
 }
@@ -190,7 +190,7 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  /* Sólo logo + botón hamburguesa; ocultar todo lo demás */
+  /* Sólo logo + botón hamburguesa; ocultar navegación inline */
   header.header .header__nav-actions-group,
   header.header .header__actions,
   header.header .header__nav,
@@ -200,8 +200,9 @@
   .header__mobile-toggle { display: inline-flex !important; width: 50px; height: 50px; margin-left: auto; align-items: center; justify-content: center; }
   .header__mobile-toggle .mobile-toggle-bar { width: 26px; height: 3px; background: var(--header-primary-color); border-radius: 2px; margin: 4px 0; display: block; }
 
-  /* Desactivar menú hasta el próximo paso */
-  .mobile-menu-overlay, .mobile-menu-panel { display: none !important; }
+  /* Overlay y panel visibles cuando se renderizan */
+  .mobile-menu-overlay { display: block; }
+  .mobile-menu-panel { display: block; }
 
   .header__logo { height: 50px; }
 }
