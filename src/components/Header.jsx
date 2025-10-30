@@ -33,6 +33,53 @@ const NavButton = ({ to, text }) => {
   }
 
   // Si estamos en otra pÃ¡gina, navegamos primero y luego hacemos scroll
+  // Cargar notificaciones al abrir el menú de usuario
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('id, title, body, created_at, read_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(15);
+        if (!error && Array.isArray(data)) {
+          const mapped = data.map(n => ({ id: n.id, message: n.title || n.body, time: new Date(n.created_at).toLocaleString('es-BO'), read: !!n.read_at }));
+          setNotifications(mapped);
+        }
+      } catch (_) { /* noop */ }
+    };
+    if (isMenuOpen) load();
+  }, [isMenuOpen]);
+
+  // Suscripción Realtime a nuevas notificaciones
+  useEffect(() => {
+    let channel;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      channel = supabase
+        .channel('notif_' + user.id)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+          const r = payload.new;
+          setNotifications(prev => ([{ id: r.id, message: r.title || r.body, time: new Date(r.created_at).toLocaleString('es-BO'), read: !!r.read_at }, ...prev]).slice(0, 15));
+        })
+        .subscribe();
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
+  const markAllRead = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', user.id).is('read_at', null);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (_) { /* noop */ }
+  };
+
   return (
     <button onClick={handleNavigateAndScroll} className="header__nav-button">
       {text}
@@ -49,8 +96,8 @@ const Header = () => {
   const location = useLocation();
   const [kpiLoading, setKpiLoading] = useState(false);
   const [kpis, setKpis] = useState({ totalInvested: 0, positions: 0 });
-  // Placeholder de notificaciones (MVP). Integrar con backend luego.
-  const [notifications] = useState([]);
+  // Notificaciones conectadas a Supabase
+  const [notifications, setNotifications] = useState([]);
   const unreadCount = notifications.filter(n => !n.read).length;
   const centerNavRef = useRef(null);
 
@@ -258,7 +305,7 @@ const Header = () => {
                 </button>
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
-                    <button className="header__dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setIsMenuOpen(false)}>
+                    <button className="header__dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: 10 }} onClick={async () => { await markAllRead(); setIsMenuOpen(false); }}>
                       <NotificationBell notifications={notifications} />
                       <span>Notificaciones</span>
                       <span className="notif-pill">{unreadCount}</span>
