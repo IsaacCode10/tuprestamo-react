@@ -141,6 +141,7 @@ const Header = () => {
     '/retiro',
     '/oportunidades',
     '/verificar-cuenta',
+    '/perfil-inversionista',
     '/faq-inversionista',
     '/terminos',
     '/privacidad'
