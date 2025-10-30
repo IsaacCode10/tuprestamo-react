@@ -165,7 +165,7 @@ const Header = () => {
                     className="header__nav-button"
                     onClick={() => { setIsMenuOpen(false); setOpenCenterMenu(openCenterMenu === 'invertir' ? null : 'invertir'); }}
                   >
-                    Invertir â–¾
+                    Invertir
                   </button>
                   {openCenterMenu === 'invertir' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
@@ -199,7 +199,7 @@ const Header = () => {
                       }
                     }}
                   >
-                    Portafolio â–¾
+                    Portafolio
                   </button>
                   {openCenterMenu === 'portafolio' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 260 }}>
@@ -229,7 +229,7 @@ const Header = () => {
                     className="header__nav-button"
                     onClick={() => { setIsMenuOpen(false); setOpenCenterMenu(openCenterMenu === 'cuenta' ? null : 'cuenta'); }}
                   >
-                    Cuenta â–¾
+                    Cuenta
                   </button>
                   {openCenterMenu === 'cuenta' && (
                     <div className="header__dropdown-menu" style={{ minWidth: 240 }}>
@@ -256,7 +256,7 @@ const Header = () => {
             {profile ? (
               <div className="header__user-menu">
                 <button onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(!isMenuOpen); }} className="header__user-button">
-                  {displayName} <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`}>â–¼</span>
+                  {displayName} <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`} aria-hidden="true"></span>
                 </button>
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
@@ -274,7 +274,7 @@ const Header = () => {
                     )}
                     <div className="header__dropdown-separator"></div>
                     <button onClick={handleLogout} className="header__dropdown-item button">
-                      Cerrar SesiÃ³n
+                      Cerrar Sesion
                     </button>
                     {profile?.id === '8983b4fb-93c8-4951-b2db-c595f61fd3c4' && (
                       <>

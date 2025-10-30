@@ -128,11 +128,18 @@
 }
 
 .header__user-arrow {
-  transition: transform 0.3s ease;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
 }
 
 .header__user-arrow.open {
-  transform: rotate(180deg);
+  transform: rotate(-135deg);
 }
 
 .header__dropdown-menu {
