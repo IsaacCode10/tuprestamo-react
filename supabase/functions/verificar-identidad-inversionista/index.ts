@@ -140,6 +140,25 @@ Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no v�
       .eq('id', user_id)
     if (updErr) throw new Error(`Error al actualizar perfil: ${updErr.message}`)
 
+    // 8) Notificación al usuario (no bloquear en caso de error)
+    try {
+      const notifyTitle = finalStatus === 'verificado'
+        ? 'Tu verificación fue aprobada'
+        : 'Tu verificación requiere revisión'
+      const notifyBody = finalStatus === 'verificado'
+        ? '¡Listo! Ya puedes invertir y solicitar retiros.'
+        : 'No pudimos confirmar automáticamente tu identidad. Un analista revisará tu caso.'
+      // Llamar a la función de notificaciones (misma instancia)
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/create-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+        },
+        body: JSON.stringify({ user_id, type: 'kyc_status', title: notifyTitle, body: notifyBody, email: true })
+      })
+    } catch (_) { /* noop */ }
+
     return new Response(JSON.stringify({ message: 'ok', status: finalStatus }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
