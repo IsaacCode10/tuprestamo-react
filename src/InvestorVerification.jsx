@@ -1,200 +1,271 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
-import InvestorBackBar from '@/components/InvestorBackBar.jsx';
-import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { supabase } from './supabaseClient'
+import InvestorBackBar from '@/components/InvestorBackBar.jsx'
+import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx'
 
-const InvestorVerification = () => {
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
-  const [error, setError] = useState(null);
+// MVP robusto: autosave (servidor + local) y subida inmediata del archivo
+
+const DRAFT_KEY_PREFIX = 'verification_drafts_local_v1'
+
+export default function InvestorVerification() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [profile, setProfile] = useState(null)
+  const [userId, setUserId] = useState(null)
+  const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   // Form state
-  const [numeroCi, setNumeroCi] = useState('');
-  const [ciFile, setCiFile] = useState(null);
-  const [bankName, setBankName] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
+  const [numeroCi, setNumeroCi] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [ciFile, setCiFile] = useState(null)
+  const [ciUploadedPath, setCiUploadedPath] = useState('')
+  const [ciUploadedName, setCiUploadedName] = useState('')
+
+  const draftKey = useMemo(() => (userId ? `${DRAFT_KEY_PREFIX}_${userId}` : null), [userId])
+  const saveTimer = useRef(null)
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setError('Debes iniciar sesión para verificar tu cuenta.');
-        setLoading(false);
-        return;
-      }
+    async function boot() {
+      try {
+        const { data: auth } = await supabase.auth.getUser()
+        if (!auth?.user) {
+          setError('Debes iniciar sesion para verificar tu cuenta.')
+          setLoading(false)
+          return
+        }
+        setUserId(auth.user.id)
 
-      const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+        // Cargar perfil
+        const { data: prof, error: pErr } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', auth.user.id)
+          .single()
+        if (pErr) throw pErr
+        setProfile(prof)
+        if (prof?.numero_ci) setNumeroCi(prof.numero_ci)
 
-      if (profileError) {
-        setError('Error al cargar tu perfil.');
-      } else {
-        setProfile(data);
-        setNumeroCi(data.numero_ci || '');
+        // Intentar cargar borrador de servidor
+        const { data: draftRow } = await supabase
+          .from('verification_drafts')
+          .select('numero_ci, bank_name, account_number, ci_uploaded_path, ci_uploaded_name')
+          .eq('user_id', auth.user.id)
+          .maybeSingle()
+
+        if (draftRow) {
+          if (draftRow.numero_ci) setNumeroCi(String(draftRow.numero_ci))
+          if (draftRow.bank_name) setBankName(String(draftRow.bank_name))
+          if (draftRow.account_number) setAccountNumber(String(draftRow.account_number))
+          if (draftRow.ci_uploaded_path) {
+            setCiUploadedPath(String(draftRow.ci_uploaded_path))
+            setCiUploadedName(String(draftRow.ci_uploaded_name || String(draftRow.ci_uploaded_path).split('/').pop()))
+          }
+        } else {
+          // Fallback: localStorage
+          try {
+            const raw = localStorage.getItem(`${DRAFT_KEY_PREFIX}_${auth.user.id}`)
+            if (raw) {
+              const d = JSON.parse(raw)
+              if (d.numeroCi) setNumeroCi(d.numeroCi)
+              if (d.bankName) setBankName(d.bankName)
+              if (d.accountNumber) setAccountNumber(d.accountNumber)
+              if (d.ciUploadedPath) {
+                setCiUploadedPath(d.ciUploadedPath)
+                setCiUploadedName(d.ciUploadedName || d.ciUploadedPath.split('/').pop())
+              }
+            }
+          } catch {}
+        }
+      } catch (e) {
+        setError('No se pudo cargar tu informacion.');
+      } finally {
+        setLoading(false)
       }
-      setLoading(false);
-    };
-    fetchProfile();
-  }, []);
+    }
+    boot()
+  }, [])
+
+  // Autosave (debounce ~600ms) a servidor y luego localStorage
+  useEffect(() => {
+    if (!userId) return
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(async () => {
+      try {
+        setSaving(true)
+        await supabase.from('verification_drafts').upsert({
+          user_id: userId,
+          numero_ci: numeroCi || null,
+          bank_name: bankName || null,
+          account_number: accountNumber || null,
+          ci_uploaded_path: ciUploadedPath || null,
+          ci_uploaded_name: ciUploadedName || null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' })
+      } catch {}
+      finally {
+        setSaving(false)
+        // Fallback local
+        try {
+          const draft = { numeroCi, bankName, accountNumber, ciUploadedPath, ciUploadedName, savedAt: Date.now() }
+          localStorage.setItem(draftKey, JSON.stringify(draft))
+        } catch {}
+      }
+    }, 600)
+    return () => saveTimer.current && clearTimeout(saveTimer.current)
+  }, [userId, draftKey, numeroCi, bankName, accountNumber, ciUploadedPath, ciUploadedName])
+
+  const handleImmediateUpload = async (file) => {
+    try {
+      if (!file) return
+      const { data: auth } = await supabase.auth.getUser()
+      if (!auth?.user) throw new Error('No autenticado')
+      const ext = file.name.split('.').pop()
+      const name = `${Date.now()}_ci_anverso.${ext}`
+      const path = `${auth.user.id}/${name}`
+      const { error: upErr } = await supabase.storage
+        .from('documentos-prestatarios')
+        .upload(path, file)
+      if (upErr) throw upErr
+      setCiUploadedPath(path)
+      setCiUploadedName(name)
+      setCiFile(null)
+      setInfo('Documento guardado. Puedes volver luego sin perder el avance.')
+    } catch (e) {
+      setError(`No se pudo subir el documento: ${e.message}`)
+    }
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setMessage('');
-
-    if (!numeroCi || !ciFile || !bankName || !accountNumber) {
-      setError("Todos los campos son obligatorios.");
-      setLoading(false);
-      return;
-    }
-
+    e.preventDefault()
+    setError('')
+    setInfo('')
+    setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuario no autenticado.");
+      const { data: auth } = await supabase.auth.getUser()
+      if (!auth?.user) throw new Error('No autenticado')
 
-      // 1. Actualizar el perfil con el número de CI
-      const { error: profileUpdateError } = await supabase
+      if (!numeroCi || !bankName || !accountNumber || (!ciUploadedPath && !ciFile)) {
+        throw new Error('Completa todos los campos y carga tu documento.')
+      }
+
+      // Asegurar archivo si aun no se subio
+      let filePath = ciUploadedPath
+      let fileName = ciUploadedName
+      if (!filePath && ciFile) {
+        const ext = ciFile.name.split('.').pop()
+        fileName = `${Date.now()}_ci_anverso.${ext}`
+        filePath = `${auth.user.id}/${fileName}`
+        const { error: upErr } = await supabase.storage
+          .from('documentos-prestatarios')
+          .upload(filePath, ciFile)
+        if (upErr) throw upErr
+      }
+
+      // 1) Actualizar perfil
+      const { error: pErr } = await supabase
         .from('profiles')
         .update({ numero_ci: numeroCi })
-        .eq('id', user.id);
-      if (profileUpdateError) throw profileUpdateError;
+        .eq('id', auth.user.id)
+      if (pErr) throw pErr
 
-      // 2. Subir el archivo del CI al bucket correcto
-      const fileExt = ciFile.name.split('.').pop();
-      const fileName = `${Date.now()}_ci_anverso.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-      const { error: uploadError } = await supabase.storage
-        .from('documentos-prestatarios')
-        .upload(filePath, ciFile);
-      if (uploadError) throw uploadError;
-
-      // 3. Insertar la cuenta bancaria
-      const { error: bankAccountError } = await supabase
-        .from('cuentas_bancarias_inversionistas')
-        .insert({
-          user_id: user.id,
-          nombre_banco: bankName,
-          numero_cuenta: accountNumber,
-        });
-      if (bankAccountError) throw bankAccountError;
-
-      // 4. Insertar el registro en la tabla 'documentos' para disparar el trigger
-      const { error: docInsertError } = await supabase
+      // 2) Insertar documento en tabla
+      const { error: dErr } = await supabase
         .from('documentos')
         .insert({
-          user_id: user.id,
-          tipo_documento: 'ci_inversionista_anverso', // Clave que el trigger espera
+          user_id: auth.user.id,
+          tipo_documento: 'ci_inversionista_anverso',
           url_archivo: filePath,
           nombre_archivo: fileName,
           estado: 'subido',
-        });
-      if (docInsertError) throw docInsertError;
-      
-      // 4.1 Fallback: invocar Edge Function directamente para verificar automáticamente
+        })
+      if (dErr) throw dErr
+
+      // 3) Invocar verificacion (fallback)
       try {
-        const { error: invokeError } = await supabase.functions.invoke('verificar-identidad-inversionista', {
-          body: { record: { user_id: user.id, url_archivo: filePath, tipo_documento: 'ci_inversionista_anverso' } },
-        });
-        if (invokeError) console.warn('verificar-identidad-inversionista invocation warning:', invokeError);
-      } catch (e) {
-        console.warn('Fallo invocando verificar-identidad-inversionista:', e?.message || e);
-      }
-      
-      // 5. Finalmente, actualizar el estado de verificación del perfil
-      const { error: finalStatusError } = await supabase
+        await supabase.functions.invoke('verificar-identidad-inversionista', {
+          body: { record: { user_id: auth.user.id, url_archivo: filePath, tipo_documento: 'ci_inversionista_anverso' } },
+        })
+      } catch {}
+
+      // 4) Marcar estado
+      const { error: sErr } = await supabase
         .from('profiles')
         .update({ estado_verificacion: 'pendiente_revision' })
-        .eq('id', user.id);
-      if (finalStatusError) throw finalStatusError;
+        .eq('id', auth.user.id)
+      if (sErr) throw sErr
 
-      setMessage('¡Verificación enviada con éxito! Recibirás una notificación cuando tu cuenta sea aprobada.');
-      
-    } catch (error) {
-      setError(`Error al enviar la verificación: ${error.message}`);
+      // 5) Limpiar borrador
+      try { await supabase.from('verification_drafts').delete().eq('user_id', auth.user.id) } catch {}
+      try { localStorage.removeItem(draftKey) } catch {}
+
+      setInfo('Verificacion enviada con exito. Te notificaremos cuando sea aprobada.')
+    } catch (e) {
+      setError(e.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  if (loading) {
-    return <div>Cargando tu perfil...</div>;
   }
 
-  if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
-  }
-
-  if (!profile) {
-    return <div>No se encontró el perfil.</div>;
-  }
+  if (loading) return <div>Cargando tu perfil...</div>
+  if (error) return <div style={{ color: 'red' }}>{error}</div>
+  if (!profile) return <div>No se encontro el perfil.</div>
 
   return (
-    <div className="verification-container" style={{ maxWidth: '768px', margin: 'auto', padding: '2rem' }}>
+    <div className="verification-container" style={{ maxWidth: 768, margin: 'auto', padding: '2rem' }}>
       <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
       <InvestorBreadcrumbs items={[
         { label: 'Inicio', to: '/investor-dashboard' },
         { label: 'Cuenta', to: '/verificar-cuenta' },
         { label: 'Verificar' },
       ]} />
-      <h2>Centro de Verificación</h2>
-      <p>Completa los siguientes pasos para verificar tu cuenta y poder empezar a invertir.</p>
-      
+      <h2>Centro de Verificacion</h2>
+      <p>Se guarda automaticamente tu avance.</p>
+
       <form onSubmit={handleSubmit}>
         <h3>1. Datos Personales</h3>
         <div>
-          <label htmlFor="numeroCi">Número de Cédula de Identidad</label>
-          <input 
-            type="text" 
-            id="numeroCi" 
-            value={numeroCi}
-            onChange={(e) => setNumeroCi(e.target.value)}
-            required
-          />
+          <label htmlFor="numeroCi">Numero de Cedula de Identidad</label>
+          <input id="numeroCi" type="text" value={numeroCi} onChange={(e) => setNumeroCi(e.target.value)} required />
         </div>
 
         <h3>2. Documento de Identidad</h3>
         <div>
-          <label htmlFor="ciFile">Sube tu Cédula de Identidad (Anverso)</label>
-          <input 
-            type="file" 
-            id="ciFile"
-            accept="image/png, image/jpeg"
-            onChange={(e) => setCiFile(e.target.files[0])}
-            required
-          />
+          <label htmlFor="ciFile">Sube tu Cedula de Identidad (Anverso)</label>
+          {ciUploadedPath ? (
+            <div style={{ padding: '8px 0' }}>
+              <div style={{ color: '#11696b', fontWeight: 600 }}>Documento cargado: {ciUploadedName}</div>
+              <small style={{ color: '#666' }}>Puedes continuar luego, el archivo queda guardado.</small>
+              <div style={{ marginTop: 8 }}>
+                <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => handleImmediateUpload(e.target.files?.[0])} />
+                <small style={{ marginLeft: 8, color: '#555' }}>(Reemplazar archivo)</small>
+              </div>
+            </div>
+          ) : (
+            <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => { setCiFile(e.target.files?.[0] || null); handleImmediateUpload(e.target.files?.[0]); }} required />
+          )}
         </div>
 
         <h3>3. Cuenta Bancaria para Retiros</h3>
-        <p>Esta será la única cuenta a la que podrás retirar tus fondos.</p>
+        <p>Esta sera la unica cuenta a la que podras retirar tus fondos.</p>
         <div>
           <label htmlFor="bankName">Nombre del Banco</label>
-          <input 
-            type="text" 
-            id="bankName" 
-            value={bankName}
-            onChange={(e) => setBankName(e.target.value)}
-            required
-          />
+          <input id="bankName" type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} required />
         </div>
         <div>
-          <label htmlFor="accountNumber">Número de Cuenta</label>
-          <input 
-            type="text" 
-            id="accountNumber" 
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            required
-          />
+          <label htmlFor="accountNumber">Numero de Cuenta</label>
+          <input id="accountNumber" type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required />
         </div>
 
-        <button type="submit" style={{ marginTop: '2rem' }}>Enviar Verificación</button>
+        <div style={{ marginTop: 12, minHeight: 20 }}>
+          {saving && <span style={{ color: '#666' }}>Guardando…</span>}
+          {info && <span style={{ color: '#11696b' }}>{info}</span>}
+        </div>
+
+        <button type="submit" style={{ marginTop: '1rem' }}>Enviar Verificacion</button>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default InvestorVerification;
