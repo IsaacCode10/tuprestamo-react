@@ -59,7 +59,7 @@ const ConfirmAndSetPassword = () => {
     setError('');
     try {
       if (!email) throw new Error('Ingresa tu email.');
-      const redirectTo = ${window.location.origin}/confirmar-y-crear-perfil;
+      
       const { error: sendErr } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
       if (sendErr) throw sendErr;
       setMessage('Te enviamos un nuevo enlace de acceso a tu correo. Revisa tu bandeja y Spam.');
@@ -80,7 +80,7 @@ const ConfirmAndSetPassword = () => {
       return;
     }
     if (password.length < 6) {
-      setError('La contraseÃƒÂ±a debe tener al menos 6 caracteres.');
+      setError('La contraseÃƒÆ’Ã‚Â±a debe tener al menos 6 caracteres.');
       return;
     }
 
@@ -90,17 +90,17 @@ const ConfirmAndSetPassword = () => {
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
       setMessage('Contrasena establecida con exito! Redirigiendo a tu dashboard...');
-      setError(`Error al establecer la contraseÃƒÂ±a: ${updateError.message}`);
+      setError(`Error al establecer la contraseÃƒÆ’Ã‚Â±a: ${updateError.message}`);
       setLoading(false);
     } else {
-      setMessage('Ã‚Â¡ContraseÃƒÂ±a establecida con ÃƒÂ©xito! Redirigiendo a tu dashboard...');
+      setMessage('Ãƒâ€šÃ‚Â¡ContraseÃƒÆ’Ã‚Â±a establecida con ÃƒÆ’Ã‚Â©xito! Redirigiendo a tu dashboard...');
 
       // Asegurar que exista el perfil y que tenga nombre/rol desde los metadatos del usuario invitado
       const desiredRole = user?.user_metadata?.role || 'inversionista';
       const desiredNombre = user?.user_metadata?.nombre_completo || user?.user_metadata?.full_name || null;
       const email = user?.email || null;
 
-      // TambiÃƒÂ©n actualizar metadata del usuario para que Supabase muestre el Display Name
+      // TambiÃƒÆ’Ã‚Â©n actualizar metadata del usuario para que Supabase muestre el Display Name
       try {
         if (desiredNombre || desiredRole) {
           await supabase.auth.updateUser({
@@ -114,7 +114,7 @@ const ConfirmAndSetPassword = () => {
         console.warn('No se pudo actualizar user metadata (full_name/role):', e);
       }
 
-      // Intentar obtener el perfil existente (puede no existir aÃƒÂºn para flujo de invitaciÃƒÂ³n)
+      // Intentar obtener el perfil existente (puede no existir aÃƒÆ’Ã‚Âºn para flujo de invitaciÃƒÆ’Ã‚Â³n)
       const { data: existingProfile, error: fetchErr } = await supabase
         .from('profiles')
         .select('id, role, nombre_completo, email')
@@ -123,7 +123,7 @@ const ConfirmAndSetPassword = () => {
 
       if (fetchErr) {
         // Continuar pero registrar el error en consola
-        console.warn('No se pudo leer perfil existente, se intentarÃƒÂ¡ crear/actualizar:', fetchErr);
+        console.warn('No se pudo leer perfil existente, se intentarÃƒÆ’Ã‚Â¡ crear/actualizar:', fetchErr);
       }
 
       if (!existingProfile) {
@@ -144,7 +144,7 @@ const ConfirmAndSetPassword = () => {
         }
       }
 
-      // Leer rol final para decidir redirecciÃƒÂ³n
+      // Leer rol final para decidir redirecciÃƒÆ’Ã‚Â³n
       const { data: finalProfile } = await supabase
         .from('profiles')
         .select('role')
@@ -185,7 +185,7 @@ const ConfirmAndSetPassword = () => {
 )}
         <form onSubmit={handleSetPassword}>
           <div>
-            <label htmlFor="password">Nueva ContraseÃƒÂ±a:</label>
+            <label htmlFor="password">Nueva ContraseÃƒÆ’Ã‚Â±a:</label>
             <input
               type="password"
               id="password"
@@ -198,7 +198,7 @@ const ConfirmAndSetPassword = () => {
             />
           </div>
           <div>
-            <label htmlFor="confirmPassword">Confirmar ContraseÃƒÂ±a:</label>
+            <label htmlFor="confirmPassword">Confirmar ContraseÃƒÆ’Ã‚Â±a:</label>
             <input
               type="password"
               id="confirmPassword"
@@ -210,12 +210,12 @@ const ConfirmAndSetPassword = () => {
             />
           </div>
           <button type="submit" disabled={loading || !password || !user}>
-            {loading ? 'Guardando...' : 'Guardar ContraseÃƒÂ±a y Acceder'}
+            {loading ? 'Guardando...' : 'Guardar ContraseÃƒÆ’Ã‚Â±a y Acceder'}
         {!user && !error && <p className=\
         </form>
         {message && <p className="auth-message auth-message-success">{message}</p>}
         {error && <p className="auth-message auth-message-error">{error}</p>}
-        {!user && !error && <p className="auth-message">Verificando sesiÃƒÂ³n...</p>}
+        {!user && !error && <p className="auth-message">Verificando sesiÃƒÆ’Ã‚Â³n...</p>}
       </div>
     </div>
   );
