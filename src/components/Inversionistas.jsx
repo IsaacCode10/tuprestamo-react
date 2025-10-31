@@ -22,13 +22,13 @@ const Inversionistas = ({ onSolicitudClick }) => {
             Protecci&oacute;n de tu capital con Seguro de Desgravamen.
           </li>
         </ul>
-        <div className="button-container">
+        <div className="button-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
           <p className="cta-text">Reg&iacute;strate como inversionista y conoce las oportunidades.</p>
-          {/* BOTÃƒâ€œN QUE ABRE EL MODAL */}
+          {/* Botón principal */}
           <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
             Ver Oportunidades
           </button>
-          <a className="btn" href="/calculadora-inversionista" style={{ marginTop: 8 }}>
+          <a className="btn" href="/calculadora-inversionista" style={{ marginTop: 8, background: '#eef9f8', border: '1px solid #26C2B2', color: '#00445A' }}>
             Calculadora de Ganancias
           </a>
         </div>
