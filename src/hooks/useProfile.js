@@ -75,7 +75,7 @@ export function useProfile() {
       if (!userId) return;
       channel = supabase
         .channel('profile_' + userId)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: id=eq. }, (payload) => {
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` }, (payload) => {
           try {
             const next = payload.new || {};
             setProfile(prev => prev ? { ...prev, ...next } : next);
@@ -86,4 +86,6 @@ export function useProfile() {
     return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
+  return { session, profile, loading, authEvent };
+}
 
