@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { trackEvent } from '@/analytics.js'
+import './InvestorCalculator.css'
 
 function calculateReturns(amount, years, rate) {
   const a = Number(amount || 0)
@@ -81,40 +82,45 @@ export default function InvestorCalculator() {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
+    <div className="calculator-page-container" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
       <h1 style={{ marginBottom: 8 }}>Calculadora de Ganancias</h1>
       <p style={{ marginTop: 0, color: '#444' }}>Compara un DPF tradicional vs invertir con Tu Pr&eacute;stamo.</p>
 
-      <div style={{ display:'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(320px, 1fr)', gap: 24 }}>
+      <div className="calculator-layout">
         {/* Columna izquierda: Inputs */}
-        <div style={{ border:'1px solid #eee', borderRadius:8, padding:16 }}>
-          <div style={{ marginBottom:16 }}>
-            <label>Monto (Bs): {amount.toLocaleString('es-BO')}</label>
-            <input type="range" min={1000} max={50000} step={500} value={amount} onChange={(e) => setAmount(Number(e.target.value))} style={{ width: '100%' }} />
-          </div>
-          <div style={{ marginBottom:16 }}>
-            <label>Plazo</label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap:'wrap' }}>
-              {[12,18,24].map(m => (
-                <button key={m} onClick={() => setMonths(m)} className={months===m? 'btn btn--primary':'btn'}>{m} meses</button>
-              ))}
+        <div className="calculator-column inputs-column">
+          <h3>Simula tu Retorno</h3>
+          <div className="calculator-inputs">
+            <div className="input-group">
+              <label>Monto (Bs.)</label>
+              <input type="range" min={1000} max={50000} step={500} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+              <span className="slider-value">Bs. {Number(amount).toLocaleString('es-BO')}</span>
             </div>
-          </div>
-          <div style={{ marginBottom:16 }}>
-            <label>Tasa de tu DPF</label>
-            <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
-              {[0.03, 0.035, 0.04].map(r => (
-                <button key={r} onClick={() => setDpfRate(r)} className={dpfRate===r? 'btn btn--secondary':'btn'}>{(r*100).toFixed(1)}%</button>
-              ))}
+            <div className="input-group">
+              <label>Plazo</label>
+              <div className="term-buttons">
+                {[12,18,24].map(m => (
+                  <button key={m} className={`term-button ${months===m ? 'selected' : ''}`} onClick={() => setMonths(m)} type="button">{m} meses</button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div>
-            <button className="btn btn--primary" onClick={handleOpenLead}>Calcular mi Ganancia Adicional</button>
+            <div className="input-group">
+              <label>Tasa de tu DPF</label>
+              <div className="term-buttons">
+                {[0.03, 0.035, 0.04].map(r => (
+                  <button key={r} className={`term-button ${dpfRate===r ? 'selected' : ''}`} onClick={() => setDpfRate(r)} type="button">{(r*100).toFixed(1)}%</button>
+                ))}
+              </div>
+            </div>
+            <div className="input-group">
+              <button className="btn btn--primary" onClick={handleOpenLead}>Calcular mi Ganancia Adicional</button>
+            </div>
           </div>
         </div>
 
         {/* Columna derecha: Resultados y comparativa */}
-        <div style={{ border:'1px solid #eef2f3', borderRadius:8, padding:16 }}>
+        <div className="calculator-column results-column">
+          <h3>Resultados</h3>
           {!saved ? (
             <div style={{ color:'#666' }}>
               <p>Ingresa los datos y presiona "Calcular mi Ganancia Adicional" para ver tu proyecci&oacute;n.</p>
@@ -122,8 +128,8 @@ export default function InvestorCalculator() {
             </div>
           ) : (
             <>
-              <div style={{ marginBottom: 20, padding: 12, border: '1px solid #a8ede6', background: '#eef9f8', borderRadius: 8 }}>
-                <strong>Proyecci&oacute;n lista.</strong> Esta es tu comparaci&oacute;n estimada.
+              <div className="savings-summary">
+                <p className="savings-label"><strong>Proyecci&oacute;n lista.</strong> Esta es tu comparaci&oacute;n estimada.</p>
               </div>
               <Scenarios amount={amount} years={years} dpfRate={dpfRate} rates={[0.10,0.12,0.15]} />
             </>
@@ -251,4 +257,3 @@ function ComparisonNotes() {
     </div>
   )
 }
-
