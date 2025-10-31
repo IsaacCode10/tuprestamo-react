@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { trackEvent } from '@/analytics.js'
@@ -83,7 +83,7 @@ export default function InvestorCalculator() {
 
   return (
     <div className="calculator-page-container" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
-      <h1 style={{ marginBottom: 8 }}>Calculadora de Ganancias</h1>
+      <h1 style={{ marginBottom: 8, textAlign: "center" }}>Calculadora de Ganancias</h1>
       <p style={{ marginTop: 0, color: '#444' }}>Compara un DPF tradicional vs invertir con Tu PrÃ©stamo.</p>
 
       <div className="calculator-layout">
@@ -205,11 +205,11 @@ function Scenarios({ amount, years, dpfRate, rates }){
           })}
         </tbody>
       </table>
-      <div style={{ marginTop:16 }}>
+      <div style={{ marginTop:16, textAlign:"center" }}>
         <a className="btn btn--primary" href="/auth">Crear mi cuenta</a>
       </div>
       <div style={{ marginTop:24 }}>
-        <h4>Diferencias clave</h4>
+        <h3 style={{ textAlign:"center" }}>Diferencias clave</h3>
         <table style={{ width:'100%', borderCollapse:'collapse' }}>
           <thead>
             <tr>
@@ -235,9 +235,9 @@ function Scenarios({ amount, years, dpfRate, rates }){
               <td style={{ padding:8 }}>Natural con reinversi&oacute;n</td>
             </tr>
             <tr style={{ borderTop:'1px solid #f0f0f0' }}>
-              <td style={{ padding:8 }}>Horizonte del MVP</td>
-              <td style={{ padding:8 }}>Fijo al plazo</td>
-              <td style={{ padding:8 }}>12, 18 y 24 meses</td>
+              <td style={{ padding:8 }}>Trámite</td>
+              <td style={{ padding:8 }}>Presencial: solicitar y firmar en sucursal</td>
+              <td style={{ padding:8 }}>100% en línea</td>
             </tr>
           </tbody>
         </table>
