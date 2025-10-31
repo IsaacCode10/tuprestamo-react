@@ -11,6 +11,8 @@ const ConfirmAndSetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const [linkErrorCode, setLinkErrorCode] = useState('');
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -31,6 +33,13 @@ const ConfirmAndSetPassword = () => {
       }
     } catch {}
   }, [location.hash]);
+
+  // Cooldown timer for resend button
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
 
   // On load, check if a user session exists from the magic link
   useEffect(() => {
@@ -60,8 +69,17 @@ const ConfirmAndSetPassword = () => {
     try {
       if (!email) throw new Error('Ingresa tu email.');
       const redirectTo = `${window.location.origin}/confirmar-y-crear-perfil`;
-      const { error: sendErr } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
-      if (sendErr) throw sendErr;
+      // Try Edge Function (Resend + admin.generateLink)
+      const { error: fnErr } = await supabase.functions.invoke('resend-magic-link', {
+        body: { email, redirectTo },
+      });
+      if (fnErr) {
+        // Fallback to native OTP if function fails
+        const { error: sendErr } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+        if (sendErr) throw sendErr;
+      }
+      setResendSuccess(true);
+      setCooldown(30);
       setMessage('Te enviamos un nuevo enlace de acceso a tu correo. Revisa tu bandeja y Spam.');
     } catch (e) {
       setError(e.message || 'No pudimos enviar el enlace.');
@@ -145,6 +163,13 @@ const ConfirmAndSetPassword = () => {
     }, 1200);
   };
 
+  const emailDomain = (email.split('@')[1] || '').toLowerCase();
+  const webmailLink = emailDomain.includes('gmail')
+    ? 'https://mail.google.com'
+    : (emailDomain.includes('outlook') || emailDomain.includes('hotmail') || emailDomain.includes('live'))
+      ? 'https://outlook.live.com'
+      : '';
+
   return (
     <div className="auth-container">
       <div className="auth-form">
@@ -154,14 +179,29 @@ const ConfirmAndSetPassword = () => {
             Enlace invalido o expirado. Solicita un nuevo acceso a tu correo.
           </div>
         )}
+        {message && (
+          <div className="auth-message auth-message-success" style={{ marginBottom: 12 }}>
+            {message}
+            {resendSuccess && (
+              <div style={{ marginTop: 6, fontSize: 13, color: '#055d63' }}>
+                Sugerencias: revisa Spam/Promociones.
+                {webmailLink && (
+                  <>
+                    {' '}o abre tu correo aqui: <a href={webmailLink} target="_blank" rel="noreferrer">{emailDomain.includes('gmail') ? 'Gmail' : 'Outlook'}</a>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {(!user && linkErrorCode) && (
           <form onSubmit={handleResendLink} style={{ marginBottom: 16 }}>
             <div>
               <label htmlFor="email">Tu correo</label>
               <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" required />
             </div>
-            <button type="submit" disabled={resendLoading || !email}>
-              {resendLoading ? 'Enviando...' : 'Enviar nuevo enlace'}
+            <button type="submit" disabled={resendLoading || !email || cooldown > 0}>
+              {resendLoading ? 'Enviando...' : (cooldown > 0 ? `Reenviar en ${cooldown}s` : 'Enviar nuevo enlace')}
             </button>
           </form>
         )}
@@ -195,7 +235,6 @@ const ConfirmAndSetPassword = () => {
             {loading ? 'Guardando...' : 'Guardar Contrasena y Acceder'}
           </button>
         </form>
-        {message && <p className="auth-message auth-message-success">{message}</p>}
         {error && <p className="auth-message auth-message-error">{error}</p>}
         {!user && !error && <p className="auth-message">Verificando sesion...</p>}
       </div>
@@ -204,4 +243,3 @@ const ConfirmAndSetPassword = () => {
 };
 
 export default ConfirmAndSetPassword;
-
