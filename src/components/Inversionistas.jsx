@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 const Inversionistas = ({ onSolicitudClick }) => {
   return (
@@ -6,24 +6,24 @@ const Inversionistas = ({ onSolicitudClick }) => {
       <div className="container">
         <h2 className="section__title">Para Inversionistas</h2>
         <p className="section__text">
-          Si eres inversionista en Bolivia y estÃƒÂ¡s cansado del 3.5 % de los DPFs, Tu PrÃƒÂ©stamo te ofrece retornos atractivos con una cartera de bajo riesgo.
+          Si eres inversionista en Bolivia y est&aacute;s cansado del 3.5% de los DPF, Tu Pr&eacute;stamo te ofrece retornos atractivos con una cartera de bajo riesgo.
         </p>
         <ul className="features-list">
           <li className="features-list__item">
-            Rendimiento competitivo: acceso a préstamos con rendimiento anual bruto de hasta 15%.
+            Rendimiento competitivo: acceso a pr&eacute;stamos con rendimiento anual bruto de hasta 15%.
           </li>
           <li className="features-list__item">
-            InversiÃƒÂ³n segura: Minimizamos el riesgo enfocÃƒÂ¡ndonos exclusivamente en prestatarios de alto perfil crediticio que buscan refinanciar deudas tÃƒÂ³xicas.
+            Inversi&oacute;n segura: minimizamos el riesgo enfoc&aacute;ndonos exclusivamente en prestatarios de alto perfil crediticio que buscan refinanciar deudas t&oacute;xicas.
           </li>
           <li className="features-list__item">
-            InterÃƒÂ©s Compuesto: Haz crecer tu capital de forma acelerada al reinvertir los pagos mensuales que recibes. Es la fÃƒÂ³rmula perfecta para que tu dinero trabaje por ti.
+            Inter&eacute;s compuesto: haz crecer tu capital de forma acelerada al reinvertir los pagos mensuales que recibes. Es la f&oacute;rmula perfecta para que tu dinero trabaje por ti.
           </li>
           <li className="features-list__item">
-            ProtecciÃƒÂ³n de tu capital con Seguro de Desgravamen.
+            Protecci&oacute;n de tu capital con Seguro de Desgravamen.
           </li>
         </ul>
         <div className="button-container">
-          <p className="cta-text">Ã‚Â¡RegÃƒÂ­strate como inversionista y conoce las oportunidades!</p>
+          <p className="cta-text">Reg&iacute;strate como inversionista y conoce las oportunidades.</p>
           {/* BOTÃƒâ€œN QUE ABRE EL MODAL */}
           <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
             Ver Oportunidades
@@ -35,4 +35,5 @@ const Inversionistas = ({ onSolicitudClick }) => {
 };
 
 export default Inversionistas;
+
 
