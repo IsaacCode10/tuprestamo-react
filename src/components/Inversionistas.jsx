@@ -27,10 +27,13 @@ const Inversionistas = ({ onSolicitudClick }) => {
           {/* BOTÃƒâ€œN QUE ABRE EL MODAL */}
           <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
             Ver Oportunidades
-          <a className="btn" href="/calculadora-inversionista" style={{ marginLeft: 8 }}>
+          </button>
+          <a className="btn" href="/calculadora-inversionista" style={{ marginTop: 8 }}>
             Calculadora de Ganancias
           </a>
-          </button>\n          <a className="btn" href="/calculadora-inversionista" style={{ marginLeft: 8 }}>\n            Calculadora de Ganancias\n          </a>\n        </div>\n      </div>\n    </section>
+        </div>
+      </div>
+    </section>
   );
 };
 
