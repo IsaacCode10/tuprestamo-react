@@ -6,27 +6,30 @@ const Inversionistas = ({ onSolicitudClick }) => {
       <div className="container">
         <h2 className="section__title">Para Inversionistas</h2>
         <p className="section__text">
-          Si eres inversionista en Bolivia y estás cansado del 3.5 % de los DPFs, Tu Préstamo te ofrece retornos atractivos con una cartera de bajo riesgo.
+          Si eres inversionista en Bolivia y estÃ¡s cansado del 3.5 % de los DPFs, Tu PrÃ©stamo te ofrece retornos atractivos con una cartera de bajo riesgo.
         </p>
         <ul className="features-list">
           <li className="features-list__item">
-            Rendimiento Competitivo: Nuestra plataforma te da acceso a préstamos con un rendimiento del 12 % anual.
+            Rendimiento Competitivo: Nuestra plataforma te da acceso a prÃ©stamos con un rendimiento del 12 % anual.
           </li>
           <li className="features-list__item">
-            Inversión segura: Minimizamos el riesgo enfocándonos exclusivamente en prestatarios de alto perfil crediticio que buscan refinanciar deudas tóxicas.
+            InversiÃ³n segura: Minimizamos el riesgo enfocÃ¡ndonos exclusivamente en prestatarios de alto perfil crediticio que buscan refinanciar deudas tÃ³xicas.
           </li>
           <li className="features-list__item">
-            Interés Compuesto: Haz crecer tu capital de forma acelerada al reinvertir los pagos mensuales que recibes. Es la fórmula perfecta para que tu dinero trabaje por ti.
+            InterÃ©s Compuesto: Haz crecer tu capital de forma acelerada al reinvertir los pagos mensuales que recibes. Es la fÃ³rmula perfecta para que tu dinero trabaje por ti.
           </li>
           <li className="features-list__item">
-            Protección de tu capital con Seguro de Desgravamen.
+            ProtecciÃ³n de tu capital con Seguro de Desgravamen.
           </li>
         </ul>
         <div className="button-container">
-          <p className="cta-text">¡Regístrate como inversionista y conoce las oportunidades!</p>
-          {/* BOTÓN QUE ABRE EL MODAL */}
+          <p className="cta-text">Â¡RegÃ­strate como inversionista y conoce las oportunidades!</p>
+          {/* BOTÃ“N QUE ABRE EL MODAL */}
           <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
             Ver Oportunidades
+          <a className="btn" href="/calculadora-inversionista" style={{ marginLeft: 8 }}>
+            Calculadora de Ganancias
+          </a>
           </button>
         </div>
       </div>

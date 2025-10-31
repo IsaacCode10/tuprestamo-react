@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Link as ScrollLink } from 'react-scroll';
 import { supabase } from '../supabaseClient';
@@ -217,6 +217,7 @@ const Header = () => {
                     <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/oportunidades'); }}>Ver Oportunidades</button>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/oportunidades?filters=1'); }}>Buscar / Filtrar</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate(\"/calculadora-inversionista\"); }}>Calculadora de Ganancias</button>
                     </div>
                   )}
                 </li>

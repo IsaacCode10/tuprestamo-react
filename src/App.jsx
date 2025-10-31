@@ -8,7 +8,7 @@ import '@/style.css';
 import Header from '@/components/Header.jsx';
 import Footer from '@/components/Footer.jsx';
 import LandingPage from '@/components/LandingPage.jsx';
-import CalculatorPage from '@/CalculatorPage.jsx'; // <-- NUEVA PÁGINA
+import CalculatorPage from '@/CalculatorPage.jsx'; // <-- NUEVA PÃƒÂGINA
 import Auth from '@/Auth.jsx';
 import AdminDashboard from '@/AdminDashboard.jsx';
 import InvestorDashboard from '@/InvestorDashboard.jsx';
@@ -20,16 +20,18 @@ import Opportunities from '@/Opportunities.jsx';
 import OpportunityDetail from '@/OpportunityDetail.jsx';
 import ConfirmAndSetPassword from '@/ConfirmAndSetPassword.jsx';
 import InvestorFAQ from '@/InvestorFAQ.jsx';
+import InvestorCalculator from '@/InvestorCalculator.jsx';
 import LegalTerms from '@/LegalTerms.jsx';
+import InvestorCalculator from '@/InvestorCalculator.jsx';
 import PrivacyPolicy from '@/PrivacyPolicy.jsx';
 import InvestorProfile from '@/InvestorProfile.jsx';
 import BorrowerDashboard from '@/BorrowerDashboard.jsx';
 import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
 import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
 import Profile from './Profile.jsx';
-import NotAvailable from './NotAvailable.jsx'; // <-- IMPORTAMOS LA NUEVA PÁGINA
+import NotAvailable from './NotAvailable.jsx'; // <-- IMPORTAMOS LA NUEVA PÃƒÂGINA
 
-// Componente "Guardia" específico para rutas de Administrador
+// Componente "Guardia" especÃƒÂ­fico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
   const allowedRoles = ['admin', 'analista_riesgo'];
 
@@ -47,7 +49,7 @@ const AdminRoute = ({ profile, loading, children }) => {
   return React.cloneElement(children, { profile });
 };
 
-// Componente "Guardia" específico para rutas de Inversionista
+// Componente "Guardia" especÃƒÂ­fico para rutas de Inversionista
 const InvestorRoute = ({ profile, loading, children }) => {
   const allowedRoles = ['inversionista', 'admin'];
 
@@ -66,7 +68,7 @@ const InvestorRoute = ({ profile, loading, children }) => {
   return React.cloneElement(children, { profile });
 };
 
-// Componente "Guardia" específico para rutas de Prestatario
+// Componente "Guardia" especÃƒÂ­fico para rutas de Prestatario
 const BorrowerRoute = ({ profile, loading, children }) => {
   const allowedRoles = ['prestatario', 'admin'];
 
@@ -85,7 +87,7 @@ const BorrowerRoute = ({ profile, loading, children }) => {
   return React.cloneElement(children, { profile });
 };
 
-// Componente para redirigir si el usuario YA está autenticado
+// Componente para redirigir si el usuario YA estÃƒÂ¡ autenticado
 const RedirectIfAuth = ({ profile, loading, children }) => {
   if (loading) {
     return <div>Cargando...</div>;
@@ -117,9 +119,9 @@ function App() {
   // analytics wrapper via trackEvent
 
 
-  // --- Evento de Analítica: Campaign Lead ---
+  // --- Evento de AnalÃƒÂ­tica: Campaign Lead ---
   useEffect(() => {
-    // Solo se ejecuta una vez por sesión
+    // Solo se ejecuta una vez por sesiÃƒÂ³n
     if (sessionStorage.getItem('utm_event_fired')) {
       return;
     }
@@ -137,18 +139,18 @@ function App() {
     // Si encontramos al menos una propiedad UTM, disparamos el evento
     if (Object.keys(properties).length > 0) {
       trackEvent('Campaign Lead', properties);
-      // Marcamos que el evento ya se disparó en esta sesión
+      // Marcamos que el evento ya se disparÃƒÂ³ en esta sesiÃƒÂ³n
       sessionStorage.setItem('utm_event_fired', 'true');
     }
   }, [location.search ]);
 
-  // Rutas donde deseamos ocultar el Header (solo confirmación)
+  // Rutas donde deseamos ocultar el Header (solo confirmaciÃƒÂ³n)
   const hideHeaderPaths = [
     '/confirmar',
     '/confirmar-y-crear-perfil'
   ];
 
-  // Ocultar solo en confirmación para mantener branding consistente en dashboards
+  // Ocultar solo en confirmaciÃƒÂ³n para mantener branding consistente en dashboards
   const isHeaderHidden = hideHeaderPaths.some(path => location.pathname.startsWith(path));
 
   // Determinar si la ruta actual es un dashboard para ajustar el Footer (estilo minimal)
@@ -162,7 +164,7 @@ function App() {
   ];
   const isDashboardPage = dashboardPaths.some(path => location.pathname.startsWith(path));
 
-  // Mostrar footer completo en el área del inversionista (no usar versión minimal)
+  // Mostrar footer completo en el ÃƒÂ¡rea del inversionista (no usar versiÃƒÂ³n minimal)
   const investorAreaPaths = [
     '/investor-dashboard',
     '/mis-inversiones',
@@ -186,7 +188,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/calculadora" element={<CalculatorPage />} />
-          <Route path="/no-disponible" element={<NotAvailable />} /> {/* <-- AÑADIMOS LA RUTA */}
+          <Route path="/no-disponible" element={<NotAvailable />} /> {/* <-- AÃƒâ€˜ADIMOS LA RUTA */}
           <Route 
             path="/auth" 
             element={
@@ -245,7 +247,9 @@ function App() {
           />
           <Route path="/oportunidades" element={<Opportunities />} />
           <Route path="/oportunidades/:id" element={<OpportunityDetail />} />
+          <Route path="/calculadora-inversionista" element={<InvestorCalculator />} />
           <Route path="/faq-inversionista" element={<InvestorFAQ />} />
+          <Route path="/calculadora-inversionista" element={<InvestorCalculator />} />
           <Route path="/terminos" element={<LegalTerms />} />
           <Route path="/privacidad" element={<PrivacyPolicy />} />
           <Route path="/confirmar" element={<ConfirmAndSetPassword />} />
