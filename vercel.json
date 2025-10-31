@@ -1,18 +1,29 @@
-{
-  "version": 2,
-  "headers": [
-    {
-      "source": "/",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
-    }
-  ]
+﻿{
+    "version":  2,
+    "headers":  [
+                    {
+                        "source":  "/",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-store"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/index.html",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-store"
+                                        }
+                                    ]
+                    }
+                ],
+    "rewrites":  [
+                     {
+                         "destination":  "/",
+                         "source":  "/(.*)"
+                     }
+                 ]
 }
-
