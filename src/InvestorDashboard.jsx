@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const InvestorDashboard = ({ profile }) => {
@@ -6,14 +6,14 @@ const InvestorDashboard = ({ profile }) => {
 
   const renderContent = () => {
     if (!profile) {
-      return <p>Cargando información de tu perfil...</p>;
+      return <p>Cargando informaciÃ³n de tu perfil...</p>;
     }
 
     switch (profile.estado_verificacion) {
       case 'verificado':
         return (
           <>
-            <p>Bienvenido a tu panel. Tu verificación de identidad está completada y puedes invertir.</p>
+            <p>Bienvenido a tu panel. Tu verificaciÃ³n de identidad estÃ¡ completada y puedes invertir.</p>
             <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
               <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
               <button className="btn" onClick={() => navigate('/mis-inversiones')}>Mis Inversiones</button>
@@ -25,7 +25,7 @@ const InvestorDashboard = ({ profile }) => {
         return (
           <>
             <div style={{ background: '#fff9e6', border: '1px solid #ffe08a', color: '#8a6d3b', padding: '12px', borderRadius: 8 }}>
-              Tu verificación de identidad está en revisión. Te notificaremos pronto.
+              Tu verificaciÃ³n de identidad estÃ¡ en revisiÃ³n. Te notificaremos pronto.
             </div>
             <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
               <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
@@ -37,12 +37,12 @@ const InvestorDashboard = ({ profile }) => {
         return (
           <>
             <div style={{ background: '#ffe6e6', border: '1px solid #ffb3b3', color: '#8b0000', padding: '12px', borderRadius: 8 }}>
-              No pudimos confirmar tu verificación de identidad. Revisa y vuelve a intentarlo.
+              No pudimos confirmar tu verificaciÃ³n de identidad. Revisa y vuelve a intentarlo.
             </div>
             <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
               <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
               <button className="btn" onClick={() => navigate('/mis-inversiones')}>Mis Inversiones</button>
-              <button className="btn" onClick={() => navigate('/verificar-cuenta')}>Revisar Verificación</button>
+              <button className="btn" onClick={() => navigate('/verificar-cuenta')}>Revisar VerificaciÃ³n</button>
             </div>
           </>
         );
@@ -51,7 +51,7 @@ const InvestorDashboard = ({ profile }) => {
         return (
           <>
             <div style={{ background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b', padding: '12px', borderRadius: 8 }}>
-              Recomendado: completa tu verificación de identidad para agilizar retiros y aumentar límites. Puedes hacerlo más tarde al invertir.
+              Recomendado: completa tu verificaciÃ³n de identidad para agilizar retiros y aumentar lÃ­mites. Puedes hacerlo mÃ¡s tarde al invertir.
             </div>
             <div className="dashboard-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
               <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
@@ -65,11 +65,12 @@ const InvestorDashboard = ({ profile }) => {
 
   return (
     <div className="investor-dashboard-container">
-      <h2>Mi Panel de Inversionista</h2>
+      \n      {profile?.estado_verificacion && (\n        <div style={{ marginTop: 6 }}>\n          <span style={{ display:'inline-block', padding:'4px 8px', borderRadius: 999, fontSize:12, fontWeight:600, background: profile.estado_verificacion==='verificado' ? '#e6fffb' : (profile.estado_verificacion==='pendiente_revision' ? '#fff9e6' : '#ffe6e6'), color: profile.estado_verificacion==='verificado' ? '#006d75' : (profile.estado_verificacion==='pendiente_revision' ? '#8a6d3b' : '#8b0000') }}>\n            Verificación: {profile.estado_verificacion==='verificado' ? 'Verificada' : (profile.estado_verificacion==='pendiente_revision' ? 'En revisión' : (profile.estado_verificacion==='requiere_revision_manual' ? 'Requiere revisión' : 'Pendiente'))}\n          </span>\n        </div>\n      )}
       {renderContent()}
     </div>
   );
 };
 
 export default InvestorDashboard;
+
 
