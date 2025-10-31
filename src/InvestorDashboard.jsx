@@ -65,8 +65,13 @@ const InvestorDashboard = ({ profile }) => {
 
   return (
     <div className="investor-dashboard-container">
-      \n      {profile?.estado_verificacion && (\n        <div style={{ marginTop: 6 }}>\n          <span style={{ display:'inline-block', padding:'4px 8px', borderRadius: 999, fontSize:12, fontWeight:600, background: profile.estado_verificacion==='verificado' ? '#e6fffb' : (profile.estado_verificacion==='pendiente_revision' ? '#fff9e6' : '#ffe6e6'), color: profile.estado_verificacion==='verificado' ? '#006d75' : (profile.estado_verificacion==='pendiente_revision' ? '#8a6d3b' : '#8b0000') }}>\n            Verificación: {profile.estado_verificacion==='verificado' ? 'Verificada' : (profile.estado_verificacion==='pendiente_revision' ? 'En revisión' : (profile.estado_verificacion==='requiere_revision_manual' ? 'Requiere revisión' : 'Pendiente'))}\n          </span>\n        </div>\n      )}
-      {renderContent()}
+      {profile?.estado_verificacion && (
+        <div style={{ marginTop: 6 }}>
+          <span style={{ display:'inline-block', padding:'4px 8px', borderRadius: 999, fontSize:12, fontWeight:600, background: profile.estado_verificacion==='verificado' ? '#e6fffb' : (profile.estado_verificacion==='pendiente_revision' ? '#fff9e6' : '#ffe6e6'), color: profile.estado_verificacion==='verificado' ? '#006d75' : (profile.estado_verificacion==='pendiente_revision' ? '#8a6d3b' : '#8b0000') }}>
+            Verificación: {profile.estado_verificacion==='verificado' ? 'Verificada' : (profile.estado_verificacion==='pendiente_revision' ? 'En revisión' : (profile.estado_verificacion==='requiere_revision_manual' ? 'Requiere revisión' : 'Pendiente'))}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
