@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import './Auth.css'; // Reusing the auth styles
@@ -6,7 +6,7 @@ import './Auth.css'; // Reusing the auth styles
 const ConfirmAndSetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('EstÃƒÂ¡s a un paso. Por favor, establece una contraseÃƒÂ±a para tu cuenta.');
+  const [message, setMessage] = useState('Estas a un paso. Por favor, establece una contrasena para tu cuenta.');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -37,11 +37,15 @@ const ConfirmAndSetPassword = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        setError("Error al verificar la sesiÃƒÂ³n. Intenta de nuevo desde tu correo.");
+        setError('Error al verificar la sesion. Intenta de nuevo desde tu correo.');
         return;
       }
       
-      if (!session?.user) { (!linkErrorCode) { setError(); } } else {
+      if (!session?.user) {
+        if (!linkErrorCode) {
+          setError("Sesion no encontrada o invalida. Por favor, usa el enlace de tu correo para continuar.");
+        }
+      } else {
         setUser(session.user);
         setError(''); // Clear any previous errors
       }
@@ -51,7 +55,7 @@ const ConfirmAndSetPassword = () => {
   const handleResendLink = async (e) => {
     e.preventDefault();
     setResendLoading(true);
-    setMessage('');
+      const redirectTo = `${window.location.origin}/confirmar-y-crear-perfil`;
     setError('');
     try {
       if (!email) throw new Error('Ingresa tu email.');
@@ -68,11 +72,11 @@ const ConfirmAndSetPassword = () => {
 
   const handleSetPassword = async (e) => {
     e.preventDefault();
-    setError('');
+      setError('Las contrasenas no coinciden.');
     setMessage('');
 
     if (password !== confirmPassword) {
-      setError('Las contraseÃƒÂ±as no coinciden.');
+      setError('La contrasena debe tener al menos 6 caracteres.');
       return;
     }
     if (password.length < 6) {
@@ -82,10 +86,10 @@ const ConfirmAndSetPassword = () => {
 
     setLoading(true);
     
-    // Update the password for the currently logged-in user
+      setError(Error al establecer la contrasena: );
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
-    if (updateError) {
+      setMessage('Contrasena establecida con exito! Redirigiendo a tu dashboard...');
       setError(`Error al establecer la contraseÃƒÂ±a: ${updateError.message}`);
       setLoading(false);
     } else {
@@ -177,7 +181,7 @@ const ConfirmAndSetPassword = () => {
     <button type=\"submit\" disabled={resendLoading || !email}>
       {resendLoading ? 'Enviando...' : 'Enviar nuevo enlace'}
     </button>
-  </form>
+            <label htmlFor="password">Nueva Contrasena:</label>
 )}
         <form onSubmit={handleSetPassword}>
           <div>
@@ -190,7 +194,7 @@ const ConfirmAndSetPassword = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder='Debe tener al menos 6 caracteres'
-              disabled={!user || loading}
+            <label htmlFor="confirmPassword">Confirmar Contrasena:</label>
             />
           </div>
           <div>
@@ -202,12 +206,12 @@ const ConfirmAndSetPassword = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              disabled={!user || loading}
+            {loading ? 'Guardando...' : 'Guardar Contrasena y Acceder'}
             />
           </div>
           <button type="submit" disabled={loading || !password || !user}>
             {loading ? 'Guardando...' : 'Guardar ContraseÃƒÂ±a y Acceder'}
-          </button>
+        {!user && !error && <p className=\
         </form>
         {message && <p className="auth-message auth-message-success">{message}</p>}
         {error && <p className="auth-message auth-message-error">{error}</p>}
