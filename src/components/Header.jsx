@@ -23,14 +23,14 @@ const NavButton = ({ to, text }) => {
     }, 100);
   };
 
-  // Si estamos en la página principal, usamos ScrollLink para un scroll suave
+  // Si estamos en la pÃ¡gina principal, usamos ScrollLink para un scroll suave
   if (location.pathname === '/') {
     return (
       <ScrollLink to={to} smooth={true} duration={500} offset={-80} className="header__nav-button">{text}</ScrollLink>
     );
   }
 
-  // Si estamos en otra página, navegamos primero y luego hacemos scroll
+  // Si estamos en otra pÃ¡gina, navegamos primero y luego hacemos scroll
   return (
     <button onClick={handleNavigateAndScroll} className="header__nav-button">{text}</button>
   );
@@ -49,7 +49,7 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const unreadCount = notifications.filter(n => !n.read).length;
   const centerNavRef = useRef(null);
-  // Cargar notificaciones al abrir el menú de usuario
+  // Cargar notificaciones al abrir el menÃº de usuario
   useEffect(() => {
     const load = async () => {
       try {
@@ -70,7 +70,7 @@ const Header = () => {
     if (isMenuOpen) load();
   }, [isMenuOpen]);
 
-  // Suscripción Realtime a nuevas notificaciones
+  // SuscripciÃ³n Realtime a nuevas notificaciones
   useEffect(() => {
     let channel;
     (async () => {
@@ -109,7 +109,7 @@ const Header = () => {
   let displayName = 'Mi Cuenta';
 
   if (profile) {
-    // Construir el nombre a mostrar con una lÃ³gica de fallbacks
+    // Construir el nombre a mostrar con una lÃƒÂ³gica de fallbacks
     const firstName = profile.nombre_completo?.split(' ')[0];
     const emailUsername = profile.email?.split('@')[0];
     displayName = `Hola, ${firstName || emailUsername || 'Usuario'}`;
@@ -129,7 +129,7 @@ const Header = () => {
     }
   }
 
-  // Ãrea del inversionista (para personalizar el header)
+  // ÃƒÂrea del inversionista (para personalizar el header)
   const investorAreaPaths = [
     '/investor-dashboard',
     '/mis-inversiones',
@@ -141,18 +141,18 @@ const Header = () => {
     '/terminos',
     '/privacidad'
   ];
-  // Solo aplicar header de inversionista si hay sesiÃ³n y rol vÃ¡lido
+  // Solo aplicar header de inversionista si hay sesiÃƒÂ³n y rol vÃƒÂ¡lido
   const isInvestorLogged = !!profile && (profile.role === 'inversionista' || profile.role === 'admin');
   const isInvestorArea = isInvestorLogged && investorAreaPaths.some((p) => location.pathname.startsWith(p));
   const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
   const statusLabel = {
     verificado: 'Verificada',
-    pendiente_revision: 'En revisiÃ³n',
-    requiere_revision_manual: 'Requiere revisiÃ³n',
+    pendiente_revision: 'En revisiÃƒÂ³n',
+    requiere_revision_manual: 'Requiere revisiÃƒÂ³n',
     no_iniciado: 'Pendiente',
   }[verificationStatus] || 'Pendiente';
 
-  // Cerrar menÃº central al hacer click fuera
+  // Cerrar menÃƒÂº central al hacer click fuera
   useEffect(() => {
     const handleDocClick = (e) => {
       try {
@@ -164,7 +164,7 @@ const Header = () => {
     return () => document.removeEventListener('click', handleDocClick);
   }, [openCenterMenu]);
 
-  // Al cambiar de ruta, cerrar menÃºs abiertos (user y central)
+  // Al cambiar de ruta, cerrar menÃƒÂºs abiertos (user y central)
   useEffect(() => {
     if (isMenuOpen) setIsMenuOpen(false);
     if (openCenterMenu) setOpenCenterMenu(null);
@@ -176,11 +176,11 @@ const Header = () => {
     <header className="header">
       <div className="header__container">
         <NavLink to="/" className="header__logo-link">
-          <img src={logo} alt="Logo Tu PrÃ©stamo" className="header__logo" />
+          <img src={logo} alt="Logo Tu PrÃƒÂ©stamo" className="header__logo" />
         </NavLink>
         <button
           className="header__mobile-toggle"
-          aria-label="Abrir menÃº"
+          aria-label="Abrir menÃƒÂº"
           onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
         >
           <span className="mobile-toggle-bar" />
@@ -217,7 +217,7 @@ const Header = () => {
                     <div className="header__dropdown-menu" style={{ minWidth: 220 }}>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/oportunidades'); }}>Ver Oportunidades</button>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/oportunidades?filters=1'); }}>Buscar / Filtrar</button>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate(\"/calculadora-inversionista\"); }}>Calculadora de Ganancias</button>
+                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/calculadora-inversionista'); }}>Calculadora de Ganancias</button>
                     </div>
                   )}
                 </li>
