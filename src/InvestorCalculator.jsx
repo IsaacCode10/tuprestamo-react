@@ -86,7 +86,7 @@ export default function InvestorCalculator() {
   }
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px' }}>
       <h1 style={{ marginBottom: 8 }}>Calculadora de Ganancias</h1>
       <p style={{ marginTop: 0, color: '#444' }}>Compara un DPF tradicional vs invertir con Tu Préstamo.</p>
 
@@ -114,9 +114,7 @@ export default function InvestorCalculator() {
         </div>
       )}
 
-      {(saved) && (
-        <Results amount={amount} years={years} dpf={result.dpf} tp={result.tp} extra={result.extra} />
-      )}
+      {(saved) && (<Scenarios amount={amount} years={years} dpfRate={dpfRate} rates={[0.10,0.12,0.15]} />)}
 
       {showLead && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex: 50 }} onClick={() => setShowLead(false)}>
@@ -174,3 +172,35 @@ function Bar({ label, height, value, color }){
   )
 }
 
+
+function Scenarios({ amount, years, dpfRate, rates }){
+  const dpfEnd = calculateReturns(amount, years, dpfRate)
+  const labels = ['Conservador (A)', 'Balanceado (B)', 'Dinámico (C)']
+  return (
+    <div style={{ marginTop: 24 }}>
+      <h3>Escenarios de retorno</h3>
+      <table style={{ width:'100%', maxWidth: 680, borderCollapse:'collapse' }}>
+        <thead>
+          <tr><th style={{textAlign:'left', padding:8}}>Escenario</th><th style={{textAlign:'right', padding:8}}>Tu Préstamo (final)</th><th style={{textAlign:'right', padding:8}}>DPF (final)</th><th style={{textAlign:'right', padding:8}}>Ganancia adicional</th></tr>
+        </thead>
+        <tbody>
+          {rates.map((r,i)=>{
+            const tpEnd = calculateReturns(amount, years, r)
+            const extra = Math.max(0, tpEnd - dpfEnd)
+            return (
+              <tr key={r} style={{ borderTop:'1px solid #f0f0f0' }}>
+                <td style={{ padding:8 }}>{labels[i]}</td>
+                <td style={{ padding:8, textAlign:'right' }}>Bs {Math.round(tpEnd).toLocaleString('es-BO')}</td>
+                <td style={{ padding:8, textAlign:'right' }}>Bs {Math.round(dpfEnd).toLocaleString('es-BO')}</td>
+                <td style={{ padding:8, textAlign:'right', color:'#11696b', fontWeight:600 }}>Bs {Math.round(extra).toLocaleString('es-BO')}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      <div style={{ marginTop:16 }}>
+        <a className="btn btn--primary" href="/auth">Crear mi cuenta</a>
+      </div>
+    </div>
+  )
+}
