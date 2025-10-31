@@ -1,4 +1,4 @@
-﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -27,7 +27,7 @@ serve(async (req) => {
       })
     }
 
-    console.log(`Iniciando verificaciÃ³n para user_id=${user_id} doc=${document_id ?? 'sin-id'}`)
+    console.log(`Iniciando verificaciÃƒÂ³n para user_id=${user_id} doc=${document_id ?? 'sin-id'}`)
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -47,7 +47,16 @@ serve(async (req) => {
     const signedUrl = signedData.signedUrl
 
     // 2) Perfil del usuario
-    \n    const firstName = (profile?.nombre_completo || '').split(' ')[0] || ''\r\n
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('nombre_completo, numero_ci, email')
+      .eq('id', user_id)
+      .single()
+    if (profileError || !profile) {
+      throw new Error(`No se encontro perfil para ${user_id}: ${profileError?.message}`)
+    }
+    const firstName = (profile.nombre_completo || '').split(' ')[0] || ''
+
     // 3) Descargar archivo y convertir a Base64
     const fileResp = await fetch(signedUrl)
     if (!fileResp.ok) throw new Error(`Fallo al obtener el archivo: ${fileResp.statusText}`)
@@ -65,9 +74,9 @@ serve(async (req) => {
     const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`
 
     const prompt = `
-Eres un sistema experto de OCR para CÃ©dulas de Identidad (Bolivia).
+Eres un sistema experto de OCR para CÃƒÂ©dulas de Identidad (Bolivia).
 Devuelve SIEMPRE JSON puro con las claves: nombre_completo (string|null) y numero_ci (string|null).
-Si la imagen no es vÃ¡lida, devuelve {"error":"Imagen ilegible o documento no vÃ¡lido"}.
+Si la imagen no es vÃƒÂ¡lida, devuelve {"error":"Imagen ilegible o documento no vÃƒÂ¡lido"}.
 `
 
     const requestBody = {
@@ -107,11 +116,11 @@ Si la imagen no es vÃ¡lida, devuelve {"error":"Imagen ilegible o documento no 
       const e = rawText.lastIndexOf('}')
       if (s !== -1 && e !== -1) jsonString = rawText.substring(s, e + 1)
     }
-    if (!jsonString) throw new Error('La IA no devolviÃ³ JSON reconocible.')
+    if (!jsonString) throw new Error('La IA no devolviÃƒÂ³ JSON reconocible.')
 
     const aiData = JSON.parse(jsonString)
 
-    // 5) ComparaciÃ³n con perfil
+    // 5) ComparaciÃƒÂ³n con perfil
     const normalize = (str?: string) => (str ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
     const onlyDigits = (str?: string) => (str ?? '').replace(/\D/g, '')
 
@@ -132,15 +141,15 @@ Si la imagen no es vÃ¡lida, devuelve {"error":"Imagen ilegible o documento no 
       .eq('id', user_id)
     if (updErr) throw new Error(`Error al actualizar perfil: ${updErr.message}`)
 
-    // 8) NotificaciÃ³n al usuario (no bloquear en caso de error)
+    // 8) NotificaciÃƒÂ³n al usuario (no bloquear en caso de error)
     try {
       const notifyTitle = finalStatus === 'verificado'
-        ? 'Tu verificaciÃ³n fue aprobada'
-        : 'Tu verificaciÃ³n requiere revisiÃ³n'
+        ? 'Tu verificaciÃƒÂ³n fue aprobada'
+        : 'Tu verificaciÃƒÂ³n requiere revisiÃƒÂ³n'
       const notifyBody = finalStatus === 'verificado'
-        ? 'Â¡Listo! Ya puedes invertir y solicitar retiros.'
-        : 'No pudimos confirmar automÃ¡ticamente tu identidad. Un analista revisarÃ¡ tu caso.'
-      // Llamar a la funciÃ³n de notificaciones (misma instancia)
+        ? 'Ã‚Â¡Listo! Ya puedes invertir y solicitar retiros.'
+        : 'No pudimos confirmar automÃƒÂ¡ticamente tu identidad. Un analista revisarÃƒÂ¡ tu caso.'
+      // Llamar a la funciÃƒÂ³n de notificaciones (misma instancia)
       await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/create-notification`, {
         method: 'POST',
         headers: {

@@ -1,4 +1,4 @@
-# Estado del Proyecto - 26 de Octubre de 2025 (ActualizaciÃ³n Noche)
+ï»¿# Estado del Proyecto - 26 de Octubre de 2025 (ActualizaciÃ³n Noche)
 
 **MisiÃ³n Cumplida:** Sistema de Monitoreo Proactivo Implementado.
 
@@ -102,33 +102,33 @@ Resumen: Se completÃ³ la migraciÃ³n a Mixpanel y se verificÃ³ en producciÃ³n (tu
 
 # Estado del Proyecto - 29 de Octubre de 2025
 
-Resumen ejecutivo (flujo INVERSIONISTA: UX, navegación, legales, branding)
+Resumen ejecutivo (flujo INVERSIONISTA: UX, navegaciï¿½n, legales, branding)
 
-- Email de invitación (Edge Function):
-  - Personalización con NOMBRE en asunto y saludo; cierre “Atentamente, El equipo de Tu Préstamo”.
+- Email de invitaciï¿½n (Edge Function):
+  - Personalizaciï¿½n con NOMBRE en asunto y saludo; cierre ï¿½Atentamente, El equipo de Tu Prï¿½stamoï¿½.
   - Removido el texto de descargo.
   - Se incluye full_name en metadata para que Supabase muestre Display Name correctamente.
 
-- Confirmación y perfil:
-  - Ocultamos Header solo en páginas de confirmación; branding visible en dashboards.
+- Confirmaciï¿½n y perfil:
+  - Ocultamos Header solo en pï¿½ginas de confirmaciï¿½n; branding visible en dashboards.
   - `ConfirmAndSetPassword`: asegura `profiles` (nombre/rol/email) y actualiza metadata (`full_name`).
-  - Nuevo perfil de inversionista: `/perfil-inversionista` (teléfono + cambio de contraseña). Menú “Mi Perfil” enruta por rol.
+  - Nuevo perfil de inversionista: `/perfil-inversionista` (telï¿½fono + cambio de contraseï¿½a). Menï¿½ ï¿½Mi Perfilï¿½ enruta por rol.
 
-- Navegación del inversionista (Header nuevo):
-  - Menús centrados: Invertir ? (Oportunidades, Buscar/Filtrar), Portafolio ? (Mis Inversiones, Retiros + KPIs), Cuenta ? (Verificación de identidad, Centro de Ayuda).
-  - Cierre por click fuera, cierre al cambiar de ruta, evita menús simultáneos; dropdown posicionados bajo cada botón.
-  - Ocultamos CTA de landing en área inversionista.
+- Navegaciï¿½n del inversionista (Header nuevo):
+  - Menï¿½s centrados: Invertir ? (Oportunidades, Buscar/Filtrar), Portafolio ? (Mis Inversiones, Retiros + KPIs), Cuenta ? (Verificaciï¿½n de identidad, Centro de Ayuda).
+  - Cierre por click fuera, cierre al cambiar de ruta, evita menï¿½s simultï¿½neos; dropdown posicionados bajo cada botï¿½n.
+  - Ocultamos CTA de landing en ï¿½rea inversionista.
 
-- Páginas nuevas y consistencia:
+- Pï¿½ginas nuevas y consistencia:
   - Centro de Ayuda inversionista: `/faq-inversionista` (+ evento `Viewed Investor FAQ`).
-  - Legales: `/terminos` y `/privacidad` (contenido base, con “Volver al Panel” si rol inversionista/admin).
-  - Breadcrumbs + barra “Volver” en Oportunidades, Detalle, Mis Inversiones, Retiros, Verificación y FAQ. También en Borrower y Admin.
+  - Legales: `/terminos` y `/privacidad` (contenido base, con ï¿½Volver al Panelï¿½ si rol inversionista/admin).
+  - Breadcrumbs + barra ï¿½Volverï¿½ en Oportunidades, Detalle, Mis Inversiones, Retiros, Verificaciï¿½n y FAQ. Tambiï¿½n en Borrower y Admin.
 
 - Footer y visibilidad:
-  - Sticky footer; versión completa en área inversionista; compactado de espacios; redes en línea; enlaces a FAQ/Términos/Privacidad.
+  - Sticky footer; versiï¿½n completa en ï¿½rea inversionista; compactado de espacios; redes en lï¿½nea; enlaces a FAQ/Tï¿½rminos/Privacidad.
 
-- Copy y verificación:
-  - Sustituimos “Estado KYC” por “Verificación de identidad” y estados: Pendiente / En revisión / Requiere revisión / Verificada (Header y Dashboard).
+- Copy y verificaciï¿½n:
+  - Sustituimos ï¿½Estado KYCï¿½ por ï¿½Verificaciï¿½n de identidadï¿½ y estados: Pendiente / En revisiï¿½n / Requiere revisiï¿½n / Verificada (Header y Dashboard).
 
 - Branding (logo):
   - Logo transparente actualizado (public + src/assets). Header balanceado a 72px desktop / 52px mobile.
@@ -136,23 +136,23 @@ Resumen ejecutivo (flujo INVERSIONISTA: UX, navegación, legales, branding)
 - Correcciones:
   - `NotificationBell` con `notifications=[]` para evitar TypeError.
   - `App.jsx`: restaurado `isDashboardPage` y Footer completo en rutas inversionista.
-  - Header inversionista solo si hay sesión con rol válido.
-  - Fix de sintaxis en `InvestorDashboard.jsx` (compilación Vercel).
+  - Header inversionista solo si hay sesiï¿½n con rol vï¿½lido.
+  - Fix de sintaxis en `InvestorDashboard.jsx` (compilaciï¿½n Vercel).
 
-Próximos pasos sugeridos
+Prï¿½ximos pasos sugeridos
 
-- Verificación automática del inversionista:
+- Verificaciï¿½n automï¿½tica del inversionista:
   - Confirmar trigger a `verificar-identidad-inversionista` al insertar en `documentos` (bucket inversionistas).
   - Validar RLS de `documentos`/`inversiones`/`solicitudes` para rol inversionista.
 
 - Marketplace y filtros:
-  - Implementar filtros en `/oportunidades` (riesgo, plazo, tasa mínima) y mantener gating de verificación al invertir.
+  - Implementar filtros en `/oportunidades` (riesgo, plazo, tasa mï¿½nima) y mantener gating de verificaciï¿½n al invertir.
 
 - Entregabilidad de correos (Resend):
   - Revisar activity/logs de `handle-new-solicitud`; validar SPF/DKIM.
 
 - UX/branding:
-  - Considerar SVG del logo para nitidez y “shrink on scroll”.
+  - Considerar SVG del logo para nitidez y ï¿½shrink on scrollï¿½.
 
 Notas de despliegue
 
@@ -160,3 +160,64 @@ Notas de despliegue
 - Backend (cuando cambie redirect):
   - `supabase secrets set APP_BASE_URL=https://www.tuprestamobo.com`
   - `supabase functions deploy handle-new-solicitud`
+
+---
+
+# Estado del Proyecto - 30 de Octubre de 2025
+
+Resumen ejecutivo (mÃ³vil, KYC inversor, notificaciones y DX de despliegue)
+
+- Header mÃ³vil (MVP worldâ€‘class):
+  - Se reemplazÃ³ navegaciÃ³n horizontal por botÃ³n hamburguesa + overlay de menÃº vertical. En desktop no cambia.
+  - Se corrigieron textos con acentos (mojibake) y se implementÃ³ chevrÃ³n por CSS.
+  - Se moviÃ³ la campana de notificaciones al menÃº de usuario; se aÃ±adiÃ³ indicador rojo en â€œHola, <Nombre>â€ cuando hay no leÃ­das.
+
+- Notificaciones endâ€‘toâ€‘end (MVP):
+  - Tabla public.notifications con RLS; Edge Function create-notification (inâ€‘app + email via Resend).
+  - erificar-identidad-inversionista ahora emite notificaciÃ³n al finalizar (aprobado o requiere revisiÃ³n).
+  - Frontend: carga real al abrir el menÃº, contador, realtime (INSERT), y â€œmarcar todas como leÃ­dasâ€.
+
+- KYC Inversor â€“ verificaciÃ³n automÃ¡tica:
+  - Edge Function robustecida: URL firmada; compatibilidad GEMINI_API_KEY/GOOGLE_GEMINI_API_KEY.
+  - Bucket unificado: documentos-prestatarios para evitar pasos manuales.
+  - Frontend InvestorVerification.jsx reescrito: subida inmediata del CI, autosave con debounce a erification_drafts (servidor) y localStorage, restaura borrador, envÃ­o idempotente y limpieza de borrador.
+
+- DX de despliegue:
+  - ercel.json: Cache-Control: no-store para / e index.html, evitando cache del app shell y permitiendo ver cambios de inmediato.
+  - Ajustes de rutas: /perfil-inversionista incluido en Ã¡rea inversionista para mostrar el header correcto.
+
+Cambios en archivos (principales)
+
+- src/components/Header.jsx y Header.css: menÃº mÃ³vil, chevrÃ³n CSS, indicador de no leÃ­das y fixes de acentos.
+- supabase/functions/create-notification/index.ts: nueva funciÃ³n.
+- supabase/functions/verificar-identidad-inversionista/index.ts: notifica al usuario tras actualizar estado.
+- supabase/sql/notifications.sql: tabla y RLS de notificaciones.
+- src/InvestorVerification.jsx: autosave + upload inmediato + restauraciÃ³n.
+- ercel.json: noâ€‘store de HTML.
+
+Despliegues/secretos
+
+- Edge Functions a desplegar (si no se hizo aÃºn):
+  - supabase functions deploy create-notification
+  - supabase functions deploy verificar-identidad-inversionista
+- Secrets (opcional email): RESEND_API_KEY
+- Recarga de esquema PostgREST tras cambios de esquema/policies: select pg_notify('pgrst','reload schema');
+
+Bug pendiente (bloqueante para KYC)
+
+- Error: â€œCould not find the 'numero_ci' column of 'profiles' in the schema cacheâ€.
+  - Estado: persiste al enviar el formulario de VerificaciÃ³n.
+  - Causa probable: PostgREST no ve la columna nueva o RLS bloquea el UPDATE.
+  - Acciones realizadas: se sugiriÃ³ crear public.profiles.numero_ci y recargar esquema; se sugirieron policies RLS mÃ­nimas.
+  - Plan de maÃ±ana:
+    1) Verificar la columna en DB: select numero_ci from public.profiles limit 1; (sin error).
+    2) Recargar PostgREST: select pg_notify('pgrst','reload schema'); o Settings â†’ API â†’ Reload/Restart.
+    3) Confirmar RLS:
+       - profiles: UPDATE self (policy profiles_update_self).
+       - documentos: INSERT/SELECT self (policies documentos_insert_own, documentos_select_own).
+    4) Reprobar envÃ­o desde la app; verificar inserciÃ³n en public.documentos y logs en erificar-identidad-inversionista.
+
+Notas rÃ¡pidas
+
+- El input de archivo nunca puede â€œrecordarseâ€ por seguridad; por eso se resolviÃ³ con subida inmediata y guardado del path.
+- Si el preview de Vercel no refleja cambios, usar el dominio de ProducciÃ³n (con vercel.json ya sin cache) o ?v=<commit>.

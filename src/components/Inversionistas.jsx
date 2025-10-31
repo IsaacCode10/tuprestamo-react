@@ -1,6 +1,11 @@
 import React from 'react';
+import { useProfile } from '@/hooks/useProfile.js';
 
 const Inversionistas = ({ onSolicitudClick }) => {
+  const { session, profile } = useProfile();
+  const isVerified = profile?.estado_verificacion === 'verificado';
+  const showCalculatorPrimary = !session || !isVerified;
+
   return (
     <section id="inversionistas" className="section section--light-alt section--compact">
       <div className="container">
@@ -24,13 +29,25 @@ const Inversionistas = ({ onSolicitudClick }) => {
         </ul>
         <div className="button-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
           <p className="cta-text">Reg&iacute;strate como inversionista y conoce las oportunidades.</p>
-          {/* Botón principal */}
-          <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
-            Ver Oportunidades
-          </button>
-          <a className="btn" href="/calculadora-inversionista" style={{ marginTop: 8, background: '#eef9f8', border: '1px solid #26C2B2', color: '#00445A' }}>
-            Calculadora de Ganancias
-          </a>
+          {showCalculatorPrimary ? (
+            <>
+              <a className="btn btn--primary" href="/calculadora-inversionista">
+                Calculadora de Ganancias
+              </a>
+              <button className="btn btn--secondary" onClick={() => onSolicitudClick('inversionista')} style={{ marginTop: 8 }}>
+                Ver Oportunidades
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
+                Ver Oportunidades
+              </button>
+              <a className="btn" href="/calculadora-inversionista" style={{ marginTop: 8, background: '#eef9f8', border: '1px solid #26C2B2', color: '#00445A' }}>
+                Calculadora de Ganancias
+              </a>
+            </>
+          )}
         </div>
       </div>
     </section>
@@ -38,5 +55,4 @@ const Inversionistas = ({ onSolicitudClick }) => {
 };
 
 export default Inversionistas;
-
 
