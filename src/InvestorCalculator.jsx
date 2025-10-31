@@ -131,6 +131,7 @@ export default function InvestorCalculator() {
               <div className="savings-summary">
                 <p className="savings-label"><strong>Proyecci&oacute;n lista.</strong> Esta es tu comparaci&oacute;n estimada.</p>
               </div>
+              <RateVersusComparison amount={amount} years={years} dpfRate={dpfRate} tpRates={[0.15, 0.12]} />
               <Scenarios amount={amount} years={years} dpfRate={dpfRate} rates={[0.10,0.12,0.15]} />
             </>
           )}
@@ -240,6 +241,35 @@ function Scenarios({ amount, years, dpfRate, rates }){
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  )
+}
+
+function RateVersusComparison({ amount, years, dpfRate, tpRates }) {
+  const [bestRate, avgRate] = tpRates;
+  const dpfEnd = calculateReturns(amount, years, dpfRate);
+  const bestEnd = calculateReturns(amount, years, bestRate);
+  const avgEnd = calculateReturns(amount, years, avgRate);
+  return (
+    <div className="rate-compare">
+      <h4 className="rate-compare__title">¡Compara tasas y montos finales!</h4>
+      <div className="rate-compare__grid">
+        <div className="rate-compare__col rate-compare__col--highlight">
+          <div className="rate-compare__col-title rate-compare__col-title--highlight">Nuestra mejor tasa</div>
+          <div className="rate-compare__row"><span>Tasa anual</span><strong>{(bestRate*100).toFixed(0)}%</strong></div>
+          <div className="rate-compare__row"><span>Monto final</span><strong className="text-success">Bs {Math.round(bestEnd).toLocaleString('es-BO')}</strong></div>
+        </div>
+        <div className="rate-compare__col">
+          <div className="rate-compare__col-title">Nuestra tasa promedio</div>
+          <div className="rate-compare__row"><span>Tasa anual</span><strong>{(avgRate*100).toFixed(0)}%</strong></div>
+          <div className="rate-compare__row"><span>Monto final</span><strong>Bs {Math.round(avgEnd).toLocaleString('es-BO')}</strong></div>
+        </div>
+        <div className="rate-compare__col rate-compare__col--danger">
+          <div className="rate-compare__col-title rate-compare__col-title--danger">Tasa de DPF</div>
+          <div className="rate-compare__row"><span>Tasa anual</span><strong className="text-danger">{(dpfRate*100).toFixed(1)}%</strong></div>
+          <div className="rate-compare__row"><span>Monto final</span><strong className="text-danger">Bs {Math.round(dpfEnd).toLocaleString('es-BO')}</strong></div>
+        </div>
       </div>
     </div>
   )

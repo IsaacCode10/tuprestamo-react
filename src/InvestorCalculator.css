@@ -57,3 +57,21 @@ th, td { padding: 8px; }
 thead th { border-bottom: 2px solid #eef2f3; }
 tbody tr + tr { border-top: 1px solid #f0f0f0; }
 
+/* Versus table (inversionista) */
+.rate-compare { margin-bottom: 16px; }
+.rate-compare__title { text-align: center; margin: 0 0 10px 0; font-size: 1.1rem; color: #2c3e50; }
+.rate-compare__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rate-compare__col { border: 1px solid #e6e9ec; border-radius: 10px; background: #fff; padding: 12px; text-align: center; }
+.rate-compare__col--highlight { background: #e6fffb; border-color: #a8ede6; }
+.rate-compare__col--danger { background: #fff5f5; border-color: #ffd6d6; }
+.rate-compare__col-title { font-weight: 700; margin-bottom: 6px; color: #34495e; text-transform: uppercase; font-size: 0.85rem; }
+.rate-compare__col-title--highlight { color: #006d75; }
+.rate-compare__col-title--danger { color: #a10; }
+.rate-compare__row { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-top: 1px solid #f0f0f0; font-weight: 600; }
+.rate-compare__row span { color: #5f7e97; font-weight: 500; }
+.text-danger { color: #c0392b; }
+.text-success { color: #117864; }
+
+@media (max-width: 700px) {
+  .rate-compare__grid { grid-template-columns: 1fr; }
+}
