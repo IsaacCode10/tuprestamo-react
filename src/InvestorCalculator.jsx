@@ -64,7 +64,7 @@ export default function InvestorCalculator() {
         ...utm,
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       }
-      const { error } = await supabase.from('investor_leads').insert(payload)
+      const { error: fnErr } = await supabase.functions.invoke('save-investor-lead', { body: payload }); if (fnErr) { console.warn('save-investor-lead failed', fnErr.message) }
       if (error) {
         // Si la tabla/policy no existe aún, no bloqueamos la UX
         console.warn('No se pudo guardar el lead:', error.message)
@@ -173,3 +173,4 @@ function Bar({ label, height, value, color }){
     </div>
   )
 }
+
