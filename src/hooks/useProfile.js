@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { identifyUser, resetMixpanel } from '@/analytics.js';
 
 /**
  * Un hook personalizado para obtener y gestionar el perfil completo del usuario,
  * incluyendo su rol desde la tabla 'profiles'.
- * Devuelve el evento de autenticación para que el componente App pueda manejar la redirección.
+ * Devuelve el evento de autenticaciÃ³n para que el componente App pueda manejar la redirecciÃ³n.
  */
 export function useProfile() {
   const [session, setSession] = useState(null);
@@ -22,7 +22,7 @@ export function useProfile() {
       if (session?.user) {
         const { data, error: profileError } = await supabase
           .from('profiles')
-          .select('id, role, nombre_completo, email')
+          .select('id, role, nombre_completo, email, estado_verificacion')
           .eq('id', session.user.id)
           .single();
 
@@ -55,7 +55,7 @@ export function useProfile() {
       if (event === 'SIGNED_OUT') {
         setProfile(null);
         setLoading(false);
-        // Resetear identificación en Mixpanel al cerrar sesión
+        // Resetear identificaciÃ³n en Mixpanel al cerrar sesiÃ³n
         resetMixpanel();
       } else if (session?.user) {
         // Para otros eventos como SIGNED_IN, volvemos a buscar el perfil
@@ -66,5 +66,24 @@ export function useProfile() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { session, profile, loading, authEvent }; // Devolvemos el evento
-}
+  
+  useEffect(() => {
+    let channel;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) return;
+      channel = supabase
+        .channel('profile_' + userId)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: id=eq. }, (payload) => {
+          try {
+            const next = payload.new || {};
+            setProfile(prev => prev ? { ...prev, ...next } : next);
+          } catch {}
+        })
+        .subscribe();
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
+
