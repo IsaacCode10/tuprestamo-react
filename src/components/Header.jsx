@@ -23,16 +23,32 @@ const NavButton = ({ to, text }) => {
     }, 100);
   };
 
-  // Si estamos en la pÃ¡gina principal, usamos ScrollLink para un scroll suave
+  // Si estamos en la página principal, usamos ScrollLink para un scroll suave
   if (location.pathname === '/') {
     return (
-      <ScrollLink to={to} smooth={true} duration={500} offset={-80} className="header__nav-button">
-        {text}
-      </ScrollLink>
+      <ScrollLink to={to} smooth={true} duration={500} offset={-80} className="header__nav-button">{text}</ScrollLink>
     );
   }
 
-  // Si estamos en otra pÃ¡gina, navegamos primero y luego hacemos scroll
+  // Si estamos en otra página, navegamos primero y luego hacemos scroll
+  return (
+    <button onClick={handleNavigateAndScroll} className="header__nav-button">{text}</button>
+  );
+};
+
+const Header = () => {
+  const { profile } = useProfile();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openCenterMenu, setOpenCenterMenu] = useState(null); // 'invertir' | 'portafolio' | 'cuenta' | null
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [kpiLoading, setKpiLoading] = useState(false);
+  const [kpis, setKpis] = useState({ totalInvested: 0, positions: 0 });
+  // Notificaciones conectadas a Supabase
+  const [notifications, setNotifications] = useState([]);
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const centerNavRef = useRef(null);
   // Cargar notificaciones al abrir el menú de usuario
   useEffect(() => {
     const load = async () => {
@@ -79,27 +95,6 @@ const NavButton = ({ to, text }) => {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (_) { /* noop */ }
   };
-
-  return (
-    <button onClick={handleNavigateAndScroll} className="header__nav-button">
-      {text}
-    </button>
-  );
-};
-
-const Header = () => {
-  const { profile } = useProfile();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [openCenterMenu, setOpenCenterMenu] = useState(null); // 'invertir' | 'portafolio' | 'cuenta' | null
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [kpiLoading, setKpiLoading] = useState(false);
-  const [kpis, setKpis] = useState({ totalInvested: 0, positions: 0 });
-  // Notificaciones conectadas a Supabase
-  const [notifications, setNotifications] = useState([]);
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const centerNavRef = useRef(null);
 
   const handleLogout = async () => {
     trackEvent('Logged Out');
@@ -390,4 +385,6 @@ const Header = () => {
 };
 
 export default Header;
+
+
 

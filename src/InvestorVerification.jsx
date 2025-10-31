@@ -14,6 +14,7 @@ export default function InvestorVerification() {
   const [userId, setUserId] = useState(null)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+  const [submitted, setSubmitted] = useState(false)
 
   // Form state
   const [numeroCi, setNumeroCi] = useState('')
@@ -25,6 +26,7 @@ export default function InvestorVerification() {
 
   const draftKey = useMemo(() => (userId ? `${DRAFT_KEY_PREFIX}_${userId}` : null), [userId])
   const saveTimer = useRef(null)
+  const isLocked = submitted || profile?.estado_verificacion === 'pendiente_revision' || profile?.estado_verificacion === 'verificado'
 
   useEffect(() => {
     async function boot() {
@@ -200,7 +202,8 @@ export default function InvestorVerification() {
       try { await supabase.from('verification_drafts').delete().eq('user_id', auth.user.id) } catch {}
       try { localStorage.removeItem(draftKey) } catch {}
 
-      setInfo('Verificacion enviada con exito. Te notificaremos cuando sea aprobada.')
+      setSubmitted(true)
+      setInfo('Verificacion enviada con exito. Ya no necesitas hacer nada. Te notificaremos cuando sea aprobada.')
     } catch (e) {
       setError(e.message)
     } finally {
@@ -221,6 +224,11 @@ export default function InvestorVerification() {
         { label: 'Verificar' },
       ]} />
       <h2>Centro de Verificacion</h2>
+      {isLocked && (
+        <div style={{ margin:'12px 0', padding:'12px', background:'#e6fffb', border:'1px solid #b5f5ec', color:'#006d75', borderRadius:8 }}>
+          <strong>Verificacion enviada.</strong> Ya no necesitas hacer nada. Te avisaremos por notificaciones y email.
+        </div>
+      )}
       <p>Se guarda automaticamente tu avance.</p>
 
       <form onSubmit={handleSubmit}>
@@ -259,7 +267,7 @@ export default function InvestorVerification() {
         </div>
 
         <div style={{ marginTop: 12, minHeight: 20 }}>
-          {saving && <span style={{ color: '#666' }}>Guardando…</span>}
+          {saving && <span style={{ color: '#666' }}>Guardando...</span>}
           {info && <span style={{ color: '#11696b' }}>{info}</span>}
         </div>
 
@@ -268,4 +276,9 @@ export default function InvestorVerification() {
     </div>
   )
 }
+
+
+
+
+
 
