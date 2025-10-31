@@ -1,16 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import './Auth.css'; // Reusing the auth styles
 
 const ConfirmAndSetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('Estás a un paso. Por favor, establece una contraseña para tu cuenta.');
+  const [message, setMessage] = useState('EstÃƒÂ¡s a un paso. Por favor, establece una contraseÃƒÂ±a para tu cuenta.');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [linkErrorCode, setLinkErrorCode] = useState('');
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  // Parse magic-link errors in hash (e.g., #error=access_denied&error_code=otp_expired)
+  useEffect(() => {
+    try {
+      const hash = location.hash && location.hash.startsWith('#') ? location.hash.substring(1) : '';
+      if (hash) {
+        const p = new URLSearchParams(hash);
+        const code = p.get('error_code') || '';
+        const err = p.get('error') || '';
+        if (code) setLinkErrorCode(code);
+        if (code === 'otp_expired' || err === 'access_denied') {
+          setError('El enlace expiro por seguridad. Solicita un nuevo acceso a tu correo.');
+        }
+      }
+    } catch {}
+  }, [location.hash]);
 
   // On component load, check if a user session exists from the magic link.
   useEffect(() => {
@@ -18,19 +37,34 @@ const ConfirmAndSetPassword = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        setError("Error al verificar la sesión. Intenta de nuevo desde tu correo.");
+        setError("Error al verificar la sesiÃƒÂ³n. Intenta de nuevo desde tu correo.");
         return;
       }
       
-      if (!session?.user) {
-        setError("Sesión no encontrada o inválida. Por favor, usa el enlace de tu correo para continuar.");
-      } else {
+      if (!session?.user) { (!linkErrorCode) { setError(); } } else {
         setUser(session.user);
         setError(''); // Clear any previous errors
       }
     };
     checkUserSession();
-  }, []);
+  }, [linkErrorCode]);
+  const handleResendLink = async (e) => {
+    e.preventDefault();
+    setResendLoading(true);
+    setMessage('');
+    setError('');
+    try {
+      if (!email) throw new Error('Ingresa tu email.');
+      const redirectTo = ${window.location.origin}/confirmar-y-crear-perfil;
+      const { error: sendErr } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+      if (sendErr) throw sendErr;
+      setMessage('Te enviamos un nuevo enlace de acceso a tu correo. Revisa tu bandeja y Spam.');
+    } catch (e) {
+      setError(e.message || 'No pudimos enviar el enlace.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleSetPassword = async (e) => {
     e.preventDefault();
@@ -38,11 +72,11 @@ const ConfirmAndSetPassword = () => {
     setMessage('');
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.');
+      setError('Las contraseÃƒÂ±as no coinciden.');
       return;
     }
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
+      setError('La contraseÃƒÂ±a debe tener al menos 6 caracteres.');
       return;
     }
 
@@ -52,17 +86,17 @@ const ConfirmAndSetPassword = () => {
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
     if (updateError) {
-      setError(`Error al establecer la contraseña: ${updateError.message}`);
+      setError(`Error al establecer la contraseÃƒÂ±a: ${updateError.message}`);
       setLoading(false);
     } else {
-      setMessage('¡Contraseña establecida con éxito! Redirigiendo a tu dashboard...');
+      setMessage('Ã‚Â¡ContraseÃƒÂ±a establecida con ÃƒÂ©xito! Redirigiendo a tu dashboard...');
 
       // Asegurar que exista el perfil y que tenga nombre/rol desde los metadatos del usuario invitado
       const desiredRole = user?.user_metadata?.role || 'inversionista';
       const desiredNombre = user?.user_metadata?.nombre_completo || user?.user_metadata?.full_name || null;
       const email = user?.email || null;
 
-      // También actualizar metadata del usuario para que Supabase muestre el Display Name
+      // TambiÃƒÂ©n actualizar metadata del usuario para que Supabase muestre el Display Name
       try {
         if (desiredNombre || desiredRole) {
           await supabase.auth.updateUser({
@@ -76,7 +110,7 @@ const ConfirmAndSetPassword = () => {
         console.warn('No se pudo actualizar user metadata (full_name/role):', e);
       }
 
-      // Intentar obtener el perfil existente (puede no existir aún para flujo de invitación)
+      // Intentar obtener el perfil existente (puede no existir aÃƒÂºn para flujo de invitaciÃƒÂ³n)
       const { data: existingProfile, error: fetchErr } = await supabase
         .from('profiles')
         .select('id, role, nombre_completo, email')
@@ -85,7 +119,7 @@ const ConfirmAndSetPassword = () => {
 
       if (fetchErr) {
         // Continuar pero registrar el error en consola
-        console.warn('No se pudo leer perfil existente, se intentará crear/actualizar:', fetchErr);
+        console.warn('No se pudo leer perfil existente, se intentarÃƒÂ¡ crear/actualizar:', fetchErr);
       }
 
       if (!existingProfile) {
@@ -106,7 +140,7 @@ const ConfirmAndSetPassword = () => {
         }
       }
 
-      // Leer rol final para decidir redirección
+      // Leer rol final para decidir redirecciÃƒÂ³n
       const { data: finalProfile } = await supabase
         .from('profiles')
         .select('role')
@@ -128,10 +162,26 @@ const ConfirmAndSetPassword = () => {
   return (
     <div className="auth-container">
       <div className="auth-form">
-        <h2>Establece tu Contraseña</h2>
+        <h2>Establece tu Contrasena</h2>
+{linkErrorCode && !user && (
+  <div className=\"auth-message auth-message-error\" style={{ marginBottom: 12 }}>
+    Enlace invalido o expirado. Solicita un nuevo acceso a tu correo.
+  </div>
+)}
+{(!user && linkErrorCode) && (
+  <form onSubmit={handleResendLink} style={{ marginBottom: 16 }}>
+    <div>
+      <label htmlFor=\"email\">Tu correo</label>
+      <input id=\"email\" type=\"email\" value={email} onChange={(e) => setEmail(e.target.value)} placeholder=\"tu@correo.com\" required />
+    </div>
+    <button type=\"submit\" disabled={resendLoading || !email}>
+      {resendLoading ? 'Enviando...' : 'Enviar nuevo enlace'}
+    </button>
+  </form>
+)}
         <form onSubmit={handleSetPassword}>
           <div>
-            <label htmlFor="password">Nueva Contraseña:</label>
+            <label htmlFor="password">Nueva ContraseÃƒÂ±a:</label>
             <input
               type="password"
               id="password"
@@ -144,7 +194,7 @@ const ConfirmAndSetPassword = () => {
             />
           </div>
           <div>
-            <label htmlFor="confirmPassword">Confirmar Contraseña:</label>
+            <label htmlFor="confirmPassword">Confirmar ContraseÃƒÂ±a:</label>
             <input
               type="password"
               id="confirmPassword"
@@ -156,15 +206,16 @@ const ConfirmAndSetPassword = () => {
             />
           </div>
           <button type="submit" disabled={loading || !password || !user}>
-            {loading ? 'Guardando...' : 'Guardar Contraseña y Acceder'}
+            {loading ? 'Guardando...' : 'Guardar ContraseÃƒÂ±a y Acceder'}
           </button>
         </form>
         {message && <p className="auth-message auth-message-success">{message}</p>}
         {error && <p className="auth-message auth-message-error">{error}</p>}
-        {!user && !error && <p className="auth-message">Verificando sesión...</p>}
+        {!user && !error && <p className="auth-message">Verificando sesiÃƒÂ³n...</p>}
       </div>
     </div>
   );
 };
 
 export default ConfirmAndSetPassword;
+
