@@ -110,14 +110,14 @@ serve(async (req) => {
 
       const html = renderEmail({
         greetingName,
-        title: 'Tu proyecciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n de inversiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n',
-        intro: `Monto: ${fmt(amount)} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Plazo: ${term_years} aÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o${term_years===1?'':'s'}`,
+        title: 'Tu proyeccion de inversion',
+        intro: `Monto: ${fmt(amount)} | Plazo: ${term_years} anio${term_years===1?'':'s'}`,
         body: 'Te compartimos un resumen con tres escenarios de retorno.',
         extraHtml,
         ctaLabel: 'Crear mi cuenta',
         ctaHref: `${appBase}/?open=investor-form#inversionistas`,
       })
-      const subject = `${greetingName}, tu proyecciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n en Tu PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©stamo ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Monto ${fmt(amount)}, plazo ${term_years} aÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o${term_years===1?'':'s'}`
+      const subject = `${greetingName} - tu proyeccion en Tu Prestamo - Monto ${fmt(amount)}, plazo ${term_years} anio${term_years===1?'':'s'}`
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },

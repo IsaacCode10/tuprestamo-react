@@ -1,4 +1,4 @@
-﻿export type EmailTemplateOptions = {
+export type EmailTemplateOptions = {
   greetingName?: string
   title?: string
   intro?: string
