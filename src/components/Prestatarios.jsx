@@ -27,7 +27,7 @@ const Prestatarios = ({ onSolicitudClick }) => {
           <button className="btn btn--secondary" onClick={() => onSolicitudClick('prestatario')}>
             Completa tu Solicitud
           </button>
-          <a className="btn" href="/calculadora" style={{ marginTop: 8, background: '#fff8e6', border: '1px solid #FFA800', color: '#7a4b00' }}>
+          <a className="btn btn--primary" href="/calculadora" style={{ marginTop: 8 }}>
             Calculadora de Ahorro
           </a>
         </div>
@@ -37,4 +37,3 @@ const Prestatarios = ({ onSolicitudClick }) => {
 };
 
 export default Prestatarios;
-
