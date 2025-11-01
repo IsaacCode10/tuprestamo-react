@@ -184,6 +184,42 @@ serve(async (req) => {
           data: { nombre_completo, full_name: nombre_completo, role: 'inversionista' },
         },
       });
+      // Manejo amable si el email ya existe: enviar instrucciones de acceso en lugar de fallar
+      if (linkError) {
+        const code = (linkError as any)?.code || (linkError as any)?.status || ''
+        const msg = String((linkError as any)?.message || '')
+        const isEmailExists = code === 'email_exists' || msg.toLowerCase().includes('already been registered')
+        if (isEmailExists) {
+          console.warn(`Solicitud ${solicitud_id}: Email ya registrado (${email}). Enviando correo de acceso.`)
+          const { data: recData } = await supabaseAdmin.auth.admin.generateLink({ type: 'recovery', email, options: { redirectTo: `${APP_BASE_URL}/auth` } })
+          const loginUrl = `${APP_BASE_URL}/auth`
+          const recoveryUrl = recData?.properties?.action_link || `${APP_BASE_URL}/auth`
+          try {
+            await resend.emails.send({
+              from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+              to: [email],
+              subject: 'Ya tienes una cuenta en Tu Préstamo',
+              html: `
+                <h1>Hola ${nombre_completo || ''}</h1>
+                <p>Detectamos que este correo ya está registrado como inversionista.</p>
+                <p>Puedes ingresar a tu cuenta con el siguiente botón:</p>
+                <p style="margin:16px 0">
+                  <a href="${loginUrl}" style="background-color:#11696b;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">Ingresar</a>
+                </p>
+                <p>Si olvidaste tu contraseña, restablécela aquí:</p>
+                <p style="margin:8px 0">
+                  <a href="${recoveryUrl}" style="color:#11696b;">Restablecer contraseña</a>
+                </p>
+                <p style="margin-top:20px">Equipo de Tu Préstamo</p>
+              `,
+              text: `Hola ${nombre_completo || ''}\n\nEste correo ya está registrado. Ingresa en ${loginUrl}.\nSi olvidaste tu contraseña, restablécela aquí: ${recoveryUrl}.\n\nEquipo de Tu Préstamo`,
+              reply_to: 'contacto@tuprestamobo.com',
+            })
+          } catch (_) {}
+          try { await supabaseAdmin.from('solicitudes').update({ estado: 'contactado' }).eq('id', solicitud_id) } catch {}
+          return new Response(JSON.stringify({ message: 'Usuario existente: se enviaron instrucciones de acceso.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
+        }
+      }
       if (linkError) {
         console.error(`Solicitud ${solicitud_id}: Error al generar link de invitación:`, linkError);
         throw linkError;
