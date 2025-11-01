@@ -93,7 +93,7 @@ serve(async (req) => {
               Ganancia adicional estimada frente al DPF: ${fmt(projected_gain)}
             </div>
           </div>
-          <h3 style="margin:14px 0 6px 0; text-align:center; color:#00445A;">Escenarios de retorno</h3>
+          <h3 style="margin:14px 0 6px 0; text-align:center; color:#00445A;">Escenarios de retorno (${term_months} meses)</h3>
           <table style="width:100%; border-collapse:collapse; font-family:Arial, Helvetica, sans-serif;">
             <thead>
               <tr>
