@@ -218,6 +218,9 @@
   line-height: 1;
 }
 
+/* Ocultar botón móvil en desktop por defecto */
+.header__mobile-toggle { display: none; background: transparent; border: none; padding: 0; }
+
 /* Responsive */
 @media (max-width: 1024px) {
   /* Sólo logo + botón hamburguesa; ocultar navegación inline */
