@@ -231,17 +231,17 @@ function RateVersusComparison({ amount, years, dpfRate, tpRates }) {
 
 function Scenarios({ amount, years, dpfRate, rates }) {
   const dpfEnd = calculateReturns(amount, years, dpfRate)
-  const labels = ['Conservador (A)', 'Balanceado (B)', 'Din&aacute;mico (C)']
+  const labels = ['Conservador (A)', 'Balanceado (B)', 'DINAMICO (C)']
   return (
     <div>
-      <h3>Escenarios de retorno</h3>
+      <h3 style={{ textAlign: 'center' }}>Escenarios de retorno</h3>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th style={{ textAlign: 'left', padding: 8 }}>Escenario</th>
-            <th style={{ textAlign: 'right', padding: 8 }}>Tu Pr&eacute;stamo (final)</th>
-            <th style={{ textAlign: 'right', padding: 8 }}>DPF (final)</th>
-            <th style={{ textAlign: 'right', padding: 8 }}>Ganancia adicional</th>
+            <th style={{ textAlign: 'center', padding: 8 }}>Escenario</th>
+            <th style={{ textAlign: 'center', padding: 8 }}>Tu Pr&eacute;stamo (final)</th>
+            <th style={{ textAlign: 'center', padding: 8 }}>DPF (final)</th>
+            <th style={{ textAlign: 'center', padding: 8 }}>Ganancia adicional</th>
           </tr>
         </thead>
         <tbody>
@@ -250,10 +250,16 @@ function Scenarios({ amount, years, dpfRate, rates }) {
             const extra = Math.max(0, tpEnd - dpfEnd)
             return (
               <tr key={r} style={{ borderTop: '1px solid #f0f0f0' }}>
-                <td style={{ padding: 8 }}>{labels[i]}</td>
-                <td style={{ padding: 8, textAlign: 'right' }}>Bs {Math.round(tpEnd).toLocaleString('es-BO')}</td>
-                <td style={{ padding: 8, textAlign: 'right' }}>Bs {Math.round(dpfEnd).toLocaleString('es-BO')}</td>
-                <td style={{ padding: 8, textAlign: 'right', color: '#11696b', fontWeight: 600 }}>Bs {Math.round(extra).toLocaleString('es-BO')}</td>
+                <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]}</td>
+                <td style={{ padding: 8, textAlign: 'right' }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(tpEnd).toLocaleString('es-BO')}</span>
+                </td>
+                <td style={{ padding: 8, textAlign: 'right' }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
+                </td>
+                <td style={{ padding: 8, textAlign: 'right', color: '#11696b', fontWeight: 600 }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(extra).toLocaleString('es-BO')}</span>
+                </td>
               </tr>
             )
           })}
