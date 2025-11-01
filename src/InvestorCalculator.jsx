@@ -155,7 +155,7 @@ export default function InvestorCalculator() {
               </div>
               <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
                 <button className="btn" onClick={()=>setShowLead(false)}>Cancelar</button>
-                <button className="btn btn--primary" onClick={saveLead} disabled={sending || !email}>{sending? 'Enviando...':'Ver mi Proyecci&oacute;n'}</button>
+                <button className="btn btn--primary" onClick={saveLead} disabled={sending || !email}>{sending? 'Enviando...':'Ver mi Proyección'}</button>
               </div>
             </div>
           </div>
