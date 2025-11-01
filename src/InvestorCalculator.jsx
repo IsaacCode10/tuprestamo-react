@@ -85,7 +85,7 @@ export default function InvestorCalculator() {
   return (
     <div className="calculator-page-container" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
       <h1 style={{ marginBottom: 8, textAlign: "center" }}>Calculadora de Ganancias</h1>
-      <p style={{ marginTop: 0, color: '#444', textAlign: 'center' }}>Compara un Depósito a Plazo Fijo (DPF) vs invertir con Tu Préstamo.</p>
+      <p style={{ marginTop: 0, color: '#444', textAlign: 'center' }}>Compara un DepÃƒÂ³sito a Plazo Fijo (DPF) vs invertir con Tu PrÃƒÂ©stamo.</p>
 
       <div className="calculator-layout">
         {/* Columna izquierda: Inputs */}
@@ -124,13 +124,13 @@ export default function InvestorCalculator() {
           <h3>Resultados</h3>
           {!saved ? (
             <div style={{ color:'#666' }}>
-              <p>Ingresa los datos y presiona "Calcular mi Ganancia Adicional" para ver tu proyección.</p>
+              <p>Ingresa los datos y presiona "Calcular mi Ganancia Adicional" para ver tu proyecciÃƒÂ³n.</p>
               <ComparisonNotes />
             </div>
           ) : (
             <>
               <div className="savings-summary">
-                <p className="savings-label"><strong>Proyección lista.</strong> Esta es tu comparación estimada.</p>
+                <p className="savings-label"><strong>ProyecciÃ³n lista.</strong> Esta es tu comparaciÃ³n estimada.</p>
               </div>
               <RateVersusComparison amount={amount} years={years} dpfRate={dpfRate} tpRates={[0.15, 0.12]} />
               <Scenarios amount={amount} years={years} dpfRate={dpfRate} rates={[0.10,0.12,0.15]} />
@@ -142,8 +142,8 @@ export default function InvestorCalculator() {
       {showLead && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex: 50 }} onClick={() => setShowLead(false)}>
           <div style={{ background:'#fff', borderRadius:8, padding:20, width:'min(520px, 92vw)' }} onClick={(e) => e.stopPropagation()}>
-            <h3>Ver mi Proyecci&oacute;n Ahora</h3>
-            <p style={{ color:'#444' }}>DÃ©janos tu correo y WhatsApp para enviarte el resultado y un acceso directo.</p>
+            <h3>Ver mi Proyección Ahora</h3>
+            <p style={{ color:'#444' }}>Déjanos tu correo y WhatsApp para enviarte el resultado y un acceso directo.</p>
             <div style={{ display:'grid', gap:12 }}>
               <div>
                 <label>Email</label>
@@ -155,7 +155,7 @@ export default function InvestorCalculator() {
               </div>
               <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
                 <button className="btn" onClick={()=>setShowLead(false)}>Cancelar</button>
-                <button className="btn btn--primary" onClick={saveLead} disabled={sending || !email}>{sending? 'Enviando...':'Ver mi Proyecci&oacute;n'}</button>
+                <button className="btn btn--primary" onClick={saveLead} disabled={sending || !email}>{sending? 'Enviando...':'Ver mi Proyección'}</button>
               </div>
             </div>
           </div>
@@ -178,7 +178,7 @@ function Bar({ label, height, value, color }){
 
 function Scenarios({ amount, years, dpfRate, rates }){
   const dpfEnd = calculateReturns(amount, years, dpfRate)
-  const labels = ['Conservador (A)', 'Balanceado (B)', 'Dinámico (C)']
+  const labels = ['Conservador (A)', 'Balanceado (B)', 'DinÃƒÂ¡mico (C)']
   return (
     <div>
       <h3>Escenarios de retorno</h3>
@@ -236,9 +236,9 @@ function Scenarios({ amount, years, dpfRate, rates }){
               <td style={{ padding:8 }}>Natural con reinversi&oacute;n</td>
             </tr>
             <tr style={{ borderTop:'1px solid #f0f0f0' }}>
-              <td style={{ padding:8 }}>Trámite</td>
+              <td style={{ padding:8 }}>TrÃƒÂ¡mite</td>
               <td style={{ padding:8 }}>Presencial: solicitar y firmar en sucursal</td>
-              <td style={{ padding:8 }}>100% en línea</td>
+              <td style={{ padding:8 }}>100% en lÃƒÂ­nea</td>
             </tr>
           </tbody>
         </table>
@@ -254,7 +254,7 @@ function RateVersusComparison({ amount, years, dpfRate, tpRates }) {
   const avgEnd = calculateReturns(amount, years, avgRate);
   return (
     <div className="rate-compare">
-      <h4 className="rate-compare__title">¡Compara tasas y montos finales!</h4>
+      <h4 className="rate-compare__title">Ã‚Â¡Compara tasas y montos finales!</h4>
       <div className="rate-compare__grid">
         <div className="rate-compare__col rate-compare__col--highlight">
           <div className="rate-compare__col-title rate-compare__col-title--highlight">Nuestra mejor tasa</div>
