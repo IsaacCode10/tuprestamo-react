@@ -112,7 +112,7 @@ serve(async (req) => {
       const html = renderEmail({
         greetingName,
         title: 'Tu proyeccion de inversion',
-        intro: Monto:  | Plazo:  ,
+        intro: `Monto: ${fmt(amount)} | Plazo: ${term_years} ${anosLabel}`,
         body: 'Te compartimos un resumen con tres escenarios de retorno.',
         extraHtml,
         ctaLabel: 'Crear mi cuenta',
