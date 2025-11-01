@@ -67,6 +67,7 @@ serve(async (req) => {
       const compound = (amt: number, yrs: number, rate: number) => amt * Math.pow(1 + rate, yrs)
       const dpf = compound(amount, term_years, (body.tasa_dpf ?? 0.03))
       const anosLabel = term_years === 1 ? 'a&ntilde;o' : 'a&ntilde;os'
+      const term_months = Math.round(term_years * 12)
       const scenarios = [
         { label: 'Conservador (A)', rate: 0.10 },
         { label: 'Balanceado (B)', rate: 0.12 },
@@ -112,13 +113,13 @@ serve(async (req) => {
       const html = renderEmail({
         greetingName,
         title: 'Tu proyeccion de inversion',
-        intro: `Monto: ${fmt(amount)} | Plazo: ${term_years} ${anosLabel}`,
+        intro: `Monto: ${fmt(amount)} | Plazo: ${term_months} meses`,
         body: 'Te compartimos un resumen con tres escenarios de retorno.',
         extraHtml,
         ctaLabel: 'Crear mi cuenta',
         ctaHref: `${appBase}/?open=investor-form#inversionistas`,
       })
-      const subject = `${greetingName} - tu proyeccion en Tu Prestamo - Monto ${fmt(amount)}, plazo ${term_years} anio${term_years===1?'':'s'}`
+      const subject = `${greetingName} - tu proyeccion en Tu Prestamo - Monto ${fmt(amount)}, plazo ${term_months} meses`
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
