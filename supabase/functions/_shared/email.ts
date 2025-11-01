@@ -1,4 +1,4 @@
-export type EmailTemplateOptions = {
+﻿export type EmailTemplateOptions = {
   greetingName?: string
   title?: string
   intro?: string
@@ -26,13 +26,13 @@ export function renderEmail(opts: EmailTemplateOptions) {
     : ''
   const extra = opts.extraHtml ? opts.extraHtml : ''
   const cta = opts.ctaHref && opts.ctaLabel
-    ? `<p style="margin:16px 0 0 0;"><a href="${escapeAttr(opts.ctaHref)}" style="background:#11696b;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block;">${escapeHtml(opts.ctaLabel)}</a></p>`
+    ? `<p style="margin:16px 0 0 0; text-align:center;"><a href="${escapeAttr(opts.ctaHref)}" style="background:#11696b;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block;">${escapeHtml(opts.ctaLabel)}</a></p>`
     : ''
-  const footer = `<p style="color:#777;font-size:12px;margin-top:20px;">Este es un mensaje automático de Tu Préstamo. Si necesitas ayuda, responde a este correo.</p>`
+  const footer = `<p style="color:#777;font-size:12px;margin-top:20px;">Este es un mensaje automÃƒÂ¡tico de Tu PrÃƒÂ©stamo. Si necesitas ayuda, responde a este correo.</p>`
 
   return `
   <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;">
-    <img src="${logoUrl}" alt="Tu Préstamo" style="height:36px;margin-bottom:12px;"/>
+    <img src="${logoUrl}" alt="Tu PrÃƒÂ©stamo" style="height:36px;margin-bottom:12px;"/>
     <p style="margin:0;color:${text}">${greeting}</p>
     ${title}
     ${intro}

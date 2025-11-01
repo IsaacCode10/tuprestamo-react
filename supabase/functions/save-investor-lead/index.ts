@@ -75,9 +75,10 @@ serve(async (req) => {
         const extra = Math.max(0, tp - dpf)
         return { ...s, tp, extra }
       })
-      const tableRows = scenarios.map(({ label, tp, extra }) => `
+      const dpfRatePct = `${((body.tasa_dpf ?? 0.03) * 100).toFixed(1)}%`
+      const tableRows = scenarios.map(({ label, rate, tp, extra }) => `
         <tr style="border-top:1px solid #f0f0f0">
-          <td style="padding:8px;">${label}</td>
+          <td style="padding:8px;">${label} (${Math.round(rate*100)}%)</td>
           <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(tp)}</td>
           <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(dpf)}</td>
           <td style="padding:8px; text-align:right;"><span style="white-space:nowrap; background:#e6fffb; border:1px solid #a8ede6; color:#006d75; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block;">${fmt(extra)}</span></td>
@@ -95,8 +96,8 @@ serve(async (req) => {
             <thead>
               <tr>
                 <th style="text-align:left; padding:8px;">Escenario</th>
-                <th style="text-align:right; padding:8px;">Tu Préstamo (final)</th>
-                <th style="text-align:right; padding:8px;">DPF (final)</th>
+                <th style="text-align:right; padding:8px;">Tu Pr&eacute;stamo (final)</th>
+                <th style="text-align:right; padding:8px;">DPF (final, ${dpfRatePct})</th>
                 <th style="text-align:right; padding:8px;">Ganancia adicional</th>
               </tr>
             </thead>
@@ -109,14 +110,14 @@ serve(async (req) => {
 
       const html = renderEmail({
         greetingName,
-        title: 'Tu proyección de inversión',
-        intro: `Monto: ${fmt(amount)} • Plazo: ${term_years} año${term_years===1?'':'s'}`,
+        title: 'Tu proyecciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n de inversiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n',
+        intro: `Monto: ${fmt(amount)} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ Plazo: ${term_years} aÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o${term_years===1?'':'s'}`,
         body: 'Te compartimos un resumen con tres escenarios de retorno.',
         extraHtml,
         ctaLabel: 'Crear mi cuenta',
         ctaHref: `${appBase}/?open=investor-form#inversionistas`,
       })
-      const subject = `${greetingName}, tu proyección en Tu Préstamo — Monto ${fmt(amount)}, plazo ${term_years} año${term_years===1?'':'s'}`
+      const subject = `${greetingName}, tu proyecciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n en Tu PrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©stamo ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Monto ${fmt(amount)}, plazo ${term_years} aÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±o${term_years===1?'':'s'}`
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
