@@ -171,7 +171,7 @@ export default function InvestorCalculator() {
                   Cancelar
                 </button>
                 <button className="btn btn--primary" onClick={saveLead} disabled={sending || !email}>
-                  {sending ? 'Enviando...' : 'Ver mi Proyecci&oacute;n'}
+                  {sending ? 'Enviando...' : 'Ver mi Proyección'}
                 </button>
               </div>
             </div>
@@ -312,4 +312,3 @@ function ComparisonNotes() {
     </div>
   )
 }
-
