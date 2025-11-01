@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Hero from './Hero';
 import Beneficios from './Beneficios';
@@ -13,6 +14,7 @@ import InvestorInterestForm from '../InvestorInterestForm';
 
 const LandingPage = () => {
   const [modalRole, setModalRole] = useState(null); // null, 'prestatario', o 'inversionista'
+  const location = useLocation();
 
   const handleOpenModal = (role) => {
     setModalRole(role);
@@ -21,6 +23,15 @@ const LandingPage = () => {
   const handleCloseModal = () => {
     setModalRole(null);
   };
+
+  // Abrir el formulario de interés para inversionistas vía query (?open=investor-form)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const open = params.get('open');
+    if (open === 'investor-form') {
+      setModalRole('inversionista');
+    }
+  }, [location.search]);
 
   return (
     <>

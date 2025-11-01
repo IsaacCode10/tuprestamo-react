@@ -278,7 +278,7 @@ function Scenarios({ amount, years, dpfRate, rates }) {
         </tbody>
       </table>
       <div style={{ marginTop: 16, textAlign: 'center' }}>
-        <a className="btn btn--primary" href="/auth">Crear mi cuenta</a>
+        <a className="btn btn--primary" href="/?open=investor-form#inversionistas">Crear mi cuenta</a>
       </div>
       <div style={{ marginTop: 24 }}>
         <h3 style={{ textAlign: 'center' }}>Diferencias clave</h3>

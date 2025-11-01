@@ -84,7 +84,7 @@ serve(async (req) => {
         </tr>
       `).join('')
       const extraHtml = `
-        <div style="margin-top:12px;">
+        <div style="margin-top:12px; max-width:520px; margin-left:auto; margin-right:auto;">
           <div style="text-align:center; margin:12px 0;">
             <div style="display:inline-block; padding:10px 14px; border-radius:12px; background:#eef9f8; border:1px dashed #26C2B2; font-weight:800; color:#11696b;">
               Ganancia adicional estimada frente al DPF: ${fmt(projected_gain)}
@@ -114,7 +114,7 @@ serve(async (req) => {
         body: 'Te compartimos un resumen con tres escenarios de retorno.',
         extraHtml,
         ctaLabel: 'Crear mi cuenta',
-        ctaHref: `${appBase}/auth`,
+        ctaHref: `${appBase}/?open=investor-form#inversionistas`,
       })
       const subject = `${greetingName}, tu proyección en Tu Préstamo — Monto ${fmt(amount)}, plazo ${term_years} año${term_years===1?'':'s'}`
       await fetch('https://api.resend.com/emails', {
@@ -135,4 +135,3 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: (e as Error).message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })
-
