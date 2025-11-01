@@ -85,7 +85,7 @@ export default function InvestorCalculator() {
   return (
     <div className="calculator-page-container" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
       <h1 style={{ marginBottom: 8, textAlign: "center" }}>Calculadora de Ganancias</h1>
-      <p style={{ marginTop: 0, color: '#444' }}>Compara un DPF tradicional vs invertir con Tu Préstamo.</p>
+      <p style={{ marginTop: 0, color: '#444', textAlign: 'center' }}>Compara un Depósito a Plazo Fijo (DPF) vs invertir con Tu Préstamo.</p>
 
       <div className="calculator-layout">
         {/* Columna izquierda: Inputs */}
