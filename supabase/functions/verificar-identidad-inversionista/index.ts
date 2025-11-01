@@ -44,16 +44,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1) Crear URL firmada del archivo (bucket privado unificado)
-    const BUCKET_NAME = 'documentos-prestatarios'
-    const { data: signedData, error: signedErr } = await supabaseAdmin
-      .storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(url_archivo, 3600)
-    if (signedErr || !signedData?.signedUrl) {
-      throw new Error(`No se pudo generar URL firmada para ${url_archivo}: ${signedErr?.message ?? 'desconocido'}`)
+    // 1) Crear URL firmada del archivo (prioriza bucket de inversionistas; fallback al anterior para compatibilidad)
+    const BUCKETS = ['documentos-inversionistas', 'documentos-prestatarios']
+    let signedUrl = ''
+    let lastErr: any = null
+    for (const b of BUCKETS) {
+      const { data, error } = await supabaseAdmin.storage.from(b).createSignedUrl(url_archivo, 3600)
+      if (!error && data?.signedUrl) { signedUrl = data.signedUrl; lastErr = null; break }
+      lastErr = error
     }
-    const signedUrl = signedData.signedUrl
+    if (!signedUrl) {
+      throw new Error(`No se pudo generar URL firmada para ${url_archivo}: ${lastErr?.message ?? 'desconocido'}`)
+    }
 
     // 2) Perfil del usuario
     const { data: profile, error: profileError } = await supabaseAdmin

@@ -127,7 +127,7 @@ export default function InvestorVerification() {
       const name = `${Date.now()}_ci_anverso.${ext}`
       const path = `${auth.user.id}/${name}`
       const { error: upErr } = await supabase.storage
-        .from('documentos-prestatarios')
+        .from('documentos-inversionistas')
         .upload(path, file)
       if (upErr) throw upErr
       setCiUploadedPath(path)
@@ -160,7 +160,7 @@ export default function InvestorVerification() {
         fileName = `${Date.now()}_ci_anverso.${ext}`
         filePath = `${auth.user.id}/${fileName}`
         const { error: upErr } = await supabase.storage
-          .from('documentos-prestatarios')
+          .from('documentos-inversionistas')
           .upload(filePath, ciFile)
         if (upErr) throw upErr
       }
