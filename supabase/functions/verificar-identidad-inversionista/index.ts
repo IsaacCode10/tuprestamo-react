@@ -4,38 +4,47 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 console.log('Function verificar-identidad-inversionista starting up...')
 
+type StorageDocPayload = {
+  record?: {
+    id?: string
+    user_id?: string
+    url_archivo?: string
+    tipo_documento?: string | null
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Espera payload: { record: { user_id, url_archivo, id? } }
-    const { record: document } = await req.json()
-    const { user_id, url_archivo, tipo_documento, id: document_id } = document || {}
+    const { record }: StorageDocPayload = await req.json()
+    const user_id = record?.user_id
+    const url_archivo = record?.url_archivo
+    const tipo_documento = record?.tipo_documento || null
+    const document_id = record?.id || 'sin-id'
 
     if (!user_id || !url_archivo) {
       throw new Error('user_id y url_archivo son requeridos en el payload.')
     }
 
-    // Si el webhook dispara para otros documentos, ignorar silenciosamente
-    if (tipo_documento && tipo_documento !== 'ci_inversionista_anverso') {
+    // Procesar SOLO el anverso del CI de inversionista; si falta tipo_documento o no coincide, ignorar
+    if (tipo_documento !== 'ci_inversionista_anverso') {
       return new Response(JSON.stringify({ message: 'ignorado: tipo_documento no aplica' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       })
     }
 
-    console.log(`Iniciando verificaciÃƒÂ³n para user_id=${user_id} doc=${document_id ?? 'sin-id'}`)
+    console.log(`Iniciando verificación para user_id=${user_id} doc=${document_id}`)
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1) URL firmada (bucket privado)
-    // MVP: reutilizar el bucket existente de prestatarios para evitar pasos manuales
+    // 1) Crear URL firmada del archivo (bucket privado unificado)
     const BUCKET_NAME = 'documentos-prestatarios'
     const { data: signedData, error: signedErr } = await supabaseAdmin
       .storage
@@ -49,17 +58,16 @@ serve(async (req) => {
     // 2) Perfil del usuario
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('nombre_completo, numero_ci, email')
+      .select('nombre_completo, numero_ci, email, estado_verificacion')
       .eq('id', user_id)
       .single()
     if (profileError || !profile) {
-      throw new Error(`No se encontro perfil para ${user_id}: ${profileError?.message}`)
+      throw new Error(`No se encontró perfil para ${user_id}: ${profileError?.message}`)
     }
-    const firstName = (profile.nombre_completo || '').split(' ')[0] || ''
 
     // 3) Descargar archivo y convertir a Base64
     const fileResp = await fetch(signedUrl)
-    if (!fileResp.ok) throw new Error(`Fallo al obtener el archivo: ${fileResp.statusText}`)
+    if (!fileResp.ok) throw new Error(`Fallo al obtener el archivo: ${fileResp.status} ${fileResp.statusText}`)
     const fileBuffer = await fileResp.arrayBuffer()
     const fileMimeType = fileResp.headers.get('Content-Type') || 'image/jpeg'
     let binary = ''
@@ -74,9 +82,9 @@ serve(async (req) => {
     const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`
 
     const prompt = `
-Eres un sistema experto de OCR para CÃƒÂ©dulas de Identidad (Bolivia).
+Eres un sistema experto de OCR para Cédulas de Identidad (Bolivia).
 Devuelve SIEMPRE JSON puro con las claves: nombre_completo (string|null) y numero_ci (string|null).
-Si la imagen no es vÃƒÂ¡lida, devuelve {"error":"Imagen ilegible o documento no vÃƒÂ¡lido"}.
+Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no válido"}.
 `
 
     const requestBody = {
@@ -116,48 +124,51 @@ Si la imagen no es vÃƒÂ¡lida, devuelve {"error":"Imagen ilegible o documento
       const e = rawText.lastIndexOf('}')
       if (s !== -1 && e !== -1) jsonString = rawText.substring(s, e + 1)
     }
-    if (!jsonString) throw new Error('La IA no devolviÃƒÂ³ JSON reconocible.')
+    if (!jsonString) throw new Error('La IA no devolvió JSON reconocible.')
 
     const aiData = JSON.parse(jsonString)
 
-    // 5) ComparaciÃƒÂ³n con perfil
+    // 5) Comparación con perfil
     const normalize = (str?: string) => (str ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
     const onlyDigits = (str?: string) => (str ?? '').replace(/\D/g, '')
 
     const nameOK = normalize(profile.nombre_completo) === normalize(aiData?.nombre_completo)
     const ciOK = onlyDigits(profile.numero_ci) === onlyDigits(aiData?.numero_ci)
 
-    let finalStatus: string = 'requiere_revision_manual'
+    let finalStatus: 'verificado' | 'pendiente_revision' | 'requiere_revision_manual' = 'requiere_revision_manual'
     if (aiData?.error) {
       finalStatus = 'requiere_revision_manual'
     } else if (nameOK && ciOK) {
       finalStatus = 'verificado'
+    } else {
+      finalStatus = 'requiere_revision_manual'
     }
 
     // 6) Actualizar perfil
     const { error: updErr } = await supabaseAdmin
       .from('profiles')
-      .update({ estado_verificacion: finalStatus as any })
+      .update({ estado_verificacion: finalStatus })
       .eq('id', user_id)
     if (updErr) throw new Error(`Error al actualizar perfil: ${updErr.message}`)
 
-    // 8) NotificaciÃƒÂ³n al usuario (no bloquear en caso de error)
+    // 7) Notificación al usuario (solo si cambió el estado; no bloquear en caso de error)
     try {
-      const notifyTitle = finalStatus === 'verificado'
-        ? 'Tu verificaciÃƒÂ³n fue aprobada'
-        : 'Tu verificaciÃƒÂ³n requiere revisiÃƒÂ³n'
-      const notifyBody = finalStatus === 'verificado'
-        ? 'Ã‚Â¡Listo! Ya puedes invertir y solicitar retiros.'
-        : 'No pudimos confirmar automÃƒÂ¡ticamente tu identidad. Un analista revisarÃƒÂ¡ tu caso.'
-      // Llamar a la funciÃƒÂ³n de notificaciones (misma instancia)
-      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/create-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-        },
-        body: JSON.stringify({ user_id, type: 'kyc_status', title: notifyTitle, body: notifyBody, email: true })
-      })
+      if (profile.estado_verificacion !== finalStatus) {
+        const notifyTitle = finalStatus === 'verificado'
+          ? 'Tu verificación fue aprobada'
+          : 'Tu verificación requiere revisión'
+        const notifyBody = finalStatus === 'verificado'
+          ? '¡Listo! Ya puedes invertir y solicitar retiros.'
+          : 'No pudimos confirmar automáticamente tu identidad. Un analista revisará tu caso.'
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/create-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({ user_id, type: 'kyc_status', title: notifyTitle, body: notifyBody, email: true })
+        })
+      }
     } catch (_) { /* noop */ }
 
     return new Response(JSON.stringify({ message: 'ok', status: finalStatus }), {
@@ -173,4 +184,3 @@ Si la imagen no es vÃƒÂ¡lida, devuelve {"error":"Imagen ilegible o documento
     })
   }
 })
-
