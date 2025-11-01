@@ -306,11 +306,11 @@ const Header = () => {
                 </button>
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
-                    <button className="header__dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: 10 }} onClick={async () => { await markAllRead(); setIsMenuOpen(false); }}>
-                      <NotificationBell notifications={notifications} />
+                    <div className="header__dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: 10 }} onClick={(e) => e.stopPropagation()}>
+                      <NotificationBell notifications={notifications} onOpen={markAllRead} />
                       <span>Notificaciones</span>
                       <span className="notif-pill">{unreadCount}</span>
-                    </button>
+                    </div>
                     <NavLink to={dashboardPath} className="header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       Panel de Control
                     </NavLink>
