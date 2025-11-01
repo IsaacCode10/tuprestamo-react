@@ -231,7 +231,7 @@ function RateVersusComparison({ amount, years, dpfRate, tpRates }) {
 
 function Scenarios({ amount, years, dpfRate, rates }) {
   const dpfEnd = calculateReturns(amount, years, dpfRate)
-  const labels = ['Conservador (A)', 'Balanceado (B)', 'DINAMICO (C)']
+  const labels = ['Conservador (A)', 'Balanceado (B)', 'Din&aacute;mico (C)']
   return (
     <div>
       <h3 style={{ textAlign: 'center' }}>Escenarios de retorno</h3>
@@ -257,8 +257,20 @@ function Scenarios({ amount, years, dpfRate, rates }) {
                 <td style={{ padding: 8, textAlign: 'right' }}>
                   <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
                 </td>
-                <td style={{ padding: 8, textAlign: 'right', color: '#11696b', fontWeight: 600 }}>
-                  <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(extra).toLocaleString('es-BO')}</span>
+                <td style={{ padding: 8, textAlign: 'right' }}>
+                  <span style={{
+                    whiteSpace: 'nowrap',
+                    background: '#e6fffb',
+                    border: '1px solid #a8ede6',
+                    color: '#006d75',
+                    fontWeight: 800,
+                    fontSize: '1.05rem',
+                    padding: '4px 10px',
+                    borderRadius: 12,
+                    display: 'inline-block'
+                  }}>
+                    Bs&nbsp;{Math.round(extra).toLocaleString('es-BO')}
+                  </span>
                 </td>
               </tr>
             )
