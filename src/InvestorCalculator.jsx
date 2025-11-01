@@ -94,7 +94,7 @@ export default function InvestorCalculator() {
           <div className="calculator-inputs">
             <div className="input-group">
               <label>Monto (Bs.)</label>
-              <input type="range" min={700} max={20000} step={500} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+              <input type="range" min={700} max={20000} step={100} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
               <span className="slider-value">Bs. {Number(amount).toLocaleString('es-BO')}</span>
             </div>
             <div className="input-group">
