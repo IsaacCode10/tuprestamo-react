@@ -14,7 +14,7 @@ function calculateReturns(amount, years, rate) {
 
 export default function InvestorCalculator() {
   const location = useLocation()
-  const [amount, setAmount] = useState(10000)
+  const [amount, setAmount] = useState(700)
   const [months, setMonths] = useState(12) // 12, 18, 24 meses
   const years = useMemo(() => months / 12, [months])
   const [dpfRate, setDpfRate] = useState(0.03) // 3%, 3.5%, 4%
@@ -94,7 +94,7 @@ export default function InvestorCalculator() {
           <div className="calculator-inputs">
             <div className="input-group">
               <label>Monto (Bs.)</label>
-              <input type="range" min={1000} max={50000} step={500} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+              <input type="range" min={700} max={20000} step={500} value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
               <span className="slider-value">Bs. {Number(amount).toLocaleString('es-BO')}</span>
             </div>
             <div className="input-group">
@@ -283,7 +283,7 @@ function ComparisonNotes() {
         <li>El DPF paga al final del plazo y penaliza retiros anticipados.</li>
         <li>En Tu Pr&eacute;stamo recibes pagos mensuales (inter&eacute;s + capital) que puedes reinvertir.</li>
         <li>Mostramos tres escenarios de rendimiento: 10%, 12% y 15% anual.</li>
-        <li>Plazos del MVP: 12, 18 o 24 meses.</li>
+        <li>100% en l&iacute;nea y r&aacute;pido; el DPF requiere sucursal, firmas y esperas.</li>
       </ul>
     </div>
   )
