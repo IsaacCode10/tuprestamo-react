@@ -129,20 +129,30 @@ Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no v�
     const aiData = JSON.parse(jsonString)
 
     // 5) Comparación con perfil
-    const normalize = (str?: string) => (str ?? '').toLowerCase().replace(/\s+/g, ' ').trim()
+    const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    const normalize = (str?: string) => stripAccents((str ?? '').toLowerCase()).replace(/\s+/g, ' ').trim()
     const onlyDigits = (str?: string) => (str ?? '').replace(/\D/g, '')
 
     const nameOK = normalize(profile.nombre_completo) === normalize(aiData?.nombre_completo)
     const ciOK = onlyDigits(profile.numero_ci) === onlyDigits(aiData?.numero_ci)
 
+    // Tolerancia: si CI coincide y el nombre tiene alta superposición de tokens, aceptar
+    const nameTokens = new Set(normalize(profile.nombre_completo).split(' ').filter(Boolean))
+    const aiTokens = new Set(normalize(aiData?.nombre_completo || '').split(' ').filter(Boolean))
+    const overlap = [...aiTokens].filter(t => nameTokens.has(t)).length
+    const minSize = Math.max(1, Math.min(nameTokens.size, aiTokens.size))
+    const nameSimilar = minSize > 0 && (overlap / minSize) >= 0.6
+
     let finalStatus: 'verificado' | 'pendiente_revision' | 'requiere_revision_manual' = 'requiere_revision_manual'
     if (aiData?.error) {
       finalStatus = 'requiere_revision_manual'
-    } else if (nameOK && ciOK) {
+    } else if (ciOK && (nameOK || nameSimilar)) {
       finalStatus = 'verificado'
     } else {
       finalStatus = 'requiere_revision_manual'
     }
+
+    console.log(`OCR compare: ciOK=${ciOK} nameOK=${nameOK} nameSimilar=${nameSimilar} overlap=${overlap}/${minSize}`)
 
     // 6) Actualizar perfil
     const { error: updErr } = await supabaseAdmin
