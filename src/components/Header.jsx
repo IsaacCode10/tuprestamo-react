@@ -176,11 +176,11 @@ const Header = () => {
     <header className="header">
       <div className="header__container">
         <NavLink to="/" className="header__logo-link">
-          <img src={logo} alt="Logo Tu PrÃƒÂ©stamo" className="header__logo" />
+          <img src={logo} alt="Logo Tu Préstamo" className="header__logo" />
         </NavLink>
         <button
           className="header__mobile-toggle"
-          aria-label="Abrir menÃƒÂº"
+          aria-label="Abrir menú"
           onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
         >
           <span className="mobile-toggle-bar" />

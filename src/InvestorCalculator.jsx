@@ -55,6 +55,7 @@ export default function InvestorCalculator() {
         whatsapp: whatsapp || null,
         amount,
         term_months: months,
+        term_years: years,
         projected_gain: Number(result.extra.toFixed(2)),
         tasa_dpf: dpfRate,
         scenario_rates: [0.10, 0.12, 0.15],
@@ -84,7 +85,7 @@ export default function InvestorCalculator() {
   return (
     <div className="calculator-page-container" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
       <h1 style={{ marginBottom: 8, textAlign: "center" }}>Calculadora de Ganancias</h1>
-      <p style={{ marginTop: 0, color: '#444' }}>Compara un DPF tradicional vs invertir con Tu PrÃ©stamo.</p>
+      <p style={{ marginTop: 0, color: '#444' }}>Compara un DPF tradicional vs invertir con Tu Préstamo.</p>
 
       <div className="calculator-layout">
         {/* Columna izquierda: Inputs */}
@@ -123,13 +124,13 @@ export default function InvestorCalculator() {
           <h3>Resultados</h3>
           {!saved ? (
             <div style={{ color:'#666' }}>
-              <p>Ingresa los datos y presiona "Calcular mi Ganancia Adicional" para ver tu proyecciÃ³n.</p>
+              <p>Ingresa los datos y presiona "Calcular mi Ganancia Adicional" para ver tu proyección.</p>
               <ComparisonNotes />
             </div>
           ) : (
             <>
               <div className="savings-summary">
-                <p className="savings-label"><strong>ProyecciÃ³n lista.</strong> Esta es tu comparaciÃ³n estimada.</p>
+                <p className="savings-label"><strong>Proyección lista.</strong> Esta es tu comparación estimada.</p>
               </div>
               <RateVersusComparison amount={amount} years={years} dpfRate={dpfRate} tpRates={[0.15, 0.12]} />
               <Scenarios amount={amount} years={years} dpfRate={dpfRate} rates={[0.10,0.12,0.15]} />
@@ -177,7 +178,7 @@ function Bar({ label, height, value, color }){
 
 function Scenarios({ amount, years, dpfRate, rates }){
   const dpfEnd = calculateReturns(amount, years, dpfRate)
-  const labels = ['Conservador (A)', 'Balanceado (B)', 'DinÃ¡mico (C)']
+  const labels = ['Conservador (A)', 'Balanceado (B)', 'Dinámico (C)']
   return (
     <div>
       <h3>Escenarios de retorno</h3>
@@ -253,7 +254,7 @@ function RateVersusComparison({ amount, years, dpfRate, tpRates }) {
   const avgEnd = calculateReturns(amount, years, avgRate);
   return (
     <div className="rate-compare">
-      <h4 className="rate-compare__title">Â¡Compara tasas y montos finales!</h4>
+      <h4 className="rate-compare__title">¡Compara tasas y montos finales!</h4>
       <div className="rate-compare__grid">
         <div className="rate-compare__col rate-compare__col--highlight">
           <div className="rate-compare__col-title rate-compare__col-title--highlight">Nuestra mejor tasa</div>

@@ -163,6 +163,39 @@ Notas de despliegue
 
 ---
 
+# Estado del Proyecto - 31 de Octubre de 2025
+
+Resumen ejecutivo (Calculadora Inversionista, Landing CTAs y pulido UX)
+
+- Calculadora del Inversionista (MVP listo para captación):
+  - Plazos restringidos a 12/18/24 meses (en línea con el modelo de negocio).
+  - Selector DPF con tasas actuales: 3.0%, 3.5% y 4.0%.
+  - Tres escenarios de retorno Tu Préstamo: 10%, 12% y 15% anual.
+  - Layout en dos columnas (inputs a la izquierda, resultados a la derecha), consistente con la Calculadora de Ahorro.
+  - Bloque comparativo “versus” (Nuestra mejor tasa vs promedio vs DPF) inspirado en referencia visual; resalta montos finales.
+  - Sección “Diferencias clave” con flujo y liquidez; fila “Trámite” reemplaza “Horizonte del MVP” (100% en línea vs presencial en banco).
+  - Textos corregidos (acentos y mojibake) y CTA centrados; botón del modal “Ver mi Proyección” corregido.
+
+- Landing – CTAs por segmento:
+  - Inversionistas: orden dinámico según sesión/estado verificación (no logueado/no verificado → Calculadora primero; verificado → Ver Oportunidades primero). Archivo: `src/components/Inversionistas.jsx`.
+  - Prestatarios: copy con acentos corregidos y botón “Calculadora de Ahorro” añadido debajo de “Completa tu Solicitud”. Archivo: `src/components/Prestatarios.jsx`.
+
+- Estilos y navegación:
+  - Hoja dedicada `src/InvestorCalculator.css` para mantener consistencia visual con la calculadora de ahorro.
+  - Menú Header incluye acceso a `/calculadora-inversionista` (verificado en producción).
+
+- Despliegue:
+  - Cambios empujados a `main` y desplegados en Vercel. Usar recarga dura o `?v=<ts>` para evitar caché.
+
+Dónde nos quedamos / Próximos pasos (mañana)
+
+1) Versus: añadir tercera fila “Ganancia adicional vs DPF” (destacar el diferencial en Bs).
+2) Ruido de consola anónimo: silenciar 403/406 en `src/hooks/useProfile.js` cuando no hay sesión.
+3) Leads: throttle anti‑spam en `save-investor-lead` (cooldown por email/IP) y confirmar secretos (RESEND_API_KEY, APP_BASE_URL, SUPABASE_SERVICE_ROLE_KEY).
+4) Analítica: enriquecer eventos de Mixpanel con `{ amount, term_months, dpf_rate, projected_gain }` en `Calculator_Lead_Submitted`.
+5) UI: pulir espaciados/contrastes de la tabla “versus” para máxima legibilidad en mobile.
+6) QA: probar E2E lead → email de proyección (Resend Activity) → registro → dashboard verificado.
+
 # Estado del Proyecto - 30 de Octubre de 2025
 
 Resumen ejecutivo (móvil, KYC inversor, notificaciones y DX de despliegue)
