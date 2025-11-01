@@ -1,4 +1,4 @@
-﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { renderEmail } from '../_shared/email.ts'
@@ -62,15 +62,61 @@ serve(async (req) => {
     if (resendKey) {
       const greetingName = email.split('@')[0]
       const appBase = Deno.env.get('APP_BASE_URL') || 'https://www.tuprestamobo.com'
+
+      const fmt = (n: number) => `Bs ${Math.round(n).toLocaleString('es-BO')}`
+      const compound = (amt: number, yrs: number, rate: number) => amt * Math.pow(1 + rate, yrs)
+      const dpf = compound(amount, term_years, (body.tasa_dpf ?? 0.03))
+      const scenarios = [
+        { label: 'Conservador (A)', rate: 0.10 },
+        { label: 'Balanceado (B)', rate: 0.12 },
+        { label: 'Dinamico (C)',  rate: 0.15 },
+      ].map(s => {
+        const tp = compound(amount, term_years, s.rate)
+        const extra = Math.max(0, tp - dpf)
+        return { ...s, tp, extra }
+      })
+      const tableRows = scenarios.map(({ label, tp, extra }) => `
+        <tr style="border-top:1px solid #f0f0f0">
+          <td style="padding:8px;">${label}</td>
+          <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(tp)}</td>
+          <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(dpf)}</td>
+          <td style="padding:8px; text-align:right;"><span style="white-space:nowrap; background:#e6fffb; border:1px solid #a8ede6; color:#006d75; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block;">${fmt(extra)}</span></td>
+        </tr>
+      `).join('')
+      const extraHtml = `
+        <div style="margin-top:12px;">
+          <div style="text-align:center; margin:12px 0;">
+            <div style="display:inline-block; padding:10px 14px; border-radius:12px; background:#eef9f8; border:1px dashed #26C2B2; font-weight:800; color:#11696b;">
+              Ganancia adicional estimada frente al DPF: ${fmt(projected_gain)}
+            </div>
+          </div>
+          <h3 style="margin:14px 0 6px 0; text-align:center; color:#00445A;">Escenarios de retorno</h3>
+          <table style="width:100%; border-collapse:collapse; font-family:Arial, Helvetica, sans-serif;">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:8px;">Escenario</th>
+                <th style="text-align:right; padding:8px;">Tu Préstamo (final)</th>
+                <th style="text-align:right; padding:8px;">DPF (final)</th>
+                <th style="text-align:right; padding:8px;">Ganancia adicional</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      `
+
       const html = renderEmail({
         greetingName,
-        title: 'Tu proyeccion de inversion',
-        intro: `Monto: Bs ${Math.round(amount).toLocaleString('es-BO')} • Plazo: ${term_years} año${term_years===1?'':'s'}`,
-        body: `Ganancia adicional estimada frente al DPF: Bs ${Math.round(projected_gain).toLocaleString('es-BO')}.`,
+        title: 'Tu proyección de inversión',
+        intro: `Monto: ${fmt(amount)} • Plazo: ${term_years} año${term_years===1?'':'s'}`,
+        body: 'Te compartimos un resumen con tres escenarios de retorno.',
+        extraHtml,
         ctaLabel: 'Crear mi cuenta',
         ctaHref: `${appBase}/auth`,
       })
-      const subject = `${greetingName} Tu proyeccion de inversion en Tu Prestamo`
+      const subject = `${greetingName}, tu proyección en Tu Préstamo — Monto ${fmt(amount)}, plazo ${term_years} año${term_years===1?'':'s'}`
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
@@ -89,3 +135,4 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: (e as Error).message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
   }
 })
+
