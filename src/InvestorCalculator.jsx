@@ -231,7 +231,7 @@ function RateVersusComparison({ amount, years, dpfRate, tpRates }) {
 
 function Scenarios({ amount, years, dpfRate, rates }) {
   const dpfEnd = calculateReturns(amount, years, dpfRate)
-  const labels = ['Conservador (A)', 'Balanceado (B)', 'Din&aacute;mico (C)']
+  const labels = ['Conservador (A)', 'Balanceado (B)', 'Dinamico (C)']
   return (
     <div>
       <h3 style={{ textAlign: 'center' }}>Escenarios de retorno</h3>
