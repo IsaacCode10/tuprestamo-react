@@ -114,8 +114,8 @@ const WithdrawalForm = () => {
           />
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={loading}>{loading ? 'Enviando...' : 'Enviar Solicitud'}</button>
-          <button type="button" onClick={() => navigate('/investor-dashboard')}>Cancelar</button>
+          <button className="btn btn--primary" type="submit" disabled={loading}>{loading ? 'Enviando...' : 'Enviar Solicitud'}</button>
+          <button className="btn btn--secondary" type="button" onClick={() => navigate('/investor-dashboard')}>Cancelar</button>
         </div>
       </form>
       {message && <p style={{ color: 'green', marginTop: 12 }}>{message}</p>}

@@ -251,7 +251,13 @@ export default function InvestorVerification() {
               </div>
             </div>
           ) : (
-            <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => { setCiFile(e.target.files?.[0] || null); handleImmediateUpload(e.target.files?.[0]); }} required />
+            <>
+              <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => { setCiFile(e.target.files?.[0] || null); handleImmediateUpload(e.target.files?.[0]); }} required style={{ display: 'none' }} />
+              <label htmlFor="ciFile" className="btn btn--secondary">Seleccionar archivo</label>
+              {(ciUploadedName || ciFile?.name) && (
+                <span style={{ marginLeft: 8 }}>{ciUploadedName || ciFile?.name}</span>
+              )}
+            </>
           )}
         </div>
 
@@ -271,7 +277,7 @@ export default function InvestorVerification() {
           {info && <span style={{ color: '#11696b' }}>{info}</span>}
         </div>
 
-        <button type="submit" style={{ marginTop: '1rem' }}>Enviar Verificacion</button>
+        <button className="btn btn--primary" type="submit" style={{ marginTop: '1rem' }}>Enviar Verificación</button>
       </form>
     </div>
   )

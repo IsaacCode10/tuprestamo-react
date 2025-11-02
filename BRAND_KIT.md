@@ -124,3 +124,62 @@ Esto nos ayuda a mantener una estÃ©tica coherente en la publicidad, redes soci
 - Logs y entregabilidad
   - Usar Resend Activity para monitoreo de entregas/bounces
   - Evitar adjuntos pesados; preferir links firmados
+
+
+### VII. Componentes UI (Consistencia)
+
+#### A. Segmented Control (selector moderno para opciones)
+
+- Uso: para selecciones cortas tipo Tasa (10/12/15) o Plazo (12/18/24).
+- Tipografía: Inter 600. Título/headers siguen Montserrat.
+- Colores: fondo del control `--light-alt-bg`, activo `--accent-color` (texto blanco), inactivo texto `--primary-color`.
+- Estados: hover (texto acento), focus-visible (halo accesible), activo (pill con sombra suave).
+
+CSS de referencia
+
+```
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  background: var(--light-alt-bg);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
+.segmented__item {
+  appearance: none; border: 0; background: transparent;
+  color: var(--primary-color);
+  font-family: var(--font-family); font-weight: 600; font-size: 0.95rem;
+  padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  transition: background-color .2s, color .2s, box-shadow .2s;
+}
+.segmented__item:hover { color: var(--accent-color); }
+.segmented__item:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(38,194,178,.25); }
+.segmented__item.is-active { background: var(--accent-color); color: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+```
+
+Ejemplo (React)
+
+```
+<label className="filters-label">Rendimiento mínimo</label>
+<div className="segmented" role="tablist" aria-label="Rendimiento mínimo">
+  {[10,12,15].map((r) => {
+    const active = String(minRate) === String(r)
+    return (
+      <button
+        key={r}
+        type="button"
+        role="tab"
+        aria-pressed={active}
+        className={[ 'segmented__item', active ? 'is-active' : '' ].filter(Boolean).join(' ')}
+        onClick={() => setMinRate(String(r))}
+      >{r}%</button>
+    )
+  })}
+</div>
+```
+
+Notas
+- Aplicación de filtros: para MVP, los cambios pueden aplicarse automáticamente al hacer clic.
+- Mantener botón “Limpiar” opcional para restablecer.
