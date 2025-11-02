@@ -14,7 +14,7 @@ const OpportunityCard = ({ opp }) => {
   const riskLabel = ({
     A: 'Conservador (A)',
     B: 'Balanceado (B)',
-    C: 'Dinamico (C)'
+    C: 'Dinámico (C)'
   }[opp.perfil_riesgo]) || `Riesgo ${opp.perfil_riesgo}`;
 
   const handleViewDetails = () => {
@@ -41,7 +41,7 @@ const OpportunityCard = ({ opp }) => {
           </div>
         </div>
         <div className="returns-breakdown">
-          <span>Comision de servicio: {comisionServicio}%</span>
+          <span>Comisión de servicio: {comisionServicio}%</span>
           <br />
           <span>Tu rendimiento neto estimado: <strong>{rendimientoNeto.toFixed(2)}%</strong></span>
         </div>
@@ -58,7 +58,7 @@ const Opportunities = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({ risk: '', minRate: '', maxMonths: '', minAmount: '' });
+  const [filters, setFilters] = useState({ minRate: '', maxMonths: '' });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -79,7 +79,7 @@ const Opportunities = () => {
 
       if (error) {
         console.error('Error fetching opportunities:', error);
-        setError('Error al cargar las oportunidades de inversion.');
+        setError('Error al cargar las oportunidades de inversión.');
       } else {
         setOpportunities(data || []);
       }
@@ -105,12 +105,10 @@ const Opportunities = () => {
         .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje')
         .eq('estado', 'disponible');
 
-      if (filters.risk) query = query.eq('perfil_riesgo', filters.risk);
       if (filters.minRate) query = query.gte('tasa_rendimiento_inversionista', Number(filters.minRate));
       if (filters.maxMonths) query = query.lte('plazo_meses', Number(filters.maxMonths));
-      if (filters.minAmount) query = query.gte('monto', Number(filters.minAmount));
 
-      query = query.order('created_at', { ascending: false });
+      query = query.order('tasa_rendimiento_inversionista', { ascending: false });
       const { data, error } = await query;
       if (error) throw error;
       setOpportunities(data || []);
@@ -124,7 +122,7 @@ const Opportunities = () => {
   };
 
   const resetFilters = async () => {
-    setFilters({ risk: '', minRate: '', maxMonths: '', minAmount: '' });
+    setFilters({ minRate: '', maxMonths: '' });
     navigate('/oportunidades', { replace: true });
     setLoading(true);
     const { data } = await supabase
@@ -150,32 +148,46 @@ const Opportunities = () => {
         { label: 'Inicio', to: '/investor-dashboard' },
         { label: 'Oportunidades' },
       ]} />
-      <h2>Oportunidades de Inversion</h2>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 16px 0' }}>
-        <button className="btn" onClick={() => setShowFilters(v => !v)}>
+      <h2>Oportunidades de Inversión</h2>
+      <div className="filters-bar">
+        <button className="btn btn--secondary" onClick={() => setShowFilters(v => !v)}>
           {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
         </button>
         {showFilters && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <select value={filters.risk} onChange={(e) => setFilters(f => ({ ...f, risk: e.target.value }))}>
-              <option value="">Riesgo (todos)</option>
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-            </select>
-            <input type="number" min="0" step="0.1" placeholder="Tasa mÃ­nima %" value={filters.minRate} onChange={(e) => setFilters(f => ({ ...f, minRate: e.target.value }))} />
-            <select value={filters.maxMonths} onChange={(e) => setFilters(f => ({ ...f, maxMonths: e.target.value }))}>
-              <option value="">Plazo mÃ¡ximo</option>
-              <option value="12">12</option>
-              <option value="18">18</option>
-              <option value="24">24</option>
-            </select>
-            <input type="number" min="0" step="100" placeholder="Monto mÃ­nimo" value={filters.minAmount} onChange={(e) => setFilters(f => ({ ...f, minAmount: e.target.value }))} />
+          <div className="filters-group">
+            <span className="filters-label">Rendimiento mínimo:</span>
+            {[10,12,15].map((r) => (
+              <button
+                key={r}
+                className={['chip', String(filters.minRate)===String(r) ? 'chip--active' : ''].filter(Boolean).join(' ')}
+                onClick={() => setFilters(f => ({ ...f, minRate: String(r) }))}
+              >{r}%</button>
+            ))}
+            <span className="filters-label" style={{ marginLeft: '0.75rem' }}>Plazo máximo:</span>
+            {[12,18,24].map((m) => (
+              <button
+                key={m}
+                className={['chip', String(filters.maxMonths)===String(m) ? 'chip--active' : ''].filter(Boolean).join(' ')}
+                onClick={() => setFilters(f => ({ ...f, maxMonths: String(m) }))}
+              >{m}m</button>
+            ))}
             <button className="btn btn--primary" onClick={applyFilters}>Aplicar</button>
             <button className="btn" onClick={resetFilters}>Limpiar</button>
           </div>
         )}
       </div>
+      {showFilters && (
+        <>
+          <p style={{ fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem 0' }}>
+            Cómo elegir: Conservador ˜10%, Balanceado ˜12%, Dinámico ˜15% anual.
+          </p>
+          {filters.minRate && (
+            <p style={{ fontSize: '0.9rem', color: '#555', marginTop: 0 }}>
+              Selección actual: {filters.minRate === '10' ? 'Conservador (~10%)' : filters.minRate === '12' ? 'Balanceado (~12%)' : filters.minRate === '15' ? 'Dinámico (~15%)' : `${filters.minRate}%`}.
+            </p>
+          )}
+        </>
+      )}
       {opportunities.length === 0 ? (
         <div>
           <p>
