@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ï»¿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
@@ -14,7 +14,7 @@ const OpportunityCard = ({ opp }) => {
   const riskLabel = ({
     A: 'Conservador (A)',
     B: 'Balanceado (B)',
-    C: 'Dinámico (C)'
+    C: 'DinÃ¡mico (C)'
   }[opp.perfil_riesgo]) || `Riesgo ${opp.perfil_riesgo}`;
 
   const handleViewDetails = () => {
@@ -41,7 +41,7 @@ const OpportunityCard = ({ opp }) => {
           </div>
         </div>
         <div className="returns-breakdown">
-          <span>Comisión de servicio: {comisionServicio}%</span>
+          <span>ComisiÃ³n de servicio: {comisionServicio}%</span>
           <br />
           <span>Tu rendimiento neto estimado: <strong>{rendimientoNeto.toFixed(2)}%</strong></span>
         </div>
@@ -79,7 +79,7 @@ const Opportunities = () => {
 
       if (error) {
         console.error('Error fetching opportunities:', error);
-        setError('Error al cargar las oportunidades de inversión.');
+        setError('Error al cargar las oportunidades de inversiÃ³n.');
       } else {
         setOpportunities(data || []);
       }
@@ -148,14 +148,14 @@ const Opportunities = () => {
         { label: 'Inicio', to: '/investor-dashboard' },
         { label: 'Oportunidades' },
       ]} />
-      <h2>Oportunidades de Inversión</h2>
+      <h2>Oportunidades de InversiÃ³n</h2>
       <div className="filters-bar">
         <button className="btn btn--secondary" onClick={() => setShowFilters(v => !v)}>
           {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
         </button>
         {showFilters && (
           <div className="filters-group">
-            <span className="filters-label">Rendimiento mínimo:</span>
+            <span className="filters-label">Rendimiento mÃ­nimo:</span>
             {[10,12,15].map((r) => (
               <button
                 key={r}
@@ -163,7 +163,7 @@ const Opportunities = () => {
                 onClick={() => setFilters(f => ({ ...f, minRate: String(r) }))}
               >{r}%</button>
             ))}
-            <span className="filters-label" style={{ marginLeft: '0.75rem' }}>Plazo máximo:</span>
+            <span className="filters-label" style={{ marginLeft: '0.75rem' }}>Plazo mÃ¡ximo:</span>
             {[12,18,24].map((m) => (
               <button
                 key={m}
@@ -179,11 +179,11 @@ const Opportunities = () => {
       {showFilters && (
         <>
           <p style={{ fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem 0' }}>
-            Cómo elegir: Conservador ˜10%, Balanceado ˜12%, Dinámico ˜15% anual.
+            CÃ³mo elegir: Conservador Ëœ10%, Balanceado Ëœ12%, DinÃ¡mico Ëœ15% anual.
           </p>
           {filters.minRate && (
             <p style={{ fontSize: '0.9rem', color: '#555', marginTop: 0 }}>
-              Selección actual: {filters.minRate === '10' ? 'Conservador (~10%)' : filters.minRate === '12' ? 'Balanceado (~12%)' : filters.minRate === '15' ? 'Dinámico (~15%)' : `${filters.minRate}%`}.
+              SelecciÃ³n actual: {filters.minRate === '10' ? 'Conservador (~10%)' : filters.minRate === '12' ? 'Balanceado (~12%)' : filters.minRate === '15' ? 'DinÃ¡mico (~15%)' : `${filters.minRate}%`}.
             </p>
           )}
         </>
