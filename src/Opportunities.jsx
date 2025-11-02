@@ -105,9 +105,8 @@ const Opportunities = () => {
       if (filters.risk) query = query.eq('perfil_riesgo', filters.risk);
       if (filters.minRate) query = query.gte('tasa_rendimiento_inversionista', Number(filters.minRate));
       if (filters.maxMonths) query = query.lte('plazo_meses', Number(filters.maxMonths));
-      if (filters.minAmount) query = query.gte('monto', Number(filters.minAmount));
-
-      query = query.order('created_at', { ascending: false });
+      
+      query = query.order('tasa_rendimiento_inversionista', { ascending: false });
       const { data, error } = await query;
       if (error) throw error;
       setOpportunities(data || []);

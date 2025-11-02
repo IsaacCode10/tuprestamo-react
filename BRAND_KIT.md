@@ -1,4 +1,4 @@
-﻿### **Brand Kit Esencial para Tu PrÃ©stamo (para Canva)**
+﻿### **Brand Kit Esencial para Tu Prestamo (para Canva)**
 
 Este documento es la gui­a de nuestra marca, asegurando coherencia y profesionalismo en todos los materiales de marketing y en la propia plataforma.
 
@@ -7,26 +7,26 @@ Este documento es la gui­a de nuestra marca, asegurando coherencia y profesiona
 *   **Logo Principal de Tu PrÃ©stamo:**
     *   **Archivos a Subir a Canva:**
         *   `Logo-Tu-Prestamo.png` (ubicado en la carpeta `/public`).
-    *   **RecomendaciÃ³n Clave:** Utiliza siempre la versiÃ³n **PNG con fondo transparente**. Esto es fundamental para poder colocar el logo sobre cualquier color o imagen de fondo sin un recuadro blanco.
+    *   **Recomendacion Clave:** Utiliza siempre la version **PNG con fondo transparente**. Esto es fundamental para poder colocar el logo sobre cualquier color o imagen de fondo sin un recuadro blanco.
     *   **Usos:** Debe usarse en todo material de marca, perfiles de redes sociales, cabeceras de documentos y en la plataforma.
     *   **Prohibiciones:**
         *   No estirar, aplastar ni distorsionar las proporciones.
         *   No cambiar los colores del logo.
-        *   No aÃ±adir sombras, brillos u otros efectos.
+        *   No añadir sombras, brillos u otros efectos.
         *   No colocarlo sobre un fondo que dificulte su lectura.
 
 #### **II. Paleta de Colores de Marca**
 
-Estos son los cÃ³digos exactos de nuestros colores. Debes configurarlos en tu "Kit de Marca" en Canva para tenerlos siempre a mano.
+Estos son los codigos exactos de nuestros colores. Debes configurarlos en tu "Kit de Marca" en Canva para tenerlos siempre a mano.
 
 *   **Colores Primarios (La Base de la Marca):**
     *   **Azul Corporativo:** Es nuestro color principal. Transmite confianza, profesionalismo y estabilidad.
         *   **HEX: `#00445A`**
-    *   **Turquesa Acento:** Aporta un toque moderno, tecnolÃ³gico y fresco. Ideal para botones, Ã­conos y llamados a la acciÃ³n.
+    *   **Turquesa Acento:** Aporta un toque moderno, tecnologico y fresco. Ideal para botones, i­conos y llamados a la accion.
         *   **HEX: `#26C2B2`**
 
 *   **Colores Secundarios (Destaque y Fondos):**
-    *   **Naranja Destaque:** Para elementos que necesitan captar la atenciÃ³n de forma inmediata, como ofertas especiales o alertas. Usar con moderaciÃ³n.
+    *   **Naranja Destaque:** Para elementos que necesitan captar la atencion de forma inmediata, como ofertas especiales o alertas. Usar con moderacion.
         *   **HEX: `#FFA800`**
     *   **Azul Oscuro (Fondo):** Perfecto para secciones con fondo oscuro que necesiten contraste.
         *   **HEX: `#002F3A`**
@@ -35,13 +35,13 @@ Estos son los cÃ³digos exactos de nuestros colores. Debes configurarlos en tu 
     *   **Gris Claro (Fondo Alternativo):** Para fondos sutiles y separar secciones sin usar blanco puro.
         *   **HEX: `#F8F8F8`**
 
-#### **III. TipografÃ­as de Marca**
+#### **III. Tipografias de Marca**
 
-Usar siempre las mismas fuentes es clave para que nuestra comunicaciÃ³n sea consistente y fÃ¡cil de leer. Ambas son gratuitas y estÃ¡n disponibles en Google Fonts y Canva.
+Usar siempre las mismas fuentes es clave para que nuestra comunicación sea consistente y facil de leer. Ambas son gratuitas y estan disponibles en Google Fonts y Canva.
 
 *   **Tipografi­a Principal (TÃ­tulos y Encabezados):**
     *   **Nombre de la Fuente:** **Montserrat**
-    *   **Uso:** TÃ­tulos principales, cifras importantes, y cualquier texto que necesite impacto visual.
+    *   **Uso:** Ti­tulos principales, cifras importantes, y cualquier texto que necesite impacto visual.
     *   **Pesos (Weights) a Utilizar:** `Bold (700)` para tÃ­tulos principales, `SemiBold (600)` para subtÃ­tulos.
 
 *   **TipografÃ­a Secundaria (Texto de Cuerpo):**
