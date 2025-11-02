@@ -364,6 +364,7 @@ const Header = () => {
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/oportunidades'); }}>Oportunidades</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/mis-inversiones'); }}>Mis inversiones</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/retiro'); }}>Retiros</button>
+                    <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/calculadora-inversionista'); }}>Calculadora de ganancias</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/verificar-cuenta'); }}>Verificar cuenta ({statusLabel})</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
                     <div className="mobile-menu-sep" />

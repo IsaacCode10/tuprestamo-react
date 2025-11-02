@@ -5,16 +5,14 @@ import { trackEvent } from '@/analytics.js';
 import './Opportunities.css';
 import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
-// --- Componente de Tarjeta de Oportunidad Individual ---
 const OpportunityCard = ({ opp }) => {
   const rendimientoBruto = opp.tasa_rendimiento_inversionista;
   const comisionServicio = opp.comision_servicio_inversionista_porcentaje;
-  const navigate = useNavigate(); // ADDED THIS LINE
-  // NEW v3.0 CALCULATION: Net Rate ≈ (Gross Rate * 0.99) - 1%
-  const rendimientoNeto = (rendimientoBruto * (1 - (comisionServicio / 100))) - comisionServicio;
+  const navigate = useNavigate();
+  const rendimientoNeto = (rendimientoBruto * (1 - (comisionServicio / 100)));
 
-  const handleViewDetails = () => { // ADDED THIS FUNCTION
-    navigate(`/oportunidades/${opp.id}`); // Navigate to a detail page
+  const handleViewDetails = () => {
+    navigate(`/oportunidades/${opp.id}`);
   };
 
   return (
@@ -39,7 +37,7 @@ const OpportunityCard = ({ opp }) => {
           </div>
         </div>
         <div className="returns-breakdown">
-          <span>Comisión de servicio: {comisionServicio}%</span>
+          <span>Comision de servicio: {comisionServicio}%</span>
           <br />
           <span>Tu rendimiento neto estimado: <strong>{rendimientoNeto.toFixed(2)}%</strong></span>
         </div>
@@ -51,24 +49,22 @@ const OpportunityCard = ({ opp }) => {
   );
 };
 
-// --- Componente Principal de la Página de Oportunidades ---
 const Opportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Analítica centralizada via trackEvent
+  const navigate = useNavigate();
 
   useEffect(() => {
-    trackEvent('Viewed Marketplace'); // Capturamos el evento
+    trackEvent('Viewed Marketplace');
 
     const fetchOpportunities = async () => {
       setLoading(true);
       setError(null);
-      // Seleccionamos todos los campos que necesitamos del nuevo modelo de negocio
       const { data, error } = await supabase
         .from('oportunidades')
         .select(`
-          id, monto, plazo_meses, perfil_riesgo, 
+          id, monto, plazo_meses, perfil_riesgo,
           tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje
         `)
         .eq('estado', 'disponible')
@@ -76,15 +72,15 @@ const Opportunities = () => {
 
       if (error) {
         console.error('Error fetching opportunities:', error);
-        setError('Error al cargar las oportunidades de inversión.');
+        setError('Error al cargar las oportunidades de inversion.');
       } else {
-        setOpportunities(data);
+        setOpportunities(data || []);
       }
       setLoading(false);
     };
 
     fetchOpportunities();
-  }, );
+  }, []);
 
   if (loading) {
     return <p>Cargando oportunidades...</p>;
@@ -100,9 +96,14 @@ const Opportunities = () => {
         { label: 'Inicio', to: '/investor-dashboard' },
         { label: 'Oportunidades' },
       ]} />
-      <h2>Oportunidades de Inversión</h2>
+      <h2>Oportunidades de Inversion</h2>
       {opportunities.length === 0 ? (
-        <p>No hay oportunidades de inversión disponibles en este momento. ¡Vuelve pronto!</p>
+        <div>
+          <p>
+            EN ESTE MOMENTO NO TENEMOS OPORTUNIDADES. TE ENVIAREMOS UNA ALERTA CUANDO TENGAMOS UNA OPORTUNIDAD.
+          </p>
+          <button className="btn" onClick={() => navigate('/investor-dashboard')}>Volver al Panel</button>
+        </div>
       ) : (
         <div className="opportunities-grid">
           {opportunities.map((opp) => (
@@ -115,5 +116,3 @@ const Opportunities = () => {
 };
 
 export default Opportunities;
-
-

@@ -169,7 +169,8 @@ function App() {
     '/mis-inversiones',
     '/retiro',
     '/oportunidades',
-    '/verificar-cuenta'
+    '/verificar-cuenta',
+    '/calculadora-inversionista'
   ];
   const isInvestorArea = investorAreaPaths.some(path => location.pathname.startsWith(path));
   const isDashboardFooterMinimal = isDashboardPage && !isInvestorArea;

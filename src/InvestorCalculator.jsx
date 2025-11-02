@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useProfile } from '@/hooks/useProfile.js'
 import { supabase } from './supabaseClient'
 import { trackEvent } from '@/analytics.js'
 import './InvestorCalculator.css'
@@ -14,6 +15,8 @@ function calculateReturns(amount, years, rate) {
 
 export default function InvestorCalculator() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { profile } = useProfile()
   const [amount, setAmount] = useState(700)
   const [months, setMonths] = useState(12) // 12, 18, 24 meses
   const years = useMemo(() => months / 12, [months])
@@ -86,6 +89,11 @@ export default function InvestorCalculator() {
     <div className="calculator-page-container" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px' }}>
       <h1 style={{ marginBottom: 8, textAlign: 'center' }}>Calculadora de Ganancias</h1>
       <p style={{ marginTop: 0, color: '#444', textAlign: 'center' }}>Compara un Dep&oacute;sito a Plazo Fijo (DPF) vs invertir con Tu Pr&eacute;stamo.</p>
+      {profile?.role === 'inversionista' && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8, marginBottom: 16 }}>
+          <button className="btn" onClick={() => navigate('/investor-dashboard')}>Volver al Panel</button>
+        </div>
+      )}
 
       <div className="calculator-layout">
         {/* Columna izquierda: Inputs */}
@@ -232,6 +240,7 @@ function RateVersusComparison({ amount, years, dpfRate, tpRates }) {
 function Scenarios({ amount, years, dpfRate, rates }) {
   const dpfEnd = calculateReturns(amount, years, dpfRate)
   const labels = ['Conservador (A)', 'Balanceado (B)', 'Dinamico (C)']
+  const ratePercents = rates.map(r => `${(r * 100).toFixed(0)}%`)
   return (
     <div>
       <h3 style={{ textAlign: 'center' }}>Escenarios de retorno</h3>
@@ -240,7 +249,7 @@ function Scenarios({ amount, years, dpfRate, rates }) {
           <tr>
             <th style={{ textAlign: 'center', padding: 8 }}>Escenario</th>
             <th style={{ textAlign: 'center', padding: 8 }}>Tu Pr&eacute;stamo (final)</th>
-            <th style={{ textAlign: 'center', padding: 8 }}>DPF (final)</th>
+            <th style={{ textAlign: 'center', padding: 8 }}>DPF (final, {(dpfRate*100).toFixed(1)}%)</th>
             <th style={{ textAlign: 'center', padding: 8 }}>Ganancia adicional</th>
           </tr>
         </thead>
@@ -250,7 +259,7 @@ function Scenarios({ amount, years, dpfRate, rates }) {
             const extra = Math.max(0, tpEnd - dpfEnd)
             return (
               <tr key={r} style={{ borderTop: '1px solid #f0f0f0' }}>
-                <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]}</td>
+                <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]} ({ratePercents[i]})</td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
                   <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(tpEnd).toLocaleString('es-BO')}</span>
                 </td>
