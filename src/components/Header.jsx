@@ -49,6 +49,7 @@ const Header = () => {
   const [notifications, setNotifications] = useState([]);
   const unreadCount = notifications.filter(n => !n.read).length;
   const centerNavRef = useRef(null);
+  const userMenuRef = useRef(null);
   // Cargar notificaciones al abrir el menÃº de usuario
   useEffect(() => {
     const load = async () => {
@@ -163,6 +164,18 @@ const Header = () => {
     document.addEventListener('click', handleDocClick);
     return () => document.removeEventListener('click', handleDocClick);
   }, [openCenterMenu]);
+
+  // Cerrar menú de usuario al hacer click fuera
+  useEffect(() => {
+    const onDocClick = (e) => {
+      try {
+        if (userMenuRef.current && userMenuRef.current.contains(e.target)) return;
+      } catch (_) {}
+      if (isMenuOpen) setIsMenuOpen(false);
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, [isMenuOpen]);
 
   // Al cambiar de ruta, cerrar menÃƒÂºs abiertos (user y central)
   useEffect(() => {
@@ -296,7 +309,7 @@ const Header = () => {
 
           <div className="header__actions">
             {profile ? (
-              <div className="header__user-menu">
+              <div className="header__user-menu" ref={userMenuRef}>
                 <button onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(!isMenuOpen); }} className="header__user-button">
                   {displayName}
                   {unreadCount > 0 && (
