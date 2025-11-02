@@ -1,6 +1,6 @@
 ﻿### **Brand Kit Esencial para Tu PrÃ©stamo (para Canva)**
 
-Este documento es la guÃ­a de nuestra marca, asegurando coherencia y profesionalismo en todos los materiales de marketing y en la propia plataforma.
+Este documento es la gui­a de nuestra marca, asegurando coherencia y profesionalismo en todos los materiales de marketing y en la propia plataforma.
 
 #### **I. Logo y Usos**
 
@@ -39,7 +39,7 @@ Estos son los cÃ³digos exactos de nuestros colores. Debes configurarlos en tu 
 
 Usar siempre las mismas fuentes es clave para que nuestra comunicaciÃ³n sea consistente y fÃ¡cil de leer. Ambas son gratuitas y estÃ¡n disponibles en Google Fonts y Canva.
 
-*   **TipografÃ­a Principal (TÃ­tulos y Encabezados):**
+*   **Tipografi­a Principal (TÃ­tulos y Encabezados):**
     *   **Nombre de la Fuente:** **Montserrat**
     *   **Uso:** TÃ­tulos principales, cifras importantes, y cualquier texto que necesite impacto visual.
     *   **Pesos (Weights) a Utilizar:** `Bold (700)` para tÃ­tulos principales, `SemiBold (600)` para subtÃ­tulos.

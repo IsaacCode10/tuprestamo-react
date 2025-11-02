@@ -4,14 +4,49 @@
   max-width: 1200px;
   margin: 2rem auto;
   padding: 0 1rem;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: var(--font-family);
 }
 
 .opportunities-container h2 {
+  font-family: var(--font-head);
   font-size: 2rem;
   text-align: center;
-  margin-bottom: 2rem;
-  color: #333;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+/* Filters */
+.filters-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem 0;
+}
+.filters-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.filters-label {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+.chip {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--primary-color);
+  background: #fff;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.chip--active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
 }
 
 .opportunities-grid {
@@ -46,7 +81,7 @@
 .card-header h3 {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--header-primary-color, #00445A);
+  color: var(--primary-color);
 }
 
 .risk-badge {
@@ -113,7 +148,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
-  background-color: var(--header-accent-color, #26C2B2);
+  background-color: var(--accent-color);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -121,5 +156,5 @@
 }
 
 .invest-button:hover {
-  background-color: var(--header-primary-color, #00445A);
+  background-color: var(--primary-color);
 }
