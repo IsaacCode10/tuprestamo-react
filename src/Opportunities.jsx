@@ -156,22 +156,37 @@ const Opportunities = () => {
         {showFilters && (
           <div className="filters-group">
             <span className="filters-label">Rendimiento mínimo:</span>
-            {[10,12,15].map((r) => (
-              <button
-                key={r}
-                className={['chip', String(filters.minRate)===String(r) ? 'chip--active' : ''].filter(Boolean).join(' ')}
-                onClick={() => setFilters(f => ({ ...f, minRate: String(r) }))}
-              >{r}%</button>
-            ))}
+            <div className="segmented" role="tablist" aria-label="Rendimiento mínimo">
+              {[10,12,15].map((r) => {
+                const active = String(filters.minRate)===String(r);
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    role="tab"
+                    aria-pressed={active}
+                    className={['segmented__item', active ? 'is-active' : ''].filter(Boolean).join(' ')}
+                    onClick={() => { setFilters(f => ({ ...f, minRate: String(r) })); applyFilters(); }}
+                  >{r}%</button>
+                );
+              })}
+            </div>
             <span className="filters-label" style={{ marginLeft: '0.75rem' }}>Plazo máximo:</span>
-            {[12,18,24].map((m) => (
-              <button
-                key={m}
-                className={['chip', String(filters.maxMonths)===String(m) ? 'chip--active' : ''].filter(Boolean).join(' ')}
-                onClick={() => setFilters(f => ({ ...f, maxMonths: String(m) }))}
-              >{m}m</button>
-            ))}
-            <button className="btn btn--primary" onClick={applyFilters}>Aplicar</button>
+            <div className="segmented" role="tablist" aria-label="Plazo máximo">
+              {[12,18,24].map((m) => {
+                const active = String(filters.maxMonths)===String(m);
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    role="tab"
+                    aria-pressed={active}
+                    className={['segmented__item', active ? 'is-active' : ''].filter(Boolean).join(' ')}
+                    onClick={() => { setFilters(f => ({ ...f, maxMonths: String(m) })); applyFilters(); }}
+                  >{m}m</button>
+                );
+              })}
+            </div>
             <button className="btn" onClick={resetFilters}>Limpiar</button>
           </div>
         )}
@@ -179,7 +194,7 @@ const Opportunities = () => {
       {showFilters && (
         <>
           <p style={{ fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem 0' }}>
-            Cómo elegir: Conservador ˜10%, Balanceado ˜12%, Dinámico ˜15% anual.
+            Cómo elegir: Conservador ≈10%, Balanceado ≈12%, Dinámico ≈15% anual.
           </p>
           {filters.minRate && (
             <p style={{ fontSize: '0.9rem', color: '#555', marginTop: 0 }}>

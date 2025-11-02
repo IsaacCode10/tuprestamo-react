@@ -1,1 +1,31 @@
 ﻿.risk-badge {  font-size: 1rem;  font-weight: 700;  padding: 0.35rem 0.75rem;  border-radius: 999px;  line-height: 1;  color: #fff;}/* Alineado al Brand Kit: A=accent, B=primary, C=accent-2 */.risk-A {  background-color: var(--accent-color); /* #26C2B2 */  color: #fff;}.risk-B {  background-color: var(--primary-color); /* #00445A */  color: #fff;}.risk-C {  background-color: var(--accent-color-2); /* #FFA800 */  color: var(--dark-bg); /* texto oscuro para mejor contraste */}
+/* Segmented control (moderno, sin gris plano) */
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  background: var(--light-alt-bg);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+}
+.segmented__item {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.segmented__item:hover { color: var(--accent-color); }
+.segmented__item:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(38,194,178,.25); }
+.segmented__item.is-active {
+  background: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
