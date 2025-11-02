@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
 import './Opportunities.css';
@@ -53,7 +53,10 @@ const Opportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ risk: '', minRate: '', maxMonths: '', minAmount: '' });
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     trackEvent('Viewed Marketplace');
@@ -82,6 +85,56 @@ const Opportunities = () => {
     fetchOpportunities();
   }, []);
 
+  // Abrir filtros si viene ?filters=1
+  useEffect(() => {
+    const qs = new URLSearchParams(location.search);
+    if (qs.get('filters') === '1') {
+      setShowFilters(true);
+    }
+  }, [location.search]);
+
+  const applyFilters = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let query = supabase
+        .from('oportunidades')
+        .select(`id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje`)
+        .eq('estado', 'disponible');
+
+      if (filters.risk) query = query.eq('perfil_riesgo', filters.risk);
+      if (filters.minRate) query = query.gte('tasa_rendimiento_inversionista', Number(filters.minRate));
+      if (filters.maxMonths) query = query.lte('plazo_meses', Number(filters.maxMonths));
+      if (filters.minAmount) query = query.gte('monto', Number(filters.minAmount));
+
+      query = query.order('created_at', { ascending: false });
+      const { data, error } = await query;
+      if (error) throw error;
+      setOpportunities(data || []);
+      trackEvent('Marketplace_Filter_Applied', { ...filters });
+    } catch (e) {
+      console.error('Filter fetch error:', e);
+      setError('No se pudieron aplicar los filtros.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetFilters = async () => {
+    setFilters({ risk: '', minRate: '', maxMonths: '', minAmount: '' });
+    navigate('/oportunidades', { replace: true });
+    // Reusar carga inicial sin filtros
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('oportunidades')
+      .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje')
+      .eq('estado', 'disponible')
+      .order('created_at', { ascending: false });
+    if (!error) setOpportunities(data || []);
+    setLoading(false);
+  };
+
   if (loading) {
     return <p>Cargando oportunidades...</p>;
   }
@@ -97,6 +150,31 @@ const Opportunities = () => {
         { label: 'Oportunidades' },
       ]} />
       <h2>Oportunidades de Inversion</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 16px 0' }}>
+        <button className="btn" onClick={() => setShowFilters(v => !v)}>
+          {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
+        </button>
+        {showFilters && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select value={filters.risk} onChange={(e) => setFilters(f => ({ ...f, risk: e.target.value }))}>
+              <option value="">Riesgo (todos)</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
+            <input type="number" min="0" step="0.1" placeholder="Tasa mínima %" value={filters.minRate} onChange={(e) => setFilters(f => ({ ...f, minRate: e.target.value }))} />
+            <select value={filters.maxMonths} onChange={(e) => setFilters(f => ({ ...f, maxMonths: e.target.value }))}>
+              <option value="">Plazo máximo</option>
+              <option value="12">12</option>
+              <option value="18">18</option>
+              <option value="24">24</option>
+            </select>
+            <input type="number" min="0" step="100" placeholder="Monto mínimo" value={filters.minAmount} onChange={(e) => setFilters(f => ({ ...f, minAmount: e.target.value }))} />
+            <button className="btn btn--primary" onClick={applyFilters}>Aplicar</button>
+            <button className="btn" onClick={resetFilters}>Limpiar</button>
+          </div>
+        )}
+      </div>
       {opportunities.length === 0 ? (
         <div>
           <p>
