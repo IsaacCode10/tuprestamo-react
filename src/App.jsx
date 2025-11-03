@@ -49,7 +49,7 @@ const AdminRoute = ({ profile, loading, children }) => {
 };
 
 // Componente "Guardia" especÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­fico para rutas de Inversionista
-const InvestorRoute = ({ profile, loading, children }) => {
+const InvestorRoute = ({ profile, loading, children, refetchProfile }) => {
   const allowedRoles = ['inversionista', 'admin'];
 
   if (loading) {
@@ -64,7 +64,7 @@ const InvestorRoute = ({ profile, loading, children }) => {
     return <Navigate to="/" replace />;
   }
   
-  return React.cloneElement(children, { profile });
+  return React.cloneElement(children, { profile, refetchProfile });
 };
 
 // Componente "Guardia" especÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­fico para rutas de Prestatario
@@ -112,7 +112,7 @@ const RedirectIfAuth = ({ profile, loading, children }) => {
 
 
 function App() {
-  const { profile, loading, authEvent } = useProfile();
+  const { profile, loading, authEvent, refetchProfile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
   // analytics wrapper via trackEvent
@@ -208,7 +208,7 @@ function App() {
           <Route 
             path="/investor-dashboard" 
             element={
-              <InvestorRoute profile={profile} loading={loading}>
+              <InvestorRoute profile={profile} loading={loading} refetchProfile={refetchProfile}>
                 <InvestorDashboard />
               </InvestorRoute>
             }

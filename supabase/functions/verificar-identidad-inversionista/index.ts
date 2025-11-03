@@ -156,25 +156,57 @@ Si la imagen no es vÃ¡lida, devuelve {"error":"Imagen ilegible o documento no 
 
     console.log(`OCR compare: ciOK=${ciOK} nameOK=${nameOK} nameSimilar=${nameSimilar} overlap=${overlap}/${minSize}`)
 
-    // 6) Actualizar perfil
-    const { error: updErr } = await supabaseAdmin
+    // 6) Actualizar perfil y obtener el registro modificado para idempotencia
+    const { data: updatedProfiles, error: updErr } = await supabaseAdmin
       .from('profiles')
       .update({ estado_verificacion: finalStatus })
       .eq('id', user_id)
+      .select('id, estado_verificacion')
+
     if (updErr) throw new Error(`Error al actualizar perfil: ${updErr.message}`)
 
-    // 7) NotificaciÃ³n al usuario (solo si cambiÃ³ el estado; no bloquear en caso de error)
+    // 7) Notificación al usuario (solo si el estado cambió; no bloquear en caso de error)
     try {
-      const changed = Array.isArray(updated) && updated.length > 0\n      if (changed) { -notification`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-          },
-          body: JSON.stringify({ user_id, type: 'kyc_status', title: notifyTitle, body: notifyBody, email: true, link_url: ${Deno.env.get('APP_BASE_URL') || 'https://tuprestamobo.com'}/oportunidades, cta_label: 'Ver Oportunidades' })
-        })
+      const profileJustChanged = updatedProfiles && updatedProfiles.length > 0
+      
+      if (profileJustChanged) {
+        console.log(`Estado de perfil cambiado a '${finalStatus}'. Enviando notificación...`)
+        
+        let notifyTitle = ''
+        let notifyBody = ''
+        let link_url = `${Deno.env.get('APP_BASE_URL') || 'https://tuprestamobo.com'}/investor-dashboard`
+        let cta_label = 'Ir a mi Panel'
+
+        if (finalStatus === 'verificado') {
+          notifyTitle = '¡Tu verificación fue aprobada!'
+          notifyBody = 'Felicidades, tu cuenta de inversionista ha sido verificada. Ya puedes explorar y participar en las oportunidades de inversión.'
+          link_url = `${Deno.env.get('APP_BASE_URL') || 'https://tuprestamobo.com'}/oportunidades`
+          cta_label = 'Ver Oportunidades'
+        } else if (finalStatus === 'requiere_revision_manual') {
+          notifyTitle = 'Tu verificación está en proceso'
+          notifyBody = 'Hemos recibido tus documentos. Nuestro equipo los revisará en las próximas 24 horas hábiles y te notificaremos el resultado.'
+        }
+
+        if (notifyTitle) {
+          const { error: notificationError } = await supabaseAdmin.functions.invoke('create-notification', {
+            body: { 
+              user_id, 
+              type: 'kyc_status', 
+              title: notifyTitle, 
+              body: notifyBody, 
+              email: true, 
+              link_url, 
+              cta_label 
+            }
+          })
+          if (notificationError) {
+            console.error('Error al invocar create-notification:', notificationError)
+          }
+        }
       }
-    } catch (_) { /* noop */ }
+    } catch (e) { 
+      console.error('Fallo el bloque de notificación:', e)
+    }
 
     return new Response(JSON.stringify({ message: 'ok', status: finalStatus }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

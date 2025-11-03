@@ -2,38 +2,45 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 
-const InvestorDashboard = ({ profile }) => {
+const InvestorDashboard = ({ profile, refetchProfile }) => {
   const navigate = useNavigate();
   const [toast, setToast] = useState(null);
 
-  const verification = profile?.estado_verificacion || 'no_iniciado';
+  // Usamos un estado local para el perfil para poder actualizarlo
+  const [localProfile, setLocalProfile] = useState(profile);
+
+  useEffect(() => {
+    setLocalProfile(profile); // Sincronizar con el perfil global si cambia
+  }, [profile]);
+
+  const verification = localProfile?.estado_verificacion || 'no_iniciado';
 
   const Banner = () => {
     if (verification === 'verificado') return null;
     if (verification === 'pendiente_revision') {
       return (
         <div style={{ background: '#fff9e6', border: '1px solid #ffe08a', color: '#8a6d3b', padding: 12, borderRadius: 8 }}>
-          Tu verificación de identidad está en revisión. Puedes navegar y conocer oportunidades; te avisaremos cuando finalice.
+          Tu verificaciÃ³n de identidad estÃ¡ en revisiÃ³n. Puedes navegar y conocer oportunidades; te avisaremos cuando finalice.
         </div>
       );
     }
     if (verification === 'requiere_revision_manual') {
       return (
         <div style={{ background: '#ffe6e6', border: '1px solid #ffb3b3', color: '#8b0000', padding: 12, borderRadius: 8 }}>
-          No pudimos confirmar tu verificación. Revisa tu información y vuelve a intentarlo.
+          No pudimos confirmar tu verificaciÃ³n. Revisa tu informaciÃ³n y vuelve a intentarlo.
         </div>
       );
     }
     return (
       <div style={{ background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b', padding: 12, borderRadius: 8 }}>
-        Verifica tu cuenta antes de invertir. Podrás explorar oportunidades de inmediato y completar la verificación cuando estés listo.
+        Verifica tu cuenta antes de invertir. PodrÃ¡s explorar oportunidades de inmediato y completar la verificaciÃ³n cuando estÃ©s listo.
       </div>
     );
   };
 
   const renderContent = () => {
-    if (!profile) {
-      return <p>Cargando información de tu perfil…</p>;
+    if (!localProfile) {
+      return <p>Cargando informaciÃ³n de tu perfilâ€¦</p>;
     }
 
     return (
@@ -54,15 +61,15 @@ const InvestorDashboard = ({ profile }) => {
     if (verification === 'no_iniciado') return null; // No mostrar pill para el estado inicial
     const bg = verification === 'verificado' ? '#e6fffb' : verification === 'pendiente_revision' ? '#fff9e6' : '#ffe6e6';
     const fg = verification === 'verificado' ? '#006d75' : verification === 'pendiente_revision' ? '#8a6d3b' : '#8b0000';
-    const text = verification === 'verificado' ? 'Verificada' : verification === 'pendiente_revision' ? 'En revisión' : 'Requiere revisión';
+    const text = verification === 'verificado' ? 'Verificada' : verification === 'pendiente_revision' ? 'En revisiÃ³n' : 'Requiere revisiÃ³n';
     return (
       <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: bg, color: fg }}>
-        Verificación: {text}
+        VerificaciÃ³n: {text}
       </span>
     );
   };
 
-  // Mostrar automáticamente notificación KYC (sin abrir menú)
+  // Mostrar automÃ¡ticamente notificaciÃ³n KYC (sin abrir menÃº)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -93,6 +100,12 @@ const InvestorDashboard = ({ profile }) => {
     } catch (_) {}
     const link = toast?.link;
     setToast(null);
+    
+    // Refrescar el perfil para obtener el estado de verificaciÃ³n mÃ¡s reciente
+    if (refetchProfile) {
+      refetchProfile();
+    }
+
     if (openLink && link) {
       try {
         const url = new URL(link);

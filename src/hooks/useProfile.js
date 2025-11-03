@@ -13,39 +13,42 @@ export function useProfile() {
   const [loading, setLoading] = useState(true);
   const [authEvent, setAuthEvent] = useState(null); // Nuevo estado para el evento
 
-  useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+  const fetchSessionAndProfile = async () => {
+    setLoading(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
 
-      if (session?.user) {
-        const { data, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, role, nombre_completo, email, estado_verificacion')
-          .eq('id', session.user.id)
-          .single();
+    if (session?.user) {
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, nombre_completo, email, estado_verificacion')
+        .eq('id', session.user.id)
+        .single();
 
-        if (profileError) {
-          console.error("Error fetching user profile:", profileError);
-          setProfile(null);
-        } else {
-          setProfile(data);
-          // Identificar usuario en Mixpanel
-          if (data) {
-            identifyUser(data.id, {
-              $email: data.email,
-              name: data.nombre_completo,
-              role: data.role,
-            });
-          }
-        }
-      } else {
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
         setProfile(null);
+      } else {
+        setProfile(data);
+        if (data) {
+          identifyUser(data.id, {
+            $email: data.email,
+            name: data.nombre_completo,
+            role: data.role,
+          });
+        }
       }
-      setLoading(false);
-    };
+    } else {
+      setProfile(null);
+    }
+    setLoading(false);
+  };
 
+  const refetchProfile = () => {
+    fetchSessionAndProfile();
+  };
+
+  useEffect(() => {
     fetchSessionAndProfile();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -55,10 +58,8 @@ export function useProfile() {
       if (event === 'SIGNED_OUT') {
         setProfile(null);
         setLoading(false);
-        // Resetear identificaciÃ³n en Mixpanel al cerrar sesiÃ³n
         resetMixpanel();
       } else if (session?.user) {
-        // Para otros eventos como SIGNED_IN, volvemos a buscar el perfil
         fetchSessionAndProfile();
       }
     });
@@ -86,6 +87,6 @@ export function useProfile() {
     return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
-  return { session, profile, loading, authEvent };
+  return { session, profile, loading, authEvent, refetchProfile };
 }
 
