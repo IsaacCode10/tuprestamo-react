@@ -1,102 +1,87 @@
-﻿# Estado del Proyecto - 3 de Noviembre de 2025 (Día)
+# Estado del Proyecto - 3 de Noviembre de 2025 (Noche)
 
 Resumen rápido
 
-- Continuar fixes prioridad alta:
-  1) Email KYC duplicado + sin CTA (idempotencia en verificación + link_url/cta_label).
-  2) UI: panel muestra “En revisión” pese a aprobado (refetch perfil en dashboard/verification).
-  3) Notificaciones: mostrar Toast automático de KYC en dashboard (sin abrir menú) y marcar leída.
-- Backend KYC: completar prompt OCR (numero_ci + expiración con meses literales), bloquear si vencida, encolar en kyc_review_queue si falla.
-- Admin: listar kyc_review_queue pendientes con acciones aprobar/rechazar.
-# Estado del Proyecto - 1 de Noviembre de 2025 (Noche)
+- KYC inversionista estable: el estado se mantiene en “Verificada”, sin regresiones.
+- Notificaciones restauradas: Toast automático en dashboard y badge rojo en el header.
+- Cuenta bancaria: se promueve desde `verification_drafts` a `cuentas_bancarias_inversionistas` al quedar verificado.
+- Auditoría OCR: se registra en `analisis_documentos` (proveedor + datos extraídos) tras la verificación.
+- Despliegues: Supabase Functions y Vercel en producción actualizados.
+
+Siguiente E2E (mañana)
+
+- Repetir flujo completo: registro → verificación CI → correo con CTA → dashboard con Toast → verificación persiste → cuenta bancaria creada/actualizada → oportunidades visibles.
+- Validar en DB: `analisis_documentos` y `cuentas_bancarias_inversionistas` contienen filas para el usuario verificado.
+
+---
 
 Resumen de hoy (flujo INVERSIONISTA)
 
-- UI filtros Oportunidades: segmented control (Tasa 10/12/15 y Plazo 12/18/24) con aplicación instantánea; estilos alineados a Brand Kit.
-- Risk badges: colores de marca (A=accent, B=primary, C=accent-2); valor de rendimiento neto en color de acento.
-- Botones estandarizados (Brand Kit) en Mis Inversiones, Retiros y Verificación (input file con botón “Seleccionar archivo”, submit “Enviar Verificación”).
-- Notificación KYC por correo: create-notification ahora soporta cta_label + link_url para CTA en emails.
-- Edge Function verificar-identidad-inversionista: hotfix para aprobar por CI (sin nombre). Deploy realizado.
+- UI Oportunidades: filtros segmentados (Tasa 10/12/15, Plazo 12/18/24) con estilos Brand Kit.
+- Dashboard (src/InvestorDashboard.jsx):
+  - Corrige acentos y copy. Oculta la pill cuando estado = verificado.
+  - Muestra Toast de KYC automáticamente (sin abrir menú).
+  - Suscripciones Realtime para perfil (UPDATE) y notificaciones (INSERT).
+- Header (src/components/Header.jsx):
+  - Badge rojo de notificaciones restablecido.
+  - Ya no marca como leídas al abrir la campana; persisten hasta acción del usuario.
+- Verificación (supabase/functions/verificar-identidad-inversionista):
+  - Idempotencia de notificación (solo si cambió el estado via UPDATE…RETURNING).
+  - Inserta auditoría en `analisis_documentos` (proveedor + datos extraídos).
+  - Si estado = “verificado”: upsert de cuenta bancaria desde `verification_drafts` → `cuentas_bancarias_inversionistas` (por `user_id`).
+- Infra: redeploy de Functions (Supabase) y deploy de producción (Vercel).
+
+---
 
 Problemas abiertos (prioridad alta)
 
-1) Email KYC duplicado y sin CTA
-   - Síntoma: llega 2 veces “Tu verificación fue aprobada” y sin botón.
-   - Causa probable: send idempotency faltante (dos ejecuciones paralelas notifican) y falta de link_url/cta_label en el payload desde verificar-identidad-inversionista.
-   - Acciones: notificar sólo si UPDATE … RETURNING cambió estado (usar updated.length>0) y enviar link_url + cta_label coherente (aprobado → /oportunidades | Ver Oportunidades; revisión → /investor-dashboard | Ir a mi Panel).
+1) OCR KYC (mejora del prompt)
+   - Extraer: `numero_ci`, `expiracion` (con meses literales), `candidatos_numero_ci`, `ocr_confidence`.
+   - Normalizar fecha (p. ej., “12 de Abril de 2031” → YYYY-MM-DD) y bloquear si expiración vencida.
 
-2) Inconsistencia de estado en panel
-   - Síntoma: correo dice “aprobada” pero el panel muestra “Verificación: En revisión”.
-   - Causa probable: el frontend no refetchéa profiles.estado_verificacion tras el cambio (estado cacheado) o el hook de perfil no invalida al volver.
-   - Acciones: forzar refetch del perfil al entrar a /investor-dashboard y tras completar verificación; opcional: suscripción a cambios de perfil o polling leve.
+2) Revisión manual (cuando OCR falla)
+   - Encolar en `public.kyc_review_queue` (crear tabla) y agregar panel admin mínimo para aprobar/rechazar.
 
-3) Notificaciones in-app no visibles automáticamente
-   - Síntoma: la notificación aparece solo al abrir el menú (“Hola, Isaac”).
-   - Causa probable: el fetch de notificaciones está atado a abrir el menú; falta banner/Toast en el dashboard.
-   - Acciones: al entrar al dashboard, leer la última 
-otifications.type='kyc_status' no leída y mostrar Toast con CTA; marcar como leída al cerrar/abrir.
+3) Email deliverability (unificación remitente)
+   - Unificar remitente en funciones a `notificaciones@tuprestamobo.com` (Reply-To `contacto@tuprestamobo.com`).
+   - Revisar SPF/DKIM/DMARC y supresión en Resend.
 
-Nota para Gemini Code Assist: flujo backend KYC inversionista (actual y esperado)
+4) Auditoría OCR (enriquecimiento)
+   - Guardar también: `user_id`, `tipo_documento` y `url_archivo` en `analisis_documentos` para trazabilidad completa.
 
-- Upload: el inversionista sube CI anverso a bucket privado documentos-inversionistas (ruta guardada en erification_drafts durante KYC).
-- Trigger/Invoke: la app invoca Edge Function erificar-identidad-inversionista con { user_id, url_archivo, tipo_documento: 'ci_inversionista_anverso' }.
-- Function (actual):
-  - Genera URL firmada (prioriza documentos-inversionistas).
-  - Obtiene perfil (profiles.id = user_id).
-  - Llama a Gemini (OCR). Hotfix: aprueba con ciOK (solo CI), sin nombre.
-  - Actualiza profiles.estado_verificacion.
-  - Llama create-notification para insertar notificación + enviar correo (pendiente idempotencia + CTA consistente).
-- Function (esperado):
-  - Prompt OCR: extraer 
-umero_ci, expiracion, candidatos_numero_ci, ocr_confidence.
-  - Normalizar fecha “12 de Abril de 2031” → YYYY-MM-DD; aprobar por CI; bloquear si expiración vencida.
-  - Encolar revisión manual en public.kyc_review_queue cuando falle (ilegible, mismatch, vencida).
-  - Notificar una sola vez (idempotencia) y con CTA coherente.
-- Notificación in-app: public.notifications (RLS por usuario). Email vía Resend usando plantillas de supabase/functions/_shared/email.ts con CTA.
-- Front: el dashboard debe refetchéar perfil y mostrar Toast de KYC sin abrir menú.
+---
+
+Flujo KYC inversionista (actual)
+
+- Upload: CI a Storage/bucket `documentos-inversionistas`; ruta guardada en `verification_drafts`.
+- Invocación: Edge `verificar-identidad-inversionista` con `{ user_id, url_archivo, tipo_documento }`.
+- Función:
+  - URL firmada; OCR con Gemini; parseo robusto de JSON.
+  - Auditoría: inserta en `analisis_documentos` (proveedor + datos extraídos).
+  - Actualiza `profiles.estado_verificacion` (idempotente) y notifica (in‑app + email con CTA consistente).
+  - Si estado = “verificado”: upsert de cuenta bancaria en `cuentas_bancarias_inversionistas` desde `verification_drafts`.
+- Front:
+  - Dashboard: Toast automático; Realtime; pill oculta en “verificado”.
+  - Header: badge rojo visible al haber no leídas; no se auto‑marcan como leídas.
+
+---
 
 Siguiente (para mañana)
 
-- Implementar idempotencia + CTA en erificar-identidad-inversionista (UPDATE … RETURNING; link_url y cta_label).
-- Refactor de hook de perfil o refetch en dashboard tras KYC aprobado.
-- Toast automático en dashboard (última notificación KYC no leída con CTA y dismiss).
-- Completar prompt OCR con expiración + encolado kyc_review_queue (ya creada) y panel admin mínimo para revisión.
+- Completar prompt OCR (expiración/normalización/confidence) + bloqueo por vencimiento.
+- Diseñar y crear `kyc_review_queue` + vista admin mínima.
+- Unificar remitente emails y revisar entregabilidad en Resend.
+- Enriquecer `analisis_documentos` con `user_id`/`tipo_documento`/`url_archivo`.
 
----
-# Estado del Proyecto - 1 de Noviembre de 2025 (DÃ­a)
-
-Resumen ejecutivo (flujo inversionista estable; validaciÃ³n E2E en curso)
-
-- Seguimos validaciÃ³n E2E de KYC, email e infraestructura (Storage/Resend/RLS).
-
-Pendientes Activos
-
-1) Validar E2E KYC inversionista
-   - Subir CI a bucket `documentos-inversionistas`, 1 sola ejecuciÃ³n (idempotencia), revisar "OCR compare", notificaciÃ³n y email sin duplicados y con acentos correctos.
-2) Auto-invite con email existente
-   - Enviar solicitud con email ya registrado; confirmar correo "Ya tienes una cuenta." y `solicitudes.estado='contactado'`.
-3) UX Oportunidades (no verificado)
-   - NavegaciÃ³n libre post-login; gate solo al intentar invertir.
-4) Email de proyecciÃ³n (lead)
-   - Validar en Resend/Gmail: meses, % visibles, CTA centrado, ancho compacto.
-5) Analytics
-   - Enriquecer `Calculator_Lead_Submitted` con `{ amount, term_months, dpf_rate, projected_gain }`.
-6) RLS
-   - `inversiones` SELECT por `investor_id = auth.uid()`.
-   - `solicitudes` INSERT para inversionistas (con `user_id` si autenticado) y retiros.
-7) Roles/Perfiles
-   - Dejar de setear `role` desde cliente en `src/Auth.jsx`; mover asignaciÃ³n a function/trigger seguro postâ€‘signup.
-8) UI encoding residual
-   - Corregir acentos visibles en `src/InvestorDashboard.jsx`, `src/App.jsx`, `src/Auth.jsx`.
-
-Notas de ConfiguraciÃ³n
+Notas de Configuración
 
 - Storage: bucket privado `documentos-inversionistas` (RLS apropiadas).
 - Secrets Functions: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `APP_BASE_URL`, `GEMINI_API_KEY`/`GOOGLE_GEMINI_API_KEY`.
 
-Enlaces Ãºtiles
+Enlaces útiles
 
 - Portafolio: `/mis-inversiones`
 - Retiros: `/retiro`
-- Landing â€œQuiero Invertirâ€: `/`
+- Landing “Quiero Invertir”: `/`
 - Edge Functions: `verificar-identidad-inversionista`, `handle-new-solicitud`, `save-investor-lead`, `create-notification`
+
