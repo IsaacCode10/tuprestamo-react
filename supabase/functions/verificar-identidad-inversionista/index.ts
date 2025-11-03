@@ -182,6 +182,33 @@ Si la imagen no es vÃ¡lida, devuelve {"error":"Imagen ilegible o documento no 
 
     if (updErr) throw new Error(`Error al actualizar perfil: ${updErr.message}`)
 
+    // 6.1) Si quedó verificado, copiar cuenta bancaria del borrador a cuentas_bancarias_inversionistas
+    if (finalStatus === 'verificado') {
+      try {
+        const { data: draft, error: draftErr } = await supabaseAdmin
+          .from('verification_drafts')
+          .select('bank_name, account_number')
+          .eq('user_id', user_id)
+          .maybeSingle();
+
+        if (!draftErr && draft && (draft.bank_name || draft.account_number)) {
+          // Upsert por user_id; si la tabla usa otra PK, ajusta onConflict según tu esquema
+          const row: Record<string, unknown> = {
+            user_id,
+            bank_name: draft.bank_name ?? null,
+            account_number: draft.account_number ?? null,
+            is_default: true,
+            updated_at: new Date().toISOString(),
+          };
+          await supabaseAdmin
+            .from('cuentas_bancarias_inversionistas')
+            .upsert(row, { onConflict: 'user_id' });
+        }
+      } catch (e) {
+        console.error('No se pudo copiar cuenta bancaria tras verificación:', e);
+      }
+    }
+
     // 7) Notificación al usuario (solo si el estado cambió; no bloquear en caso de error)
     try {
       const profileJustChanged = updatedProfiles && updatedProfiles.length > 0
