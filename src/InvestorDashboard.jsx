@@ -58,7 +58,7 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
   };
 
   const Pill = () => {
-    if (verification === 'no_iniciado') return null;
+    if (verification === 'no_iniciado' || verification === 'verificado') return null;
     const bg = verification === 'verificado' ? '#e6fffb' : verification === 'pendiente_revision' ? '#fff9e6' : '#ffe6e6';
     const fg = verification === 'verificado' ? '#006d75' : verification === 'pendiente_revision' ? '#8a6d3b' : '#8b0000';
     const text = verification === 'verificado' ? 'Verificada' : verification === 'pendiente_revision' ? 'En revisión' : 'Requiere revisión';
