@@ -86,18 +86,10 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
           .limit(1);
         if (!error && mounted && data && data.length > 0) {
           setToast({ id: data[0].id, title: data[0].title, body: data[0].body, link: data[0].link_url });
-          if (refetchProfile) {
-            refetchProfile();
-          }
         }
       } catch (_) {}
     })();
     return () => { mounted = false };
-  }, []);
-
-  // Refrescar perfil al montar para evitar estados obsoletos
-  useEffect(() => {
-    if (refetchProfile) refetchProfile();
   }, []);
 
   // Suscripciones Realtime: notificaciones nuevas y cambios en perfil
@@ -135,10 +127,6 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
     } catch (_) {}
     const link = toast?.link;
     setToast(null);
-
-    if (refetchProfile) {
-      refetchProfile();
-    }
 
     if (openLink && link) {
       try {
@@ -181,4 +169,3 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
 };
 
 export default InvestorDashboard;
-
