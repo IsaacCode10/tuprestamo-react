@@ -1,4 +1,14 @@
-﻿# Estado del Proyecto - 1 de Noviembre de 2025 (Noche)
+﻿# Estado del Proyecto - 3 de Noviembre de 2025 (Día)
+
+Resumen rápido
+
+- Continuar fixes prioridad alta:
+  1) Email KYC duplicado + sin CTA (idempotencia en verificación + link_url/cta_label).
+  2) UI: panel muestra “En revisión” pese a aprobado (refetch perfil en dashboard/verification).
+  3) Notificaciones: mostrar Toast automático de KYC en dashboard (sin abrir menú) y marcar leída.
+- Backend KYC: completar prompt OCR (numero_ci + expiración con meses literales), bloquear si vencida, encolar en kyc_review_queue si falla.
+- Admin: listar kyc_review_queue pendientes con acciones aprobar/rechazar.
+# Estado del Proyecto - 1 de Noviembre de 2025 (Noche)
 
 Resumen de hoy (flujo INVERSIONISTA)
 
