@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -37,7 +37,7 @@ serve(async (req) => {
       })
     }
 
-    console.log(`Iniciando verificación para user_id=${user_id} doc=${document_id}`)
+    console.log(`Iniciando verificaciÃ³n para user_id=${user_id} doc=${document_id}`)
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -64,7 +64,7 @@ serve(async (req) => {
       .eq('id', user_id)
       .single()
     if (profileError || !profile) {
-      throw new Error(`No se encontró perfil para ${user_id}: ${profileError?.message}`)
+      throw new Error(`No se encontrÃ³ perfil para ${user_id}: ${profileError?.message}`)
     }
 
     // 3) Descargar archivo y convertir a Base64
@@ -84,9 +84,9 @@ serve(async (req) => {
     const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`
 
     const prompt = `
-Eres un sistema experto de OCR para Cédulas de Identidad (Bolivia).
+Eres un sistema experto de OCR para CÃ©dulas de Identidad (Bolivia).
 Devuelve SIEMPRE JSON puro con las claves: nombre_completo (string|null) y numero_ci (string|null).
-Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no válido"}.
+Si la imagen no es vÃ¡lida, devuelve {"error":"Imagen ilegible o documento no vÃ¡lido"}.
 `
 
     const requestBody = {
@@ -126,11 +126,11 @@ Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no v�
       const e = rawText.lastIndexOf('}')
       if (s !== -1 && e !== -1) jsonString = rawText.substring(s, e + 1)
     }
-    if (!jsonString) throw new Error('La IA no devolvió JSON reconocible.')
+    if (!jsonString) throw new Error('La IA no devolviÃ³ JSON reconocible.')
 
     const aiData = JSON.parse(jsonString)
 
-    // 5) Comparación con perfil
+    // 5) ComparaciÃ³n con perfil
     const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
     const normalize = (str?: string) => stripAccents((str ?? '').toLowerCase()).replace(/\s+/g, ' ').trim()
     const onlyDigits = (str?: string) => (str ?? '').replace(/\D/g, '')
@@ -138,7 +138,7 @@ Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no v�
     const nameOK = normalize(profile.nombre_completo) === normalize(aiData?.nombre_completo)
     const ciOK = onlyDigits(profile.numero_ci) === onlyDigits(aiData?.numero_ci)
 
-    // Tolerancia: si CI coincide y el nombre tiene alta superposición de tokens, aceptar
+    // Tolerancia: si CI coincide y el nombre tiene alta superposiciÃ³n de tokens, aceptar
     const nameTokens = new Set(normalize(profile.nombre_completo).split(' ').filter(Boolean))
     const aiTokens = new Set(normalize(aiData?.nombre_completo || '').split(' ').filter(Boolean))
     const overlap = [...aiTokens].filter(t => nameTokens.has(t)).length
@@ -148,7 +148,7 @@ Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no v�
     let finalStatus: 'verificado' | 'pendiente_revision' | 'requiere_revision_manual' = 'requiere_revision_manual'
     if (aiData?.error) {
       finalStatus = 'requiere_revision_manual'
-    } else if (ciOK && (nameOK || nameSimilar)) {
+    } else if (ciOK) {
       finalStatus = 'verificado'
     } else {
       finalStatus = 'requiere_revision_manual'
@@ -163,22 +163,15 @@ Si la imagen no es válida, devuelve {"error":"Imagen ilegible o documento no v�
       .eq('id', user_id)
     if (updErr) throw new Error(`Error al actualizar perfil: ${updErr.message}`)
 
-    // 7) Notificación al usuario (solo si cambió el estado; no bloquear en caso de error)
+    // 7) NotificaciÃ³n al usuario (solo si cambiÃ³ el estado; no bloquear en caso de error)
     try {
-      if (profile.estado_verificacion !== finalStatus) {
-        const notifyTitle = finalStatus === 'verificado'
-          ? 'Tu verificación fue aprobada'
-          : 'Tu verificación requiere revisión'
-        const notifyBody = finalStatus === 'verificado'
-          ? '¡Listo! Ya puedes invertir y solicitar retiros.'
-          : 'No pudimos confirmar automáticamente tu identidad. Un analista revisará tu caso.'
-        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/create-notification`, {
+      const changed = Array.isArray(updated) && updated.length > 0\n      if (changed) { -notification`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
           },
-          body: JSON.stringify({ user_id, type: 'kyc_status', title: notifyTitle, body: notifyBody, email: true })
+          body: JSON.stringify({ user_id, type: 'kyc_status', title: notifyTitle, body: notifyBody, email: true, link_url: ${Deno.env.get('APP_BASE_URL') || 'https://tuprestamobo.com'}/oportunidades, cta_label: 'Ver Oportunidades' })
         })
       }
     } catch (_) { /* noop */ }

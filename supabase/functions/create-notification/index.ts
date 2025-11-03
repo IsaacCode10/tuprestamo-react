@@ -8,6 +8,7 @@ type Payload = {
   title: string
   body: string
   link_url?: string
+  cta_label?: string
   data?: Record<string, unknown>
   email?: boolean
 }
@@ -18,7 +19,7 @@ serve(async (req) => {
   }
   try {
     const payload: Payload = await req.json()
-    const { user_id, type, title, body, link_url, data, email } = payload || ({} as Payload)
+    const { user_id, type, title, body, link_url, cta_label, data, email } = payload || ({} as Payload)
     if (!user_id || !type || !title || !body) throw new Error('user_id, type, title y body son requeridos')
 
     const supabase = createClient(
@@ -46,7 +47,7 @@ serve(async (req) => {
           greetingName: profile?.nombre_completo || '',
           title,
           body,
-          ctaLabel: link_url ? 'Ver detalles' : undefined,
+          ctaLabel: link_url ? (cta_label || 'Ver detalles') : undefined,
           ctaHref: link_url
         })
         await fetch('https://api.resend.com/emails', {

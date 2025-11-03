@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from './supabaseClient';
 
 const InvestorDashboard = ({ profile }) => {
   const navigate = useNavigate();
+  const [toast, setToast] = useState(null);
 
   const verification = profile?.estado_verificacion || 'no_iniciado';
 
@@ -60,6 +62,63 @@ const InvestorDashboard = ({ profile }) => {
     );
   };
 
+  // Mostrar automáticamente notificación KYC (sin abrir menú)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('id, title, body, link_url, created_at, read_at')
+          .eq('user_id', user.id)
+          .eq('type', 'kyc_status')
+          .is('read_at', null)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (!error && mounted && data && data.length > 0) {
+          setToast({ id: data[0].id, title: data[0].title, body: data[0].body, link: data[0].link_url });
+        }
+      } catch (_) {}
+    })();
+    return () => { mounted = false };
+  }, []);
+
+  const dismissToast = async (openLink = false) => {
+    try {
+      if (toast?.id) {
+        await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', toast.id);
+      }
+    } catch (_) {}
+    const link = toast?.link;
+    setToast(null);
+    if (openLink && link) {
+      try {
+        const url = new URL(link);
+        navigate(url.pathname + (url.search || ''));
+      } catch {
+        navigate(link);
+      }
+    }
+  };
+
+  const Toast = () => {
+    if (!toast) return null;
+    return (
+      <div style={{ marginTop: 12, padding: 12, borderRadius: 8, border: '1px solid #a8ede6', background: '#eef9f8', color: '#11696b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>{toast.title}</div>
+          <div style={{ opacity: 0.9 }}>{toast.body}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {toast.link && (<button className="btn btn--primary" onClick={() => dismissToast(true)}>Abrir</button>)}
+          <button className="btn" onClick={() => dismissToast(false)}>Cerrar</button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="investor-dashboard-container">
       <div style={{ marginTop: 6 }}>
@@ -68,9 +127,11 @@ const InvestorDashboard = ({ profile }) => {
       <div style={{ marginTop: 12 }}>
         <Banner />
       </div>
+      <Toast />
       {renderContent()}
     </div>
   );
 };
 
 export default InvestorDashboard;
+
