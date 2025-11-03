@@ -191,12 +191,9 @@ export default function InvestorVerification() {
         })
       } catch {}
 
-      // 4) Marcar estado
-      const { error: sErr } = await supabase
-        .from('profiles')
-        .update({ estado_verificacion: 'pendiente_revision' })
-        .eq('id', auth.user.id)
-      if (sErr) throw sErr
+      // 4) No actualizar estado_verificacion desde el cliente.
+      //    La Edge Function 'verificar-identidad-inversionista' decide y actualiza el estado.
+      //    Esto evita sobreescribir 'verificado' con 'pendiente_revision' por condiciones de carrera.
 
       // 5) Limpiar borrador
       try { await supabase.from('verification_drafts').delete().eq('user_id', auth.user.id) } catch {}
