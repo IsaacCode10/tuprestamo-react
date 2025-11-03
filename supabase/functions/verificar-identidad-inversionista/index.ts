@@ -130,6 +130,23 @@ Si la imagen no es vÃ¡lida, devuelve {"error":"Imagen ilegible o documento no 
 
     const aiData = JSON.parse(jsonString)
 
+    // 4.5) Guardar el resultado del anÃ¡lisis para auditorÃ­a (sin bloquear el flujo)
+    try {
+      await supabaseAdmin.from('analisis_documentos').insert({
+        documento_id: document_id, // Asumiendo que record.id es el ID del documento
+        proveedor_analisis: model,
+        resultado_crudo: aiData,
+        datos_extraidos: {
+          nombre_completo: aiData?.nombre_completo || null,
+          numero_ci: aiData?.numero_ci || null,
+          error: aiData?.error || null,
+        },
+      })
+    } catch (logErr) {
+      console.error('Error al guardar en analisis_documentos:', logErr)
+      // No relanzar el error, el logging es secundario.
+    }
+
     // 5) ComparaciÃ³n con perfil
     const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
     const normalize = (str?: string) => stripAccents((str ?? '').toLowerCase()).replace(/\s+/g, ' ').trim()

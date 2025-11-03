@@ -6,11 +6,11 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
   const navigate = useNavigate();
   const [toast, setToast] = useState(null);
 
-  // Usamos un estado local para el perfil para poder actualizarlo
+  // Estado local del perfil para reflejar cambios en tiempo real
   const [localProfile, setLocalProfile] = useState(profile);
 
   useEffect(() => {
-    setLocalProfile(profile); // Sincronizar con el perfil global si cambia
+    setLocalProfile(profile);
   }, [profile]);
 
   const verification = localProfile?.estado_verificacion || 'no_iniciado';
@@ -20,27 +20,27 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
     if (verification === 'pendiente_revision') {
       return (
         <div style={{ background: '#fff9e6', border: '1px solid #ffe08a', color: '#8a6d3b', padding: 12, borderRadius: 8 }}>
-          Tu verificaciÃ³n de identidad estÃ¡ en revisiÃ³n. Puedes navegar y conocer oportunidades; te avisaremos cuando finalice.
+          Tu verificación de identidad está en revisión. Puedes navegar y conocer oportunidades; te avisaremos cuando finalice.
         </div>
       );
     }
     if (verification === 'requiere_revision_manual') {
       return (
         <div style={{ background: '#ffe6e6', border: '1px solid #ffb3b3', color: '#8b0000', padding: 12, borderRadius: 8 }}>
-          No pudimos confirmar tu verificaciÃ³n. Revisa tu informaciÃ³n y vuelve a intentarlo.
+          No pudimos confirmar tu verificación. Revisa tu información y vuelve a intentarlo.
         </div>
       );
     }
     return (
       <div style={{ background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b', padding: 12, borderRadius: 8 }}>
-        Verifica tu cuenta antes de invertir. PodrÃ¡s explorar oportunidades de inmediato y completar la verificaciÃ³n cuando estÃ©s listo.
+        Verifica tu cuenta antes de invertir. Podrás explorar oportunidades de inmediato y completar la verificación cuando estés listo.
       </div>
     );
   };
 
   const renderContent = () => {
     if (!localProfile) {
-      return <p>Cargando informaciÃ³n de tu perfilâ€¦</p>;
+      return <p>Cargando información de tu perfil…</p>;
     }
 
     return (
@@ -58,18 +58,18 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
   };
 
   const Pill = () => {
-    if (verification === 'no_iniciado') return null; // No mostrar pill para el estado inicial
+    if (verification === 'no_iniciado') return null;
     const bg = verification === 'verificado' ? '#e6fffb' : verification === 'pendiente_revision' ? '#fff9e6' : '#ffe6e6';
     const fg = verification === 'verificado' ? '#006d75' : verification === 'pendiente_revision' ? '#8a6d3b' : '#8b0000';
-    const text = verification === 'verificado' ? 'Verificada' : verification === 'pendiente_revision' ? 'En revisiÃ³n' : 'Requiere revisiÃ³n';
+    const text = verification === 'verificado' ? 'Verificada' : verification === 'pendiente_revision' ? 'En revisión' : 'Requiere revisión';
     return (
       <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: bg, color: fg }}>
-        VerificaciÃ³n: {text}
+        Verificación: {text}
       </span>
     );
   };
 
-  // Mostrar automÃ¡ticamente notificaciÃ³n KYC (sin abrir menÃº)
+  // Mostrar automáticamente notificación KYC (sin abrir menú)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -86,10 +86,45 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
           .limit(1);
         if (!error && mounted && data && data.length > 0) {
           setToast({ id: data[0].id, title: data[0].title, body: data[0].body, link: data[0].link_url });
+          if (refetchProfile) {
+            refetchProfile();
+          }
         }
       } catch (_) {}
     })();
     return () => { mounted = false };
+  }, []);
+
+  // Refrescar perfil al montar para evitar estados obsoletos
+  useEffect(() => {
+    if (refetchProfile) refetchProfile();
+  }, []);
+
+  // Suscripciones Realtime: notificaciones nuevas y cambios en perfil
+  useEffect(() => {
+    let channel;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        channel = supabase
+          .channel('investor-dashboard-ch')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+            const n = payload?.new;
+            if (n && n.type === 'kyc_status' && !n.read_at) {
+              setToast({ id: n.id, title: n.title, body: n.body, link: n.link_url });
+            }
+          })
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+            const updated = payload?.new;
+            if (updated) {
+              setLocalProfile((prev) => ({ ...prev, ...updated }));
+            }
+          })
+          .subscribe();
+      } catch (_) {}
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
   const dismissToast = async (openLink = false) => {
@@ -100,8 +135,7 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
     } catch (_) {}
     const link = toast?.link;
     setToast(null);
-    
-    // Refrescar el perfil para obtener el estado de verificaciÃ³n mÃ¡s reciente
+
     if (refetchProfile) {
       refetchProfile();
     }
