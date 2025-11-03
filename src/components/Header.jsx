@@ -320,7 +320,7 @@ const Header = () => {
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
                     <div className="header__dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: 10 }} onClick={(e) => e.stopPropagation()}>
-                      <NotificationBell notifications={notifications} onOpen={markAllRead} />
+                      <NotificationBell notifications={notifications} />
                       <span>Notificaciones</span>
                       <span className="notif-pill">{unreadCount}</span>
                     </div>
