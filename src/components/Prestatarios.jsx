@@ -16,6 +16,9 @@ const Prestatarios = ({ onSolicitudClick }) => {
             Ahorro real: las TC en Bolivia cobran tasas de inter&eacute;s anuales superiores al 24% y costos de mantenimiento de m&aacute;s de Bs 120 al mes. Con nosotros, puedes acceder a un refinanciamiento significativamente menor.
           </li>
           <li className="features-list__item">
+            Desembolso directo a tu banco acreedor: pagamos tu tarjeta, no transferimos a tu cuenta. As&iacute; te enfocas en salir de la deuda.
+          </li>
+          <li className="features-list__item">
             Evaluaci&oacute;n justa: no eres solo un n&uacute;mero en un sistema. Un analista de cr&eacute;dito experto revisar&aacute; tu perfil para ofrecerte las mejores condiciones.
           </li>
           <li className="features-list__item">

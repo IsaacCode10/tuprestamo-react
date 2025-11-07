@@ -6,10 +6,10 @@ const Hero = () => {
     <section id="hero" className="hero">
       <div className="container hero__content">
         <h1 className="hero__title">
-          Sal de tu deuda de tarjeta. Paga a tu ritmo, sin penalidades por pagos anticipados.
+          Refinancia tus tarjetas de crédito en Bolivia con mejores tasas
         </h1>
         <p className="hero__subtitle">
-          Refinanci&aacute; con cuota fija y transparencia total. Adelant&aacute; cuotas o cancel&aacute; cuando quieras: Bs 0 de comisiones por prepago.
+          Conectamos personas que necesitan refinanciar sus tarjetas de crédito con inversionistas que buscan rentabilidad. Tasas justas, proceso simple y 100% en línea.
         </p>
 
         {/* CTA Items */}
@@ -17,7 +17,7 @@ const Hero = () => {
           <div className="cta-item">
             <Link to="prestatarios" smooth={true} duration={500} className="btn btn--secondary">Quiero refinanciar</Link>
             <div className="cta-box">
-              <p>REDUCE TUS INTERESES CON TASAS DESDE 15% ANUAL. CUOTA FIJA MENSUAL.</p>
+              <p>REDUCE TUS INTERESES CON TASAS DESDE 15% ANUAL. CUOTA FIJA MENSUAL</p>
             </div>
           </div>
           <div className="cta-item">
@@ -33,4 +33,3 @@ const Hero = () => {
 };
 
 export default Hero;
-

@@ -34,7 +34,7 @@ const FAQ = () => {
           </FaqItem>
 
           <FaqItem question="¿Me cobran algo si liquido antes mi pr&eacute;stamo?">
-            <p>No. <strong>Cero comisiones por pago anticipado</strong>. Solo pag&aacute;s el capital pendiente y los intereses generados hasta ese d&iacute;a.</p>
+            <p>No. <strong>Cero comisiones por pago anticipado</strong>. Solo pagas el capital pendiente y los intereses generados hasta ese d&iacute;a.</p>
           </FaqItem>
 
           <FaqItem question="¿C&oacute;mo aplican mi pago extra?">
