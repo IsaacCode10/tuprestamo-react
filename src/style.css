@@ -353,15 +353,17 @@ header.header {
   gap: 2rem;
 }
 
-/* Desktop: 3 cards on first row, 2 centered on second */
+/* Desktop: 3 cards on row 1, and 2 centered on row 2 using 12-col grid */
 @media (min-width: 992px) {
   #beneficios .benefits-grid {
-    grid-template-columns: repeat(3, 1fr);
-    justify-items: stretch;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2rem;
   }
-  #beneficios .benefit-card:nth-child(5) {
-    grid-column: 2; /* center the last card */
-  }
+  #beneficios .benefit-card { grid-column: span 4; }
+  /* Center row 2: place 4th and 5th at columns 3-6 and 7-10 */
+  #beneficios .benefit-card:nth-child(4) { grid-column: 3 / span 4; }
+  #beneficios .benefit-card:nth-child(5) { grid-column: 7 / span 4; }
 }
 
 .benefit-card {
