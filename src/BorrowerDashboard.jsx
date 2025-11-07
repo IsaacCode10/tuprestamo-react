@@ -7,6 +7,7 @@ import './BorrowerDashboard.css';
 import SavingsCalculator from '@/components/SavingsCalculator.jsx';
 import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
+import ExtraPaymentSimulator from '@/components/ExtraPaymentSimulator.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import Header from './components/Header';
 import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
@@ -24,7 +25,26 @@ const mockNotifications = [];
 const LoanSummaryCard = ({ title, value, subtext, isPrimary = false }) => ( <div/> );
 const AmortizationTable = ({ schedule }) => ( <div/> );
 const PaymentHistory = ({ history }) => ( <div/> );
-const ApprovedLoanDashboard = ({ loan, user, onLogout }) => ( <div/> );
+const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
+  // Valores de ejemplo si no hay datos reales del préstamo aún
+  const principal = Number(loan?.capital_pendiente ?? 12000);
+  const annualRate = Number(loan?.tasa_anual ?? 24);
+  const months = Number(loan?.plazo_restante ?? 24);
+  return (
+    <div className="borrower-dashboard">
+      <div className="dashboard-header">
+        <h2>Mi Préstamo</h2>
+        <button onClick={onLogout} className="btn">Cerrar sesión</button>
+      </div>
+      <div className="cards-grid">
+        <div className="card"><h4>Capital pendiente</h4><div>Bs {principal.toLocaleString('es-BO')}</div></div>
+        <div className="card"><h4>Tasa anual</h4><div>{annualRate}%</div></div>
+        <div className="card"><h4>Plazo restante</h4><div>{months} meses</div></div>
+      </div>
+      <ExtraPaymentSimulator principal={principal} annualRate={annualRate} months={months} />
+    </div>
+  );
+};
 
 // --- FUNCIÓN HELPER MOVILIZADA PARA SER REUTILIZABLE ---
 const getRequiredDocs = (situacionLaboral) => {
@@ -71,7 +91,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
         setSimulation(prev => ({ ...prev, ...newValues }));
     };
 
-    const { totalAPagar } = calcularCostosTuPrestamo(
+    const { totalAPagar, commission: originacionMonto, minApplied } = calcularCostosTuPrestamo(
         parseFloat(simulation.montoDeuda),
         oportunidadObj?.tasa_interes_prestatario,
         simulation.plazo,
@@ -99,6 +119,8 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
                     oportunidad={oportunidadObj} 
                     simulation={simulation}
                     pagoTotalMensualTP={pagoTotalMensualTP}
+                    originacionMonto={originacionMonto}
+                    minApplied={minApplied}
                 />
 
                 <>
@@ -139,17 +161,39 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
   );
 };
 
-const calcularCostosTuPrestamo = (principal, annualRate, termMonths, originacion_porcentaje) => {
-    if (!principal || !annualRate || !termMonths || !originacion_porcentaje) {
-        return { totalAPagar: 0 };
+const calcularCostosTuPrestamo = (principalNet, annualRate, termMonths, originacion_porcentaje) => {
+    if (!principalNet || !annualRate || !termMonths || !originacion_porcentaje) {
+        return { totalAPagar: 0, commission: 0, minApplied: false, principalBruto: 0 };
     }
-    const monthlyRate = annualRate / 100 / 12;
-    const pmt = (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -termMonths));
-    const totalAPagar = pmt * termMonths + (principal * (originacion_porcentaje / 100));
-    return isFinite(totalAPagar) ? { totalAPagar } : { totalAPagar: 0 };
+    const net = Number(principalNet) || 0;
+    const p = Number(originacion_porcentaje) / 100;
+    // Política MVP: 450 Bs fijos hasta 10.000 Bs netos; arriba, % con gross-up.
+    const MIN_ORIGINACION = 450;
+    const THRESHOLD_NET = 10000;
+    let commission = 0;
+    let principalBruto = 0;
+    let minApplied = false;
+    if (net <= THRESHOLD_NET) {
+        commission = MIN_ORIGINACION;
+        principalBruto = net + commission;
+        minApplied = true;
+    } else {
+        const feePctIfGross = net * p / (1 - p);
+        commission = feePctIfGross;
+        principalBruto = net / (1 - p);
+        minApplied = false;
+    }
+    const monthlyRate = Number(annualRate) / 100 / 12;
+    const n = Number(termMonths) || 0;
+    let pmt = 0;
+    if (n > 0) {
+        pmt = monthlyRate > 0 ? (principalBruto * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n)) : (principalBruto / n);
+    }
+    const totalAPagar = isFinite(pmt) ? pmt * n : 0;
+    return { totalAPagar, commission, minApplied, principalBruto, monthlyPayment: pmt };
 };
 
-const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => {
+const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, originacionMonto, minApplied }) => {
   const monto = Number(simulation.montoDeuda) || 0;
   const tasaBancoAnual = Number(simulation.tasaActual) || 0;
   const plazo = Number(simulation.plazo) || 0;
@@ -179,7 +223,12 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) 
           <div className="summary-item"><strong>Tasa Propuesta (anual)</strong><div>{tasaTP != null ? `${Number(tasaTP).toFixed(1)}%` : '—'}</div></div>
           <div className="summary-item"><strong>Cuota Mensual Banco</strong><div>Bs. {cuotaBanco > 0 ? cuotaBanco.toFixed(2) : '—'}</div></div>
           <div className="summary-item"><strong>Cuota Mensual Tu Préstamo</strong><div>Bs. {pagoTotalMensualTP > 0 ? pagoTotalMensualTP.toFixed(2) : '—'}</div></div>
-          <div className="summary-item"><strong>Comisión de Originación</strong><div>{comisionOriginacion != null ? `${Number(comisionOriginacion).toFixed(1)}%` : '—'}</div></div>
+          <div className="summary-item"><strong>Comisión de Originación</strong>
+            <div>{comisionOriginacion != null ? `${Number(comisionOriginacion).toFixed(1)}%` : '—'}</div>
+            {originacionMonto > 0 && (
+              <div style={{ fontSize: '0.9em', color: '#444' }}>Monto estimado: Bs. {Number(originacionMonto).toFixed(2)} {minApplied ? '(mínimo aplicado)' : ''}</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
