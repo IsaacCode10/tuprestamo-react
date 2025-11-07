@@ -7,7 +7,7 @@ import './BorrowerDashboard.css';
 import SavingsCalculator from '@/components/SavingsCalculator.jsx';
 import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
-import ExtraPaymentSimulator from '@/components/ExtraPaymentSimulator.jsx';
+import { annuityPayment, applyExtraPaymentReduceTerm } from '@/utils/amortization.js';
 import NotificationBell from './components/NotificationBell.jsx';
 import Header from './components/Header';
 import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
@@ -30,6 +30,27 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
   const principal = Number(loan?.capital_pendiente ?? 12000);
   const annualRate = Number(loan?.tasa_anual ?? 24);
   const months = Number(loan?.plazo_restante ?? 24);
+  const [showModal, setShowModal] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+  const monthly = annuityPayment(principal, annualRate, months);
+  const result = applyExtraPaymentReduceTerm(principal, annualRate, months, Number(amount || 0));
+  const handleConfirm = async () => {
+    try {
+      setLoading(true);
+      const extra = Number(amount);
+      if (!extra || extra <= 0) { setMsg('Ingresa un monto válido.'); setLoading(false); return; }
+      trackEvent('ExtraPaymentRequested', { amount: extra, capital_before: principal, new_months: result.newMonths, interest_saved: result.interestSaved });
+      try {
+        await supabase.from('pagos_extra_solicitados').insert({ user_id: user?.id, monto: extra, capital_antes: principal, tasa_anual: annualRate, plazo_antes: months });
+      } catch (_) {}
+      setMsg('Solicitud registrada. Te contactaremos para procesar el pago.');
+      setTimeout(() => { setShowModal(false); setMsg(''); setAmount(''); }, 1200);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="borrower-dashboard">
       <div className="dashboard-header">
@@ -41,7 +62,32 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
         <div className="card"><h4>Tasa anual</h4><div>{annualRate}%</div></div>
         <div className="card"><h4>Plazo restante</h4><div>{months} meses</div></div>
       </div>
-      <ExtraPaymentSimulator principal={principal} annualRate={annualRate} months={months} />
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3>Pagos Anticipados</h3>
+        <p style={{ color: '#385b64' }}>Sin penalidades. Tu pago extra se aplica 100% a capital y reducimos el plazo.</p>
+        <button className="btn btn--primary" onClick={() => setShowModal(true)}>Realizar Pago Extra</button>
+      </div>
+
+      {showModal && (
+        <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div className="modal" style={{background:'#fff',borderRadius:8,padding:16,width:'min(520px, 92vw)'}}>
+            <h3>Pago Extra a Capital</h3>
+            <label style={{display:'block',marginTop:8}}>Monto (Bs)
+              <input type="number" min="0" value={amount} onChange={e=>setAmount(e.target.value)} style={{width:'100%',padding:8,marginTop:6}}/>
+            </label>
+            <div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:12,color:'#385b64'}}>
+              <div><strong>Cuota actual:</strong> Bs {monthly.toFixed(2)}</div>
+              <div><strong>Nuevo plazo:</strong> {result.newMonths} meses</div>
+              <div><strong>Ahorro intereses:</strong> Bs {Number(result.interestSaved||0).toFixed(2)}</div>
+            </div>
+            {msg && <div style={{marginTop:8,color:'#0a7a4b'}}>{msg}</div>}
+            <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:16}}>
+              <button className="btn" onClick={()=>setShowModal(false)} disabled={loading}>Cancelar</button>
+              <button className="btn btn--primary" onClick={handleConfirm} disabled={loading}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
