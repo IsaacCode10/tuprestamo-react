@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tuprestamobo.com/sitemap.xml
