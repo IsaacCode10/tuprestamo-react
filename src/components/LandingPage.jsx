@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Hero from './Hero';
 import Beneficios from './Beneficios';
+import Comparativa from './Comparativa';
 import Prestatarios from './Prestatarios';
 import Inversionistas from './Inversionistas';
 import ComoFunciona from './ComoFunciona';
@@ -38,8 +39,8 @@ const LandingPage = () => {
   return (
     <>
       <Helmet>
-        <title>Tu Pr&eacute;stamo Bolivia &mdash; Refinanci&aacute; e Invert&iacute;</title>
-        <meta name="description" content="Refinanci&aacute; tus tarjetas con cuota fija y tasa menor al 24%. Invert&iacute; y recib&iacute; pagos mensuales. Comisi&oacute;n de originaci&oacute;n Bs 450 hasta Bs 10.000." />
+        <title>Tu Pr&eacute;stamo Bolivia &mdash; Cero comisiones por pago anticipado</title>
+        <meta name="description" content="Refinanci&aacute; con cuota fija y transparencia total. Sin penalidades por pagos anticipados: adelant&aacute; cuotas o cancel&aacute; cuando quieras." />
         <script type="application/ld+json">
           {JSON.stringify({
             '@context': 'https://schema.org',
@@ -54,6 +55,7 @@ const LandingPage = () => {
       </Helmet>
       <Hero />
       <Beneficios />
+      <Comparativa />
       <Prestatarios onSolicitudClick={() => handleOpenModal('prestatario')} />
       <Inversionistas onSolicitudClick={() => handleOpenModal('inversionista')} />
       <ComoFunciona />
