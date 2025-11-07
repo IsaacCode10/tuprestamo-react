@@ -163,6 +163,25 @@ const ConfirmAndSetPassword = () => {
     }, 1200);
   };
 
+  const handleLinkGoogle = async () => {
+    if (!user) return;
+    setLoading(true);
+    setError('');
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/perfil-inversionista' }
+      });
+      if (error) throw error;
+      setMessage('Cuenta de Google vinculada. Puedes iniciar sesion con Google en el futuro.');
+    } catch (e) {
+      setError(e?.message || 'No se pudo vincular Google.');
+    } finally {
+      setLoading(false);
+      setTimeout(() => { setError(''); }, 4000);
+    }
+  };
+
   const emailDomain = (email.split('@')[1] || '').toLowerCase();
   const webmailLink = emailDomain.includes('gmail')
     ? 'https://mail.google.com'
@@ -237,6 +256,13 @@ const ConfirmAndSetPassword = () => {
         </form>
         {error && <p className="auth-message auth-message-error">{error}</p>}
         {!user && !error && <p className="auth-message">Verificando sesion...</p>}
+        {user && (
+          <div style={{ marginTop: 12 }}>
+            <button type="button" onClick={handleLinkGoogle} disabled={loading} className="auth-button alt">
+              Vincular con Google
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -71,6 +71,26 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: { prompt: 'consent', access_type: 'offline' }
+        }
+      });
+      if (error) throw error;
+      // Redirige a Google; no continuamos aqui
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- LOGIN VIEW ---
   if (!isSignUp) {
     return (
@@ -116,7 +136,11 @@ const Auth = () => {
           <button onClick={() => navigate('/')} className="cta-button secondary">
             Quiero Invertir
           </button>
-          
+          <div style={{ marginTop: 16 }}>
+            <button type="button" onClick={handleGoogleLogin} disabled={loading} className="auth-button alt">
+              Continuar con Google
+            </button>
+          </div>
         </div>
       </div>
     );
