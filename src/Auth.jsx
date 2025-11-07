@@ -147,6 +147,7 @@ const Auth = () => {
               </svg>
               Continuar con Google
             </button>
+            <p className="auth-note">Autenticación segura vía Supabase. Verás supabase.co al continuar.</p>
           </div>
         </div>
       </div>

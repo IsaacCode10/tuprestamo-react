@@ -268,6 +268,7 @@ const ConfirmAndSetPassword = () => {
               </svg>
               Vincular con Google
             </button>
+            <p className="auth-note">Asocia tu Google a esta cuenta. Seguro vía Supabase.</p>
           </div>
         )}
       </div>
