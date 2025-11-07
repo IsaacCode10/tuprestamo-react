@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
 import { trackEvent } from '@/analytics.js';
-import InvestorBackBar from '@/components/InvestorBackBar.jsx';
-import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 const faqs = [
   {
@@ -9,7 +7,7 @@ const faqs = [
     items: [
       {
         q: '¿Cuál es el rendimiento esperado para el inversionista?',
-        a: 'Mostramos una tasa anual bruta por oportunidad. Tu rendimiento neto estima la comisión de servicio del 1% sobre cada pago recibido (capital + interés). Revisa siempre la tarjeta y el detalle de la oportunidad.'
+        a: 'Mostramos una tasa anual bruta por oportunidad. Tu rendimiento neto descuenta la comisión de servicio del 1% sobre cada pago recibido (capital + interés). Revisa siempre la tarjeta y el detalle de la oportunidad.'
       },
       {
         q: '¿Qué comisiones cobra Tu Préstamo?',
@@ -17,7 +15,7 @@ const faqs = [
       },
       {
         q: '¿Cómo se calculan y se acreditan los retornos?',
-        a: 'Cada pago del prestatario se distribuye: capital + interés para el inversionista menos la comisión de servicio. Acreditamos el neto a tus Fondos Disponibles.'
+        a: 'Cada pago del prestatario se distribuye: capital + interés para el inversionista menos la comisión de servicio. Transferimos automáticamente el neto a tu cuenta bancaria verificada. Tu Préstamo no custodia fondos.'
       }
     ]
   },
@@ -26,7 +24,7 @@ const faqs = [
     items: [
       {
         q: '¿Qué riesgo asumo al invertir?',
-        a: 'Toda inversión conlleva riesgo de incumplimiento. Mitigamos con filtros de riesgo, enfoque en refinanciación de deudas tóxicas y procesos KYC. Aun así, el capital no está garantizado.'
+        a: 'Toda inversión conlleva riesgo de incumplimiento. Mitigamos con filtros de riesgo, enfoque en refinanciamiento de deudas tóxicas y procesos KYC. Aun así, el capital no está garantizado.'
       },
       {
         q: '¿Cuentan con seguro de desgravamen o coberturas?',
@@ -51,20 +49,20 @@ const faqs = [
       },
       {
         q: '¿Qué ocurre cuando una oportunidad se financia al 100%?',
-        a: 'Se marca como “financiada” y continúa el flujo operativo: desembolso al prestatario y habilitación del ciclo de pagos mensuales.'
+        a: 'Se marca como “financiada” y continúa el flujo operativo: desembolso dirigido (pago directo al banco acreedor) e inicio del ciclo de pagos mensuales.'
       }
     ]
   },
   {
-    title: 'Retiros y Liquidez',
+    title: 'Pagos y Liquidez',
     items: [
       {
-        q: '¿Cómo retiro mis fondos disponibles?',
-        a: 'Desde “Retiros” puedes solicitar transferencia a tu cuenta bancaria verificada. En el MVP el proceso es manual por el equipo de Operaciones.'
+        q: '¿Cómo recibo mis pagos? ¿Hay retiros?',
+        a: 'Tu Préstamo no custodia fondos de inversionistas. Cuando el prestatario paga, transferimos automáticamente tu parte (capital + interés menos comisión) a tu cuenta bancaria verificada. No existe un botón de “Retiros” ni un saldo para retirar.'
       },
       {
         q: '¿Puedo salir antes del plazo?',
-        a: 'No hay mercado secundario en el MVP. Tus retornos provienen de pagos periódicos del prestatario y al finalizar el plazo.'
+        a: 'No hay mercado secundario en Tu Préstamo. Tus retornos provienen de pagos periódicos del prestatario y al finalizar el plazo.'
       }
     ]
   },
@@ -73,11 +71,11 @@ const faqs = [
     items: [
       {
         q: '¿Por qué debo verificar mi identidad?',
-        a: 'Cumplimiento regulatorio (KYC) y prevención de fraude. Además, la verificación agiliza retiros y aumenta límites operativos.'
+        a: 'Cumplimiento regulatorio (KYC) y prevención de fraude. Además, la verificación habilita pagos a tu cuenta bancaria y aumenta límites operativos.'
       },
       {
         q: '¿Qué datos se solicitan?',
-        a: 'CI, selfie/documentos básicos y cuenta bancaria para retiros. Usamos almacenamiento seguro y verificación automatizada asistida por IA.'
+        a: 'CI, selfie/documentos básicos y cuenta bancaria para pagos. Usamos almacenamiento seguro y verificación automatizada asistida por IA.'
       }
     ]
   },
@@ -95,30 +93,20 @@ const faqs = [
     items: [
       {
         q: '¿Dónde puedo resolver dudas o reportar un problema?',
-        a: 'Escríbenos a contacto@tuprestamobo.com o utiliza el centro de ayuda. Te responderemos con prioridad.'
+        a: 'Escríbenos a contacto@tuprestamobo.com. Te responderemos con prioridad.'
       }
     ]
   }
 ];
 
 const InvestorFAQ = () => {
-  useEffect(() => {
-    trackEvent('Viewed Investor FAQ');
-  }, []);
-
+  useEffect(() => { trackEvent('Viewed Investor FAQ'); }, []);
   return (
     <div className="container" style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px' }}>
-      <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
-      <InvestorBreadcrumbs items={[
-        { label: 'Inicio', to: '/investor-dashboard' },
-        { label: 'Cuenta', to: '/investor-dashboard' },
-        { label: 'Centro de Ayuda' },
-      ]} />
       <h1 style={{ marginBottom: 8 }}>Centro de Ayuda para Inversionistas</h1>
       <p style={{ color: '#555', marginBottom: 24 }}>
         Encuentra respuestas a las preguntas más comunes sobre invertir con Tu Préstamo.
       </p>
-
       {faqs.map((group) => (
         <section key={group.title} style={{ marginBottom: 24 }}>
           <h2 style={{ fontSize: 20, marginBottom: 12 }}>{group.title}</h2>
@@ -137,3 +125,4 @@ const InvestorFAQ = () => {
 };
 
 export default InvestorFAQ;
+
