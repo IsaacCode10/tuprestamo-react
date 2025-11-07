@@ -50,6 +50,29 @@ const Header = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
   const centerNavRef = useRef(null);
   const userMenuRef = useRef(null);
+  const mobilePanelRef = useRef(null);
+  // Cargar notificaciones desde Supabase (reutilizable)
+  const loadNotifications = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id, title, body, created_at, read_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(15);
+      if (!error && Array.isArray(data)) {
+        const mapped = data.map(n => ({ id: n.id, message: n.title || n.body, time: new Date(n.created_at).toLocaleString('es-BO'), read: !!n.read_at }));
+        setNotifications(mapped);
+      }
+    } catch (_) { /* noop */ }
+  };
+
+  // Carga inicial para mostrar badge sin abrir menú
+  useEffect(() => {
+    loadNotifications();
+  }, []);
   // Cargar notificaciones al abrir el menÃº de usuario
   useEffect(() => {
     const load = async () => {
@@ -185,6 +208,56 @@ const Header = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  // Accesibilidad y UX para menú móvil: bloqueo de scroll, foco y Escape
+  useEffect(() => {
+    if (!isMobileNavOpen) return;
+    const panel = mobilePanelRef.current;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusables = panel ? panel.querySelectorAll(
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    ) : [];
+    if (focusables && focusables.length > 0) {
+      const first = focusables[0];
+      if (first && first.focus) first.focus();
+    } else if (panel && panel.focus) {
+      panel.focus();
+    }
+
+    const handleKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsMobileNavOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab' || !panel) return;
+      const els = panel.querySelectorAll(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!els || els.length === 0) return;
+      const firstEl = els[0];
+      const lastEl = els[els.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === firstEl) {
+          e.preventDefault();
+          lastEl.focus();
+        }
+      } else {
+        if (document.activeElement === lastEl) {
+          e.preventDefault();
+          firstEl.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isMobileNavOpen]);
+
   return (
     <header className="header">
       <div className="header__container">
@@ -280,7 +353,6 @@ const Header = () => {
                         )}
                       </div>
                       <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/mis-inversiones'); }}>Mis Inversiones</button>
-                      <button className="header__dropdown-item" onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(false); navigate('/retiro'); }}>Retiros</button>
                     </div>
                   )}
                 </li>
@@ -360,8 +432,8 @@ const Header = () => {
         </div>
       </div>
       {isMobileNavOpen && (
-        <div className="mobile-menu-overlay" onClick={() => setIsMobileNavOpen(false)}>
-          <div className="mobile-menu-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="mobile-menu-overlay" role="presentation" style={{ display: isMobileNavOpen ? 'block' : 'none' }} onClick={() => setIsMobileNavOpen(false)}>
+          <div id="mobile-menu-panel" ref={mobilePanelRef} className="mobile-menu-panel" role="dialog" aria-modal="true" aria-label="Menú de navegación" tabIndex={-1} onClick={(e) => e.stopPropagation()}>
             {!profile ? (
               <>
                 <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/'); setTimeout(() => document.getElementById('prestatarios')?.scrollIntoView({ behavior: 'smooth' }), 50); }}>Refinanciar tarjeta</button>
@@ -376,7 +448,6 @@ const Header = () => {
                   <>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/oportunidades'); }}>Oportunidades</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/mis-inversiones'); }}>Mis inversiones</button>
-                    <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/retiro'); }}>Retiros</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/calculadora-inversionista'); }}>Calculadora de ganancias</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/verificar-cuenta'); }}>Verificar cuenta ({statusLabel})</button>
                     <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/faq-inversionista'); }}>Centro de Ayuda</button>
