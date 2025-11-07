@@ -258,7 +258,14 @@ const ConfirmAndSetPassword = () => {
         {!user && !error && <p className="auth-message">Verificando sesion...</p>}
         {user && (
           <div style={{ marginTop: 12 }}>
-            <button type="button" onClick={handleLinkGoogle} disabled={loading} className="auth-button alt">
+            <button type="button" onClick={handleLinkGoogle} disabled={loading} className="google-btn">
+              <svg className="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.72 1.22 9.22 3.6l6.9-6.9C36.64 2.02 30.82 0 24 0 14.62 0 6.4 5.38 2.56 13.22l8.04 6.24C12.36 13.02 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.5 24c0-1.64-.15-3.22-.44-4.74H24v9.04h12.7c-.55 2.96-2.22 5.48-4.72 7.18l7.24 5.62C43.93 37.04 46.5 30.96 46.5 24z"/>
+                <path fill="#FBBC05" d="M10.6 28.46A14.5 14.5 0 0 1 9.5 24c0-1.55.26-3.04.74-4.44l-8.04-6.24C.74 15.92 0 19.86 0 24c0 4.14.74 8.08 2.2 11.68l8.4-6.22z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.92-2.14 15.9-5.82l-7.24-5.62c-2 1.34-4.58 2.14-8.66 2.14-6.26 0-11.64-3.52-13.4-8.92l-8.4 6.22C6.4 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+              </svg>
               Vincular con Google
             </button>
           </div>
