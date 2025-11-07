@@ -1,4 +1,51 @@
-# Estado del Proyecto - 3 de Noviembre de 2025 (Noche)
+# Estado del Proyecto — 7 Nov 2025 (Tarde)
+Vigente: 2025-11-07
+
+Convención de actualización
+- Mantener este bloque como vigente (última fecha).
+- Borrar lo ya implementado; solo listar pendientes/QA actuales.
+- Opcional: mover el bloque anterior a “Historial — <fecha>”.
+
+Resumen
+- Menú móvil: overlay + panel lateral con bloqueo de scroll, foco inicial, trap de tabulación y Escape para cerrar.
+- “Cómo Funciona” (móvil): rediseñado con tarjetas apiladas (Opción 1), mayor legibilidad y estética.
+- Supabase Auth Linking (Google): componente para vincular/desvincular cuentas integrado en perfiles.
+- Despliegue: cambios publicados en Vercel producción para verificación.
+
+Producción
+- URL activa: https://tuprestamo-react-a0y2o8gpt-isaac-alfaros-projects.vercel.app
+
+Cambios por archivo
+- `src/components/Header.css`: estilos para `.mobile-menu-overlay` y `.mobile-menu-panel` (slide-in, sombras) y elementos del menú móvil.
+- `src/components/Header.jsx`: mejoras de a11y (foco, Escape, trap, scroll lock) y estructura del panel móvil.
+- `src/components/ComoFunciona.css`: layout móvil con tarjetas apiladas (100% ancho, padding 16px, radius, shadow).
+- `src/components/ComoFunciona.jsx`: import de estilos móviles.
+- `src/components/AuthLinker.jsx`: nuevo componente de vinculación de identidades (Google) vía Supabase Auth v2.
+- `src/InvestorProfile.jsx`, `src/Profile.jsx`: integración de `AuthLinker` bajo la sección “Seguridad”.
+
+Pendientes (Supabase Dashboard — requeridos)
+1) Activar proveedor Google (Authentication → Providers → Google → ON).
+2) Configurar Client ID/Secret de Google y autorizar redirect: `https://<PROJECT-REF>.supabase.co/auth/v1/callback`.
+3) Authentication → Settings: Site URL (dominio Vercel prod), Additional Redirect URLs (previews de Vercel + `http://localhost:5173`).
+4) Activar “Allow linking of multiple identities”.
+
+QA sugerido
+- Vincular Google desde Perfil: listar identidades, vincular, confirmar retorno a la app, ver método en la lista.
+- Desvincular: no permitir si quedaría la cuenta sin método o si es email/password.
+- Menú móvil: abrir/cerrar, bloqueo de scroll, Escape y navegación por Tab dentro del panel.
+- “Cómo Funciona” (móvil): 5 tarjetas apiladas, tipografía legible y spacing correcto.
+
+Siguientes pasos (opcionales)
+- Pantalla de Auth: añadir botón “Continuar con Google” (sign-in social estándar).
+- Header: exponer `aria-expanded`/`aria-controls` en el botón y animar a “X” al abrir.
+- Apple Sign-in: planificar setup (Service ID, Team ID, Key ID, Private Key) y habilitar provider.
+
+Nota
+Este STATUS reemplaza versiones previas extensas. Mantenerlo breve y accionable a partir de ahora.
+
+---
+
+## Historial — 3 Nov 2025 (Noche)
 
 Resumen rápido
 
@@ -26,7 +73,7 @@ Resumen de hoy (flujo INVERSIONISTA)
   - Badge rojo de notificaciones restablecido.
   - Ya no marca como leídas al abrir la campana; persisten hasta acción del usuario.
 - Verificación (supabase/functions/verificar-identidad-inversionista):
-  - Idempotencia de notificación (solo si cambió el estado via UPDATE…RETURNING).
+  - Idempotencia de notificación (solo si cambió el estado vía UPDATE RETURNING).
   - Inserta auditoría en `analisis_documentos` (proveedor + datos extraídos).
   - Si estado = “verificado”: upsert de cuenta bancaria desde `verification_drafts` → `cuentas_bancarias_inversionistas` (por `user_id`).
 - Infra: redeploy de Functions (Supabase) y deploy de producción (Vercel).
@@ -37,7 +84,7 @@ Problemas abiertos (prioridad alta)
 
 1) OCR KYC (mejora del prompt)
    - Extraer: `numero_ci`, `expiracion` (con meses literales), `candidatos_numero_ci`, `ocr_confidence`.
-   - Normalizar fecha (p. ej., “12 de Abril de 2031” → YYYY-MM-DD) y bloquear si expiración vencida.
+   - Normalizar fecha (p. ej., “12 de abril de 2031” → YYYY-MM-DD) y bloquear si expiración vencida.
 
 2) Revisión manual (cuando OCR falla)
    - Encolar en `public.kyc_review_queue` (crear tabla) y agregar panel admin mínimo para aprobar/rechazar.
@@ -58,11 +105,11 @@ Flujo KYC inversionista (actual)
 - Función:
   - URL firmada; OCR con Gemini; parseo robusto de JSON.
   - Auditoría: inserta en `analisis_documentos` (proveedor + datos extraídos).
-  - Actualiza `profiles.estado_verificacion` (idempotente) y notifica (in‑app + email con CTA consistente).
+  - Actualiza `profiles.estado_verificacion` (idempotente) y notifica (in-app + email con CTA consistente).
   - Si estado = “verificado”: upsert de cuenta bancaria en `cuentas_bancarias_inversionistas` desde `verification_drafts`.
 - Front:
   - Dashboard: Toast automático; Realtime; pill oculta en “verificado”.
-  - Header: badge rojo visible al haber no leídas; no se auto‑marcan como leídas.
+  - Header: badge rojo visible al haber no leídas; no se auto-marcan como leídas.
 
 ---
 
@@ -84,4 +131,3 @@ Enlaces útiles
 - Retiros: `/retiro`
 - Landing “Quiero Invertir”: `/`
 - Edge Functions: `verificar-identidad-inversionista`, `handle-new-solicitud`, `save-investor-lead`, `create-notification`
-

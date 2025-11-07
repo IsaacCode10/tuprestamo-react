@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Hero from './Hero';
@@ -24,7 +24,7 @@ const LandingPage = () => {
     setModalRole(null);
   };
 
-  // Abrir el formulario de interés para inversionistas vía query (?open=investor-form)
+  // Abrir el formulario de interes para inversionistas via query (?open=investor-form)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const open = params.get('open');
@@ -33,11 +33,24 @@ const LandingPage = () => {
     }
   }, [location.search]);
 
+  const siteOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://tuprestamobo.com');
+
   return (
     <>
       <Helmet>
-        <title>Tu Préstamo – MVP Fintech Bolivia</title>
-        <meta name="description" content="Tu Préstamo: refinancia tus tarjetas de crédito o invierte con seguridad en Bolivia." />
+        <title>Tu Pr&eacute;stamo Bolivia &mdash; Refinanci&aacute; e Invert&iacute;</title>
+        <meta name="description" content="Refinanci&aacute; tus tarjetas con cuota fija y tasa menor al 24%. Invert&iacute; y recib&iacute; pagos mensuales. Comisi&oacute;n de originaci&oacute;n Bs 450 hasta Bs 10.000." />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Tu Pr\u00E9stamo',
+            url: siteOrigin,
+            logo: `${siteOrigin}/Logo-Tu-Prestamo.png`,
+            sameAs: []
+          })}
+        </script>
+        <link rel="canonical" href="https://tuprestamobo.com" />
       </Helmet>
       <Hero />
       <Beneficios />
