@@ -7,10 +7,12 @@ Convención de actualización
 - Opcional: mover el bloque anterior a “Historial — <fecha>”.
 
 Resumen
-- Menú móvil: overlay + panel lateral con bloqueo de scroll, foco inicial, trap de tabulación y Escape para cerrar.
-- “Cómo Funciona” (móvil): rediseñado con tarjetas apiladas (Opción 1), mayor legibilidad y estética.
-- Supabase Auth Linking (Google): componente para vincular/desvincular cuentas integrado en perfiles.
-- Despliegue: cambios publicados en Vercel producción para verificación.
+- Landing: Hero restaurado (refinanciá con mejores tasas), se eliminó “Comparativa”, Beneficios con íconos y grilla 3+2 centrada, SEO actualizado.
+- Menú móvil: overlay lateral robusto (bloqueo de scroll, foco, Escape, trap de Tab); fixes de visibilidad y altura (auto/max-height, borde redondeado).
+- Cómo Funciona: sin marcas de terceros; desembolso dirigido al banco; originación por nivel A 3% / B 4% / C 5%; CSS incluido para build.
+- FAQ Inversionista: modelo no-custodia (sin “Fondos disponibles”/“Retiros”); sin breadcrumbs/back cuando no hay sesión.
+- Legales: Privacidad y Términos sin placeholders de “Última actualización” ni stack tecnológico; Ley aplicable: Bolivia.
+- Infra: build corregido (faltante `src/components/ComoFunciona.css`).
 
 Producción
 - URL activa: https://tuprestamo-react-a0y2o8gpt-isaac-alfaros-projects.vercel.app
@@ -32,8 +34,22 @@ Pendientes (Supabase Dashboard — requeridos)
 QA sugerido
 - Vincular Google desde Perfil: listar identidades, vincular, confirmar retorno a la app, ver método en la lista.
 - Desvincular: no permitir si quedaría la cuenta sin método o si es email/password.
-- Menú móvil: abrir/cerrar, bloqueo de scroll, Escape y navegación por Tab dentro del panel.
+- Menú móvil: abrir/cerrar, bloqueo de scroll, Escape y navegación por Tab dentro del panel; sin “espacio blanco” extra.
 - “Cómo Funciona” (móvil): 5 tarjetas apiladas, tipografía legible y spacing correcto.
+
+Pendientes E2E (lanzamiento)
+- E2E Inversionista
+  - Registro/inicio sin sesión → ver Landing correcta (Hero/Beneficios).
+  - KYC completo → estado verificado persiste; sin breadcrumbs/back en FAQ si no hay sesión.
+  - Explorar Oportunidades → invertir (mín. Bs 700) → al 100%: flujo marca financiada.
+  - Pagos: en cada ciclo, transferencia automática del neto a cuenta bancaria (no hay “Retiros” ni “Fondos disponibles”).
+  - Notificaciones: creación y lectura manual (no auto-leídas).
+
+- E2E Prestatario
+  - Solicitud → verificación de saldo deudor → cálculo gross-up según nivel (A/B/C).
+  - Aprobación → fondeo → desembolso dirigido al banco acreedor (no a la cuenta del prestatario).
+  - Amortización: generar tabla (ejecutar `sql/amortizacion.sql` y `generate_amortizacion(...)`).
+  - Dashboard prestatario: CTA “Pago Extra” (registro de intención) y UX estable.
 
 Siguientes pasos (opcionales)
 - Pantalla de Auth: añadir botón “Continuar con Google” (sign-in social estándar).
@@ -131,3 +147,28 @@ Enlaces útiles
 - Retiros: `/retiro`
 - Landing “Quiero Invertir”: `/`
 - Edge Functions: `verificar-identidad-inversionista`, `handle-new-solicitud`, `save-investor-lead`, `create-notification`
+
+---
+
+## Actualizacion — 7 Nov 2025 (Noche)
+
+Implementado hoy
+- Branding meta/OG/Twitter corregido y assets public agregados (SEO/preview).
+- Landing: posicionamiento "Cero comisiones por pago anticipado" (Hero, Beneficios, Comparativa, FAQ).
+- Prepagos (MVP): boton "Realizar Pago Extra" en dashboard del prestatario aprobado/desembolsado.
+  - Modal con simulacion local (metodo frances): mantiene cuota y reduce plazo; muestra ahorro en intereses.
+  - Registra intencion en tabla pagos_extra_solicitados (si existe) y evento analytics.
+- SQL base: sql/amortizacion.sql con tablas mortizaciones y pagos_extra_solicitados + funcion generate_amortizacion(...).
+- Google Sign-In: revertido en /auth y en activacion; se retomara con Custom Domain (Supabase Pro).
+
+Pendientes inmediatos
+- Ejecutar sql/amortizacion.sql en Supabase (SQL Editor) para crear tablas y funcion.
+- Generar cronograma al "desembolsar" (ejecutar generate_amortizacion(...) manual o activar trigger opcional del script).
+- Definir donde mostrar la tabla de amortizacion en el dashboard y leer public.amortizaciones.
+- Mantener calculadoras sin logica de prepago (confirmado).
+
+Rutas/archivos claves
+- index.html, src/components/LandingPage.jsx
+- src/components/Hero.jsx, src/components/Beneficios.jsx, src/components/Comparativa.jsx, src/components/FAQ.jsx
+- src/BorrowerDashboard.jsx (CTA y modal), src/utils/amortization.js
+- sql/amortizacion.sql
