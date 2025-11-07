@@ -1042,6 +1042,13 @@ header.header {
 
 /* Ensure the panel is visible whenever overlay is present (robustness) */
 .mobile-menu-overlay .mobile-menu-panel { display: block !important; z-index: 1002; }
+
+/* Override: stack 'Cómo Funciona' cards on mobile (last-wins) */
+@media (max-width: 768px) {
+  .steps-row { display: block !important; margin-top: 1rem; }
+  .steps-row--centered { margin-top: 1rem; }
+  .step-card { width: 100% !important; max-width: none; margin-left: 0; margin-right: 0; }
+}
 /* Bloque inferior: derechos reservados */
 .footer__bottom--custom {
   margin-top: 0.5rem;
