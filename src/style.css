@@ -353,6 +353,17 @@ header.header {
   gap: 2rem;
 }
 
+/* Desktop: 3 cards on first row, 2 centered on second */
+@media (min-width: 992px) {
+  #beneficios .benefits-grid {
+    grid-template-columns: repeat(3, 1fr);
+    justify-items: stretch;
+  }
+  #beneficios .benefit-card:nth-child(5) {
+    grid-column: 2; /* center the last card */
+  }
+}
+
 .benefit-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: var(--radius);
