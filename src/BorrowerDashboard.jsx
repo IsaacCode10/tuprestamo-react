@@ -596,40 +596,53 @@ const BorrowerDashboard = () => {
   // Suscripción en tiempo real a cambios de 'documentos' para esta solicitud
   useEffect(() => {
     if (!solicitud?.id) return;
-    const channel = supabase
+
+    const handleDocumentChange = (payload) => {
+      const newDoc = payload.new;
+      if (!newDoc) return;
+      
+      setDocuments(currentDocs => {
+        const docIndex = currentDocs.findIndex(d => d.id === newDoc.id);
+        if (docIndex > -1) {
+          // El documento ya existe, lo actualizamos
+          const updatedDocs = [...currentDocs];
+          updatedDocs[docIndex] = newDoc;
+          return updatedDocs;
+        } else {
+          // Nuevo documento, lo añadimos
+          return [...currentDocs, newDoc];
+        }
+      });
+    };
+
+    const handleAnalysisChange = (payload) => {
+      const docType = payload.new?.document_type;
+      if (docType) {
+        setAnalyzedDocTypes(prev => {
+          const current = Array.isArray(prev) ? prev : [];
+          // Usar un Set para evitar duplicados fácilmente
+          const typesSet = new Set(current);
+          typesSet.add(docType);
+          return Array.from(typesSet);
+        });
+      }
+    };
+
+    const docChannel = supabase
       .channel(`documentos-solicitud-${solicitud.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` },
-        () => refreshDocs()
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, handleDocumentChange)
       .subscribe();
 
-    const channel2 = supabase
+    const analysisChannel = supabase
       .channel(`analisis-docs-solicitud-${solicitud.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` },
-        (payload) => {
-          try {
-            const docType = (payload?.new?.document_type || payload?.record?.document_type || payload?.old?.document_type) ?? null;
-            if (docType) {
-              setAnalyzedDocTypes(prev => {
-                const current = Array.isArray(prev) ? prev : [];
-                return current.includes(docType) ? current : [...current, docType];
-              });
-            }
-          } catch (_) {}
-          refreshDocs();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` }, handleAnalysisChange)
       .subscribe();
 
     return () => {
-      try { supabase.removeChannel(channel); } catch (_) {}
-      try { supabase.removeChannel(channel2); } catch (_) {}
+      supabase.removeChannel(docChannel);
+      supabase.removeChannel(analysisChannel);
     };
-  }, [solicitud?.id, refreshDocs]);
+  }, [solicitud?.id]);
 
   const handleLogout = async () => {
     trackEvent('Logged Out');
