@@ -189,6 +189,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                         onDocumentUploaded={onDocumentUploaded} 
                         requiredDocs={requiredDocs} 
                         analyzedDocTypes={analyzedDocTypes} 
+                        onRefreshData={refreshData}
                     />
                 </>
                 <FloatingFinan faqItems={inProgressFaqs} />
@@ -354,7 +355,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
 };
 
 // --- DOCUMENT MANAGER CONECTADO A LA NUEVA EDGE FUNCTION ---
-const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploaded, requiredDocs, analyzedDocTypes }) => {
+const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploaded, requiredDocs, analyzedDocTypes, onRefreshData }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [analysing, setAnalysing] = useState({});
   const [errors, setErrors] = useState({});
@@ -445,7 +446,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
 
       // Ejecutar análisis en segundo plano (dejamos que Realtime refresque la UI)
       setAnalysing(prev => ({ ...prev, [docId]: true }));
-      supabase.functions
+      await supabase.functions
         .invoke('analizar-documento-v2', {
           body: { filePath: filePath, documentType: docId, solicitud_id: solicitud.id },
         })
@@ -458,12 +459,11 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
         })
         .catch(err => {
           console.warn('Fallo invocando analizar-documento-v2:', err);
-        })
-        .finally(() => {
-          // Mantener "Analizando..." hasta que llegue analisis_documentos por Realtime
-          // (no forzamos false aquí)
         });
       trackEvent('Successfully Uploaded Document', { document_type: docId });
+      if (typeof onRefreshData === 'function') {
+        onRefreshData();
+      }
 
     } catch (error) {
       console.error("Error en el proceso de carga y análisis:", error);
@@ -607,6 +607,8 @@ const BorrowerDashboard = () => {
       }
     });
   };
+
+  const refreshData = useCallback(() => fetchData({ silent: true }), [fetchData]);
 
   useEffect(() => { 
     trackEvent('Viewed Borrower Dashboard');
