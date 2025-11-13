@@ -597,48 +597,66 @@ const BorrowerDashboard = () => {
   useEffect(() => {
     if (!solicitud?.id) return;
 
+    console.log('[Realtime] Suscribiendo a cambios para solicitud ID:', solicitud.id);
+
     const handleDocumentChange = (payload) => {
+      console.log('[Realtime] Evento de "documentos" recibido:', payload);
       const newDoc = payload.new;
-      if (!newDoc) return;
+      if (!newDoc) {
+        console.log('[Realtime] Payload de "documentos" no contenía datos nuevos. Ignorando.');
+        return;
+      }
       
       setDocuments(currentDocs => {
+        console.log('[Realtime] Actualizando estado de "documentos". Documento nuevo/actualizado:', newDoc.tipo_documento);
         const docIndex = currentDocs.findIndex(d => d.id === newDoc.id);
         if (docIndex > -1) {
-          // El documento ya existe, lo actualizamos
           const updatedDocs = [...currentDocs];
           updatedDocs[docIndex] = newDoc;
           return updatedDocs;
         } else {
-          // Nuevo documento, lo añadimos
           return [...currentDocs, newDoc];
         }
       });
     };
 
     const handleAnalysisChange = (payload) => {
+      console.log('[Realtime] Evento de "analisis_documentos" recibido:', payload);
       const docType = payload.new?.document_type;
       if (docType) {
+        console.log('[Realtime] Tipo de documento analizado:', docType);
         setAnalyzedDocTypes(prev => {
           const current = Array.isArray(prev) ? prev : [];
-          // Usar un Set para evitar duplicados fácilmente
           const typesSet = new Set(current);
+          if (typesSet.has(docType)) {
+            console.log('[Realtime] El tipo de documento ya estaba en el estado. No hay cambios.');
+            return prev;
+          }
           typesSet.add(docType);
+          console.log('[Realtime] Añadiendo nuevo tipo de documento al estado.');
           return Array.from(typesSet);
         });
+      } else {
+        console.log('[Realtime] Payload de "analisis_documentos" no contenía un document_type. Ignorando.');
       }
     };
 
     const docChannel = supabase
       .channel(`documentos-solicitud-${solicitud.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, handleDocumentChange)
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`[Realtime] Estado del canal 'documentos': ${status}`);
+      });
 
     const analysisChannel = supabase
       .channel(`analisis-docs-solicitud-${solicitud.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` }, handleAnalysisChange)
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`[Realtime] Estado del canal 'analisis_documentos': ${status}`);
+      });
 
     return () => {
+      console.log('[Realtime] Desuscribiendo de los canales.');
       supabase.removeChannel(docChannel);
       supabase.removeChannel(analysisChannel);
     };
