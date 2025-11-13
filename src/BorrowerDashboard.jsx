@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import './BorrowerDashboard.css';
 import SavingsCalculator from '@/components/SavingsCalculator.jsx';
-import { calcCuotaMensualTP } from '@/utils/loan.js';
+import { calcTPBreakdown } from '@/utils/loan.js';
 import AmortizationSchedule from '@/components/AmortizationSchedule.jsx';
 import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
@@ -143,13 +143,15 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
         setSimulation(prev => ({ ...prev, ...newValues }));
     };
 
-    const { totalAPagar, commission: originacionMonto, minApplied, monthlyPaymentTotal } = calcularCostosTuPrestamo(
+    const breakdownTP = calcTPBreakdown(
         parseFloat(simulation.montoDeuda),
         oportunidadObj?.tasa_interes_prestatario,
         simulation.plazo,
         oportunidadObj?.comision_originacion_porcentaje
     );
-    const pagoTotalMensualTP = monthlyPaymentTotal > 0 ? monthlyPaymentTotal : 0;
+    const originacionMonto = breakdownTP.originacion || 0;
+    const minApplied = breakdownTP.minApplied || false;
+    const pagoTotalMensualTP = Number(breakdownTP.monthlyPaymentTotal) || 0;
 
     const requiredDocs = getRequiredDocs(solicitud.situacion_laboral);
     const allDocumentsUploaded = requiredDocs.every(doc => 
@@ -212,65 +214,12 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
   );
 };
 
-const calcularCostosTuPrestamo = (principalNet, annualRate, termMonths, originacion_porcentaje) => {
-    if (!principalNet || !annualRate || !termMonths || !originacion_porcentaje) {
-        return { totalAPagar: 0, commission: 0, minApplied: false, principalBruto: 0, monthlyPayment: 0, monthlyPaymentTotal: 0 };
-    }
-    const net = Number(principalNet) || 0;
-    const p = Number(originacion_porcentaje) / 100;
-    // Política MVP: 450 Bs fijos hasta 10.000 Bs netos; arriba, % con gross-up.
-    const MIN_ORIGINACION = 450;
-    const THRESHOLD_NET = 10000;
-    let commission = 0;
-    let principalBruto = 0;
-    let minApplied = false;
-    if (net <= THRESHOLD_NET) {
-        commission = MIN_ORIGINACION;
-        principalBruto = net + commission;
-        minApplied = true;
-    } else {
-        const feePctIfGross = net * p / (1 - p);
-        commission = feePctIfGross;
-        principalBruto = net / (1 - p);
-        minApplied = false;
-    }
-    const monthlyRate = Number(annualRate) / 100 / 12;
-    const n = Number(termMonths) || 0;
-    let pmt = 0;
-    if (n > 0) {
-        pmt = monthlyRate > 0 ? (principalBruto * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n)) : (principalBruto / n);
-    }
-    // Incluir costo de administración y seguro (0.15% mensual sobre saldo, mínimo Bs 10) promedio
-    const serviceFeeRate = 0.0015;
-    const minServiceFee = 10;
-    let balance = principalBruto;
-    let totalServiceFee = 0;
-    for (let i = 0; i < n; i++) {
-        const interestPayment = balance * monthlyRate;
-        const principalPayment = (pmt || 0) - interestPayment;
-        const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
-        totalServiceFee += isFinite(serviceFee) ? serviceFee : 0;
-        balance -= isFinite(principalPayment) ? principalPayment : 0;
-    }
-    const avgServiceFee = n > 0 ? (totalServiceFee / n) : 0;
-    const monthlyPaymentTotal = (pmt || 0) + avgServiceFee;
-    const totalAPagar = isFinite(pmt) ? pmt * n : 0; // mantiene compatibilidad
-    return { totalAPagar, commission, minApplied, principalBruto, monthlyPayment: pmt, monthlyPaymentTotal };
-};
-
 const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => {
   const monto = Number(simulation.montoDeuda) || 0;
   const tasaBancoAnual = Number(simulation.tasaActual) || 0;
   const plazo = Number(simulation.plazo) || 0;
-  const costoMant = Number(simulation.costoMantenimientoBanco) || 0;
-
-  const monthlyRateBanco = tasaBancoAnual / 100 / 12;
-  const cuotaBanco = monthlyRateBanco > 0 && plazo > 0
-    ? (monto * monthlyRateBanco) / (1 - Math.pow(1 + monthlyRateBanco, -plazo)) + costoMant
-    : 0;
   const tasaTP = oportunidad?.tasa_interes_prestatario ?? null;
-  const comisionOriginacion = oportunidad?.comision_originacion_porcentaje ?? null;
-  const cuotaTpResumen = calcCuotaMensualTP(monto, tasaTP, plazo, comisionOriginacion);
+  const cuotaTpResumen = pagoTotalMensualTP;
 
   const summaryItems = [
     {
@@ -299,10 +248,7 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) 
     {
       id: 'tasa-banco',
       title: 'Tasa Banco (anual)',
-      value: tasaBancoAnual ? `${tasaBancoAnual.toFixed(1)}%` : '-',
-      extra: cuotaBanco > 0 && pagoTotalMensualTP > 0
-        ? `Ahorro vs. banco: Bs ${(cuotaBanco - pagoTotalMensualTP).toFixed(2)}`
-        : null
+      value: tasaBancoAnual ? `${tasaBancoAnual.toFixed(1)}%` : '-'
     },
   ];
 
