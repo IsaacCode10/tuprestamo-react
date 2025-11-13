@@ -127,7 +127,7 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
 };
 
 // --- VISTA PARA SOLICITUD EN PROGRESO ---
-const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLogout, fetchData, analyzedDocTypes }) => {
+const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploaded, onLogout, analyzedDocTypes }) => {
     const oportunidadObj = Array.isArray(solicitud.oportunidades) && solicitud.oportunidades.length > 0
         ? solicitud.oportunidades[0]
         : null;
@@ -182,7 +182,14 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
                         simulation={simulation}
                         onSimulationChange={handleSimulationChange}
                     />
-                    <DocumentManager solicitud={solicitud} user={user} uploadedDocuments={documents} onUpload={fetchData} requiredDocs={requiredDocs} analyzedDocTypes={analyzedDocTypes} />
+                    <DocumentManager 
+                        solicitud={solicitud} 
+                        user={user} 
+                        uploadedDocuments={documents} 
+                        onDocumentUploaded={onDocumentUploaded} 
+                        requiredDocs={requiredDocs} 
+                        analyzedDocTypes={analyzedDocTypes} 
+                    />
                 </>
                 <FloatingFinan faqItems={inProgressFaqs} />
             </div>
@@ -347,7 +354,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
 };
 
 // --- DOCUMENT MANAGER CONECTADO A LA NUEVA EDGE FUNCTION ---
-const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, requiredDocs, analyzedDocTypes }) => {
+const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploaded, requiredDocs, analyzedDocTypes }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [analysing, setAnalysing] = useState({});
   const [errors, setErrors] = useState({});
@@ -423,11 +430,15 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
       await supabase.storage.from('documentos-prestatarios').upload(filePath, file, { upsert: true });
       setUploadProgress(prev => ({ ...prev, [docId]: 100 }));
 
-      await supabase.from('documentos').upsert({ solicitud_id: solicitud.id, user_id: user.id, tipo_documento: docId, nombre_archivo: fileName, url_archivo: filePath, estado: 'subido' }, { onConflict: ['solicitud_id', 'tipo_documento'] });
-      // Refresh sin pantalla de carga global, usando el callback del padre
-      if (typeof onUpload === 'function') {
-        try { await onUpload({ silent: true }); } catch (_) {}
+      const { data: newDoc, error: upsertError } = await supabase.from('documentos').upsert({ solicitud_id: solicitud.id, user_id: user.id, tipo_documento: docId, nombre_archivo: fileName, url_archivo: filePath, estado: 'subido' }, { onConflict: ['solicitud_id', 'tipo_documento'] }).select().single();
+      
+      if (upsertError) throw upsertError;
+
+      // Actualizar estado local inmediatamente para reflejar la subida.
+      if (typeof onDocumentUploaded === 'function') {
+        onDocumentUploaded(newDoc);
       }
+
       if (docId === 'autorizacion_infocred_firmada') {
         try { trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, file: fileName }); } catch (_) {}
       }
@@ -584,9 +595,18 @@ const BorrowerDashboard = () => {
     }
   }, [navigate]);
 
-  const refreshDocs = useCallback(() => {
-    fetchData({ silent: true });
-  }, [fetchData]);
+  const handleDocumentUploaded = (newDoc) => {
+    setDocuments(currentDocs => {
+      const docIndex = currentDocs.findIndex(d => d.id === newDoc.id);
+      if (docIndex > -1) {
+        const updatedDocs = [...currentDocs];
+        updatedDocs[docIndex] = newDoc;
+        return updatedDocs;
+      } else {
+        return [...currentDocs, newDoc];
+      }
+    });
+  };
 
   useEffect(() => { 
     trackEvent('Viewed Borrower Dashboard');
@@ -678,7 +698,7 @@ const BorrowerDashboard = () => {
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;
 
-  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onUpload={fetchData} onLogout={handleLogout} fetchData={fetchData} analyzedDocTypes={analyzedDocTypes} />;
+  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onDocumentUploaded={handleDocumentUploaded} onLogout={handleLogout} analyzedDocTypes={analyzedDocTypes} />;
 };
 
 export default BorrowerDashboard;
