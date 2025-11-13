@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import { resetMixpanel } from './analytics';
 import { Link, useNavigate } from 'react-router-dom';
@@ -182,7 +182,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
                         simulation={simulation}
                         onSimulationChange={handleSimulationChange}
                     />
-                    <DocumentManager solicitud={solicitud} user={user} uploadedDocuments={documents} onUpload={fetchData} requiredDocs={requiredDocs} />
+                    <DocumentManager solicitud={solicitud} user={user} uploadedDocuments={documents} onUpload={fetchData} requiredDocs={requiredDocs} analyzedDocTypes={analyzedDocTypes} />
                 </>
                 <FloatingFinan faqItems={inProgressFaqs} />
             </div>
@@ -236,7 +236,7 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) 
     },
     {
       id: 'cuota',
-      title: 'Cuota Mensual Tu Préstamo',
+      title: 'Cuota Mensual Total',
       value: cuotaTpResumen > 0 ? `Bs ${cuotaTpResumen.toFixed(2)}` : '-',
       tooltip: 'Incluye capital + interés + costo de administración y seguro. Monto final sujeto a validación de documentos.'
     },
@@ -376,6 +376,21 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
     fetchSigned();
   }, [uploadedDocuments]);
 
+  useEffect(() => {
+    if (!analyzedDocTypes || analyzedDocTypes.length === 0) return;
+    setAnalysing(prev => {
+      const next = { ...prev };
+      let changed = false;
+      analyzedDocTypes.forEach(type => {
+        if (next[type]) {
+          next[type] = false;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [analyzedDocTypes]);
+
   const handleFileUpload = async (file, docId) => {
     if (!file) return;
     trackEvent('Started Document Upload', { document_type: docId });
@@ -512,7 +527,7 @@ const BorrowerDashboard = () => {
   const [analyzedDocTypes, setAnalyzedDocTypes] = useState([]);
   const navigate = useNavigate();
 
-  const fetchData = async (opts = {}) => {
+  const fetchData = useCallback(async (opts = {}) => {
     const silent = opts && opts.silent === true;
     if (!silent) setLoading(true);
     try {
@@ -567,19 +582,27 @@ const BorrowerDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  const refreshDocs = useCallback(() => {
+    fetchData({ silent: true });
+  }, [fetchData]);
 
   useEffect(() => { 
     trackEvent('Viewed Borrower Dashboard');
     fetchData(); 
-  }, [navigate]);
+  }, [fetchData, navigate]);
 
   // Suscripción en tiempo real a cambios de 'documentos' para esta solicitud
   useEffect(() => {
     if (!solicitud?.id) return;
     const channel = supabase
       .channel(`documentos-solicitud-${solicitud.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, () => refreshDocs())
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` },
+        () => refreshDocs()
+      )
       .subscribe();
 
     const channel2 = supabase
@@ -587,15 +610,7 @@ const BorrowerDashboard = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` },
-        (payload) => {
-          try {
-            const docType = (payload && (payload.new?.document_type || payload.record?.document_type)) || null;
-            if (docType) {
-              setAnalysing(prev => ({ ...prev, [docType]: false }));
-            }
-          } catch (_) {}
-          refreshDocs();
-        }
+        () => refreshDocs()
       )
       .subscribe();
 
@@ -603,7 +618,7 @@ const BorrowerDashboard = () => {
       try { supabase.removeChannel(channel); } catch (_) {}
       try { supabase.removeChannel(channel2); } catch (_) {}
     };
-  }, [solicitud?.id]);
+  }, [solicitud?.id, refreshDocs]);
 
   const handleLogout = async () => {
     trackEvent('Logged Out');
