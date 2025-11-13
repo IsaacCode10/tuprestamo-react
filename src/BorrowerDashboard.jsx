@@ -613,6 +613,29 @@ const BorrowerDashboard = () => {
     fetchData(); 
   }, [fetchData, navigate]);
 
+  useEffect(() => {
+    if (!solicitud?.id) return;
+    const channel = supabase
+      .channel(`analisis-docs-solicitud-${solicitud.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` },
+        (payload) => {
+          const docType = (payload?.new?.document_type || payload?.record?.document_type || payload?.old?.document_type) ?? null;
+          if (!docType) return;
+          setAnalyzedDocTypes(prev => {
+            const current = Array.isArray(prev) ? prev : [];
+            if (current.includes(docType)) return prev;
+            return [...current, docType];
+          });
+        }
+      )
+      .subscribe();
+    return () => {
+      try { supabase.removeChannel(channel); } catch (_) {}
+    };
+  }, [solicitud?.id]);
+
   // Suscripción en tiempo real a cambios de 'documentos' para esta solicitud
   useEffect(() => {
     if (!solicitud?.id) return;
