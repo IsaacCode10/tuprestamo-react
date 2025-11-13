@@ -5,11 +5,12 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import './BorrowerDashboard.css';
 import SavingsCalculator from '@/components/SavingsCalculator.jsx';
+import { calcCuotaMensualTP } from '@/utils/loan.js';
+import AmortizationSchedule from '@/components/AmortizationSchedule.jsx';
 import FloatingFinan from '@/components/FloatingFinan.jsx';
 import HelpTooltip from '@/components/HelpTooltip.jsx';
 import { annuityPayment, applyExtraPaymentReduceTerm } from '@/utils/amortization.js';
 import NotificationBell from './components/NotificationBell.jsx';
-import Header from './components/Header';
 import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 import { trackEvent } from '@/analytics.js';
 
@@ -48,7 +49,7 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
       setMsg('Solicitud registrada. Te contactaremos para procesar el pago.');
       setTimeout(() => { setShowModal(false); setMsg(''); setAmount(''); }, 1200);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
   return (
@@ -67,6 +68,8 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
         <p style={{ color: '#385b64' }}>Sin penalidades. Tu pago extra se aplica 100% a capital y reducimos el plazo.</p>
         <button className="btn btn--primary" onClick={() => setShowModal(true)}>Realizar Pago Extra</button>
       </div>
+
+      <AmortizationSchedule userId={user?.id} />
 
       {showModal && (
         <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
@@ -93,15 +96,15 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
 };
 
 // --- FUNCIÓN HELPER MOVILIZADA PARA SER REUTILIZABLE ---
-const getRequiredDocs = (situacionLaboral) => {
-  const baseDocs = [
-    { id: 'autorizacion_infocred', nombre: 'Autorización Consulta Infocred', definition: 'Documento generado automáticamente que nos autoriza a consultar tu historial crediticio.' },
-    { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
-    { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
-    { id: 'factura_servicio', nombre: 'Factura Servicio Básico', definition: 'Para confirmar tu dirección de residencia actual. Puede ser una factura de luz, agua o gas de los últimos 3 meses.' },
-    { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.' },
-    { id: 'selfie_ci', nombre: 'Selfie con Cédula de Identidad', definition: 'Una medida de seguridad adicional para prevenir el fraude y asegurar que realmente eres tú quien solicita el préstamo. Sostén tu CI al lado de tu cara.' },
-  ];
+  const getRequiredDocs = (situacionLaboral) => {
+    // Documentos base (sin la autorización firmada, que irá al final)
+    const baseDocs = [
+      { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
+      { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
+      { id: 'factura_servicio', nombre: 'Factura Servicio Básico', definition: 'Para confirmar tu dirección de residencia actual. Puede ser una factura de luz, agua o gas de los últimos 3 meses.' },
+      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.' },
+      { id: 'selfie_ci', nombre: 'Selfie con Cédula de Identidad', definition: 'Una medida de seguridad adicional para prevenir el fraude y asegurar que realmente eres tú quien solicita el préstamo. Sostén tu CI al lado de tu cara.' },
+    ];
   const situacionDocs = {
     'Dependiente': [
       { id: 'boleta_pago', nombre: 'Última Boleta de Pago', definition: 'Para verificar tus ingresos mensuales y tu relación laboral como dependiente.' },
@@ -117,7 +120,10 @@ const getRequiredDocs = (situacionLaboral) => {
       { id: 'boleta_jubilacion', nombre: 'Boleta de Pago de Jubilación', definition: 'Para verificar tus ingresos como jubilado y la regularidad de los mismos.' },
     ],
   };
-  return [...baseDocs, ...(situacionDocs[situacionLaboral] || [])];
+  const docs = [...baseDocs, ...(situacionDocs[situacionLaboral] || [])];
+  // Agregar al final la autorización firmada (fricción al final)
+  docs.push({ id: 'autorizacion_infocred_firmada', nombre: 'Autorización Consulta Infocred (Firmada a mano)', definition: 'Imprimí, firmá a mano dentro del recuadro y subí una foto nítida.' });
+  return docs;
 };
 
 // --- VISTA PARA SOLICITUD EN PROGRESO ---
@@ -137,13 +143,13 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
         setSimulation(prev => ({ ...prev, ...newValues }));
     };
 
-    const { totalAPagar, commission: originacionMonto, minApplied } = calcularCostosTuPrestamo(
+    const { totalAPagar, commission: originacionMonto, minApplied, monthlyPaymentTotal } = calcularCostosTuPrestamo(
         parseFloat(simulation.montoDeuda),
         oportunidadObj?.tasa_interes_prestatario,
         simulation.plazo,
         oportunidadObj?.comision_originacion_porcentaje
     );
-    const pagoTotalMensualTP = totalAPagar > 0 ? totalAPagar / simulation.plazo : 0;
+    const pagoTotalMensualTP = monthlyPaymentTotal > 0 ? monthlyPaymentTotal : 0;
 
     const requiredDocs = getRequiredDocs(solicitud.situacion_laboral);
     const allDocumentsUploaded = requiredDocs.every(doc => 
@@ -152,7 +158,6 @@ const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLog
 
     return (
         <>
-            <Header />
             <div className="borrower-dashboard">
                 <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Mi Solicitud' }]} />
                 <div className="dashboard-header">
@@ -209,7 +214,7 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
 
 const calcularCostosTuPrestamo = (principalNet, annualRate, termMonths, originacion_porcentaje) => {
     if (!principalNet || !annualRate || !termMonths || !originacion_porcentaje) {
-        return { totalAPagar: 0, commission: 0, minApplied: false, principalBruto: 0 };
+        return { totalAPagar: 0, commission: 0, minApplied: false, principalBruto: 0, monthlyPayment: 0, monthlyPaymentTotal: 0 };
     }
     const net = Number(principalNet) || 0;
     const p = Number(originacion_porcentaje) / 100;
@@ -235,8 +240,22 @@ const calcularCostosTuPrestamo = (principalNet, annualRate, termMonths, originac
     if (n > 0) {
         pmt = monthlyRate > 0 ? (principalBruto * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n)) : (principalBruto / n);
     }
-    const totalAPagar = isFinite(pmt) ? pmt * n : 0;
-    return { totalAPagar, commission, minApplied, principalBruto, monthlyPayment: pmt };
+    // Incluir costo de administración y seguro (0.15% mensual sobre saldo, mínimo Bs 10) promedio
+    const serviceFeeRate = 0.0015;
+    const minServiceFee = 10;
+    let balance = principalBruto;
+    let totalServiceFee = 0;
+    for (let i = 0; i < n; i++) {
+        const interestPayment = balance * monthlyRate;
+        const principalPayment = (pmt || 0) - interestPayment;
+        const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+        totalServiceFee += isFinite(serviceFee) ? serviceFee : 0;
+        balance -= isFinite(principalPayment) ? principalPayment : 0;
+    }
+    const avgServiceFee = n > 0 ? (totalServiceFee / n) : 0;
+    const monthlyPaymentTotal = (pmt || 0) + avgServiceFee;
+    const totalAPagar = isFinite(pmt) ? pmt * n : 0; // mantiene compatibilidad
+    return { totalAPagar, commission, minApplied, principalBruto, monthlyPayment: pmt, monthlyPaymentTotal };
 };
 
 const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, originacionMonto, minApplied }) => {
@@ -252,41 +271,55 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, or
 
   const tasaTP = oportunidad?.tasa_interes_prestatario ?? null;
   const comisionOriginacion = oportunidad?.comision_originacion_porcentaje ?? null;
+  // KPIs para la cinta de resumen (se actualizan con la simulación)
+  const ahorroMensual = Math.max(0, (cuotaBanco || 0) - (pagoTotalMensualTP || 0));
+  const ahorroPct = cuotaBanco > 0 ? (ahorroMensual / cuotaBanco) * 100 : 0;
+  const cuotaTpResumen = calcCuotaMensualTP(monto, tasaTP, plazo, comisionOriginacion);
+
+  // cuotaTpResumen ya calculada con helper común
 
   return (
     <div className="card">
       <h2>Resumen de tu Solicitud</h2>
-      <div className="status-card-content">
-        <p className="status-highlight">Tu solicitud está en proceso. Revisa los datos clave:</p>
-        <div className="summary-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-          gap: '1rem',
-          textAlign: 'left'
-        }}>
-          <div className="summary-item"><strong>Monto Solicitado</strong><div>Bs. {monto.toLocaleString()}</div></div>
-          <div className="summary-item"><strong>Tasa Banco (anual)</strong><div>{tasaBancoAnual ? `${tasaBancoAnual.toFixed(1)}%` : '—'}</div></div>
-          <div className="summary-item"><strong>Tasa Propuesta (anual)</strong><div>{tasaTP != null ? `${Number(tasaTP).toFixed(1)}%` : '—'}</div></div>
-          <div className="summary-item"><strong>Cuota Mensual Banco</strong><div>Bs. {cuotaBanco > 0 ? cuotaBanco.toFixed(2) : '—'}</div></div>
-          <div className="summary-item"><strong>Cuota Mensual Tu Préstamo</strong><div>Bs. {pagoTotalMensualTP > 0 ? pagoTotalMensualTP.toFixed(2) : '—'}</div></div>
-          <div className="summary-item"><strong>Comisión de Originación</strong>
-            <div>{comisionOriginacion != null ? `${Number(comisionOriginacion).toFixed(1)}%` : '—'}</div>
-            {originacionMonto > 0 && (
-              <div style={{ fontSize: '0.9em', color: '#444' }}>Monto estimado: Bs. {Number(originacionMonto).toFixed(2)} {minApplied ? '(mínimo aplicado)' : ''}</div>
-            )}
+      <div className="summary-row">
+        <div className="kpi-card kpi-card--rate">
+          <div className="kpi-title">Tasa Propuesta (anual)</div>
+          <div className="kpi-rate">{tasaTP != null ? `${Number(tasaTP).toFixed(1)}%` : '-'}</div>
+          <span className="badge badge--success">Excelente perfil</span>
+          <div className="why-rate">
+            <HelpTooltip text={'Premiamos a los buenos perfiles como el tuyo.'} />
           </div>
         </div>
+        <div className="kpi-card">
+          <div className="kpi-title">Plazo</div>
+          <div className="kpi-value">{plazo || '-'} meses</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-title">Cuota Mensual Tu Préstamo</div>
+          <div className="kpi-value">{cuotaTpResumen > 0 ? `Bs ${cuotaTpResumen.toFixed(2)}` : '-'}</div>
+          <div className="kpi-help"><HelpTooltip text={'Incluye capital + interés + costo de administración y seguro. Monto final sujeto a validación de documentos.'} /></div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-title">Monto Solicitado</div>
+          <div className="kpi-value">Bs {monto.toLocaleString('es-BO')}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-title">Tasa Banco (anual)</div>
+          <div className="kpi-value">{tasaBancoAnual ? `${tasaBancoAnual.toFixed(1)}%` : '-'}</div>
+        </div>
       </div>
+      {/* Resumen sin duplicados: no renderizamos grilla adicional */}
     </div>
   );
 };
-const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled }) => {
+const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled, isAnalyzed }) => {
   const inputRef = useRef(null);
 
   const handleClick = () => {
     if (disabled) return;
     inputRef.current?.click();
   };
+
 
   const handleChange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -327,6 +360,9 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
       <div className="file-slot-info">
         <div className="file-slot-name">{doc.nombre}</div>
         <div className={`file-slot-status ${statusClass}`}>{statusText}</div>
+        {isAnalyzed ? (
+          <div className="ai-badge" aria-label="Analizado por IA">🧠 Analizado por IA</div>
+        ) : null}
         {error && <span className="file-slot-error">{error}</span>}
       </div>
       <div className="file-slot-action">➔</div>
@@ -351,11 +387,34 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
 };
 
 // --- DOCUMENT MANAGER CONECTADO A LA NUEVA EDGE FUNCTION ---
-const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, requiredDocs }) => {
+const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, requiredDocs, analyzedDocTypes }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [analysing, setAnalysing] = useState({});
   const [errors, setErrors] = useState({});
   const [isUploadingGlobal, setIsUploadingGlobal] = useState(false);
+  const [authPreprintUrl, setAuthPreprintUrl] = useState(null);
+  const uploadedSet = new Set((uploadedDocuments || []).map(d => d.tipo_documento));
+  const analyzedSet = new Set(analyzedDocTypes || []);
+  const othersComplete = (requiredDocs || [])
+    .filter(d => d.id !== 'autorizacion_infocred_firmada')
+    .every(d => uploadedSet.has(d.id));
+
+  useEffect(() => {
+    // buscar documento preimpreso para descarga
+    const pre = uploadedDocuments?.find(d => d.tipo_documento === 'autorizacion_infocred_preimpresa');
+    const fetchSigned = async () => {
+      if (!pre || !pre.url_archivo) { setAuthPreprintUrl(null); return; }
+      try {
+        const { data, error } = await supabase
+          .storage
+          .from('documentos-prestatarios')
+          .createSignedUrl(pre.url_archivo, 60 * 30); // 30 minutos
+        if (error) { setAuthPreprintUrl(null); return; }
+        setAuthPreprintUrl(data?.signedUrl || null);
+      } catch (_) { setAuthPreprintUrl(null); }
+    };
+    fetchSigned();
+  }, [uploadedDocuments]);
 
   const handleFileUpload = async (file, docId) => {
     if (!file) return;
@@ -367,7 +426,18 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
     }
 
     setIsUploadingGlobal(true);
-    setUploadProgress(prev => ({ ...prev, [docId]: 0 }));
+    setUploadProgress(prev => ({ ...prev, [docId]: 5 }));
+    // Progreso suave mientras sube (simulado) para mejor UX
+    let progressTimer;
+    try {
+      progressTimer = setInterval(() => {
+        setUploadProgress(prev => {
+          const curr = Number(prev[docId] || 0);
+          const next = Math.min(90, curr + 5);
+          return { ...prev, [docId]: next };
+        });
+      }, 300);
+    } catch (_) {}
     setErrors(prev => ({ ...prev, [docId]: null }));
 
     try {
@@ -379,6 +449,13 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
       setUploadProgress(prev => ({ ...prev, [docId]: 100 }));
 
       await supabase.from('documentos').upsert({ solicitud_id: solicitud.id, user_id: user.id, tipo_documento: docId, nombre_archivo: fileName, url_archivo: filePath, estado: 'subido' }, { onConflict: ['solicitud_id', 'tipo_documento'] });
+      // Refresh sin pantalla de carga global, usando el callback del padre
+      if (typeof onUpload === 'function') {
+        try { await onUpload({ silent: true }); } catch (_) {}
+      }
+      if (docId === 'autorizacion_infocred_firmada') {
+        try { trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, file: fileName }); } catch (_) {}
+      }
 
       // Ejecutar análisis en segundo plano (dejamos que Realtime refresque la UI)
       setAnalysing(prev => ({ ...prev, [docId]: true }));
@@ -397,8 +474,8 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
           console.warn('Fallo invocando analizar-documento-v2:', err);
         })
         .finally(() => {
-          setAnalysing(prev => ({ ...prev, [docId]: false }));
-          // No forzamos refresco; Realtime gestiona las actualizaciones
+          // Mantener "Analizando..." hasta que llegue analisis_documentos por Realtime
+          // (no forzamos false aquí)
         });
       trackEvent('Successfully Uploaded Document', { document_type: docId });
 
@@ -409,6 +486,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
     } finally {
       setUploadProgress(prev => ({ ...prev, [docId]: undefined }));
       setIsUploadingGlobal(false);
+      try { clearInterval(progressTimer); } catch(_) {}
     }
   };
 
@@ -420,18 +498,42 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
         {requiredDocs.map(doc => {
           // Considerar documento "subido" si existe registro, sin depender del estado específico
           const isUploaded = uploadedDocuments.some(d => d.tipo_documento === doc.id);
+          const isAnalyzed = analyzedSet.has(doc.id);
+          // El estado "analizando" se controla localmente solo para el doc en subida
+          const isAuthFirmada = doc.id === 'autorizacion_infocred_firmada';
           return (
-            <FileSlot
-              key={doc.id}
-              doc={doc}
-              isUploaded={isUploaded}
-              isUploading={!!uploadProgress[doc.id]}
-              isAnalysing={!!analysing[doc.id]}
-              progress={uploadProgress[doc.id]}
-              error={errors[doc.id]}
-              onFileSelect={(file) => handleFileUpload(file, doc.id)}
-              disabled={isUploadingGlobal && !uploadProgress[doc.id]}
-            />
+            <div key={doc.id}>
+              {isAuthFirmada && (
+                <div className="info-box" style={{marginBottom:8, background:'#f7fbfb', border:'1px solid #e6f4f3', borderRadius:8, padding:10}}>
+                  <div style={{display:'flex',gap:8,alignItems:'center',justifyContent:'space-between',flexWrap:'wrap'}}>
+                    <div style={{display:'inline-flex',alignItems:'center',gap:6}}>
+                      <span style={{color:'#385b64',fontWeight:700}}>Autorización INFOCRED (requisito ASFI)</span>
+                      <HelpTooltip text={'Autorización para consultar tu historial crediticio en INFOCRED; requisito indispensable de ASFI para evaluar y aprobar el crédito.'} />
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{color:'#55747b'}}>Imprimí, firmá a mano y subí la foto.</span>
+                      <a href={authPreprintUrl || '#'} target="_blank" rel="noreferrer" className="btn btn--sm btn--primary" style={{opacity: authPreprintUrl?1:0.5, pointerEvents: authPreprintUrl? 'auto':'none'}} onClick={() => { if (authPreprintUrl) { try { trackEvent('Downloaded Authorization PDF', { solicitud_id: solicitud.id }); } catch (_) {} } }}>Descargar PDF</a>
+                      {!authPreprintUrl && <span style={{color:'#8a8a8a'}}>Generando…</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <FileSlot
+                key={doc.id}
+                doc={doc}
+                isUploaded={isUploaded}
+                isUploading={!!uploadProgress[doc.id]}
+                isAnalysing={!!analysing[doc.id]}
+                progress={uploadProgress[doc.id]}
+                error={errors[doc.id]}
+                onFileSelect={(file) => handleFileUpload(file, doc.id)}
+                disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !othersComplete)}
+                isAnalyzed={isAnalyzed}
+              />
+              {isAuthFirmada && !othersComplete && (
+                <div style={{marginTop:6, color:'#8a8a8a', fontSize:'0.9rem'}}>Paso final: subí primero los demás documentos.</div>
+              )}
+            </div>
           );
         })}
       </div>
@@ -447,10 +549,12 @@ const BorrowerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [documents, setDocuments] = useState([]);
+  const [analyzedDocTypes, setAnalyzedDocTypes] = useState([]);
   const navigate = useNavigate();
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (opts = {}) => {
+    const silent = opts && opts.silent === true;
+    if (!silent) setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate('/auth'); return; }
@@ -488,6 +592,14 @@ const BorrowerDashboard = () => {
         .eq('solicitud_id', solData.id);
       if (docsError) throw docsError;
       setDocuments(docsData || []);
+      // Analizados por IA
+      try {
+        const { data: analyzedData } = await supabase
+          .from('analisis_documentos')
+          .select('document_type')
+          .eq('solicitud_id', solData.id);
+        setAnalyzedDocTypes((analyzedData || []).map(d => d.document_type));
+      } catch (_) {}
 
     } catch (err) {
       console.error('Error cargando datos:', err);
@@ -507,11 +619,29 @@ const BorrowerDashboard = () => {
     if (!solicitud?.id) return;
     const channel = supabase
       .channel(`documentos-solicitud-${solicitud.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, () => refreshDocs())
+      .subscribe();
+
+    const channel2 = supabase
+      .channel(`analisis-docs-solicitud-${solicitud.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` },
+        (payload) => {
+          try {
+            const docType = (payload && (payload.new?.document_type || payload.record?.document_type)) || null;
+            if (docType) {
+              setAnalysing(prev => ({ ...prev, [docType]: false }));
+            }
+          } catch (_) {}
+          refreshDocs();
+        }
+      )
       .subscribe();
 
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
+      try { supabase.removeChannel(channel2); } catch (_) {}
     };
   }, [solicitud?.id]);
 
@@ -531,7 +661,7 @@ const BorrowerDashboard = () => {
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;
 
-  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onUpload={fetchData} onLogout={handleLogout} fetchData={fetchData} />;
+  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onUpload={fetchData} onLogout={handleLogout} fetchData={fetchData} analyzedDocTypes={analyzedDocTypes} />;
 };
 
 export default BorrowerDashboard;
