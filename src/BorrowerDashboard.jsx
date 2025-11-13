@@ -127,7 +127,7 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
 };
 
 // --- VISTA PARA SOLICITUD EN PROGRESO ---
-const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLogout, fetchData }) => {
+const InProgressApplicationView = ({ solicitud, user, documents, onUpload, onLogout, fetchData, analyzedDocTypes }) => {
     const oportunidadObj = Array.isArray(solicitud.oportunidades) && solicitud.oportunidades.length > 0
         ? solicitud.oportunidades[0]
         : null;
