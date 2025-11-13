@@ -610,7 +610,18 @@ const BorrowerDashboard = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` },
-        () => refreshDocs()
+        (payload) => {
+          try {
+            const docType = (payload?.new?.document_type || payload?.record?.document_type || payload?.old?.document_type) ?? null;
+            if (docType) {
+              setAnalyzedDocTypes(prev => {
+                const current = Array.isArray(prev) ? prev : [];
+                return current.includes(docType) ? current : [...current, docType];
+              });
+            }
+          } catch (_) {}
+          refreshDocs();
+        }
       )
       .subscribe();
 
