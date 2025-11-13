@@ -498,7 +498,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onUpload, require
                 doc={doc}
                 isUploaded={isUploaded}
                 isUploading={!!uploadProgress[doc.id]}
-                isAnalysing={!!analysing[doc.id]}
+                isAnalysing={!!analysing[doc.id] && !isAnalyzed}
                 progress={uploadProgress[doc.id]}
                 error={errors[doc.id]}
                 onFileSelect={(file) => handleFileUpload(file, doc.id)}
