@@ -258,57 +258,58 @@ const calcularCostosTuPrestamo = (principalNet, annualRate, termMonths, originac
     return { totalAPagar, commission, minApplied, principalBruto, monthlyPayment: pmt, monthlyPaymentTotal };
 };
 
-const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, originacionMonto, minApplied }) => {
+const StatusCard = ({ solicitud, oportunidad, simulation }) => {
   const monto = Number(simulation.montoDeuda) || 0;
   const tasaBancoAnual = Number(simulation.tasaActual) || 0;
   const plazo = Number(simulation.plazo) || 0;
-  const costoMant = Number(simulation.costoMantenimientoBanco) || 0;
-
-  const monthlyRateBank = tasaBancoAnual / 100 / 12;
-  const cuotaBanco = monthlyRateBank > 0 && plazo > 0
-    ? (monto * monthlyRateBank) / (1 - Math.pow(1 + monthlyRateBank, -plazo)) + costoMant
-    : 0;
 
   const tasaTP = oportunidad?.tasa_interes_prestatario ?? null;
   const comisionOriginacion = oportunidad?.comision_originacion_porcentaje ?? null;
-  // KPIs para la cinta de resumen (se actualizan con la simulación)
-  const ahorroMensual = Math.max(0, (cuotaBanco || 0) - (pagoTotalMensualTP || 0));
-  const ahorroPct = cuotaBanco > 0 ? (ahorroMensual / cuotaBanco) * 100 : 0;
   const cuotaTpResumen = calcCuotaMensualTP(monto, tasaTP, plazo, comisionOriginacion);
 
-  // cuotaTpResumen ya calculada con helper común
+  const summaryItems = [
+    {
+      id: 'tasa',
+      title: 'Tasa Propuesta (anual)',
+      value: tasaTP != null ? `${Number(tasaTP).toFixed(1)}%` : '-',
+      extra: tasaTP != null ? 'Excelente perfil' : null,
+      tooltip: 'Premiamos a los buenos perfiles como el tuyo.'
+    },
+    {
+      id: 'plazo',
+      title: 'Plazo',
+      value: plazo ? `${plazo} meses` : '-'
+    },
+    {
+      id: 'cuota',
+      title: 'Cuota Mensual Tu Préstamo',
+      value: cuotaTpResumen > 0 ? `Bs ${cuotaTpResumen.toFixed(2)}` : '-',
+      tooltip: 'Incluye capital + interés + costo de administración y seguro. Monto final sujeto a validación de documentos.'
+    },
+    {
+      id: 'monto',
+      title: 'Monto Solicitado',
+      value: `Bs ${monto.toLocaleString('es-BO')}`
+    }
+  ];
 
   return (
     <div className="card">
       <h2>Resumen de tu Solicitud</h2>
-      <div className="summary-row">
-        <div className="kpi-card kpi-card--rate">
-          <div className="kpi-title">Tasa Propuesta (anual)</div>
-          <div className="kpi-rate">{tasaTP != null ? `${Number(tasaTP).toFixed(1)}%` : '-'}</div>
-          <span className="badge badge--success">Excelente perfil</span>
-          <div className="why-rate">
-            <HelpTooltip text={'Premiamos a los buenos perfiles como el tuyo.'} />
+      <div className="loan-summary-grid loan-summary-grid--stacked">
+        {summaryItems.map((item) => (
+          <div key={item.id} className="loan-summary-card">
+            <div className="summary-card-title">{item.title}</div>
+            <div className="summary-card-value">{item.value}</div>
+            {item.extra && <div className="summary-card-subtext">{item.extra}</div>}
+            {item.tooltip && (
+              <div className="summary-card-help">
+                <HelpTooltip text={item.tooltip} />
+              </div>
+            )}
           </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-title">Plazo</div>
-          <div className="kpi-value">{plazo || '-'} meses</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-title">Cuota Mensual Tu Préstamo</div>
-          <div className="kpi-value">{cuotaTpResumen > 0 ? `Bs ${cuotaTpResumen.toFixed(2)}` : '-'}</div>
-          <div className="kpi-help"><HelpTooltip text={'Incluye capital + interés + costo de administración y seguro. Monto final sujeto a validación de documentos.'} /></div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-title">Monto Solicitado</div>
-          <div className="kpi-value">Bs {monto.toLocaleString('es-BO')}</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-title">Tasa Banco (anual)</div>
-          <div className="kpi-value">{tasaBancoAnual ? `${tasaBancoAnual.toFixed(1)}%` : '-'}</div>
-        </div>
+        ))}
       </div>
-      {/* Resumen sin duplicados: no renderizamos grilla adicional */}
     </div>
   );
 };

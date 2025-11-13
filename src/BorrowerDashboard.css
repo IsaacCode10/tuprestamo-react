@@ -243,6 +243,167 @@
     background-color: #5a6268;
 }
 
+/* Summary strip (TOFU) */
+.summary-strip {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  background: #f7fbfb;
+  border: 1px solid #e6f4f3;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.summary-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 260px;
+}
+
+.rate-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rate-line .label {
+  color: #385b64;
+  font-weight: 600;
+}
+
+.rate-line .rate {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0e6b62; /* brand primary dark */
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.badge--success {
+  background: #e8faf7;
+  color: #0e6b62;
+  border-color: #b9efe6;
+}
+
+.why-rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #51747c;
+  font-size: 0.9rem;
+}
+
+.why-rate .why-text {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.summary-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #e6f4f3;
+  background: #ffffff;
+  border-radius: 10px;
+}
+
+.chip .chip-label {
+  color: #55747b;
+  font-weight: 600;
+}
+
+.chip .chip-value {
+  color: #0e6b62;
+  font-weight: 700;
+}
+
+.chip--positive {
+  background: #effbf7;
+  border-color: #c9f0e6;
+}
+
+/* KPI row as large cards */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid #e6f4f3;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(14, 107, 98, 0.06);
+}
+
+.kpi-card--rate {
+  background: #f7fbfb;
+  border-color: #cfeee8;
+}
+
+.kpi-card--positive {
+  background: #effbf7;
+  border-color: #c9f0e6;
+}
+
+.kpi-title {
+  color: #385b64;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.kpi-rate {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #0e6b62;
+  line-height: 1.1;
+}
+
+.kpi-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0e6b62;
+}
+
+.kpi-help {
+  margin-top: 4px;
+}
+
+/* Small button variant */
+.btn.btn--sm {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  line-height: 1.1;
+}
+
+@media (max-width: 1100px) {
+  .summary-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .summary-row { grid-template-columns: 1fr; }
+}
+
 /* Logout Button */
 .logout-button {
     display: block;
@@ -479,6 +640,21 @@
   font-weight: 600;
 }
 
+/* AI Analyzed badge */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #1d7d5c;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .file-slot-error {
   color: #dc3545;
   font-size: 0.8rem;
@@ -527,6 +703,10 @@
   gap: 1rem;
   margin-bottom: 2.5rem;
   /* align-items: start; <-- Eliminado para que las tarjetas tengan la misma altura */
+}
+
+.loan-summary-grid--stacked {
+  grid-template-columns: 1fr;
 }
 
 .loan-summary-card {
@@ -583,6 +763,12 @@
   font-size: 0.9rem;
   color: #888;
   margin: 0.5rem 0 0 0;
+}
+
+.summary-card-help {
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: center;
 }
 
 .payment-cta-section {
