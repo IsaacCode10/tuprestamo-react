@@ -699,76 +699,64 @@
 
 .loan-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 2.5rem;
-  /* align-items: start; <-- Eliminado para que las tarjetas tengan la misma altura */
-}
-
-.loan-summary-grid--stacked {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 1rem;
 }
 
 .loan-summary-card {
-  background-color: #fff;
-  border-radius: 12px; /* Bordes más redondeados */
-  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e6f4f3;
+  border-radius: 12px;
+  padding: 16px 12px;
   text-align: center;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07); /* Sombra más pronunciada */
-  border: 1px solid #eee;
-  border-top: 4px solid #26C2B2; /* Acento de color */
-  transition: all 0.3s ease;
-  display: flex; /* <-- Clave para centrar */
-  flex-direction: column; /* <-- Clave para centrar */
-  justify-content: center; /* <-- Clave para centrar */
+  box-shadow: 0 2px 8px rgba(14, 107, 98, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
 }
 
-.loan-summary-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-}
-
-.loan-summary-card.primary {
-  background-image: linear-gradient(45deg, #26C2B2, #2CD9C5); /* Gradiente sutil */
-  color: white;
-  border-top: 4px solid #ffffff;
+.loan-summary-card:first-child {
+  background: #f7fbfb;
+  border-color: #cfeee8;
 }
 
 .summary-card-title {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  margin: 0 0 0.5rem 0;
-  color: #666;
-}
-
-.loan-summary-card.primary .summary-card-title,
-.loan-summary-card.primary .summary-card-subtext {
-  color: rgba(255, 255, 255, 0.9);
+  color: #385b64;
+  margin: 0;
 }
 
 .summary-card-value {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
+  color: #0e6b62;
   margin: 0;
-  line-height: 1.2;
-  color: #111;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
-}
-
-.loan-summary-card.primary .summary-card-value {
-  color: white;
 }
 
 .summary-card-subtext {
-  font-size: 0.9rem;
-  color: #888;
-  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #0e6b62;
 }
 
 .summary-card-help {
-  margin-top: 0.4rem;
+  margin-top: 0.3rem;
   display: flex;
   justify-content: center;
+}
+
+@media (max-width: 1100px) {
+  .loan-summary-grid {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .loan-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .payment-cta-section {

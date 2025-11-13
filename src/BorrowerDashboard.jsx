@@ -258,11 +258,16 @@ const calcularCostosTuPrestamo = (principalNet, annualRate, termMonths, originac
     return { totalAPagar, commission, minApplied, principalBruto, monthlyPayment: pmt, monthlyPaymentTotal };
 };
 
-const StatusCard = ({ solicitud, oportunidad, simulation }) => {
+const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => {
   const monto = Number(simulation.montoDeuda) || 0;
   const tasaBancoAnual = Number(simulation.tasaActual) || 0;
   const plazo = Number(simulation.plazo) || 0;
+  const costoMant = Number(simulation.costoMantenimientoBanco) || 0;
 
+  const monthlyRateBanco = tasaBancoAnual / 100 / 12;
+  const cuotaBanco = monthlyRateBanco > 0 && plazo > 0
+    ? (monto * monthlyRateBanco) / (1 - Math.pow(1 + monthlyRateBanco, -plazo)) + costoMant
+    : 0;
   const tasaTP = oportunidad?.tasa_interes_prestatario ?? null;
   const comisionOriginacion = oportunidad?.comision_originacion_porcentaje ?? null;
   const cuotaTpResumen = calcCuotaMensualTP(monto, tasaTP, plazo, comisionOriginacion);
@@ -290,13 +295,21 @@ const StatusCard = ({ solicitud, oportunidad, simulation }) => {
       id: 'monto',
       title: 'Monto Solicitado',
       value: `Bs ${monto.toLocaleString('es-BO')}`
-    }
+    },
+    {
+      id: 'tasa-banco',
+      title: 'Tasa Banco (anual)',
+      value: tasaBancoAnual ? `${tasaBancoAnual.toFixed(1)}%` : '-',
+      extra: cuotaBanco > 0 && pagoTotalMensualTP > 0
+        ? `Ahorro vs. banco: Bs ${(cuotaBanco - pagoTotalMensualTP).toFixed(2)}`
+        : null
+    },
   ];
 
   return (
     <div className="card">
       <h2>Resumen de tu Solicitud</h2>
-      <div className="loan-summary-grid loan-summary-grid--stacked">
+      <div className="loan-summary-grid">
         {summaryItems.map((item) => (
           <div key={item.id} className="loan-summary-card">
             <div className="summary-card-title">{item.title}</div>
