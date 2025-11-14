@@ -1,4 +1,51 @@
-# Estado del Proyecto — 7 Nov 2025 (Tarde)
+
+# Estado del Proyecto — 13 Nov 2025 (Tarde)
+Vigente: 2025-11-13
+
+Convención de actualización
+- Mantener este bloque como vigente (última fecha).
+- Borrar lo ya implementado; solo listar pendientes / QA actuales.
+- El bloque anterior se mueve a Historial para preservar el contexto del 7/11.
+
+Resumen
+- El Document Manager actualiza `documents` mediante `onDocumentUploaded` tan pronto Supabase confirma el upsert, evitando recargas completas para reflejar las subidas.
+- Se añadieron listeners Realtime para `documentos` y `analisis_documentos` que alimentan `documents` y `analyzedDocTypes`, deduplicando nuevos tipos y registrando estados de canal.
+- La invocación a `analizar-documento-v2` dispara `refreshData` (fetch silencioso), manteniendo sincronizados `solicitud` y los análisis sin forzar loaders.
+
+Producción
+- URL activa: https://tuprestamo-react-a0y2o8gpt-isaac-alfaros-projects.vercel.app
+
+Cambios por archivo
+- `src/BorrowerDashboard.jsx`: DocumentManager recibe `onDocumentUploaded` y `onRefreshData`, actualiza el estado local con la fila devuelta y mantiene la UI sin recargar.
+- `src/BorrowerDashboard.jsx`: Nuevos canales Realtime para `documentos` y `analisis_documentos`, manejadores con `Set` para `analyzedDocTypes` y eliminación del refresh manual.
+
+Pendientes (Supabase Dashboard — requeridos)
+1) Verificar que los canales `documentos-solicitud-<id>` y `analisis-docs-solicitud-<id>` permanezcan suscritos tras navegaciones y despliegues.
+2) Confirmar que `analizar-documento-v2` + `refreshData` refresca los registros relevantes sin intervención del usuario.
+3) Auditar `analyzedDocTypes` para evitar duplicados y garantizar el orden esperado.
+
+QA sugerido
+- Subir un documento desde Borrower Dashboard: la tarjeta debe mostrar el progreso, finalizar sin recargar y agregar el registro a la lista.
+- Generar un evento en `analisis_documentos`: el estado en pantalla (documentos analizados/checkbox) debe actualizarse de inmediato y la consola mostrar el log del canal.
+- Validar que `refreshData` ejecuta un fetch silencioso tras el análisis y que campos derivados (timestamps, estado) cambian en la UI.
+
+Pendientes E2E (lanzamiento)
+- E2E Prestatario
+  - Subir cada documento requerido y confirmar que aparece sin recargar gracias a `onDocumentUploaded`.
+  - Enviar el análisis y validar que `analyzedDocTypes` se actualiza al momento y habilita la siguiente etapa.
+  - Asegurarse de que `analizar-documento-v2` dispara `refreshData` y sincroniza `solicitud`/`analisis_documentos` con la vista.
+
+Siguientes pasos (opcionales)
+- Medir métricas de los canales Realtime para detectar desconexiones antes de que afecten a usuarios.
+- Evaluar añadir un indicador en la UI que muestre que un documento está en análisis mientras `analysing` esté activo.
+
+Nota
+Este STATUS reemplaza versiones previas extensas. Mantenerlo breve y accionable a partir de ahora.
+
+
+---
+
+## Historial — 7 Nov 2025 (Tarde)
 Vigente: 2025-11-07
 
 Convención de actualización
@@ -58,6 +105,7 @@ Siguientes pasos (opcionales)
 
 Nota
 Este STATUS reemplaza versiones previas extensas. Mantenerlo breve y accionable a partir de ahora.
+
 
 ---
 
