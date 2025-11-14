@@ -127,7 +127,7 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
 };
 
 // --- VISTA PARA SOLICITUD EN PROGRESO ---
-const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploaded, onLogout, analyzedDocTypes }) => {
+const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploaded, onLogout, analyzedDocTypes, onRefreshData }) => {
     const oportunidadObj = Array.isArray(solicitud.oportunidades) && solicitud.oportunidades.length > 0
         ? solicitud.oportunidades[0]
         : null;
@@ -189,7 +189,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                         onDocumentUploaded={onDocumentUploaded} 
                         requiredDocs={requiredDocs} 
                         analyzedDocTypes={analyzedDocTypes} 
-                        onRefreshData={refreshData}
+                        onRefreshData={onRefreshData}
                     />
                 </>
                 <FloatingFinan faqItems={inProgressFaqs} />
@@ -723,7 +723,7 @@ const BorrowerDashboard = () => {
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;
 
-  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onDocumentUploaded={handleDocumentUploaded} onLogout={handleLogout} analyzedDocTypes={analyzedDocTypes} />;
+  return <InProgressApplicationView solicitud={solicitud} user={user} documents={documents} onDocumentUploaded={handleDocumentUploaded} onLogout={handleLogout} analyzedDocTypes={analyzedDocTypes} onRefreshData={refreshData} />;
 };
 
 export default BorrowerDashboard;
