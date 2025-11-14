@@ -579,7 +579,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                 manualFallback={manualFallback[doc.id]}
                 onManualRetry={() => handleRetryAnalysis(uploadedDocuments.find(d => d.tipo_documento === doc.id))}
                 onFileSelect={(file) => handleFileUpload(file, doc.id)}
-                disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !othersComplete)}
+                disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && (!othersComplete || !authPreprintUrl))}
                 isAnalyzed={isAnalyzed}
               />
               {isAuthFirmada && !othersComplete && (
