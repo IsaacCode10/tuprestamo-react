@@ -331,12 +331,59 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
   console.log(`Completitud: ${isComplete}. Requeridos: ${requiredDocs.join(', ')}. Subidos: ${[...uploadedDocTypes].join(', ')}`)
 
   if (isComplete) {
-    console.log(`¡Completo! Disparando función de síntesis para ${solicitud_id}`)
+    console.log(`¡Completo! Generando autorización INFOCRED preimpresa y disparando síntesis para ${solicitud_id}`)
+    await ensureAuthorizationPreprint(supabaseAdmin, solicitudData)
     const { error: invokeError } = await supabaseAdmin.functions.invoke('sintetizar-perfil-riesgo', {
       body: { solicitud_id },
     })
     if (invokeError) {
       console.error('Error al invocar la función de síntesis:', invokeError)
     }
+  }
+}
+
+const PREPRINT_DOCUMENT_TYPE = 'autorizacion_infocred_preimpresa'
+
+async function ensureAuthorizationPreprint(supabaseAdmin: any, solicitud: any) {
+  if (!solicitud) return
+  const { id: solicitud_id, user_id } = solicitud
+  const { data: existing } = await supabaseAdmin
+    .from('documentos')
+    .select('id')
+    .eq('solicitud_id', solicitud_id)
+    .eq('tipo_documento', PREPRINT_DOCUMENT_TYPE)
+    .limit(1)
+  if (existing && existing.length > 0) {
+    console.log(`Preimpreso INFOCRED ya existe para solicitud ${solicitud_id}`)
+    return
+  }
+
+  try {
+    const pdfBytes = await generateAuthorizationPDF(solicitud)
+    const pdfFileName = `${user_id}/${solicitud_id}_autorizacion_infocred_preimpresa.pdf`
+    const { error: storageError } = await supabaseAdmin
+      .storage
+      .from('documentos-prestatarios')
+      .upload(pdfFileName, pdfBytes, { contentType: 'application/pdf', upsert: true })
+    if (storageError) {
+      console.error(`Error subiendo preimpreso INFOCRED para ${solicitud_id}:`, storageError)
+      return
+    }
+
+    const { error: dbError } = await supabaseAdmin.from('documentos').insert({
+      solicitud_id,
+      user_id,
+      tipo_documento: PREPRINT_DOCUMENT_TYPE,
+      nombre_archivo: pdfFileName,
+      url_archivo: pdfFileName,
+      estado: 'subido',
+    })
+    if (dbError) {
+      console.error(`Error registrando preimpreso INFOCRED para ${solicitud_id}:`, dbError)
+    } else {
+      console.log(`Preimpreso INFOCRED creado para solicitud ${solicitud_id}`)
+    }
+  } catch (err) {
+    console.error(`Error generando preimpreso INFOCRED para solicitud ${solicitud_id}:`, err)
   }
 }
