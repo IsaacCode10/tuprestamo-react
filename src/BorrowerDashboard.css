@@ -640,6 +640,30 @@
   font-weight: 600;
 }
 
+.file-slot-status.status-manual {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.manual-fallback {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background-color: #fff7e6;
+  border: 1px solid #ffe4b5;
+}
+
+.manual-fallback-text {
+  font-size: 0.8rem;
+  margin: 0 0 0.45rem;
+  color: #8a5a1a;
+}
+
+.manual-fallback-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
 /* AI Analyzed badge */
 .ai-badge {
   display: inline-flex;

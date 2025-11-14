@@ -280,7 +280,7 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) 
     </div>
   );
 };
-const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled, isAnalyzed }) => {
+const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, onFileSelect, disabled, isAnalyzed, manualFallback, onManualRetry }) => {
   const inputRef = useRef(null);
 
   const handleClick = () => {
@@ -298,7 +298,10 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
     e.target.value = '';
   };
 
-  const statusClass = isUploading
+  const fallbackActive = Boolean(manualFallback?.message);
+  const statusClass = fallbackActive
+    ? 'status-manual'
+    : isUploading
     ? 'status-subiendo'
     : isUploaded
     ? 'status-completado'
@@ -306,6 +309,8 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
 
   const statusText = error
     ? 'Error al subir'
+    : fallbackActive
+    ? 'Revisión manual activada'
     : isUploading
     ? `Subiendo... ${Math.max(0, Math.min(100, Number(progress) || 0))}%`
     : isAnalysing
@@ -328,6 +333,16 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
       <div className="file-slot-info">
         <div className="file-slot-name">{doc.nombre}</div>
         <div className={`file-slot-status ${statusClass}`}>{statusText}</div>
+        {fallbackActive && (
+          <div className="manual-fallback">
+            <p className="manual-fallback-text">{manualFallback.message}</p>
+            <div className="manual-fallback-actions">
+              <button className="btn btn--ghost btn--xs" type="button" onClick={onManualRetry}>
+                Reintentar análisis
+              </button>
+            </div>
+          </div>
+        )}
         {isAnalyzed ? (
           <div className="ai-badge" aria-label="Analizado por IA">🧠 Analizado por IA</div>
         ) : null}
@@ -361,11 +376,28 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
   const [errors, setErrors] = useState({});
   const [isUploadingGlobal, setIsUploadingGlobal] = useState(false);
   const [authPreprintUrl, setAuthPreprintUrl] = useState(null);
+  const [manualFallback, setManualFallback] = useState({});
   const uploadedSet = new Set((uploadedDocuments || []).map(d => d.tipo_documento));
   const analyzedSet = new Set(analyzedDocTypes || []);
   const othersComplete = (requiredDocs || [])
     .filter(d => d.id !== 'autorizacion_infocred_firmada')
     .every(d => uploadedSet.has(d.id));
+
+  const activateManualFallback = useCallback((docId, message) => {
+    setManualFallback(prev => ({
+      ...prev,
+      [docId]: { message, acknowledged: false }
+    }));
+  }, []);
+
+  const clearManualFallback = useCallback((docId) => {
+    setManualFallback(prev => {
+      if (!prev[docId]) return prev;
+      const next = { ...prev };
+      delete next[docId];
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     // buscar documento preimpreso para descarga
@@ -398,6 +430,53 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
       return changed ? next : prev;
     });
   }, [analyzedDocTypes]);
+
+  const shouldActivateManualFallback = useCallback((error) => {
+    if (!error) return false;
+    const msg = ((error?.message || '')).toLowerCase();
+    return msg.includes('gemini') || msg.includes('modo_manual') || msg.includes('analizar');
+  }, []);
+
+  const analyzeDocument = useCallback(async (docId, filePath) => {
+    setAnalysing(prev => ({ ...prev, [docId]: true }));
+    try {
+      const { error: analysisError } = await supabase.functions.invoke('analizar-documento-v2', {
+        body: { filePath, documentType: docId, solicitud_id: solicitud.id },
+      });
+      if (analysisError) throw analysisError;
+      const { error: notifyError } = await supabase.functions.invoke('notify-uploads-complete', {
+        body: { solicitud_id: solicitud.id }
+      });
+      if (notifyError) console.warn('Error calling notify-uploads-complete:', notifyError);
+      clearManualFallback(docId);
+    } catch (err) {
+      if (shouldActivateManualFallback(err)) {
+        console.warn('Gemini fallback manual activado:', err.message || err);
+        activateManualFallback(docId, 'La IA no pudo leer este documento, lo mantenemos en revisión manual.');
+        setErrors(prev => ({ ...prev, [docId]: null }));
+        trackEvent('ManualFallbackTriggered', { document_type: docId });
+      } else {
+        throw err;
+      }
+    } finally {
+      setAnalysing(prev => ({ ...prev, [docId]: false }));
+    }
+  }, [activateManualFallback, clearManualFallback, shouldActivateManualFallback, solicitud?.id]);
+
+  const handleRetryAnalysis = useCallback(async (doc) => {
+    if (!doc?.url_archivo) {
+      setErrors(prev => ({ ...prev, [doc.tipo_documento]: 'No hay archivo disponible para reanálisis.' }));
+      return;
+    }
+    try {
+      await analyzeDocument(doc.tipo_documento, doc.url_archivo);
+      trackEvent('Reanalysis Requested', { document_type: doc.tipo_documento });
+    } catch (err) {
+      console.error('Error reintentando el análisis:', err);
+      trackEvent('Reanalysis Failed', { document_type: doc.tipo_documento, error_message: err?.message });
+    }
+  }, [analyzeDocument]);
+
 
   const handleFileUpload = async (file, docId) => {
     if (!file) return;
@@ -444,22 +523,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
         try { trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, file: fileName }); } catch (_) {}
       }
 
-      // Ejecutar análisis en segundo plano (dejamos que Realtime refresque la UI)
-      setAnalysing(prev => ({ ...prev, [docId]: true }));
-      await supabase.functions
-        .invoke('analizar-documento-v2', {
-          body: { filePath: filePath, documentType: docId, solicitud_id: solicitud.id },
-        })
-        .then(async ({ error }) => {
-          if (error) console.warn('Error en analizar-documento-v2:', error);
-          const { error: notifyError } = await supabase.functions.invoke('notify-uploads-complete', {
-            body: { solicitud_id: solicitud.id }
-          });
-          if (notifyError) console.warn('Error calling notify-uploads-complete:', notifyError);
-        })
-        .catch(err => {
-          console.warn('Fallo invocando analizar-documento-v2:', err);
-        });
+      await analyzeDocument(docId, filePath);
       trackEvent('Successfully Uploaded Document', { document_type: docId });
       if (typeof onRefreshData === 'function') {
         onRefreshData();
@@ -512,6 +576,8 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                 isAnalysing={!!analysing[doc.id] && !isAnalyzed}
                 progress={uploadProgress[doc.id]}
                 error={errors[doc.id]}
+                manualFallback={manualFallback[doc.id]}
+                onManualRetry={() => handleRetryAnalysis(uploadedDocuments.find(d => d.tipo_documento === doc.id))}
                 onFileSelect={(file) => handleFileUpload(file, doc.id)}
                 disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !othersComplete)}
                 isAnalyzed={isAnalyzed}
