@@ -472,24 +472,48 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
   }, []);
 
   useEffect(() => {
+    console.log('--- DIAGNÓSTICO DESCARGA PDF ---');
+    console.log('1. Documentos recibidos:', uploadedDocuments);
     // buscar documento preimpreso para descarga
     const pre = uploadedDocuments?.find(d => d.tipo_documento === 'autorizacion_infocred_preimpresa');
+    console.log('2. Documento "preimpreso" encontrado en la base de datos:', pre);
+
     const fetchSigned = async () => {
-      if (!pre || !pre.url_archivo) { setAuthPreprintUrl(null); return; }
+      if (!pre || !pre.url_archivo) {
+        console.log('3. ERROR: No se encontró el documento preimpreso o no tiene URL. No se puede generar enlace de descarga.');
+        setAuthPreprintUrl(null);
+        return;
+      }
+      console.log('3. URL de archivo encontrada:', pre.url_archivo);
       try {
+        console.log('4. Intentando generar URL firmada para el archivo...');
         const { data, error } = await supabase
           .storage
           .from('documentos-prestatarios')
           .createSignedUrl(pre.url_archivo, 60 * 30); // 30 minutos
-        if (error) { setAuthPreprintUrl(null); return; }
+        
+        if (error) {
+          console.log('5. ERROR al generar URL firmada:', error);
+          setAuthPreprintUrl(null);
+          return;
+        }
+        
+        console.log('5. ÉXITO. URL firmada generada:', data?.signedUrl);
         setAuthPreprintUrl(data?.signedUrl || null);
-      } catch (_) { setAuthPreprintUrl(null); }
+      } catch (e) {
+        console.log('6. ERROR CATASTRÓFICO en fetchSigned:', e);
+        setAuthPreprintUrl(null);
+      }
     };
     fetchSigned();
+    console.log('--- FIN DIAGNÓSTICO ---');
   }, [uploadedDocuments]);
 
   const handleAuthPreprintDownload = useCallback(() => {
-    if (!authPreprintUrl) return;
+    if (!authPreprintUrl) {
+      console.error("Intento de descarga pero la URL del PDF no está lista.");
+      return;
+    }
     try {
       trackEvent('Downloaded Authorization PDF', { solicitud_id: solicitud.id });
     } catch (_) {}
@@ -642,7 +666,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{color:'#55747b'}}>Imprimí, firmá a mano y subí la foto.</span>
-                      <button type="button" className="btn btn--sm btn--primary" onClick={handleAuthPreprintDownload}>
+                      <button type="button" className="btn btn--sm btn--primary" onClick={handleAuthPreprintDownload} disabled={!authPreprintUrl}>
                         Descargar PDF
                       </button>
                       {!authPreprintUrl && <span style={{color:'#8a8a8a'}}>Generando…</span>}
@@ -762,29 +786,6 @@ const BorrowerDashboard = () => {
     trackEvent('Viewed Borrower Dashboard');
     fetchData(); 
   }, [fetchData, navigate]);
-
-  useEffect(() => {
-    if (!solicitud?.id) return;
-    const channel = supabase
-      .channel(`analisis-docs-solicitud-${solicitud.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` },
-        (payload) => {
-          const docType = (payload?.new?.document_type || payload?.record?.document_type || payload?.old?.document_type) ?? null;
-          if (!docType) return;
-          setAnalyzedDocTypes(prev => {
-            const current = Array.isArray(prev) ? prev : [];
-            if (current.includes(docType)) return prev;
-            return [...current, docType];
-          });
-        }
-      )
-      .subscribe();
-    return () => {
-      try { supabase.removeChannel(channel); } catch (_) {}
-    };
-  }, [solicitud?.id]);
 
   // Suscripción en tiempo real a cambios de 'documentos' para esta solicitud
   useEffect(() => {
