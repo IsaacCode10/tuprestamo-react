@@ -1,0 +1,209 @@
+# Estado del Proyecto � 10 Nov 2025 (Noche)
+Vigente: 2025-11-10
+
+Convenci�n
+- Mantener solo pendientes/QA del bloque vigente.
+
+Resumen
+- Resumen (Borrower): tarjetas KPI en una fila; �Tasa Propuesta (anual)�; unificaci�n de �Cuota Mensual�.
+- C�lculos: helper com�n con pol�tica V1 (=10k Bs ? 450 fijo; >10k ? % con gross-up) + admin/seguro 0,15% (m�n. 10). Afecta Resumen y Propuesta.
+- Propuesta de Ahorro: corregidos �Costo Admin. y Seguro�, �Comisi�n por Originaci�n�, y Transparencia Total (Con Tu Pr�stamo).
+- Amortizaci�n: generaci�n autom�tica al estado inanciado + lectura/render en dashboard.
+- Documentaci�n: flujo �Autorizaci�n INFOCRED (requisito ASFI)� con descarga de PDF pre-relleno y subida de versi�n firmada a mano; se muestra al final y se habilita cuando el resto est� completo.
+- Funciones: handle-new-solicitud genera utorizacion_infocred_preimpresa.pdf y lo registra para descarga.
+
+Producci�n
+- Frontend desplegado en Vercel (�ltimo deploy activo OK).
+- Supabase Functions desplegadas en paijuvlccnkxjwjpoffe.
+
+Cambios por archivo (clave)
+- src/utils/loan.js: calcOriginacionYBruto, calcCuotaMensualTP, calcTPBreakdown.
+- src/components/SavingsCalculator.jsx: usa breakdown com�n; �Cuota Mensual�.
+- src/BorrowerDashboard.jsx/.css: KPI row, tooltips, tn--sm; autorizaci�n INFOCRED (descarga + subida final y gating).
+- supabase/functions/handle-new-solicitud/index.ts: genera y registra PDF pre-relleno.
+
+Pendientes / QA
+1) PDF pre-impreso en solicitudes previas: probar con solicitud nueva; si se requiere backfill on-demand, agregar endpoint de generaci�n manual.
+2) QA responsive (m�vil): tama�os de KPI y bloque de autorizaci�n; accesibilidad del tooltip.
+3) Validar c�lculo �Cuota Mensual� con casos l�mite: neto 10k/10.001/70k; tasas 15/17/20; plazos 12/18/24.
+4) Verificar trigger de amortizaci�n y lectura cuando oportunidades ? inanciado en un flujo real.
+5) Anal�tica: instrumentar Downloaded Authorization PDF y Uploaded Signed Authorization.
+6) Opcional: badge �ASFI� junto al t�tulo de autorizaci�n.
+
+---
+# Estado del Proyecto — 7 Nov 2025 (Tarde)
+Vigente: 2025-11-07
+
+Convención de actualización
+- Mantener este bloque como vigente (última fecha).
+- Borrar lo ya implementado; solo listar pendientes/QA actuales.
+- Opcional: mover el bloque anterior a “Historial — <fecha>”.
+
+Resumen
+- Landing: Hero restaurado (refinanciá con mejores tasas), se eliminó “Comparativa”, Beneficios con íconos y grilla 3+2 centrada, SEO actualizado.
+- Menú móvil: overlay lateral robusto (bloqueo de scroll, foco, Escape, trap de Tab); fixes de visibilidad y altura (auto/max-height, borde redondeado).
+- Cómo Funciona: sin marcas de terceros; desembolso dirigido al banco; originación por nivel A 3% / B 4% / C 5%; CSS incluido para build.
+- FAQ Inversionista: modelo no-custodia (sin “Fondos disponibles”/“Retiros”); sin breadcrumbs/back cuando no hay sesión.
+- Legales: Privacidad y Términos sin placeholders de “Última actualización” ni stack tecnológico; Ley aplicable: Bolivia.
+- Infra: build corregido (faltante `src/components/ComoFunciona.css`).
+
+Producción
+- URL activa: https://tuprestamo-react-a0y2o8gpt-isaac-alfaros-projects.vercel.app
+
+Cambios por archivo
+- `src/components/Header.css`: estilos para `.mobile-menu-overlay` y `.mobile-menu-panel` (slide-in, sombras) y elementos del menú móvil.
+- `src/components/Header.jsx`: mejoras de a11y (foco, Escape, trap, scroll lock) y estructura del panel móvil.
+- `src/components/ComoFunciona.css`: layout móvil con tarjetas apiladas (100% ancho, padding 16px, radius, shadow).
+- `src/components/ComoFunciona.jsx`: import de estilos móviles.
+- `src/components/AuthLinker.jsx`: nuevo componente de vinculación de identidades (Google) vía Supabase Auth v2.
+- `src/InvestorProfile.jsx`, `src/Profile.jsx`: integración de `AuthLinker` bajo la sección “Seguridad”.
+
+Pendientes (Supabase Dashboard — requeridos)
+1) Activar proveedor Google (Authentication → Providers → Google → ON).
+2) Configurar Client ID/Secret de Google y autorizar redirect: `https://<PROJECT-REF>.supabase.co/auth/v1/callback`.
+3) Authentication → Settings: Site URL (dominio Vercel prod), Additional Redirect URLs (previews de Vercel + `http://localhost:5173`).
+4) Activar “Allow linking of multiple identities”.
+
+QA sugerido
+- Vincular Google desde Perfil: listar identidades, vincular, confirmar retorno a la app, ver método en la lista.
+- Desvincular: no permitir si quedaría la cuenta sin método o si es email/password.
+- Menú móvil: abrir/cerrar, bloqueo de scroll, Escape y navegación por Tab dentro del panel; sin “espacio blanco” extra.
+- “Cómo Funciona” (móvil): 5 tarjetas apiladas, tipografía legible y spacing correcto.
+
+Pendientes E2E (lanzamiento)
+- E2E Inversionista
+  - Registro/inicio sin sesión → ver Landing correcta (Hero/Beneficios).
+  - KYC completo → estado verificado persiste; sin breadcrumbs/back en FAQ si no hay sesión.
+  - Explorar Oportunidades → invertir (mín. Bs 700) → al 100%: flujo marca financiada.
+  - Pagos: en cada ciclo, transferencia automática del neto a cuenta bancaria (no hay “Retiros” ni “Fondos disponibles”).
+  - Notificaciones: creación y lectura manual (no auto-leídas).
+
+- E2E Prestatario
+  - Solicitud → verificación de saldo deudor → cálculo gross-up según nivel (A/B/C).
+  - Aprobación → fondeo → desembolso dirigido al banco acreedor (no a la cuenta del prestatario).
+  - Amortización: generar tabla (ejecutar `sql/amortizacion.sql` y `generate_amortizacion(...)`).
+  - Dashboard prestatario: CTA “Pago Extra” (registro de intención) y UX estable.
+
+Siguientes pasos (opcionales)
+- Pantalla de Auth: añadir botón “Continuar con Google” (sign-in social estándar).
+- Header: exponer `aria-expanded`/`aria-controls` en el botón y animar a “X” al abrir.
+- Apple Sign-in: planificar setup (Service ID, Team ID, Key ID, Private Key) y habilitar provider.
+
+Nota
+Este STATUS reemplaza versiones previas extensas. Mantenerlo breve y accionable a partir de ahora.
+
+---
+
+## Historial — 3 Nov 2025 (Noche)
+
+Resumen rápido
+
+- KYC inversionista estable: el estado se mantiene en “Verificada”, sin regresiones.
+- Notificaciones restauradas: Toast automático en dashboard y badge rojo en el header.
+- Cuenta bancaria: se promueve desde `verification_drafts` a `cuentas_bancarias_inversionistas` al quedar verificado.
+- Auditoría OCR: se registra en `analisis_documentos` (proveedor + datos extraídos) tras la verificación.
+- Despliegues: Supabase Functions y Vercel en producción actualizados.
+
+Siguiente E2E (mañana)
+
+- Repetir flujo completo: registro → verificación CI → correo con CTA → dashboard con Toast → verificación persiste → cuenta bancaria creada/actualizada → oportunidades visibles.
+- Validar en DB: `analisis_documentos` y `cuentas_bancarias_inversionistas` contienen filas para el usuario verificado.
+
+---
+
+Resumen de hoy (flujo INVERSIONISTA)
+
+- UI Oportunidades: filtros segmentados (Tasa 10/12/15, Plazo 12/18/24) con estilos Brand Kit.
+- Dashboard (src/InvestorDashboard.jsx):
+  - Corrige acentos y copy. Oculta la pill cuando estado = verificado.
+  - Muestra Toast de KYC automáticamente (sin abrir menú).
+  - Suscripciones Realtime para perfil (UPDATE) y notificaciones (INSERT).
+- Header (src/components/Header.jsx):
+  - Badge rojo de notificaciones restablecido.
+  - Ya no marca como leídas al abrir la campana; persisten hasta acción del usuario.
+- Verificación (supabase/functions/verificar-identidad-inversionista):
+  - Idempotencia de notificación (solo si cambió el estado vía UPDATE RETURNING).
+  - Inserta auditoría en `analisis_documentos` (proveedor + datos extraídos).
+  - Si estado = “verificado”: upsert de cuenta bancaria desde `verification_drafts` → `cuentas_bancarias_inversionistas` (por `user_id`).
+- Infra: redeploy de Functions (Supabase) y deploy de producción (Vercel).
+
+---
+
+Problemas abiertos (prioridad alta)
+
+1) OCR KYC (mejora del prompt)
+   - Extraer: `numero_ci`, `expiracion` (con meses literales), `candidatos_numero_ci`, `ocr_confidence`.
+   - Normalizar fecha (p. ej., “12 de abril de 2031” → YYYY-MM-DD) y bloquear si expiración vencida.
+
+2) Revisión manual (cuando OCR falla)
+   - Encolar en `public.kyc_review_queue` (crear tabla) y agregar panel admin mínimo para aprobar/rechazar.
+
+3) Email deliverability (unificación remitente)
+   - Unificar remitente en funciones a `notificaciones@tuprestamobo.com` (Reply-To `contacto@tuprestamobo.com`).
+   - Revisar SPF/DKIM/DMARC y supresión en Resend.
+
+4) Auditoría OCR (enriquecimiento)
+   - Guardar también: `user_id`, `tipo_documento` y `url_archivo` en `analisis_documentos` para trazabilidad completa.
+
+---
+
+Flujo KYC inversionista (actual)
+
+- Upload: CI a Storage/bucket `documentos-inversionistas`; ruta guardada en `verification_drafts`.
+- Invocación: Edge `verificar-identidad-inversionista` con `{ user_id, url_archivo, tipo_documento }`.
+- Función:
+  - URL firmada; OCR con Gemini; parseo robusto de JSON.
+  - Auditoría: inserta en `analisis_documentos` (proveedor + datos extraídos).
+  - Actualiza `profiles.estado_verificacion` (idempotente) y notifica (in-app + email con CTA consistente).
+  - Si estado = “verificado”: upsert de cuenta bancaria en `cuentas_bancarias_inversionistas` desde `verification_drafts`.
+- Front:
+  - Dashboard: Toast automático; Realtime; pill oculta en “verificado”.
+  - Header: badge rojo visible al haber no leídas; no se auto-marcan como leídas.
+
+---
+
+Siguiente (para mañana)
+
+- Completar prompt OCR (expiración/normalización/confidence) + bloqueo por vencimiento.
+- Diseñar y crear `kyc_review_queue` + vista admin mínima.
+- Unificar remitente emails y revisar entregabilidad en Resend.
+- Enriquecer `analisis_documentos` con `user_id`/`tipo_documento`/`url_archivo`.
+
+Notas de Configuración
+
+- Storage: bucket privado `documentos-inversionistas` (RLS apropiadas).
+- Secrets Functions: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `APP_BASE_URL`, `GEMINI_API_KEY`/`GOOGLE_GEMINI_API_KEY`.
+
+Enlaces útiles
+
+- Portafolio: `/mis-inversiones`
+- Retiros: `/retiro`
+- Landing “Quiero Invertir”: `/`
+- Edge Functions: `verificar-identidad-inversionista`, `handle-new-solicitud`, `save-investor-lead`, `create-notification`
+
+---
+
+## Actualizacion — 7 Nov 2025 (Noche)
+
+Implementado hoy
+- Branding meta/OG/Twitter corregido y assets public agregados (SEO/preview).
+- Landing: posicionamiento "Cero comisiones por pago anticipado" (Hero, Beneficios, Comparativa, FAQ).
+- Prepagos (MVP): boton "Realizar Pago Extra" en dashboard del prestatario aprobado/desembolsado.
+  - Modal con simulacion local (metodo frances): mantiene cuota y reduce plazo; muestra ahorro en intereses.
+  - Registra intencion en tabla pagos_extra_solicitados (si existe) y evento analytics.
+- SQL base: sql/amortizacion.sql con tablas mortizaciones y pagos_extra_solicitados + funcion generate_amortizacion(...).
+- Google Sign-In: revertido en /auth y en activacion; se retomara con Custom Domain (Supabase Pro).
+
+Pendientes inmediatos
+- Ejecutar sql/amortizacion.sql en Supabase (SQL Editor) para crear tablas y funcion.
+- Generar cronograma al "desembolsar" (ejecutar generate_amortizacion(...) manual o activar trigger opcional del script).
+- Definir donde mostrar la tabla de amortizacion en el dashboard y leer public.amortizaciones.
+- Mantener calculadoras sin logica de prepago (confirmado).
+
+Rutas/archivos claves
+- index.html, src/components/LandingPage.jsx
+- src/components/Hero.jsx, src/components/Beneficios.jsx, src/components/Comparativa.jsx, src/components/FAQ.jsx
+- src/BorrowerDashboard.jsx (CTA y modal), src/utils/amortization.js
+- sql/amortizacion.sql
+
+

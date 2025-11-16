@@ -80,18 +80,21 @@ Deno.serve(async (req) => {
     console.log('Métricas calculadas:', metricasRiesgo)
 
     // 5. Insertar el perfil de riesgo consolidado
-    console.log('Creando perfil de riesgo en la base de datos...')
+    console.log('Insertando/actualizando perfil de riesgo en la base de datos...')
     const { data: perfilDeRiesgo, error: perfilError } = await supabaseClient
       .from('perfiles_de_riesgo')
-      .insert({
-        solicitud_id: solicitud_id,
-        user_id: solicitudData.user_id,
-        monto_solicitado_evaluacion: solicitudData.monto_solicitado,
-        estado: 'listo_para_revision',
-        datos_sintetizados: datosSintetizados,
-        metricas_evaluacion: metricasRiesgo,
-        decision_tomada: false,
-      })
+      .upsert(
+        {
+          solicitud_id: solicitud_id,
+          user_id: solicitudData.user_id,
+          monto_solicitado_evaluacion: solicitudData.monto_solicitado,
+          estado: 'listo_para_revision',
+          datos_sintetizados: datosSintetizados,
+          metricas_evaluacion: metricasRiesgo,
+          decision_tomada: false,
+        },
+        { onConflict: 'solicitud_id' }
+      )
       .select('id')
       .single()
 

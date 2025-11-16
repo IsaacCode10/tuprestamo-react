@@ -1,0 +1,23 @@
+MODELO DE TRABAJO DE CODEX
+
+1. Acceso y permisos
+- Trabajo dentro del repo en C:\.../tuprestamo-react con permiso de lectura/escritura.
+- Uso la CLI para git, vercel y supabase desde esta terminal (token ya guardado).
+
+2. Flujo habitual
+- Revisar status con git status.
+- Agregar solo archivos relevantes (code/docs) con git add.
+- Commit con mensaje claro y git push al remoto.
+- Ejecutar npx vercel --prod para desplegar.
+- Usar MCP para leer tablas/scripts si necesito contextos adicionales.
+
+3. Operaciones de Supabase
+- Ejecutar SQL directo desde Supabase CLI o copiar resultados para guiar el análisis.
+- Crear vistas/scripts por solicitud (te los paso listos para pegar).
+- Consultar tablas relevantes como documentos/analisis_documentos cuando investigamos flujos.
+
+4. Monitoreo y QA
+- Observo logs de deploy, checo que el nuevo .env esté consistente.
+- Probar en producción y confirmar los cambios en UI con tu aprobación.
+- Actualizar STATUS.md o docs cuando cerramos funcionalidades.
+

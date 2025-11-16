@@ -131,6 +131,8 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
     const oportunidadObj = Array.isArray(solicitud.oportunidades) && solicitud.oportunidades.length > 0
         ? solicitud.oportunidades[0]
         : null;
+    const oportunidadFallback = getFallbackOpportunity(solicitud);
+    const activeOpportunity = oportunidadObj || oportunidadFallback;
 
     const [simulation, setSimulation] = useState({
         montoDeuda: solicitud.monto_solicitado || '',
@@ -139,15 +141,25 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
         costoMantenimientoBanco: '100',
     });
 
+    useEffect(() => {
+        if (!solicitud) return;
+        setSimulation(prev => ({
+            ...prev,
+            montoDeuda: solicitud.monto_solicitado ?? solicitud.saldo_deuda_tc ?? prev.montoDeuda,
+            tasaActual: solicitud.tasa_interes_tc ?? prev.tasaActual,
+            plazo: solicitud.plazo_meses ?? prev.plazo,
+        }));
+    }, [solicitud?.monto_solicitado, solicitud?.saldo_deuda_tc, solicitud?.tasa_interes_tc, solicitud?.plazo_meses]);
+
     const handleSimulationChange = (newValues) => {
         setSimulation(prev => ({ ...prev, ...newValues }));
     };
 
     const breakdownTP = calcTPBreakdown(
         parseFloat(simulation.montoDeuda),
-        oportunidadObj?.tasa_interes_prestatario,
+        activeOpportunity?.tasa_interes_prestatario,
         simulation.plazo,
-        oportunidadObj?.comision_originacion_porcentaje
+        activeOpportunity?.comision_originacion_porcentaje
     );
     const originacionMonto = breakdownTP.originacion || 0;
     const minApplied = breakdownTP.minApplied || false;
@@ -169,7 +181,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                 
                 <StatusCard 
                     solicitud={solicitud} 
-                    oportunidad={oportunidadObj} 
+                    oportunidad={activeOpportunity} 
                     simulation={simulation}
                     pagoTotalMensualTP={pagoTotalMensualTP}
                     originacionMonto={originacionMonto}
@@ -177,8 +189,8 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                 />
 
                 <>
-                    <SavingsCalculator 
-                        oportunidad={oportunidadObj}
+                        <SavingsCalculator 
+                            oportunidad={activeOpportunity}
                         simulation={simulation}
                         onSimulationChange={handleSimulationChange}
                     />
@@ -198,6 +210,51 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
     );
 }
 
+const riskRateMap = { A: 15, B: 17, C: 20 };
+const commissionMap = { A: 3, B: 4, C: 5 };
+
+const deriveRiskProfile = (solicitud) => {
+  if (!solicitud) return null;
+  const ingresos = Number(solicitud.ingreso_mensual);
+  const saldoDeuda = Number(solicitud.saldo_deuda_tc);
+  const tasaAnual = Number(solicitud.tasa_interes_tc);
+  const antiguedad = Number(solicitud.antiguedad_laboral);
+  if ([ingresos, saldoDeuda, tasaAnual, antiguedad].some(val => Number.isNaN(val))) return null;
+  if (ingresos < 3000) return 'Rechazado';
+  const interesMensual = (saldoDeuda * (tasaAnual / 100)) / 12;
+  const amortizacionCapital = saldoDeuda * 0.01;
+  const deudaMensualEstimada = interesMensual + amortizacionCapital;
+  const dti = (deudaMensualEstimada / ingresos) * 100;
+  if (dti > 50) return 'Rechazado';
+  let totalScore = 0;
+  if (ingresos > 8000) totalScore += 3;
+  else if (ingresos >= 5000) totalScore += 2;
+  else if (ingresos >= 3000) totalScore += 1;
+  if (dti < 30) totalScore += 3;
+  else if (dti <= 40) totalScore += 2;
+  else if (dti <= 50) totalScore += 1;
+  if (antiguedad >= 24) totalScore += 2;
+  else if (antiguedad >= 12) totalScore += 1;
+  if (totalScore >= 7) return 'A';
+  if (totalScore >= 5) return 'B';
+  if (totalScore >= 2) return 'C';
+  return 'Rechazado';
+};
+
+const getFallbackOpportunity = (solicitud) => {
+  const profile = deriveRiskProfile(solicitud);
+  const tasa = profile && riskRateMap[profile] ? riskRateMap[profile] : 20;
+  const commission = profile && commissionMap[profile] ? commissionMap[profile] : 3;
+  const montoDeuda = Number(solicitud?.saldo_deuda_tc) || Number(solicitud?.monto_solicitado) || 0;
+  return {
+    tasa_interes_prestatario: tasa,
+    tasa_interes_anual: tasa,
+    comision_originacion_porcentaje: commission,
+    monto: montoDeuda,
+    user_id: solicitud?.user_id,
+  };
+};
+
 const getProfileMessage = (profile) => { /* ... */ };
 
 // --- PROGRESS STEPPER CON LÓGICA DE UI MEJORADA ---
@@ -205,10 +262,14 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
   const steps = ['Solicitud Recibida', 'Verificación Inicial', 'Sube tus Documentos', 'Revisión Final', 'Préstamo Aprobado'];
   const getStepStatus = (stepIndex) => {
     const stepMap = { 'pre-aprobado': 2, 'documentos-en-revision': 3, 'aprobado': 4 };
-    let currentStepIndex = stepMap[currentStep] || 0;
+    let currentStepIndex = stepMap[currentStep] ?? 0;
+
+    if (currentStepIndex === 0 && currentStep !== 'pendiente') {
+      currentStepIndex = 1; // ensure verification step is marked when no longer pending
+    }
 
     if (allDocumentsUploaded && currentStepIndex < 3) {
-        currentStepIndex = 3;
+      currentStepIndex = 3;
     }
 
     if (stepIndex < currentStepIndex) return 'completed';
@@ -229,7 +290,18 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) 
   const tasaTP = oportunidad?.tasa_interes_prestatario ?? null;
   const cuotaTpResumen = pagoTotalMensualTP;
 
-  const summaryItems = [
+    const effectiveMonto = Number(simulation.montoDeuda) || Number(oportunidad?.monto) || Number(solicitud?.monto_solicitado) || 0;
+    const effectivePlazo = Number(simulation.plazo) || Number(oportunidad?.plazo_meses) || Number(solicitud?.plazo_meses) || 24;
+    const breakdownTP = calcTPBreakdown(
+      effectiveMonto,
+      oportunidad?.tasa_interes_prestatario,
+      effectivePlazo,
+      oportunidad?.comision_originacion_porcentaje
+    );
+    const derivedMonthly = breakdownTP.monthlyPaymentTotal || cuotaTpResumen;
+    const effectiveCuota = derivedMonthly > 0 ? derivedMonthly : cuotaTpResumen;
+
+    const summaryItems = [
     {
       id: 'tasa',
       title: 'Tasa Propuesta (anual)',
@@ -242,17 +314,17 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) 
       title: 'Plazo',
       value: plazo ? `${plazo} meses` : '-'
     },
-    {
-      id: 'cuota',
-      title: 'Cuota Mensual Total',
-      value: cuotaTpResumen > 0 ? `Bs ${cuotaTpResumen.toFixed(2)}` : '-',
-      tooltip: 'Incluye capital + interés + costo de administración y seguro. Monto final sujeto a validación de documentos.'
-    },
-    {
-      id: 'monto',
-      title: 'Monto Solicitado',
-      value: `Bs ${monto.toLocaleString('es-BO')}`
-    },
+      {
+        id: 'cuota',
+        title: 'Cuota Mensual Total',
+        value: effectiveCuota > 0 ? `Bs ${effectiveCuota.toFixed(2)}` : '-',
+        tooltip: 'Incluye capital + interés + costo de administración y seguro. Monto final sujeto a validación de documentos.'
+      },
+      {
+        id: 'monto',
+        title: 'Monto Solicitado',
+        value: `Bs ${effectiveMonto.toLocaleString('es-BO')}`
+      },
     {
       id: 'tasa-banco',
       title: 'Tasa Banco (anual)',
@@ -416,6 +488,14 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
     fetchSigned();
   }, [uploadedDocuments]);
 
+  const handleAuthPreprintDownload = useCallback(() => {
+    if (!authPreprintUrl) return;
+    try {
+      trackEvent('Downloaded Authorization PDF', { solicitud_id: solicitud.id });
+    } catch (_) {}
+    window.open(authPreprintUrl, '_blank');
+  }, [authPreprintUrl, solicitud?.id]);
+
   useEffect(() => {
     if (!analyzedDocTypes || analyzedDocTypes.length === 0) return;
     setAnalysing(prev => {
@@ -562,7 +642,9 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{color:'#55747b'}}>Imprimí, firmá a mano y subí la foto.</span>
-                      <a href={authPreprintUrl || '#'} target="_blank" rel="noreferrer" className="btn btn--sm btn--primary" style={{opacity: authPreprintUrl?1:0.5, pointerEvents: authPreprintUrl? 'auto':'none'}} onClick={() => { if (authPreprintUrl) { try { trackEvent('Downloaded Authorization PDF', { solicitud_id: solicitud.id }); } catch (_) {} } }}>Descargar PDF</a>
+                      <button type="button" className="btn btn--sm btn--primary" onClick={handleAuthPreprintDownload}>
+                        Descargar PDF
+                      </button>
                       {!authPreprintUrl && <span style={{color:'#8a8a8a'}}>Generando…</span>}
                     </div>
                   </div>

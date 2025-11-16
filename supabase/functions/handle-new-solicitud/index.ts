@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
-import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1';
+import { ensureAuthorizationPreprint } from '../_shared/preprint.ts';
 
 console.log('Function handle-new-solicitud (V8.1 - PDF Auth) starting up.');
 
@@ -119,45 +119,6 @@ const runRiskScorecard = (solicitud) => {
   return PRICING_MODEL.Rechazado;
 };
 
-// --- NUEVA FUNCIÓN PARA GENERAR PDF DE AUTORIZACIÓN ---
-async function generateAuthorizationPDF(solicitud) {
-  const { nombre_completo, cedula_identidad, ciudad } = solicitud;
-  const creationDate = new Date().toLocaleDateString('es-BO', { timeZone: 'America/La_Paz' });
-
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage();
-  const { width, height } = page.getSize();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  let y = height - 50;
-  const margin = 50;
-  const textWidth = width - 2 * margin;
-
-  page.drawText('AUTORIZACIÓN EXPRESA PARA LA CONSULTA DE INFORMACIÓN CREDITICIA', {
-    x: margin,
-    y: y,
-    font: boldFont,
-    size: 14,
-    maxWidth: textWidth,
-    lineHeight: 20,
-  });
-  y -= 40;
-
-  const bodyText = `Por medio del presente documento, yo, ${nombre_completo}, mayor de edad, hábil por derecho, con Cédula de Identidad N° ${cedula_identidad}, con domicilio en la ciudad de ${ciudad}, en mi calidad de solicitante de un producto crediticio:\n\n1. AUTORIZACIÓN: De manera libre, voluntaria y expresa, autorizo a TU PRESTAMO BOLIVIA S.R.L. para que, por cuenta propia o a través de terceros designados, pueda solicitar, consultar, verificar y obtener mi historial crediticio, mi nivel de endeudamiento, mi score de riesgo y cualquier otra información crediticia y de comportamiento comercial que considere relevante.\n\n2. ALCANCE: Esta autorización abarca la consulta de información en todas las centrales de riesgo, buros de información crediticia o entidades análogas, públicas o privadas, que operen en el territorio del Estado Plurinacional de Bolivia, incluyendo, pero no limitándose a, INFOCRED S.A.\n\n3. FINALIDAD: Declaro que la información obtenida será utilizada única y exclusivamente para fines de evaluación, análisis y calificación de mi solicitud de crédito, así como para la gestión de la relación crediticia en caso de que mi solicitud sea aprobada.\n\n4. VIGENCIA: La presente autorización se mantendrá vigente durante todo el tiempo que dure el proceso de análisis y evaluación de mi solicitud de crédito y, en caso de ser aprobada, durante toda la vigencia de la relación contractual con TU PRESTAMO BOLIVIA S.R.L.\n\nEn señal de conformidad con los términos expuestos, acepto la presente autorización de manera digital.\n\nFecha de Aceptación: ${creationDate}\nRegistro de Aceptación Digital: Se registra la dirección IP y la marca de tiempo (timestamp) en el momento de la aceptación como constancia de la manifestación de voluntad.`;
-
-  page.drawText(bodyText, {
-    x: margin,
-    y: y,
-    font: font,
-    size: 11,
-    maxWidth: textWidth,
-    lineHeight: 15,
-  });
-
-  return await pdfDoc.save();
-}
-
 const resend = new Resend(Deno.env.get('RESEND_API_KEY')!);
 
 serve(async (req) => {
@@ -167,7 +128,7 @@ serve(async (req) => {
 
   try {
     const { record: solicitud } = await req.json();
-    const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses } = solicitud;
+    const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses, saldo_deuda_tc } = solicitud;
 
     // Flujo AUTOMÁTICO para INVERSIONISTA: generar invitación y enviar correo de bienvenida
     if (tipo_solicitud === 'inversionista') {
@@ -335,19 +296,28 @@ serve(async (req) => {
       });
       console.log(`Solicitud ${solicitud_id}: Correo de bienvenida enviado a ${email} via Resend.`);
 
+      const netDebt = Number(saldo_deuda_tc) || null;
+      const baseAmount = Number(monto_solicitado) || netDebt || 17000;
+      const originacionPct = Number(riskProfile.comision_originacion_porcentaje) || 3;
+      const commissionDecimal = originacionPct / 100;
+      const grossUpBase = commissionDecimal >= 1 ? baseAmount : baseAmount / (1 - commissionDecimal);
+      const clippedGross = Math.min(70000, Math.max(5000, isNaN(grossUpBase) ? baseAmount : grossUpBase));
+      const finalAmount = clippedGross;
+      const finalPlazo = Number(plazo_meses) || 24;
+
       const loanCosts = calculateLoanCosts(
-        monto_solicitado,
+        finalAmount,
         riskProfile.tasa_interes_prestatario,
-        plazo_meses,
-        riskProfile.comision_originacion_porcentaje
+        finalPlazo,
+        originacionPct
       );
 
       console.log(`Solicitud ${solicitud_id}: Iniciando inserción de oportunidad con costos calculados.`);
       const { data: oppData, error: oppError } = await supabaseAdmin.from('oportunidades').insert([{
         solicitud_id,
         user_id,
-        monto: monto_solicitado,
-        plazo_meses,
+        monto: finalAmount,
+        plazo_meses: finalPlazo,
         perfil_riesgo: riskProfile.label,
         tasa_interes_anual: riskProfile.tasa_interes_prestatario,
         tasa_interes_prestatario: riskProfile.tasa_interes_prestatario,
@@ -366,39 +336,21 @@ serve(async (req) => {
       console.log(`Solicitud ${solicitud_id}: Oportunidad insertada con ID: ${oppData.id}`);
 
       console.log(`Solicitud ${solicitud_id}: Iniciando actualización de solicitud a 'pre-aprobado'.`);
-      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({ estado: 'pre-aprobado', user_id, opportunity_id: oppData.id }).eq('id', solicitud_id);
+      const { error: updateError } = await supabaseAdmin.from('solicitudes').update({
+        estado: 'pre-aprobado',
+        user_id,
+        opportunity_id: oppData.id,
+        monto_solicitado: finalAmount,
+        plazo_meses: finalPlazo,
+      }).eq('id', solicitud_id);
       if (updateError) {
         console.error(`Error al actualizar solicitud ${solicitud_id} a 'pre-aprobado':`, updateError);
         throw updateError;
       }
       console.log(`Solicitud ${solicitud_id}: Actualización a 'pre-aprobado' finalizada.`);
 
-      // --- INICIO DE LA NUEVA LÓGICA DE PDF ---
-      console.log(`Solicitud ${solicitud_id}: Generando PDF de autorización.`);
-      const pdfBytes = await generateAuthorizationPDF(solicitud);
-      const pdfFileName = `${user_id}/${solicitud_id}_autorizacion_infocred.pdf`;
-
-      const { error: storageError } = await supabaseAdmin.storage
-        .from('documentos-prestatarios')
-        .upload(pdfFileName, pdfBytes, { contentType: 'application/pdf', upsert: true });
-
-      if (storageError) {
-        console.error(`Error al subir PDF de autorización para solicitud ${solicitud_id}:`, storageError);
-      } else {
-        const { error: dbError } = await supabaseAdmin.from('documentos').insert({
-          solicitud_id: solicitud_id,
-          user_id: user_id,
-          tipo_documento: 'autorizacion_infocred',
-          nombre_archivo: pdfFileName,
-          url_archivo: pdfFileName,
-          estado: 'subido',
-        });
-        if (dbError) {
-          console.error(`Error al insertar registro del PDF en DB para solicitud ${solicitud_id}:`, dbError);
-        }
-      }
-      console.log(`Solicitud ${solicitud_id}: PDF de autorización procesado.`);
-      // --- FIN DE LA NUEVA LÓGICA DE PDF ---
+      console.log(`Solicitud ${solicitud_id}: Generando PDF INFOCRED inmediato.`);
+      await ensureAuthorizationPreprint(supabaseAdmin, solicitud);
 
       return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada, correo de activación enviado manualmente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
