@@ -30,6 +30,7 @@ const RiskAnalystDashboard = () => {
   const [loading, setLoading] = useState(false); // Inicia en false
   const [error, setError] = useState(null);
   const [perfilSeleccionado, setPerfilSeleccionado] = useState(mockProfile);
+  const [showOnlyComplete, setShowOnlyComplete] = useState(false);
   // ----------------------------------
 
   // State para el modal
@@ -123,6 +124,16 @@ const RiskAnalystDashboard = () => {
     fetchHelpRequests();
   }, []);
 
+  const isProfileComplete = (perfil) => {
+    const docs = perfil.documentos_validados || [];
+    if (docs.length === 0) return false;
+    return docs.every(doc => (doc.estado || '').toLowerCase() === 'verificado');
+  };
+
+  const filteredPerfiles = showOnlyComplete
+    ? perfiles.filter(p => isProfileComplete(p))
+    : perfiles;
+
   const renderContent = () => {
     if (loading) {
       return <div className="centered-message">Cargando perfiles...</div>;
@@ -146,10 +157,19 @@ const RiskAnalystDashboard = () => {
         <aside className="lista-perfiles">
           <header>
             <h2>Perfiles a Revisar ({perfiles.length})</h2>
+            <div className="filter-group">
+              <button
+                type="button"
+                className={`filter-pill ${showOnlyComplete ? 'filter-pill--active' : ''}`}
+                onClick={() => setShowOnlyComplete(prev => !prev)}
+              >
+                {showOnlyComplete ? 'Todos los perfiles' : 'Solo completos'}
+              </button>
+            </div>
             <HelpTooltip text="Estos son los perfiles de prestatarios que han completado la carga de documentos y están listos para un análisis de riesgo." />
           </header>
           <div className="perfiles-list">
-            {perfiles.map(perfil => (
+            {filteredPerfiles.map(perfil => (
               <div 
                 key={perfil.id} 
                 className={`perfil-item ${perfilSeleccionado && perfilSeleccionado.id === perfil.id ? 'selected' : ''}`}

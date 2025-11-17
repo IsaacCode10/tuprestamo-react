@@ -27,6 +27,27 @@
   align-items: center;
 }
 
+.filter-group {
+  display: inline-flex;
+}
+
+.filter-pill {
+  border: 1px solid rgba(0, 68, 90, 0.2);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #00445A;
+  background: #f7fbfb;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.filter-pill--active {
+  background: #00445A;
+  color: #fff;
+}
+
 .lista-perfiles h2 {
   margin: 0;
   font-size: 1.2rem;

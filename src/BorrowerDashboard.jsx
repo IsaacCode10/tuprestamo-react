@@ -651,13 +651,12 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
         try { trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, file: fileName }); } catch (_) {}
       }
 
-      if (docId !== 'autorizacion_infocred_firmada') {
-        await analyzeDocument(docId, filePath);
-        trackEvent('Successfully Uploaded Document', { document_type: docId });
-      } else {
-        trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, document_type: docId });
-        setHelpRequests(prev => ({ ...prev, [docId]: false }));
-      }
+        if (docId !== 'autorizacion_infocred_firmada') {
+          await analyzeDocument(docId, filePath);
+          trackEvent('Successfully Uploaded Document', { document_type: docId });
+        } else {
+          trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, document_type: docId });
+        }
       if (typeof onRefreshData === 'function') {
         onRefreshData();
       }
