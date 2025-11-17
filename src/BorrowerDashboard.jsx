@@ -422,8 +422,11 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
             </div>
           </div>
         )}
-        {isAnalyzed ? (
-          <div className="ai-badge" aria-label="Analizado por IA">IA Analizado por IA</div>
+        {isAnalyzed && doc.tipo_documento !== 'autorizacion_infocred_firmada' ? (
+          <div className="ai-badge" aria-label="Analizado por IA">
+            <span className="ai-icon" aria-hidden="true">🧠</span>
+            Analizado por IA
+          </div>
         ) : null}
         {error && <span className="file-slot-error">{error}</span>}
       </div>
@@ -648,8 +651,13 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
         try { trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, file: fileName }); } catch (_) {}
       }
 
-      await analyzeDocument(docId, filePath);
-      trackEvent('Successfully Uploaded Document', { document_type: docId });
+      if (docId !== 'autorizacion_infocred_firmada') {
+        await analyzeDocument(docId, filePath);
+        trackEvent('Successfully Uploaded Document', { document_type: docId });
+      } else {
+        trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, document_type: docId });
+        setHelpRequests(prev => ({ ...prev, [docId]: false }));
+      }
       if (typeof onRefreshData === 'function') {
         onRefreshData();
       }
