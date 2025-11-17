@@ -106,7 +106,7 @@ export async function ensureAuthorizationPreprint(supabaseClient: any, solicitud
 
   try {
     const pdfBytes = await generateAuthorizationPDF(solicitud)
-    const folder = user_id || 'unknown'
+    const folder = ownerId || 'unknown'
     const pdfFileName = `${folder}/${solicitud_id}_${PREPRINT_DOCUMENT_TYPE}.pdf`
     const { error: storageError } = await supabaseClient
       .storage
