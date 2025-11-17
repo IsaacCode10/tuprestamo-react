@@ -133,9 +133,10 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
         : null;
     const oportunidadFallback = getFallbackOpportunity(solicitud);
     const activeOpportunity = oportunidadObj || oportunidadFallback;
+    const requestedAmountValue = parseNumberValue(solicitud?.saldo_deuda_tc ?? solicitud?.monto_solicitado);
 
     const [simulation, setSimulation] = useState({
-        montoDeuda: solicitud.monto_solicitado || '',
+        montoDeuda: requestedAmountValue ?? '',
         tasaActual: solicitud.tasa_interes_tc || '',
         plazo: solicitud.plazo_meses || 24,
         costoMantenimientoBanco: '100',
@@ -143,13 +144,14 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
 
     useEffect(() => {
         if (!solicitud) return;
+        const preferredDebt = parseNumberValue(solicitud?.saldo_deuda_tc ?? solicitud?.monto_solicitado);
         setSimulation(prev => ({
             ...prev,
-            montoDeuda: solicitud.monto_solicitado ?? solicitud.saldo_deuda_tc ?? prev.montoDeuda,
+            montoDeuda: preferredDebt ?? prev.montoDeuda,
             tasaActual: solicitud.tasa_interes_tc ?? prev.tasaActual,
             plazo: solicitud.plazo_meses ?? prev.plazo,
         }));
-    }, [solicitud?.monto_solicitado, solicitud?.saldo_deuda_tc, solicitud?.tasa_interes_tc, solicitud?.plazo_meses]);
+    }, [solicitud?.saldo_deuda_tc, solicitud?.monto_solicitado, solicitud?.tasa_interes_tc, solicitud?.plazo_meses]);
 
     const handleSimulationChange = (newValues) => {
         setSimulation(prev => ({ ...prev, ...newValues }));
@@ -179,14 +181,14 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                 </div>
                 <ProgressStepper currentStep={solicitud.estado} allDocumentsUploaded={allDocumentsUploaded} />
                 
-                <StatusCard 
-                    solicitud={solicitud} 
-                    oportunidad={activeOpportunity} 
-                    simulation={simulation}
-                    pagoTotalMensualTP={pagoTotalMensualTP}
-                    originacionMonto={originacionMonto}
-                    minApplied={minApplied}
-                />
+                    <StatusCard 
+                        solicitud={solicitud} 
+                        oportunidad={activeOpportunity} 
+                        simulation={simulation}
+                        pagoTotalMensualTP={pagoTotalMensualTP}
+                        originacionMonto={originacionMonto}
+                        minApplied={minApplied}
+                    />
 
                 <>
                         <SavingsCalculator 
@@ -256,6 +258,11 @@ const getFallbackOpportunity = (solicitud) => {
 };
 
 const getProfileMessage = (profile) => { /* ... */ };
+
+const parseNumberValue = (value) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
 
 // --- PROGRESS STEPPER CON LÓGICA DE UI MEJORADA ---
 const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
