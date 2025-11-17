@@ -78,6 +78,76 @@
   color: #595959;
 }
 
+.help-requests-analyst {
+  margin-top: 1.5rem;
+  border: 1px solid rgba(38, 194, 178, 0.4);
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(38, 194, 178, 0.05);
+}
+
+.help-requests-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.75rem;
+}
+
+.help-requests-count {
+  font-size: 0.85rem;
+  color: #00445A;
+  font-weight: 600;
+}
+
+.help-requests-analyst ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.help-request-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.help-request-row strong {
+  display: block;
+  color: #00445A;
+}
+
+.help-request-row p {
+  margin: 0;
+  color: #55747b;
+  font-size: 0.85rem;
+}
+
+.help-request-meta {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #55747b;
+}
+
+.help-request-status {
+  display: inline-block;
+  margin-left: 0.5rem;
+  color: #26C2B2;
+  font-weight: 600;
+}
+
+.help-requests-empty {
+  margin: 0;
+  color: #385b64;
+  font-size: 0.85rem;
+}
+
 /* --- Panel Principal del Scorecard --- */
 .scorecard-digital {
   flex-grow: 1;

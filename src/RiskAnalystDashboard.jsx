@@ -39,6 +39,7 @@ const RiskAnalystDashboard = () => {
   // State para el cálculo de gross-up
   const [saldoDeudorVerificado, setSaldoDeudorVerificado] = useState('');
   const [montoTotalPrestamo, setMontoTotalPrestamo] = useState(null);
+  const [helpRequests, setHelpRequests] = useState([]);
   const TASA_COMISION = 0.08; // 8%
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
@@ -106,6 +107,22 @@ const RiskAnalystDashboard = () => {
     // ------------------------------------------------------
   };
   
+  useEffect(() => {
+    const fetchHelpRequests = async () => {
+      const { data, error } = await supabase
+        .from('document_help_requests')
+        .select('id, solicitud_id, created_at, status, payload, solicitudes (id, email, nombre_completo, estado)')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Error fetching help requests:', error);
+        return;
+      }
+      setHelpRequests(data || []);
+    };
+    fetchHelpRequests();
+  }, []);
+
   const renderContent = () => {
     if (loading) {
       return <div className="centered-message">Cargando perfiles...</div>;
@@ -149,6 +166,30 @@ const RiskAnalystDashboard = () => {
               </div>
             ))}
           </div>
+          <section className="help-requests-analyst">
+            <header className="help-requests-header">
+              <h3>Solicitudes que pidieron ayuda</h3>
+              <span className="help-requests-count">{helpRequests.length} pendientes</span>
+            </header>
+            {helpRequests.length === 0 ? (
+              <p className="help-requests-empty">Sin solicitudes nuevas. Tus leads más calientes están listos.</p>
+            ) : (
+              <ul>
+                {helpRequests.map((request) => (
+                  <li key={request.id} className="help-request-row">
+                    <div>
+                      <strong>{request.solicitudes?.nombre_completo || 'Sin nombre'}</strong>
+                      <p>{request.solicitudes?.email || 'Sin correo'}</p>
+                    </div>
+                    <div className="help-request-meta">
+                      <span>{new Date(request.created_at).toLocaleString('es-BO')}</span>
+                      <span className="help-request-status">{request.status}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </aside>
 
         <main className="scorecard-digital">

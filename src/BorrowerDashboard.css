@@ -856,3 +856,43 @@
   background-color: #1faca0 !important;
   transform: scale(1.05);
 }
+
+.help-pill {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #26C2B2;
+  color: #26C2B2;
+  background: rgba(38, 194, 178, 0.12);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.help-pill--active {
+  background: #26C2B2;
+  color: #fff;
+  border-color: #26C2B2;
+  box-shadow: 0 4px 12px rgba(38, 194, 178, 0.25);
+}
+
+.help-pill-subtext {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #385b64;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.document-help-footer {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.help-pill--global {
+  font-weight: 500;
+  background: transparent;
+  border-color: rgba(0,0,0,0.1);
+  color: #00445A;
+}

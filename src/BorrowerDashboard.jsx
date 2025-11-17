@@ -423,7 +423,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
           </div>
         )}
         {isAnalyzed ? (
-          <div className="ai-badge" aria-label="Analizado por IA">🧠 Analizado por IA</div>
+          <div className="ai-badge" aria-label="Analizado por IA">IA Analizado por IA</div>
         ) : null}
         {error && <span className="file-slot-error">{error}</span>}
       </div>
@@ -456,11 +456,9 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
   const [isUploadingGlobal, setIsUploadingGlobal] = useState(false);
   const [authPreprintUrl, setAuthPreprintUrl] = useState(null);
   const [manualFallback, setManualFallback] = useState({});
+  const [globalHelpRequested, setGlobalHelpRequested] = useState(false);
   const uploadedSet = new Set((uploadedDocuments || []).map(d => d.tipo_documento));
   const analyzedSet = new Set(analyzedDocTypes || []);
-  const othersComplete = (requiredDocs || [])
-    .filter(d => d.id !== 'autorizacion_infocred_firmada')
-    .every(d => uploadedSet.has(d.id));
 
   const activateManualFallback = useCallback((docId, message) => {
     setManualFallback(prev => ({
@@ -477,6 +475,22 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
       return next;
     });
   }, []);
+
+  const handleGlobalHelp = useCallback(async () => {
+    if (globalHelpRequested) return;
+    setGlobalHelpRequested(true);
+    try {
+      await supabase.from('document_help_requests').insert({
+        solicitud_id: solicitud.id,
+        user_id: user?.id,
+        payload: { event: 'global_help_request' },
+        status: 'pending'
+      });
+      trackEvent('Requested Global Document Help', { solicitud_id: solicitud?.id });
+    } catch (err) {
+      console.error('Error registrando request de ayuda global:', err);
+    }
+  }, [globalHelpRequested, solicitud?.id, user?.id]);
 
   useEffect(() => {
     console.log('--- DIAGNÓSTICO DESCARGA PDF ---');
@@ -692,15 +706,25 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                 manualFallback={manualFallback[doc.id]}
                 onManualRetry={() => handleRetryAnalysis(uploadedDocuments.find(d => d.tipo_documento === doc.id))}
                 onFileSelect={(file) => handleFileUpload(file, doc.id)}
-                disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && (!othersComplete || !authPreprintUrl))}
+                disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !authPreprintUrl)}
                 isAnalyzed={isAnalyzed}
               />
-              {isAuthFirmada && !othersComplete && (
-                <div style={{marginTop:6, color:'#8a8a8a', fontSize:'0.9rem'}}>Paso final: subí primero los demás documentos.</div>
-              )}
             </div>
           );
         })}
+      </div>
+      <div className="document-help-footer">
+        <button
+          className={`help-pill help-pill--global ${globalHelpRequested ? 'help-pill--active' : ''}`}
+          type="button"
+          onClick={handleGlobalHelp}
+          disabled={globalHelpRequested}
+        >
+          {globalHelpRequested ? 'Ayuda solicitada' : 'Necesito ayuda para subir un documento'}
+        </button>
+        {globalHelpRequested && (
+          <span className="help-pill-subtext">Te contactaremos en breve para ayudarte.</span>
+        )}
       </div>
     </div>
   );
