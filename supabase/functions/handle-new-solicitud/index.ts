@@ -351,7 +351,7 @@ serve(async (req) => {
       console.log(`Solicitud ${solicitud_id}: Actualización a 'pre-aprobado' finalizada.`);
 
       console.log(`Solicitud ${solicitud_id}: Generando PDF INFOCRED inmediato.`);
-      await ensureAuthorizationPreprint(supabaseAdmin, solicitud);
+      await ensureAuthorizationPreprint(supabaseAdmin, solicitud, user_id);
 
       return new Response(JSON.stringify({ message: 'Solicitud pre-aprobada, correo de activación enviado manualmente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
