@@ -128,7 +128,8 @@ serve(async (req) => {
 
   try {
     const { record: solicitud } = await req.json();
-    const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses, saldo_deuda_tc } = solicitud;
+    const solicitudPayload = solicitud ?? {};
+    const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses, saldo_deuda_tc } = solicitudPayload;
 
     // Flujo AUTOMÁTICO para INVERSIONISTA: generar invitación y enviar correo de bienvenida
     if (tipo_solicitud === 'inversionista') {
