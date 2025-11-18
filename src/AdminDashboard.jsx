@@ -348,15 +348,19 @@ const AdminDashboard = () => {
       <h3>Detalle de Solicitudes</h3>
       <div className="filter-buttons">
         {statusFilters.map(status => (
-        <button
-          key={status}
-          onClick={() => setFilter(status)}
-          className={filter === status ? 'filter-btn filter-btn--active' : 'filter-btn'}
-          title={filterTooltips[status] || ''}
-        >
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={filter === status ? 'filter-btn filter-btn--active' : 'filter-btn'}
+            title={filterTooltips[status] || ''}
+          >
             {status === 'todos' ? 'Todos' : status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
           </button>
         ))}
+      </div>
+      <div className="filter-helper">
+        <span className="filter-helper-label">Estado seleccionado:</span>
+        <span className="filter-helper-value">{filter === 'todos' ? 'Todos los estados' : filterTooltips[filter] || filter.replace('-', ' ')}</span>
       </div>
 
       {loading && <p>Cargando solicitudes...</p>}

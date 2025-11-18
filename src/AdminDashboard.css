@@ -215,6 +215,24 @@
   box-shadow: 0 6px 20px rgba(0, 68, 90, 0.25);
 }
 
+.filter-helper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+  padding: 6px 0 0;
+  color: #385b64;
+}
+
+.filter-helper-label {
+  font-weight: 600;
+  color: #00445a;
+}
+
+.filter-helper-value {
+  font-style: italic;
+}
+
 .request-detail-panel {
   margin-top: 24px;
   padding: 18px;
