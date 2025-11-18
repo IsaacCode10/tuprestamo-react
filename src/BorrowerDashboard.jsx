@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import { resetMixpanel } from './analytics';
 import { Link, useNavigate } from 'react-router-dom';
@@ -527,8 +527,10 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
   const [authPreprintUrl, setAuthPreprintUrl] = useState(null);
   const [manualFallback, setManualFallback] = useState({});
   const [globalHelpRequested, setGlobalHelpRequested] = useState(false);
+  const [helpRequestsResolved, setHelpRequestsResolved] = useState(false);
   const uploadedSet = new Set((uploadedDocuments || []).map(d => d.tipo_documento));
   const analyzedSet = new Set(analyzedDocTypes || []);
+  const requiredDocIds = useMemo(() => (requiredDocs || []).map(doc => doc.id), [requiredDocs]);
 
   const activateManualFallback = useCallback((docId, message) => {
     setManualFallback(prev => ({
@@ -648,6 +650,26 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
       return changed ? next : prev;
     });
   }, [analyzedDocTypes]);
+
+  useEffect(() => {
+    if (!solicitud?.id || helpRequestsResolved) return;
+    if (!requiredDocIds.length) return;
+    const allAnalyzed = requiredDocIds.every(id => analyzedDocTypes?.includes(id));
+    if (!allAnalyzed) return;
+    const resolveHelpRequests = async () => {
+      const { error } = await supabase
+        .from('document_help_requests')
+        .update({ status: 'resolved' })
+        .eq('solicitud_id', solicitud.id)
+        .eq('status', 'pending');
+      if (!error) {
+        setHelpRequestsResolved(true);
+      } else {
+        console.error('No se pudo cerrar help requests automáticamente:', error);
+      }
+    };
+    resolveHelpRequests();
+  }, [analyzedDocTypes, requiredDocIds, solicitud?.id, helpRequestsResolved]);
 
   const shouldActivateManualFallback = useCallback((error) => {
     if (!error) return false;
