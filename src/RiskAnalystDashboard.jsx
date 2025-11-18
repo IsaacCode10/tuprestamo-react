@@ -4,8 +4,7 @@ import './RiskAnalystDashboard.css';
 import HelpTooltip from './components/HelpTooltip';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
-// --- Objeto de prueba para desarrollo ---
-const mockProfile = {
+const FALLBACK_PROFILE = {
   id: '12345-abcde',
   nombre_completo: 'Isaac Alfaro (Prueba)',
   ci: '1234567 LP',
@@ -22,20 +21,19 @@ const mockProfile = {
     { tipo_documento: 'Foto Selfie con CI', estado: 'Rechazado' },
   ]
 };
-// --------------------------------------
 
 const RiskAnalystDashboard = () => {
-  // --- Estados con datos de prueba ---
-  const [perfiles, setPerfiles] = useState([mockProfile]);
+  const [perfiles, setPerfiles] = useState([]);
   const [loading, setLoading] = useState(false); // Inicia en false
   const [error, setError] = useState(null);
-  const [perfilSeleccionado, setPerfilSeleccionado] = useState(mockProfile);
+  const [perfilSeleccionado, setPerfilSeleccionado] = useState(null);
   const [showOnlyComplete, setShowOnlyComplete] = useState(false);
   // ----------------------------------
 
   // State para el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [decisionType, setDecisionType] = useState(null); // 'Aprobado' or 'Rechazado'
+  const [isSavingDecision, setIsSavingDecision] = useState(false);
 
   // State para el cálculo de gross-up
   const [saldoDeudorVerificado, setSaldoDeudorVerificado] = useState('');
@@ -98,14 +96,40 @@ const RiskAnalystDashboard = () => {
     setIsModalOpen(true);
   };
 
+  const handleOpenBorrowerView = () => {
+    if (!perfilSeleccionado) return;
+    const base = `${window.location.origin}/borrower-dashboard`;
+    const params = new URLSearchParams();
+    if (perfilSeleccionado.solicitudes?.id) {
+      params.set('solicitudId', perfilSeleccionado.solicitudes.id);
+    }
+    params.set('perfilId', perfilSeleccionado.id);
+    window.open(`${base}?${params.toString()}`, '_blank');
+  };
+
   // Se ejecuta al confirmar la decisión en el modal
   const handleSubmitDecision = async (decisionData) => {
-    // --- Lógica de guardado desactivada en modo de prueba ---
-    alert("Modo de prueba: La decisión no se guardará en la base de datos.");
-    console.log("Decisión a guardar:", decisionData);
-    setIsModalOpen(false);
-    return;
-    // ------------------------------------------------------
+    setIsSavingDecision(true);
+    try {
+      const payload = {
+        profile_id: decisionData.profileId,
+        decision: decisionData.decision,
+        motivo: decisionData.motivo,
+        notas: decisionData.notas,
+        analyst_id: null,
+        created_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('risk_decisions').insert(payload);
+      if (error) throw error;
+      setError(null);
+      alert('Decisión registrada en el expediente.');
+    } catch (err) {
+      console.error('Error guardando decisión:', err);
+      alert('Hubo un inconveniente al guardar la decisión. Intenta nuevamente.');
+    } finally {
+      setIsSavingDecision(false);
+      setIsModalOpen(false);
+    }
   };
   
   useEffect(() => {
@@ -133,6 +157,43 @@ const RiskAnalystDashboard = () => {
   const filteredPerfiles = showOnlyComplete
     ? perfiles.filter(p => isProfileComplete(p))
     : perfiles;
+
+  const fetchPerfiles = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('perfiles_de_riesgo')
+        .select(`
+          *,
+          solicitudes (
+            id,
+            nombre_completo,
+            email,
+            estado
+          )
+        `)
+        .in('estado', ['listo_para_revision', 'documentos-en-revision']);
+
+      if (error) throw error;
+      const payload = (data && data.length > 0) ? data : [FALLBACK_PROFILE];
+      setPerfiles(payload);
+      setPerfilSeleccionado(prev =>
+        payload.find(p => prev?.id === p.id) || payload[0]
+      );
+    } catch (err) {
+      console.error('Error fetching risk profiles:', err);
+      setError('No se pudieron cargar los perfiles. Se muestran datos de prueba.');
+      setPerfiles([FALLBACK_PROFILE]);
+      setPerfilSeleccionado(FALLBACK_PROFILE);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPerfiles();
+  }, [fetchPerfiles]);
 
   const renderContent = () => {
     if (loading) {
@@ -217,8 +278,19 @@ const RiskAnalystDashboard = () => {
             <>
               <header className="scorecard-header">
                 <h1>Scorecard Digital</h1>
-                <p>Análisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong></p>
-              </header>
+            <p>Análisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong></p>
+            <div className="analyst-actions">
+              <button
+                type="button"
+                className="btn-link"
+                onClick={handleOpenBorrowerView}
+                disabled={!perfilSeleccionado}
+              >
+                Ver proceso del prestatario
+              </button>
+              <HelpTooltip text="Abre el panel del prestatario para revisar documentos, mensajes y el historial reciente sin cerrar este panel." />
+            </div>
+          </header>
               
               <section className="metricas-clave">
                 <div className="metrica">
