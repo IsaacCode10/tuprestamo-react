@@ -173,7 +173,8 @@ const RiskAnalystDashboard = () => {
             estado
           )
         `)
-        .in('estado', ['listo_para_revision', 'documentos-en-revision', 'pre-aprobado', 'pendiente']);
+        .in('estado', ['listo_para_revision', 'documentos-en-revision', 'pre-aprobado', 'pendiente'])
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       const payload = (data && data.length > 0) ? data : [FALLBACK_PROFILE];
