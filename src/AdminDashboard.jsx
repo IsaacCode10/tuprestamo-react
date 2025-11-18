@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import AdminNav from './components/AdminNav';
 import './LoanRequestsList.css';
@@ -170,6 +171,15 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
+  const [alertMessage, setAlertMessage] = useState('');
+  const prevRejectionsRef = useRef(0);
+
+  const normalizedStatus = (state) => {
+    if (!state) return 'pendiente';
+    const lower = state.toLowerCase().trim();
+    if (lower === 'documentos-en-revision') return 'pre-aprobado';
+    return lower;
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -207,13 +217,14 @@ const AdminDashboard = () => {
       today.setHours(0, 0, 0, 0);
 
       const statsPayload = processedRequests.reduce((acc, r) => {
+        const memoEstado = normalizedStatus(r.estado);
         const isToday = new Date(r.created_at) >= today;
 
-        acc.estados[r.estado] = (acc.estados[r.estado] || 0) + 1;
+        acc.estados[memoEstado] = (acc.estados[memoEstado] || 0) + 1;
 
         if (isToday) {
           acc.solicitudesHoy += 1;
-          if (r.estado === 'pre-aprobado') {
+          if (memoEstado === 'pre-aprobado') {
             acc.montoPreAprobadoHoy += r.monto_solicitado;
           }
         }
@@ -253,6 +264,16 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (stats.totalRechazados > prevRejectionsRef.current) {
+      setAlertMessage('Rechazos diarios en aumento. Revisá las solicitudes con más atención.');
+      const timer = setTimeout(() => setAlertMessage(''), 4000);
+      return () => clearTimeout(timer);
+    }
+    prevRejectionsRef.current = stats.totalRechazados;
+    return undefined;
+  }, [stats.totalRechazados]);
+
+  useEffect(() => {
     const subscription = supabase.channel('solicitudes-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes' }, 
         () => fetchDashboardData()
@@ -260,9 +281,12 @@ const AdminDashboard = () => {
     return () => supabase.removeChannel(subscription);
   }, []);
 
+  const navigate = useNavigate();
+  const openRequestDetail = (requestId) => navigate(`/solicitudes/${requestId}`);
+
   const filteredRequests = useMemo(() => {
     if (filter === 'todos') return requests;
-    return requests.filter(req => req.estado === filter);
+    return requests.filter(req => normalizedStatus(req.estado) === filter);
   }, [filter, requests]);
 
   return (
@@ -270,6 +294,11 @@ const AdminDashboard = () => {
       <AdminNav />
       <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/admin-dashboard' }, { label: 'Centro de Operaciones' }]} />
       <h2>Centro de Operaciones</h2>
+      {alertMessage && (
+        <div className="alert-banner" role="status">
+          {alertMessage}
+        </div>
+      )}
       
       {loading ? <p>Cargando métricas...</p> : (
         <>
@@ -303,31 +332,45 @@ const AdminDashboard = () => {
         <table>
           <thead>
             <tr>
+              <th>Solicitud</th>
               <th>Fecha</th>
+              <th>ID</th>
               <th>Nombre</th>
               <th>Monto Solicitado</th>
               <th>Ingresos Mensuales</th>
               <th>Deudas Mensuales</th>
               <th>Perfil Riesgo</th>
               <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {filteredRequests.map((req) => (
               <tr key={req.id}>
+                <td>
+                  <span className={`priority-tag ${req.estado === 'documentos-en-revision' ? 'priority-tag--hot' : ''}`}>
+                    {req.estado === 'documentos-en-revision' ? 'Lead caliente' : 'Solicitud'}
+                  </span>
+                </td>
                 <td>{new Date(req.created_at).toLocaleDateString()}</td>
+                <td>{req.id}</td>
                 <td>{req.nombre_completo}</td>
                 <td>Bs {req.monto_solicitado}</td>
-                <td>Bs {req.ingresos_mensuales}</td>
-                <td>Bs {req.deudas_mensuales}</td>
+                <td>Bs {req.ingreso_mensual ?? '--'}</td>
+                <td>Bs {req.deudas_mensuales ?? '--'}</td>
                 <td>
                   {req.perfil_riesgo ? (
-                     <span className={`suggestion-label suggestion-${req.perfil_riesgo.toLowerCase()}`}>
-                        {req.perfil_riesgo}
-                      </span>
+                    <span className={`suggestion-label suggestion-${req.perfil_riesgo.toLowerCase()}`}>
+                      {req.perfil_riesgo}
+                    </span>
                   ) : '--'}
                 </td>
                 <td><span className={`status status-${req.estado}`}>{req.estado}</span></td>
+                <td>
+                  <button className="btn btn--ghost btn--xs" onClick={() => openRequestDetail(req.id)}>
+                    Ver solicitud
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
