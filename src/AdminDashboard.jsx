@@ -183,10 +183,23 @@ const AdminDashboard = () => {
 
       if (requestsError) throw requestsError;
       
-      // El join en Supabase devuelve oportunidades como un array. Lo aplanamos.
-      const processedRequests = requestsData.map(r => ({
+      const requestIds = (requestsData || []).map(r => r.id);
+      let oppsMap = {};
+      if (requestIds.length > 0) {
+        const { data: oppsData, error: oppsError } = await supabase
+          .from('oportunidades')
+          .select('solicitud_id, perfil_riesgo')
+          .in('solicitud_id', requestIds);
+        if (oppsError) throw oppsError;
+        oppsMap = (oppsData || []).reduce((acc, opp) => {
+          acc[opp.solicitud_id] = opp.perfil_riesgo;
+          return acc;
+        }, {});
+      }
+
+      const processedRequests = (requestsData || []).map(r => ({
         ...r,
-        perfil_riesgo: r.oportunidades?.length > 0 ? r.oportunidades[0].perfil_riesgo : null
+        perfil_riesgo: oppsMap[r.id] || null
       }));
       setRequests(processedRequests);
 

@@ -16,11 +16,37 @@ import { trackEvent } from '@/analytics.js';
 
 // --- LISTAS DE FAQs CONTEXTUALES (SIN CAMBIOS) ---
 const approvedLoanFaqs = [];
-const inProgressFaqs = [];
+const inProgressFaqs = [
+  {
+    question: '¿Qué significa que ya estoy en Revisión Final?',
+    answer: 'Tus documentos llegaron completos, ahora los analistas financieros y de riesgo los revisan; si todo está en orden recibirás una propuesta formal desde este mismo panel.'
+  },
+  {
+    question: '¿Qué documento falta y cómo lo detecto?',
+    answer: 'Revisa el Document Manager: cada tarjeta se actualiza con estado y análisis. Si ves una tarjeta con “Pendiente” o “Subiendo”, es el que falta.'
+  },
+  {
+    question: '¿Cuánto tarda el análisis? ¿Necesito hacer algo más?',
+    answer: 'Una vez subido el archivo, el análisis ocurre automáticamente y debería reflejarse en segundos. Si algo falla, el mismo panel mostrará el error y podrás reintentar.'
+  },
+  {
+    question: '¿Puedo volver a subir un documento?',
+    answer: 'Sí. Toca el slot correspondiente, selecciona el archivo correcto y el sistema reemplazará la carga anterior sin duplicados.'
+  },
+  {
+    question: '¿Qué pasa si no tengo un documento y necesito ayuda?',
+    answer: 'Haz clic en “Necesito ayuda para subir un documento” y Sarai o el equipo de soporte se contactarán contigo. Así no tenés que tocar Supabase.'
+  }
+];
 
 // --- MOCK DATA (SIN CAMBIOS) ---
 const mockLoanData = {};
 const mockNotifications = [];
+
+const isDev = process.env.NODE_ENV === 'development';
+const diagLog = (...args) => {
+  if (isDev) console.log(...args);
+};
 
 // --- COMPONENTES DE VISTA APROBADA (SIN CAMBIOS) ---
 const LoanSummaryCard = ({ title, value, subtext, isPrimary = false }) => ( <div/> );
@@ -101,15 +127,15 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
     const baseDocs = [
       { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
       { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
-      { id: 'factura_servicio', nombre: 'Factura Servicio Básico', definition: 'Para confirmar tu dirección de residencia actual. Puede ser una factura de luz, agua o gas de los últimos 3 meses.' },
-      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.' },
+      { id: 'factura_servicio', nombre: 'Factura Servicio Básico', definition: 'Para confirmar tu dirección de residencia actual. Puede ser una factura de luz, agua o gas.', tooltip: 'Adjunta la última factura de agua, electricidad o internet que muestre tu dirección actual.' },
+      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.', tooltip: 'La última boleta que te envía el banco; si no llega, solicita el documento a través de la banca en línea o en una agencia.' },
       { id: 'selfie_ci', nombre: 'Selfie con Cédula de Identidad', definition: 'Una medida de seguridad adicional para prevenir el fraude y asegurar que realmente eres tú quien solicita el préstamo. Sostén tu CI al lado de tu cara.' },
     ];
   const situacionDocs = {
-    'Dependiente': [
-      { id: 'boleta_pago', nombre: 'Última Boleta de Pago', definition: 'Para verificar tus ingresos mensuales y tu relación laboral como dependiente.' },
-      { id: 'certificado_gestora', nombre: 'Certificado de la Gestora Pública', definition: 'Confirma tus aportes y nos ayuda a complementar el análisis de tus ingresos.' },
-    ],
+      'Dependiente': [
+        { id: 'boleta_pago', nombre: 'Última Boleta de Pago', definition: 'Para verificar tus ingresos mensuales y tu relación laboral como dependiente.', tooltip: 'Debe mostrar empresa, fecha de ingreso y líquido pagable. Si falta algún dato, pídeselo a RRHH.' },
+        { id: 'certificado_gestora', nombre: 'Certificado de la Gestora Pública', definition: 'Confirma tus aportes y nos ayuda a complementar el análisis de tus ingresos.', tooltip: <>Solicítalo en la Gestora Pública de Pensiones (o AFP) presentando tu cédula. También puedes descargarlo en <a href="https://www.gestorapublica.gob.bo" target="_blank" rel="noopener noreferrer">gestorapublica.gob.bo</a> y si la web no responde, acércate a sus oficinas.</> },
+      ],
     'Independiente': [
       { id: 'extracto_bancario_m1', nombre: 'Extracto Bancario (Mes 1)', definition: 'Tu extracto bancario más reciente. Permite verificar la consistencia de tus ingresos.' },
       { id: 'extracto_bancario_m2', nombre: 'Extracto Bancario (Mes 2)', definition: 'Tu extracto bancario del mes anterior. Permite verificar la consistencia de tus ingresos.' },
@@ -171,6 +197,20 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
     const allDocumentsUploaded = requiredDocs.every(doc => 
         documents.some(uploadedDoc => uploadedDoc.tipo_documento === doc.id && uploadedDoc.estado === 'subido')
     );
+    const showFinalReviewNote = allDocumentsUploaded || ['documentos-en-revision','aprobado'].includes(solicitud.estado);
+    const [showUploadToast, setShowUploadToast] = useState(false);
+    const prevAllDocs = useRef(allDocumentsUploaded);
+    useEffect(() => {
+        let timer;
+        if (allDocumentsUploaded && !prevAllDocs.current) {
+            setShowUploadToast(true);
+            timer = setTimeout(() => setShowUploadToast(false), 3200);
+        }
+        prevAllDocs.current = allDocumentsUploaded;
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+    }, [allDocumentsUploaded]);
 
     return (
         <>
@@ -180,6 +220,8 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                     <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
                 </div>
                 <ProgressStepper currentStep={solicitud.estado} allDocumentsUploaded={allDocumentsUploaded} />
+                <UploadToast visible={showUploadToast} />
+                <FinalReviewNote visible={showFinalReviewNote} />
                 
                     <StatusCard 
                         solicitud={solicitud} 
@@ -289,6 +331,24 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
     </div>
   );
 };
+
+const FinalReviewNote = ({ visible }) => {
+  if (!visible) return null;
+  return (
+    <div className="final-review-note">
+      <p>
+        Ya con todos tus documentos en mano, nuestros analistas revisarán con cuidado que todo cumpla riesgo, compliance y requisitos internos; si todo está alineado, recibirás la propuesta del préstamo desde este mismo panel.
+      </p>
+      </div>
+    );
+};
+
+const UploadToast = ({ visible }) => (
+  <div className={`upload-toast ${visible ? 'upload-toast--visible' : ''}`} role="status" aria-live="polite">
+    <span className="upload-toast__icon" aria-hidden="true">✔</span>
+    <p>¡Todo listo! Tu solicitud pasa a Revisión Final.</p>
+  </div>
+);
 
 const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => {
   const monto = Number(simulation.montoDeuda) || 0;
@@ -409,9 +469,16 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
       }}
     >
       <div className="file-slot-icon">📄</div>
-      <div className="file-slot-info">
-        <div className="file-slot-name">{doc.nombre}</div>
-        <div className={`file-slot-status ${statusClass}`}>{statusText}</div>
+        <div className="file-slot-info">
+          <div className="file-slot-name-row">
+            <span className="file-slot-name">{doc.nombre}</span>
+            {doc.tooltip && (
+              <span className="file-slot-tooltip">
+                <HelpTooltip text={doc.tooltip} />
+              </span>
+            )}
+          </div>
+          <div className={`file-slot-status ${statusClass}`}>{statusText}</div>
         {fallbackActive && (
           <div className="manual-fallback">
             <p className="manual-fallback-text">{manualFallback.message}</p>
@@ -422,7 +489,7 @@ const FileSlot = ({ doc, isUploaded, isUploading, isAnalysing, progress, error, 
             </div>
           </div>
         )}
-        {isAnalyzed && doc.tipo_documento !== 'autorizacion_infocred_firmada' ? (
+        {isAnalyzed && doc.id !== 'autorizacion_infocred_firmada' ? (
           <div className="ai-badge" aria-label="Analizado por IA">
             <span className="ai-icon" aria-hidden="true">🧠</span>
             Analizado por IA
@@ -496,41 +563,64 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
   }, [globalHelpRequested, solicitud?.id, user?.id]);
 
   useEffect(() => {
-    console.log('--- DIAGNÓSTICO DESCARGA PDF ---');
-    console.log('1. Documentos recibidos:', uploadedDocuments);
-    // buscar documento preimpreso para descarga
+    if (!isDev) { // keep functionality without logs
+      const pre = uploadedDocuments?.find(d => d.tipo_documento === 'autorizacion_infocred_preimpresa');
+      const fetchSigned = async () => {
+        if (!pre || !pre.url_archivo) {
+          setAuthPreprintUrl(null);
+          return;
+        }
+        try {
+          const { data, error } = await supabase
+            .storage
+            .from('documentos-prestatarios')
+            .createSignedUrl(pre.url_archivo, 60 * 30);
+          if (error) {
+            setAuthPreprintUrl(null);
+            return;
+          }
+          setAuthPreprintUrl(data?.signedUrl || null);
+        } catch (e) {
+          setAuthPreprintUrl(null);
+        }
+      };
+      fetchSigned();
+      return;
+    }
+    diagLog('--- DIAGNÓSTICO DESCARGA PDF ---');
+    diagLog('1. Documentos recibidos:', uploadedDocuments);
     const pre = uploadedDocuments?.find(d => d.tipo_documento === 'autorizacion_infocred_preimpresa');
-    console.log('2. Documento "preimpreso" encontrado en la base de datos:', pre);
+    diagLog('2. Documento "preimpreso" encontrado en la base de datos:', pre);
 
     const fetchSigned = async () => {
       if (!pre || !pre.url_archivo) {
-        console.log('3. ERROR: No se encontró el documento preimpreso o no tiene URL. No se puede generar enlace de descarga.');
+        diagLog('3. ERROR: No se encontró el documento preimpreso o no tiene URL. No se puede generar enlace de descarga.');
         setAuthPreprintUrl(null);
         return;
       }
-      console.log('3. URL de archivo encontrada:', pre.url_archivo);
+      diagLog('3. URL de archivo encontrada:', pre.url_archivo);
       try {
-        console.log('4. Intentando generar URL firmada para el archivo...');
+        diagLog('4. Intentando generar URL firmada para el archivo...');
         const { data, error } = await supabase
           .storage
           .from('documentos-prestatarios')
           .createSignedUrl(pre.url_archivo, 60 * 30); // 30 minutos
         
         if (error) {
-          console.log('5. ERROR al generar URL firmada:', error);
+          diagLog('5. ERROR al generar URL firmada:', error);
           setAuthPreprintUrl(null);
           return;
         }
         
-        console.log('5. ÉXITO. URL firmada generada:', data?.signedUrl);
+        diagLog('5. ÉXITO. URL firmada generada:', data?.signedUrl);
         setAuthPreprintUrl(data?.signedUrl || null);
       } catch (e) {
-        console.log('6. ERROR CATASTRÓFICO en fetchSigned:', e);
+        diagLog('6. ERROR CATASTRÓFICO en fetchSigned:', e);
         setAuthPreprintUrl(null);
       }
     };
     fetchSigned();
-    console.log('--- FIN DIAGNÓSTICO ---');
+    diagLog('--- FIN DIAGNÓSTICO ---');
   }, [uploadedDocuments]);
 
   const handleAuthPreprintDownload = useCallback(() => {
@@ -829,18 +919,18 @@ const BorrowerDashboard = () => {
   useEffect(() => {
     if (!solicitud?.id) return;
 
-    console.log('[Realtime] Suscribiendo a cambios para solicitud ID:', solicitud.id);
+    diagLog('[Realtime] Suscribiendo a cambios para solicitud ID:', solicitud.id);
 
     const handleDocumentChange = (payload) => {
-      console.log('[Realtime] Evento de "documentos" recibido:', payload);
+      diagLog('[Realtime] Evento de "documentos" recibido:', payload);
       const newDoc = payload.new;
       if (!newDoc) {
-        console.log('[Realtime] Payload de "documentos" no contenía datos nuevos. Ignorando.');
+        diagLog('[Realtime] Payload de "documentos" no contenía datos nuevos. Ignorando.');
         return;
       }
       
       setDocuments(currentDocs => {
-        console.log('[Realtime] Actualizando estado de "documentos". Documento nuevo/actualizado:', newDoc.tipo_documento);
+        diagLog('[Realtime] Actualizando estado de "documentos". Documento nuevo/actualizado:', newDoc.tipo_documento);
         const docIndex = currentDocs.findIndex(d => d.id === newDoc.id);
         if (docIndex > -1) {
           const updatedDocs = [...currentDocs];
@@ -853,23 +943,23 @@ const BorrowerDashboard = () => {
     };
 
     const handleAnalysisChange = (payload) => {
-      console.log('[Realtime] Evento de "analisis_documentos" recibido:', payload);
+      diagLog('[Realtime] Evento de "analisis_documentos" recibido:', payload);
       const docType = payload.new?.document_type;
       if (docType) {
-        console.log('[Realtime] Tipo de documento analizado:', docType);
+        diagLog('[Realtime] Tipo de documento analizado:', docType);
         setAnalyzedDocTypes(prev => {
           const current = Array.isArray(prev) ? prev : [];
           const typesSet = new Set(current);
           if (typesSet.has(docType)) {
-            console.log('[Realtime] El tipo de documento ya estaba en el estado. No hay cambios.');
+            diagLog('[Realtime] El tipo de documento ya estaba en el estado. No hay cambios.');
             return prev;
           }
           typesSet.add(docType);
-          console.log('[Realtime] Añadiendo nuevo tipo de documento al estado.');
+          diagLog('[Realtime] Añadiendo nuevo tipo de documento al estado.');
           return Array.from(typesSet);
         });
       } else {
-        console.log('[Realtime] Payload de "analisis_documentos" no contenía un document_type. Ignorando.');
+        diagLog('[Realtime] Payload de "analisis_documentos" no contenía un document_type. Ignorando.');
       }
     };
 
@@ -877,18 +967,18 @@ const BorrowerDashboard = () => {
       .channel(`documentos-solicitud-${solicitud.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos', filter: `solicitud_id=eq.${solicitud.id}` }, handleDocumentChange)
       .subscribe((status) => {
-        console.log(`[Realtime] Estado del canal 'documentos': ${status}`);
+        diagLog(`[Realtime] Estado del canal 'documentos': ${status}`);
       });
 
     const analysisChannel = supabase
       .channel(`analisis-docs-solicitud-${solicitud.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'analisis_documentos', filter: `solicitud_id=eq.${solicitud.id}` }, handleAnalysisChange)
       .subscribe((status) => {
-        console.log(`[Realtime] Estado del canal 'analisis_documentos': ${status}`);
+        diagLog(`[Realtime] Estado del canal 'analisis_documentos': ${status}`);
       });
 
     return () => {
-      console.log('[Realtime] Desuscribiendo de los canales.');
+      diagLog('[Realtime] Desuscribiendo de los canales.');
       supabase.removeChannel(docChannel);
       supabase.removeChannel(analysisChannel);
     };
