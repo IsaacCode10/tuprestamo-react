@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import AdminNav from './components/AdminNav';
 import './LoanRequestsList.css';
@@ -7,6 +6,18 @@ import './AdminDashboard.css';
 import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
 // --- Componente para Inversiones Pendientes ---
+const currencyFormatter = new Intl.NumberFormat('es-BO', {
+  style: 'currency',
+  currency: 'BOB',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatCurrency = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? currencyFormatter.format(number) : 'Bs 0.00';
+};
+
 const PendingInvestments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -281,8 +292,24 @@ const AdminDashboard = () => {
     return () => supabase.removeChannel(subscription);
   }, []);
 
-  const navigate = useNavigate();
-  const openRequestDetail = (requestId) => navigate(`/solicitudes/${requestId}`);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const handleSelectRequest = (request) => setSelectedRequest(request);
+
+  const statusFilters = useMemo(() => {
+    const states = new Set();
+    requests.forEach(req => {
+      states.add(normalizedStatus(req.estado));
+    });
+    return ['todos', ...Array.from(states)];
+  }, [requests]);
+
+  const filterTooltips = {
+    todos: 'Ver todas las solicitudes activas',
+    pendiente: 'Pendientes de iniciar evaluación documental',
+    'documentos-en-revision': 'Documentos en análisis previo a la pre-aprobación',
+    'pre-aprobado': 'Listas para desembolso o seguimiento del pago',
+    rechazado: 'Rechazadas por riesgo o documentación incompleta'
+  };
 
   const filteredRequests = useMemo(() => {
     if (filter === 'todos') return requests;
@@ -302,12 +329,12 @@ const AdminDashboard = () => {
       
       {loading ? <p>Cargando métricas...</p> : (
         <>
-          <div className="kpi-dashboard">
-            <KpiCard title="Solicitudes Hoy" value={stats.solicitudesHoy} />
-            <KpiCard title="Monto Pre-Aprobado Hoy" value={`Bs ${stats.montoPreAprobadoHoy.toLocaleString()}`} />
-            <KpiCard title="Total Pre-Aprobadas" value={stats.totalPreAprobados} type="total-approved" />
-            <KpiCard title="Total Rechazadas" value={stats.totalRechazados} type="total-rejected" />
-          </div>
+            <div className="kpi-dashboard">
+              <KpiCard title="Solicitudes Hoy" value={stats.solicitudesHoy} />
+              <KpiCard title="Monto Pre-Aprobado Hoy" value={formatCurrency(stats.montoPreAprobadoHoy)} />
+              <KpiCard title="Total Pre-Aprobadas" value={stats.totalPreAprobados} type="total-approved" />
+              <KpiCard title="Total Rechazadas" value={stats.totalRechazados} type="total-rejected" />
+            </div>
           <RiskDistributionChart stats={stats} />
         </>
       )}
@@ -320,9 +347,16 @@ const AdminDashboard = () => {
 
       <h3>Detalle de Solicitudes</h3>
       <div className="filter-buttons">
-        <button onClick={() => setFilter('todos')} className={filter === 'todos' ? 'active' : ''}>Todos</button>
-        <button onClick={() => setFilter('pre-aprobado')} className={filter === 'pre-aprobado' ? 'active' : ''}>Pre-Aprobados</button>
-        <button onClick={() => setFilter('rechazado')} className={filter === 'rechazado' ? 'active' : ''}>Rechazados</button>
+        {statusFilters.map(status => (
+        <button
+          key={status}
+          onClick={() => setFilter(status)}
+          className={filter === status ? 'filter-btn filter-btn--active' : 'filter-btn'}
+          title={filterTooltips[status] || ''}
+        >
+            {status === 'todos' ? 'Todos' : status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </button>
+        ))}
       </div>
 
       {loading && <p>Cargando solicitudes...</p>}
@@ -338,7 +372,6 @@ const AdminDashboard = () => {
               <th>Nombre</th>
               <th>Monto Solicitado</th>
               <th>Ingresos Mensuales</th>
-              <th>Deudas Mensuales</th>
               <th>Perfil Riesgo</th>
               <th>Estado</th>
               <th>Acciones</th>
@@ -355,9 +388,8 @@ const AdminDashboard = () => {
                 <td>{new Date(req.created_at).toLocaleDateString()}</td>
                 <td>{req.id}</td>
                 <td>{req.nombre_completo}</td>
-                <td>Bs {req.monto_solicitado}</td>
-                <td>Bs {req.ingreso_mensual ?? '--'}</td>
-                <td>Bs {req.deudas_mensuales ?? '--'}</td>
+                <td>{formatCurrency(req.monto_solicitado)}</td>
+                <td>{req.ingreso_mensual ? formatCurrency(req.ingreso_mensual) : '--'}</td>
                 <td>
                   {req.perfil_riesgo ? (
                     <span className={`suggestion-label suggestion-${req.perfil_riesgo.toLowerCase()}`}>
@@ -367,7 +399,7 @@ const AdminDashboard = () => {
                 </td>
                 <td><span className={`status status-${req.estado}`}>{req.estado}</span></td>
                 <td>
-                  <button className="btn btn--ghost btn--xs" onClick={() => openRequestDetail(req.id)}>
+                  <button className="btn btn--ghost btn--xs" onClick={() => handleSelectRequest(req)}>
                     Ver solicitud
                   </button>
                 </td>
@@ -377,6 +409,32 @@ const AdminDashboard = () => {
         </table>
       )}
       {filteredRequests.length === 0 && !loading && <p>No hay solicitudes que coincidan con el filtro seleccionado.</p>}
+      {selectedRequest && (
+        <div className="request-detail-panel">
+          <div className="request-detail-header">
+            <h3>Solicitud #{selectedRequest.id}</h3>
+            <button className="btn btn--ghost btn--xs" onClick={() => setSelectedRequest(null)}>Cerrar</button>
+          </div>
+          <div className="request-detail-grid">
+            <div>
+              <strong>Estado</strong>
+              <p>{selectedRequest.estado}</p>
+            </div>
+            <div>
+              <strong>Perfil de riesgo</strong>
+              <p>{selectedRequest.perfil_riesgo ?? '--'}</p>
+            </div>
+            <div>
+              <strong>Monto solicitado</strong>
+              <p>{formatCurrency(selectedRequest.monto_solicitado)}</p>
+            </div>
+            <div>
+              <strong>Ingresos mensuales</strong>
+              <p>{selectedRequest.ingreso_mensual ? formatCurrency(selectedRequest.ingreso_mensual) : '--'}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
