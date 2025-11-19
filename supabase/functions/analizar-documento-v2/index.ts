@@ -299,7 +299,7 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
 
   const { data: solicitudData, error: solicitudError } = await supabaseAdmin
     .from('solicitudes')
-    .select('situacion_laboral, nombre_completo, cedula_identidad, departamento, user_id')
+    .select('id, situacion_laboral, nombre_completo, cedula_identidad, departamento, user_id')
     .eq('id', solicitud_id)
     .single()
 
@@ -333,7 +333,7 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
 
   if (isComplete) {
     console.log(`Â¡Completo! Generando autorizaciÃ³n INFOCRED preimpresa y disparando sÃ­ntesis para ${solicitud_id}`)
-    await ensureAuthorizationPreprint(supabaseAdmin, solicitudData)
+    await ensureAuthorizationPreprint(supabaseAdmin, { ...solicitudData, id: solicitud_id })
     const { error: invokeError } = await supabaseAdmin.functions.invoke('sintetizar-perfil-riesgo', {
       body: { solicitud_id },
     })

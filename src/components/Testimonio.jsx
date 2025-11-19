@@ -20,7 +20,7 @@ const Testimonio = () => {
           {/* Texto del testimonio */}
           <div className="testimony-text">
             <p>
-              Como muchos en Bolivia, he experimentado de primera mano la carga de una tarjeta de crédito. En <strong>2014</strong>, contraje una deuda de <strong>17.000 Bs</strong> con una tasa anual del <strong>24%</strong> y un costo de mantenimiento de <strong>150 Bs</strong> mensuales.
+              Como muchos en Bolivia, he experimentado de primera mano la carga de una tarjeta de crédito. En <strong>2014</strong>, contraje una deuda de <strong>17.000 Bs</strong> con una tasa anual del <strong>24%</strong> y un costo de mantenimiento de <strong>120 Bs</strong> mensuales.
               <br />
               Durante años, busqué sin éxito una opción para refinanciar esta "deuda tóxica", terminando por pagar más de <strong>4 veces</strong> el monto original del crédito. Esta experiencia personal, finalizada recién en <strong>abril de 2025</strong>, me reveló una necesidad urgente en nuestro país.
             </p>

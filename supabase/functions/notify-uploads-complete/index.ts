@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { corsHeaders } from "../_shared/cors.ts";
 
 // Esta función replica la lógica del frontend para saber qué documentos son requeridos
@@ -54,8 +54,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: "Solicitud no encontrada." }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
-    // Si el estado ya avanzó, no se hace nada más.
-    if (solicitud.estado !== 'pre-aprobado') {
+    // Si el estado ya avanzó a la fase de revisión o más allá, no se hace nada.
+    if (['documentos-en-revision', 'aprobado', 'desembolsado', 'rechazado'].includes(solicitud.estado)) {
       return new Response(JSON.stringify({ message: `La solicitud ya tiene el estado '${solicitud.estado}'. No se requiere acción.` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -77,8 +77,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: "Aún faltan documentos por subir." }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 4. ÉXITO! Todos los documentos están. Actualizar estado e invocar el correo.
-    console.log(`Todos los docs para solicitud ${solicitud_id} subidos. Actualizando estado y enviando correo.`);
+    // 4. ÉXITO! Todos los documentos están. Actualizar estado, invocar síntesis y correo.
+    console.log(`Todos los docs para solicitud ${solicitud_id} subidos. Actualizando estado, disparando síntesis y enviando correo.`);
 
     const { error: updateError } = await supabaseDb
       .from('solicitudes')
@@ -87,30 +87,48 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // Intentar enviar email solo si hay service role configurado
+    // Usar un cliente admin para las operaciones de backend si es posible
+    const adminClient = serviceKey ? createClient(supabaseUrl, serviceKey) : supabaseDb;
+
+    // 5. Invocar la síntesis del perfil de riesgo (PASO CRÍTICO FALTANTE)
+    try {
+      const { error: sintesisError } = await adminClient.functions.invoke('sintetizar-perfil-riesgo', {
+        body: { solicitud_id },
+      });
+      if (sintesisError) {
+        console.error("Error al invocar sintetizar-perfil-riesgo:", sintesisError);
+        // No detenemos el flujo, pero es un error grave que debe registrarse.
+      }
+    } catch (e) {
+      console.error('Fallo catastrófico al invocar la síntesis del perfil:', e);
+    }
+
+    // 6. Intentar enviar email de confirmación
     if (serviceKey) {
       try {
-        const adminClient = createClient(supabaseUrl, serviceKey);
         const { data: userRes, error: adminErr } = await adminClient.auth.admin.getUserById(solicitud.user_id);
         if (adminErr) throw adminErr;
+        
         const email = userRes?.user?.email ?? '';
         const nombre_completo = (userRes?.user?.user_metadata as any)?.full_name ?? '';
+
         if (email) {
           const { error: functionError } = await adminClient.functions.invoke('send-final-confirmation-email', {
             body: { email, nombre_completo },
           });
           if (functionError) {
-            console.error("Error al invocar send-final-confirmation-email:", functionError);
+            // El error ya se registra internamente, pero lo volvemos a loguear aquí para contexto.
+            console.error("Error durante la invocación de send-final-confirmation-email:", functionError.message);
           }
         } else {
           console.warn('No se pudo obtener el email del usuario para enviar confirmación.');
         }
       } catch (e) {
-        console.error('Fallo al intentar enviar el correo de confirmación:', e);
+        console.error('Fallo al intentar construir y enviar el correo de confirmación:', e);
       }
     }
 
-    return new Response(JSON.stringify({ message: "Éxito! La solicitud ha sido actualizada a 'documentos-en-revision' y se ha notificado al usuario." }), {
+    return new Response(JSON.stringify({ message: "Éxito! La solicitud ha sido actualizada y el perfil de riesgo está siendo generado." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

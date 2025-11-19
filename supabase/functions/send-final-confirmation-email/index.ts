@@ -9,29 +9,29 @@ if (!RESEND_API_KEY) {
 }
 
 const LOGO_URL = "https://tuprestamobo.com/Logo-Tu-Prestamo.png";
-// Asegúrate de tener esta variable en tu configuración de Supabase
 const APP_DASHBOARD_URL = Deno.env.get("APP_BASE_URL") ? `${Deno.env.get("APP_BASE_URL")}/borrower-dashboard` : "https://tuprestamobo.com/borrower-dashboard";
 
-
-const handler = async (_req: Request): Promise<Response> => {
-  console.log("Handler invoked for send-final-confirmation-email.");
-
-  if (_req.method !== "POST") {
-    console.log(`Method ${_req.method} not allowed.`);
-    return new Response("Method Not Allowed", { status: 405 });
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    if (req.method !== "POST") {
+      console.log(`Method ${req.method} not allowed.`);
+      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+    }
+
     console.log("Parsing request body...");
-    const { email, nombre_completo } = await _req.json();
+    const { email, nombre_completo } = await req.json();
     console.log("Request body parsed:", { email, nombre_completo });
 
     if (!email) {
       console.error("Missing required field: email");
-      return new Response("Missing required field: email", { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing required field: email" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
-    // Fallback logic for a more personal display name
     let displayName = nombre_completo;
     if (!displayName || displayName.trim() === '' || displayName.includes('@')) {
       const namePart = email.split('@')[0];
@@ -40,14 +40,14 @@ const handler = async (_req: Request): Promise<Response> => {
 
     const subject = "¡Gracias! Hemos recibido tus documentos";
     const htmlBody = `
-      <div style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">
-        <img src=\"${LOGO_URL}\" alt=\"Logo Tu Préstamo Bolivia\" style=\"width: 150px; margin-bottom: 20px;\">
-        <h2 style=\"color: #333;\">¡Hola ${displayName}!</h2>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <img src="${LOGO_URL}" alt="Logo Tu Préstamo Bolivia" style="width: 150px; margin-bottom: 20px;">
+        <h2 style="color: #333;">¡Hola ${displayName}!</h2>
         <p>Hemos recibido y confirmado la carga de todos tus documentos en la plataforma de <strong>Tu Préstamo Bolivia</strong>.</p>
         <p>Nuestro equipo de analistas de riesgo comenzará la revisión final. Te notificaremos sobre la decisión de tu crédito en los próximos días.</p>
         <p>Puedes revisar el estado de tu solicitud en cualquier momento desde tu panel de control:</p>
-        <p style=\"margin-top: 30px; margin-bottom: 30px;\">
-          <a href=\"${APP_DASHBOARD_URL}\" style=\"background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;\">IR A MI PANEL DE CONTROL</a>
+        <p style="margin-top: 30px; margin-bottom: 30px;">
+          <a href="${APP_DASHBOARD_URL}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;">IR A MI PANEL DE CONTROL</a>
         </p>
         <p>Atentamente,<br>El equipo de Tu Préstamo Bolivia</p>
       </div>
@@ -87,6 +87,4 @@ const handler = async (_req: Request): Promise<Response> => {
       status: 500,
     });
   }
-};
-
-serve(handler);
+});
