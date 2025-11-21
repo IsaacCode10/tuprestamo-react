@@ -163,30 +163,25 @@ const RiskAnalystDashboard = () => {
     setError(null);
     try {
       const { data, error } = await supabase
-        .from('perfiles_de_riesgo')
-        .select(`
-          *,
-          solicitudes (
-            id,
-            nombre_completo,
-            email,
-            estado
-          )
-        `)
-        .in('estado', ['listo_para_revision', 'documentos-en-revision', 'pre-aprobado', 'pendiente'])
+        .from('solicitudes')
+        .select('*')
+        .eq('estado', 'documentos-en-revision')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      const payload = (data && data.length > 0) ? data : [FALLBACK_PROFILE];
-      setPerfiles(payload);
-      setPerfilSeleccionado(prev =>
-        payload.find(p => prev?.id === p.id) || payload[0]
-      );
+
+      setPerfiles(data || []);
+      if (data && data.length > 0) {
+        // Mantener el perfil seleccionado si aún existe en la nueva lista, o seleccionar el primero.
+        setPerfilSeleccionado(prev => 
+          data.find(p => prev?.id === p.id) || data[0]
+        );
+      } else {
+        setPerfilSeleccionado(null);
+      }
     } catch (err) {
-      console.error('Error fetching risk profiles:', err);
-      setError('No se pudieron cargar los perfiles. Se muestran datos de prueba.');
-      setPerfiles([FALLBACK_PROFILE]);
-      setPerfilSeleccionado(FALLBACK_PROFILE);
+      console.error('Error fetching profiles:', err);
+      setError('No se pudieron cargar los perfiles.');
     } finally {
       setLoading(false);
     }
@@ -239,7 +234,7 @@ const RiskAnalystDashboard = () => {
               >
                 <div className="perfil-item-header">
                   <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
-                  <span>CI: {perfil.ci || 'N/A'}</span>
+                  <span>CI: {perfil.cedula_identidad || 'N/A'}</span>
                 </div>
                 <div className="perfil-item-body">
                   <span>Confianza: {perfil.score_confianza || 0}%</span>
@@ -296,11 +291,11 @@ const RiskAnalystDashboard = () => {
               <section className="metricas-clave">
                 <div className="metrica">
                   <span className="metrica-titulo">Ingreso Mensual</span>
-                  <span className="metrica-valor">Bs. {(perfilSeleccionado.ingresos_mensuales || 0).toLocaleString('es-BO')}</span>
+                  <span className="metrica-valor">Bs. {(perfilSeleccionado.ingreso_mensual || 0).toLocaleString('es-BO')}</span>
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Deuda Total Declarada</span>
-                  <span className="metrica-valor">Bs. {(perfilSeleccionado.deuda_total_declarada || 0).toLocaleString('es-BO')}</span>
+                  <span className="metrica-valor">Bs. {(perfilSeleccionado.saldo_deuda_tc || 0).toLocaleString('es-BO')}</span>
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Debt-to-Income (DTI)</span>
