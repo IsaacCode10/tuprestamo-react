@@ -175,7 +175,7 @@
 .scorecard-digital {
   flex-grow: 1;
   min-width: 0;
-  padding: 24px 28px;
+  padding: 16px 18px;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -215,8 +215,8 @@
 }
 
 .scorecard-header h1 {
-  margin: 0 0 5px 0;
-  font-size: 2rem;
+  margin: 0 0 4px 0;
+  font-size: 1.75rem;
   color: #1f1f1f;
 }
 
@@ -229,7 +229,7 @@
 section {
   background-color: #ffffff;
   border-radius: 8px;
-  padding: 25px;
+  padding: 18px 16px;
   margin-bottom: 30px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
   width: 100%;
@@ -239,9 +239,9 @@ section {
 }
 
 section h2 {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   color: #333;
   border-bottom: 1px solid #f0f0f0;
   padding-bottom: 10px;
@@ -250,9 +250,9 @@ section h2 {
 /* Metricas Clave */
 .metricas-clave {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
 
 .metrica {
   display: flex;
