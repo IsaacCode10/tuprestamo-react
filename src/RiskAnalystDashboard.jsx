@@ -156,9 +156,15 @@ const RiskAnalystDashboard = () => {
   }, []);
 
   const isProfileComplete = (perfil) => {
-    const docs = perfil.documentos_validados || [];
-    if (docs.length === 0) return false;
-    return docs.every(doc => (doc.estado || '').toLowerCase() === 'verificado');
+    const validatedDocs = perfil?.documentos_validados || [];
+    if (validatedDocs.length > 0) {
+      return validatedDocs.every(doc => (doc.estado || '').toLowerCase() === 'verificado');
+    }
+    if (documentos.length === 0) return false;
+    return documentos.every(doc => {
+      const estado = (doc.estado || '').toLowerCase();
+      return ['analizado', 'subido', 'verificado', 'validado'].some(ok => estado.includes(ok));
+    });
   };
 
   const fetchDocumentos = useCallback(async (solicitudId) => {
@@ -414,14 +420,20 @@ const RiskAnalystDashboard = () => {
 
               <section className="checklist-documentos">
                 <h2>Checklist de Documentos</h2>
-                <ul>
-                  {(perfilSeleccionado.documentos_validados || []).map((doc, index) => (
-                    <li key={index} className={`doc-item doc-${(doc.estado || 'pendiente').toLowerCase()}`}>
-                      <span className="doc-nombre">{doc.tipo_documento}</span>
-                      <span className="doc-estado">{doc.estado}</span>
-                    </li>
-                  ))}
-                </ul>
+                {docLoading ? (
+                  <p>Cargando documentos...</p>
+                ) : (documentos.length > 0 ? (
+                  <ul>
+                    {documentos.map((doc) => (
+                      <li key={doc.id || doc.tipo_documento} className={`doc-item doc-${(doc.estado || 'pendiente').toLowerCase()}`}>
+                        <span className="doc-nombre">{doc.nombre_archivo || doc.tipo_documento}</span>
+                        <span className="doc-estado">{doc.estado || 'Pendiente'}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No hay documentos cargados para este expediente.</p>
+                ))}
               </section>
 
               <section className="infocred-upload">
