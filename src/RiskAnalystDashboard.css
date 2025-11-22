@@ -232,6 +232,10 @@ section {
   padding: 25px;
   margin-bottom: 30px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 section h2 {
@@ -246,9 +250,9 @@ section h2 {
 /* Metricas Clave */
 .metricas-clave {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
-}
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  }
 
 .metrica {
   display: flex;
