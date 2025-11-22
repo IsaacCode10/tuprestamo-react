@@ -178,7 +178,8 @@
   padding: 16px 18px;
   overflow-y: auto;
   overflow-x: hidden;
-  max-width: 100%;
+  width: 100%;
+  max-width: calc(100vw - 360px);
   box-sizing: border-box;
 }
 
@@ -193,6 +194,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .btn-link {
@@ -218,7 +221,7 @@
 
 .scorecard-header h1 {
   margin: 0 0 4px 0;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   color: #1f1f1f;
 }
 
@@ -252,8 +255,8 @@ section h2 {
 /* Metricas Clave */
 .metricas-clave {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -332,6 +335,7 @@ section h2 {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .infocred-actions {
@@ -339,7 +343,7 @@ section h2 {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .pill {
