@@ -4,6 +4,16 @@ import './RiskAnalystDashboard.css';
 import HelpTooltip from './components/HelpTooltip';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
+const getRequiredDocsBySituation = (situacion) => {
+  const baseDocs = ['ci_anverso', 'ci_reverso', 'factura_servicio', 'extracto_tarjeta', 'selfie_ci'];
+  const map = {
+    Dependiente: [...baseDocs, 'boleta_pago', 'certificado_gestora'],
+    Independiente: [...baseDocs, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3', 'nit'],
+    Jubilado: [...baseDocs, 'boleta_jubilacion'],
+  };
+  return map[situacion] || baseDocs;
+};
+
 const FALLBACK_PROFILE = {
   id: '12345-abcde',
   nombre_completo: 'Isaac Alfaro (Prueba)',
@@ -40,6 +50,7 @@ const RiskAnalystDashboard = () => {
   const [montoTotalPrestamo, setMontoTotalPrestamo] = useState(null);
   const [helpRequests, setHelpRequests] = useState([]);
   const [documentos, setDocumentos] = useState([]);
+  const [analisisDocs, setAnalisisDocs] = useState([]);
   const [docLoading, setDocLoading] = useState(false);
   const [infocredSignedUrl, setInfocredSignedUrl] = useState(null);
   const [uploadingInfocred, setUploadingInfocred] = useState(false);
@@ -177,6 +188,13 @@ const RiskAnalystDashboard = () => {
         .eq('solicitud_id', solicitudId);
       if (error) throw error;
       setDocumentos(data || []);
+      const { data: analizados, error: analError } = await supabase
+        .from('analisis_documentos')
+        .select('document_type, analysed_at')
+        .eq('solicitud_id', solicitudId);
+      if (!analError) {
+        setAnalisisDocs(analizados || []);
+      }
     } catch (err) {
       console.error('Error cargando documentos:', err);
     } finally {
@@ -305,6 +323,24 @@ const RiskAnalystDashboard = () => {
       return <div className="centered-message">Cargando perfiles...</div>;
     }
 
+    const derivedIncome = Number(perfilSeleccionado?.ingreso_mensual || 0);
+    const derivedSaldo = Number(perfilSeleccionado?.saldo_deuda_tc || perfilSeleccionado?.monto_solicitado || 0);
+    const tasa = Number(perfilSeleccionado?.tasa_interes_tc || 0);
+    const interesMensual = derivedSaldo && tasa ? (derivedSaldo * (tasa / 100)) / 12 : 0;
+    const amortizacion = derivedSaldo ? derivedSaldo * 0.01 : 0;
+    const dtiCalculado = derivedIncome ? ((interesMensual + amortizacion) / derivedIncome) * 100 : null;
+    const requiredDocs = getRequiredDocsBySituation(perfilSeleccionado?.situacion_laboral);
+    const analyzedSet = new Set((analisisDocs || []).map(a => a.document_type));
+    const completionRatio = requiredDocs.length ? Math.min(1, documentos.length / requiredDocs.length) : 0;
+    const scoreFallback = isProfileComplete(perfilSeleccionado) ? 90 : Math.round(completionRatio * 80);
+    const docByType = documentos.reduce((acc, doc) => {
+      if (doc?.tipo_documento) acc[doc.tipo_documento] = doc;
+      return acc;
+    }, {});
+    const uploadedCount = documentos.length;
+    const analyzedCount = analyzedSet.size;
+    const infocredStatus = infocredDoc ? 'PDF subido' : 'Pendiente';
+
     if (error && !isModalOpen) { // No mostrar error de fondo si el modal está abierto
       return <div className="centered-message error">Error: {error}</div>;
     }
@@ -396,24 +432,57 @@ const RiskAnalystDashboard = () => {
               <HelpTooltip text="Abre el panel del prestatario para revisar documentos, mensajes y el historial reciente sin cerrar este panel." />
             </div>
           </header>
+
+              <section className="resumen-expediente">
+                <div className="resumen-grid">
+                  <div>
+                    <div className="muted">Situación laboral</div>
+                    <strong>{perfilSeleccionado.situacion_laboral || 'N/D'}</strong>
+                    {perfilSeleccionado.antiguedad_laboral && (
+                      <div className="muted">Antigüedad: {perfilSeleccionado.antiguedad_laboral} meses</div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="muted">Identidad</div>
+                    <strong>CI: {perfilSeleccionado.cedula_identidad || 'N/D'}</strong>
+                    <div className="muted">{perfilSeleccionado.email || ''}</div>
+                    <div className="muted">{perfilSeleccionado.departamento || ''}</div>
+                  </div>
+                  <div>
+                    <div className="muted">Documentos</div>
+                    <strong>{uploadedCount}/{requiredDocs.length || 'N/A'} subidos</strong>
+                    <div className="muted">{analyzedCount} analizados por IA</div>
+                  </div>
+                  <div>
+                    <div className="muted">InfoCred</div>
+                    <strong>{infocredStatus}</strong>
+                    <div className="muted">{infocredDoc ? 'Lista para revisión' : 'Sube el reporte'}</div>
+                  </div>
+                </div>
+              </section>
               
               <section className="metricas-clave">
                 <div className="metrica">
                   <span className="metrica-titulo">Ingreso Mensual</span>
                   <span className="metrica-valor">Bs. {(perfilSeleccionado.ingreso_mensual || 0).toLocaleString('es-BO')}</span>
+                  <div className="muted">Fuente: solicitud/boleta</div>
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Deuda Total Declarada</span>
                   <span className="metrica-valor">Bs. {(perfilSeleccionado.saldo_deuda_tc || 0).toLocaleString('es-BO')}</span>
+                  <div className="muted">Pago mín. estimado: Bs. {(interesMensual + amortizacion).toFixed(0)}</div>
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Debt-to-Income (DTI)</span>
-                  <span className="metrica-valor">{perfilSeleccionado.dti || 'N/A'}</span>
+                  <span className="metrica-valor">
+                    {perfilSeleccionado.dti || (dtiCalculado ? `${dtiCalculado.toFixed(1)}%` : 'N/A')}
+                  </span>
+                  <div className="muted">Ingreso usado: Bs. {derivedIncome.toLocaleString('es-BO')}</div>
                   <HelpTooltip text="Porcentaje del ingreso mensual que se destina al pago de deudas. Un DTI más bajo es mejor." />
                 </div>
                 <div className="metrica score-confianza">
                   <span className="metrica-titulo">Score de Confianza</span>
-                  <span className="metrica-valor">{perfilSeleccionado.score_confianza || 0}%</span>
+                  <span className="metrica-valor">{perfilSeleccionado.score_confianza || scoreFallback}%</span>
                   <HelpTooltip text="Puntaje calculado basado en la completitud y consistencia de los datos y documentos. No es un score de crédito tradicional." />
                 </div>
               </section>
@@ -422,14 +491,18 @@ const RiskAnalystDashboard = () => {
                 <h2>Checklist de Documentos</h2>
                 {docLoading ? (
                   <p>Cargando documentos...</p>
-                ) : (documentos.length > 0 ? (
+                ) : (requiredDocs.length > 0 ? (
                   <ul>
-                    {documentos.map((doc) => (
-                      <li key={doc.id || doc.tipo_documento} className={`doc-item doc-${(doc.estado || 'pendiente').toLowerCase()}`}>
-                        <span className="doc-nombre">{doc.nombre_archivo || doc.tipo_documento}</span>
-                        <span className="doc-estado">{doc.estado || 'Pendiente'}</span>
-                      </li>
-                    ))}
+                    {requiredDocs.map((docId) => {
+                      const doc = docByType[docId];
+                      const estado = (doc?.estado || (analyzedSet.has(docId) ? 'analizado' : 'pendiente')).toLowerCase();
+                      return (
+                        <li key={docId} className={`doc-item doc-${estado}`}>
+                          <span className="doc-nombre">{docId}</span>
+                          <span className="doc-estado">{estado}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p>No hay documentos cargados para este expediente.</p>
