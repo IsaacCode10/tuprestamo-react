@@ -6,6 +6,8 @@
   height: 100vh;
   background-color: #f0f2f5;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* --- Barra Lateral de Perfiles --- */
@@ -172,8 +174,10 @@
 /* --- Panel Principal del Scorecard --- */
 .scorecard-digital {
   flex-grow: 1;
-  padding: 30px 40px;
+  min-width: 0;
+  padding: 24px 28px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .scorecard-header {
@@ -242,8 +246,8 @@ section h2 {
 /* Metricas Clave */
 .metricas-clave {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
 }
 
 .metrica {
@@ -303,6 +307,82 @@ section h2 {
   padding: 3px 8px;
   border-radius: 12px;
   font-size: 0.8rem;
+}
+
+.infocred-upload {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.infocred-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.infocred-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 68, 90, 0.15);
+  font-size: 0.85rem;
+  color: #00445A;
+  background: #f7fbfb;
+}
+
+.pill.muted {
+  color: #6d7b80;
+  border-color: rgba(109, 123, 128, 0.25);
+  background: #f4f6f7;
+}
+
+.infocred-body {
+  margin-top: 14px;
+}
+
+.infocred-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e6f4f3;
+  border-radius: 10px;
+  background: rgba(38, 194, 178, 0.05);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.infocred-empty {
+  padding: 12px;
+  border: 1px dashed #c7d6d9;
+  border-radius: 10px;
+  color: #385b64;
+  background: #f9fbfb;
+}
+
+.muted {
+  color: #6d7b80;
+  font-size: 0.9rem;
+}
+
+.error-text {
+  margin-top: 8px;
+  color: #c0262d;
+  font-weight: 600;
 }
 
 .doc-verificado .doc-estado {

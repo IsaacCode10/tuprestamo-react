@@ -39,6 +39,12 @@ const RiskAnalystDashboard = () => {
   const [saldoDeudorVerificado, setSaldoDeudorVerificado] = useState('');
   const [montoTotalPrestamo, setMontoTotalPrestamo] = useState(null);
   const [helpRequests, setHelpRequests] = useState([]);
+  const [documentos, setDocumentos] = useState([]);
+  const [docLoading, setDocLoading] = useState(false);
+  const [infocredSignedUrl, setInfocredSignedUrl] = useState(null);
+  const [uploadingInfocred, setUploadingInfocred] = useState(false);
+  const [infocredError, setInfocredError] = useState(null);
+  const infocredInputRef = React.useRef(null);
   const TASA_COMISION = 0.08; // 8%
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
@@ -88,6 +94,7 @@ const RiskAnalystDashboard = () => {
     // Limpiar los campos de cálculo al cambiar de perfil
     setSaldoDeudorVerificado('');
     setMontoTotalPrestamo(null);
+    setInfocredError(null);
   };
 
   // Abre el modal para tomar la decisión
@@ -154,6 +161,55 @@ const RiskAnalystDashboard = () => {
     return docs.every(doc => (doc.estado || '').toLowerCase() === 'verificado');
   };
 
+  const fetchDocumentos = useCallback(async (solicitudId) => {
+    if (!solicitudId) return;
+    setDocLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('documentos')
+        .select('*')
+        .eq('solicitud_id', solicitudId);
+      if (error) throw error;
+      setDocumentos(data || []);
+    } catch (err) {
+      console.error('Error cargando documentos:', err);
+    } finally {
+      setDocLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (perfilSeleccionado?.id) {
+      fetchDocumentos(perfilSeleccionado.id);
+    } else {
+      setDocumentos([]);
+      setInfocredSignedUrl(null);
+    }
+  }, [perfilSeleccionado?.id, fetchDocumentos]);
+
+  const infocredDoc = documentos.find(doc => doc.tipo_documento === 'historial_infocred');
+
+  useEffect(() => {
+    const buildSignedUrl = async () => {
+      if (!infocredDoc?.url_archivo) {
+        setInfocredSignedUrl(null);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .storage
+          .from('documentos-prestatarios')
+          .createSignedUrl(infocredDoc.url_archivo, 60 * 30);
+        if (error) throw error;
+        setInfocredSignedUrl(data?.signedUrl || null);
+      } catch (err) {
+        console.error('No se pudo generar URL firmada de INFOCRED:', err);
+        setInfocredSignedUrl(null);
+      }
+    };
+    buildSignedUrl();
+  }, [infocredDoc?.url_archivo]);
+
   const filteredPerfiles = showOnlyComplete
     ? perfiles.filter(p => isProfileComplete(p))
     : perfiles;
@@ -190,6 +246,53 @@ const RiskAnalystDashboard = () => {
   useEffect(() => {
     fetchPerfiles();
   }, [fetchPerfiles]);
+
+  const handleInfocredUpload = async (file) => {
+    if (!file || !perfilSeleccionado?.id) return;
+    setUploadingInfocred(true);
+    setInfocredError(null);
+    try {
+      const userId = perfilSeleccionado.user_id || perfilSeleccionado.userId || 'sin-user';
+      const ext = (file.name.split('.').pop() || 'pdf').toLowerCase();
+      const safeName = `historial_infocred_${perfilSeleccionado.id}.${ext}`;
+      const storagePath = `${userId}/${safeName}`;
+
+      const { error: uploadError } = await supabase
+        .storage
+        .from('documentos-prestatarios')
+        .upload(storagePath, file, { upsert: true, contentType: 'application/pdf' });
+      if (uploadError) throw uploadError;
+
+      const { data: docData, error: docError } = await supabase
+        .from('documentos')
+        .upsert(
+          {
+            solicitud_id: perfilSeleccionado.id,
+            user_id: userId,
+            tipo_documento: 'historial_infocred',
+            nombre_archivo: safeName,
+            url_archivo: storagePath,
+            estado: 'subido',
+          },
+          { onConflict: ['solicitud_id', 'tipo_documento'] }
+        )
+        .select()
+        .single();
+      if (docError) throw docError;
+
+      // Refrescar documentos y enlace firmado
+      setDocumentos(prev => {
+        const others = (prev || []).filter(d => d.tipo_documento !== 'historial_infocred');
+        return [...others, docData];
+      });
+      fetchDocumentos(perfilSeleccionado.id);
+    } catch (err) {
+      console.error('Error subiendo historial INFOCRED:', err);
+      setInfocredError(err?.message || 'No se pudo subir el PDF');
+    } finally {
+      setUploadingInfocred(false);
+    }
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -319,6 +422,67 @@ const RiskAnalystDashboard = () => {
                     </li>
                   ))}
                 </ul>
+              </section>
+
+              <section className="infocred-upload">
+                <div className="infocred-header">
+                  <div>
+                    <h2>Historial INFOCRED</h2>
+                    <p>Sube el PDF que recibes de INFOCRED tras validar la autorización firmada. Solo disponible cuando el expediente está completo.</p>
+                  </div>
+                  <div className="infocred-actions">
+                    <button
+                      type="button"
+                      className="btn-decision aprobar"
+                      onClick={() => infocredInputRef.current?.click()}
+                      disabled={!isProfileComplete(perfilSeleccionado) || uploadingInfocred}
+                    >
+                      {uploadingInfocred ? 'Subiendo...' : (infocredDoc ? 'Reemplazar PDF' : 'Subir PDF')}
+                    </button>
+                    {!isProfileComplete(perfilSeleccionado) && (
+                      <span className="pill muted">Completa checklist para habilitar</span>
+                    )}
+                  </div>
+                </div>
+
+                <input
+                  ref={infocredInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setInfocredError(null);
+                      await handleInfocredUpload(file);
+                    }
+                    if (e.target) e.target.value = '';
+                  }}
+                />
+
+                <div className="infocred-body">
+                  {docLoading ? (
+                    <p>Cargando documentos...</p>
+                  ) : infocredDoc ? (
+                    <div className="infocred-card">
+                      <div>
+                        <strong>PDF subido:</strong> {infocredDoc.nombre_archivo || 'historial_infocred.pdf'}
+                        <p className="muted">Subido por analista. Si hay nueva consulta, puedes reemplazarlo.</p>
+                      </div>
+                      {infocredSignedUrl ? (
+                        <a href={infocredSignedUrl} target="_blank" rel="noreferrer" className="btn-link">Ver PDF</a>
+                      ) : (
+                        <span className="pill muted">Generando enlace...</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="infocred-empty">
+                      <p>Aún no se ha cargado el historial de INFOCRED.</p>
+                      <p className="muted">Sube el PDF una vez recibas el reporte del buró.</p>
+                    </div>
+                  )}
+                  {infocredError && <div className="error-text">Error: {infocredError}</div>}
+                </div>
               </section>
 
               {/* Nueva sección para verificación manual y cálculo */}
