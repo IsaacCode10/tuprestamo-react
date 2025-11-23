@@ -405,10 +405,10 @@ const RiskAnalystDashboard = () => {
 
         <main className="scorecard-digital">
           {perfilSeleccionado ? (
-            <>
+              <>
               <header className="scorecard-header">
                 <h1>Scorecard Digital</h1>
-            <p>Análisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong></p>
+            <p>Análisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong> (ID {perfilSeleccionado.id || 'N/D'})</p>
           </header>
 
               <section className="resumen-expediente">
