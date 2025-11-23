@@ -367,12 +367,15 @@ const RiskAnalystDashboard = () => {
                 onClick={() => handleSelectPerfil(perfil)}
               >
                 <div className="perfil-item-header">
-                  <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
+                  <div>
+                    <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
+                    <div className="muted">ID: {perfil.id}</div>
+                  </div>
                   <span>CI: {perfil.cedula_identidad || 'N/A'}</span>
                 </div>
                 <div className="perfil-item-body">
                   <span>Confianza: {perfil.score_confianza || 0}%</span>
-                  <span>DTI: {perfil.dti || 'N/A'}</span>
+                  <span>DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')}</span>
                 </div>
               </div>
             ))}
