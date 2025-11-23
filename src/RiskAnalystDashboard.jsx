@@ -114,17 +114,6 @@ const RiskAnalystDashboard = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenBorrowerView = () => {
-    if (!perfilSeleccionado) return;
-    const base = `${window.location.origin}/borrower-dashboard`;
-    const params = new URLSearchParams();
-    if (perfilSeleccionado.solicitudes?.id) {
-      params.set('solicitudId', perfilSeleccionado.solicitudes.id);
-    }
-    params.set('perfilId', perfilSeleccionado.id);
-    window.open(`${base}?${params.toString()}`, '_blank');
-  };
-
   // Se ejecuta al confirmar la decisión en el modal
   const handleSubmitDecision = async (decisionData) => {
     setIsSavingDecision(true);
@@ -420,17 +409,6 @@ const RiskAnalystDashboard = () => {
               <header className="scorecard-header">
                 <h1>Scorecard Digital</h1>
             <p>Análisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong></p>
-            <div className="analyst-actions">
-              <button
-                type="button"
-                className="btn-link"
-                onClick={handleOpenBorrowerView}
-                disabled={!perfilSeleccionado}
-              >
-                Ver proceso del prestatario
-              </button>
-              <HelpTooltip text="Abre el panel del prestatario para revisar documentos, mensajes y el historial reciente sin cerrar este panel." />
-            </div>
           </header>
 
               <section className="resumen-expediente">
