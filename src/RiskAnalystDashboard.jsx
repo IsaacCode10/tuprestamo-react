@@ -55,6 +55,8 @@ const RiskAnalystDashboard = () => {
   const [infocredSignedUrl, setInfocredSignedUrl] = useState(null);
   const [uploadingInfocred, setUploadingInfocred] = useState(false);
   const [infocredError, setInfocredError] = useState(null);
+  const [docLinks, setDocLinks] = useState({});
+  const [docLinksLoading, setDocLinksLoading] = useState({});
   const infocredInputRef = React.useRef(null);
   const TASA_COMISION = 0.08; // 8%
 
@@ -227,6 +229,31 @@ const RiskAnalystDashboard = () => {
     };
     buildSignedUrl();
   }, [infocredDoc?.url_archivo]);
+
+  const handleOpenDoc = async (doc) => {
+    if (!doc?.url_archivo) return;
+    const docId = doc.tipo_documento || doc.id;
+    setDocLinksLoading(prev => ({ ...prev, [docId]: true }));
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from('documentos-prestatarios')
+        .createSignedUrl(doc.url_archivo, 60 * 15);
+      if (error) throw error;
+      const link = data?.signedUrl;
+      setDocLinks(prev => ({ ...prev, [docId]: link }));
+      if (link) window.open(link, '_blank');
+    } catch (err) {
+      console.error('No se pudo abrir el documento:', err);
+      alert('No pudimos abrir el documento. Reintenta o revisa permisos.');
+    } finally {
+      setDocLinksLoading(prev => {
+        const next = { ...prev };
+        delete next[docId];
+        return next;
+      });
+    }
+  };
 
   const filteredPerfiles = showOnlyComplete
     ? perfiles.filter(p => isProfileComplete(p))
@@ -485,7 +512,19 @@ const RiskAnalystDashboard = () => {
                       return (
                         <li key={docId} className={`doc-item doc-${estado}`}>
                           <span className="doc-nombre">{docId}</span>
-                          <span className="doc-estado">{estado}</span>
+                          <div className="doc-actions">
+                            <span className="doc-estado">{estado}</span>
+                            {doc && (
+                              <button
+                                type="button"
+                                className="btn-link"
+                                onClick={() => handleOpenDoc(doc)}
+                                disabled={!!docLinksLoading[docId]}
+                              >
+                                {docLinksLoading[docId] ? 'Abriendo...' : 'Ver'}
+                              </button>
+                            )}
+                          </div>
                         </li>
                       );
                     })}

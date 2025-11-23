@@ -322,6 +322,12 @@ section h2 {
   font-size: 0.8rem;
 }
 
+.doc-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .infocred-upload {
   margin-top: 24px;
   padding: 16px;
