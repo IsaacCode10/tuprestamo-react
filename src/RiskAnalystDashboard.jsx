@@ -160,11 +160,16 @@ const RiskAnalystDashboard = () => {
     if (validatedDocs.length > 0) {
       return validatedDocs.every(doc => (doc.estado || '').toLowerCase() === 'verificado');
     }
-    if (documentos.length === 0) return false;
-    return documentos.every(doc => {
+    const analyzedSet = new Set((analisisDocs || []).map(a => a.document_type));
+    if (documentos.length === 0 && analyzedSet.size === 0) return false;
+    const docsCovered = documentos.reduce((acc, doc) => {
       const estado = (doc.estado || '').toLowerCase();
-      return ['analizado', 'subido', 'verificado', 'validado'].some(ok => estado.includes(ok));
-    });
+      const ok = ['analizado', 'subido', 'verificado', 'validado'].some(s => estado.includes(s));
+      if (ok && doc.tipo_documento) acc.add(doc.tipo_documento);
+      return acc;
+    }, new Set());
+    const requiredDocs = getRequiredDocsBySituation(perfil?.situacion_laboral);
+    return requiredDocs.every(docId => docsCovered.has(docId) || analyzedSet.has(docId));
   };
 
   const fetchDocumentos = useCallback(async (solicitudId) => {
