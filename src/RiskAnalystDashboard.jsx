@@ -245,7 +245,8 @@ const RiskAnalystDashboard = () => {
       if (link) window.open(link, '_blank');
     } catch (err) {
       console.error('No se pudo abrir el documento:', err);
-      alert('No pudimos abrir el documento. Reintenta o revisa permisos.');
+      const msg = err?.message || 'Error desconocido';
+      alert(`No pudimos abrir el documento. Detalle: ${msg}. Reintenta o revisa permisos.`);
     } finally {
       setDocLinksLoading(prev => {
         const next = { ...prev };
