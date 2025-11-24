@@ -18,7 +18,6 @@ const APPROVAL_REASONS = [
   'Antigüedad laboral y estabilidad demostrada',
   'Score de Confianza muy alto',
   'Verificación de documentos exitosa y consistente',
-  'Garantías o colaterales sólidos',
 ];
 
 const DecisionModal = ({ isOpen, onClose, onSubmit, profile, decisionType }) => {
@@ -54,10 +53,10 @@ const DecisionModal = ({ isOpen, onClose, onSubmit, profile, decisionType }) => 
     try {
       let motivo;
       if (decisionType === 'Rechazado') {
-        motivo = motivoRechazo;
+        motivo = motivoRechazo; // string
       } else {
-        // Guardamos los motivos de aprobación como un array JSON
-        motivo = JSON.stringify(motivosAprobacion);
+        // Guardamos los motivos de aprobación como array de strings (no JSON string)
+        motivo = motivosAprobacion;
       }
 
       await onSubmit({

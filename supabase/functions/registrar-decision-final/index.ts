@@ -67,10 +67,23 @@ serve(async (req) => {
 
     // Insertar decisión en la tabla oficial si tenemos perfil
     if (perfilDeRiesgoId) {
-      const razonesValue =
-        decision === "Aprobado"
-          ? (motivo ? [motivo] : [])
-          : (motivo ? [motivo] : []);
+      let razonesValue: string[] = [];
+      if (decision === "Aprobado") {
+        if (Array.isArray(motivo)) {
+          razonesValue = motivo.map(String);
+        } else if (typeof motivo === "string" && motivo.trim()) {
+          // si vino como string JSON, intentar parsear
+          try {
+            const parsed = JSON.parse(motivo);
+            if (Array.isArray(parsed)) razonesValue = parsed.map(String);
+          } catch (_) {
+            razonesValue = [motivo];
+          }
+        }
+      } else {
+        if (typeof motivo === "string" && motivo.trim()) razonesValue = [motivo];
+      }
+
       const { error: decisionError } = await supabase.from("decisiones_de_riesgo").insert({
         perfil_riesgo_id: perfilDeRiesgoId,
         decision,
