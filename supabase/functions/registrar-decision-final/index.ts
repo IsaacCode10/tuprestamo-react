@@ -46,7 +46,31 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Intentar identificar al analista desde el token del frontend
+    let analistaId: string | null = null;
+    const authHeader = req.headers.get("Authorization") || "";
+    if (authHeader && anonKey) {
+      try {
+        const supabaseAuth = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+        if (!userError && userData?.user) {
+          analistaId = userData.user.id;
+        }
+      } catch (e) {
+        console.warn("No se pudo obtener analista desde el token:", e);
+      }
+    }
+    if (!analistaId) {
+      return new Response(JSON.stringify({ error: "No se pudo identificar al analista (token faltante o inválido)." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Traer solicitud y perfil de riesgo
     const { data: solicitud, error: solError } = await supabase
@@ -89,6 +113,7 @@ serve(async (req) => {
         decision,
         razones: razonesValue,
         comentarios: notas,
+        analista_id: analistaId,
       });
       if (decisionError) throw decisionError;
     }
