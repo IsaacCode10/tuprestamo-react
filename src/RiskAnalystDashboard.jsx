@@ -61,6 +61,9 @@ const RiskAnalystDashboard = () => {
   const COMISION_ORIGINACION = { A: 0.03, B: 0.04, C: 0.05 };
   const TASA_INTERES_PRESTATARIO = { A: 15, B: 17, C: 20 };
   const DEFAULT_COMISION = 0.05; // fallback conservador
+  const [infocredScore, setInfocredScore] = useState('');
+  const [infocredRiskLevel, setInfocredRiskLevel] = useState('');
+  const [savingInfocredMeta, setSavingInfocredMeta] = useState(false);
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
@@ -119,6 +122,8 @@ const RiskAnalystDashboard = () => {
     setSaldoDeudorVerificado('');
     setMontoTotalPrestamo(null);
     setInfocredError(null);
+    setInfocredScore('');
+    setInfocredRiskLevel('');
   };
 
   // Abre el modal para tomar la decisión
@@ -217,11 +222,17 @@ const RiskAnalystDashboard = () => {
   useEffect(() => {
     if (perfilSeleccionado?.id) {
       fetchDocumentos(perfilSeleccionado.id);
+      const score = perfilSeleccionado?.metricas_evaluacion?.infocred_score;
+      const risk = perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level;
+      setInfocredScore(score ?? '');
+      setInfocredRiskLevel(risk ?? '');
     } else {
       setDocumentos([]);
       setInfocredSignedUrl(null);
+      setInfocredScore('');
+      setInfocredRiskLevel('');
     }
-  }, [perfilSeleccionado?.id, fetchDocumentos]);
+  }, [perfilSeleccionado?.id, perfilSeleccionado?.metricas_evaluacion, fetchDocumentos]);
 
   const infocredDoc = documentos.find(doc => doc.tipo_documento === 'historial_infocred');
 
@@ -425,6 +436,37 @@ const RiskAnalystDashboard = () => {
     }
   };
 
+  const handleSaveInfocredMeta = async () => {
+    if (!perfilSeleccionado?.id) return;
+    const scoreVal = Number(infocredScore);
+    const riskVal = (infocredRiskLevel || '').toUpperCase();
+    if (!scoreVal || scoreVal < 300 || scoreVal > 850) {
+      alert('Ingresa un score INFOCRED entre 300 y 850.');
+      return;
+    }
+    if (!riskVal || !['A','B','C','D','E','F','G','H'].includes(riskVal)) {
+      alert('Selecciona el nivel de riesgo INFOCRED (A-H).');
+      return;
+    }
+    setSavingInfocredMeta(true);
+    try {
+      const currentMetrics = perfilSeleccionado?.metricas_evaluacion || {};
+      const updatedMetrics = { ...currentMetrics, infocred_score: scoreVal, infocred_risk_level: riskVal };
+      const { error } = await supabase
+        .from('perfiles_de_riesgo')
+        .update({ metricas_evaluacion: updatedMetrics })
+        .eq('solicitud_id', perfilSeleccionado.id);
+      if (error) throw error;
+      setPerfilSeleccionado(prev => prev ? { ...prev, metricas_evaluacion: updatedMetrics } : prev);
+      alert('Score INFOCRED guardado.');
+    } catch (err) {
+      console.error('No se pudo guardar score INFOCRED:', err);
+      alert('No pudimos guardar el score INFOCRED. Intenta nuevamente.');
+    } finally {
+      setSavingInfocredMeta(false);
+    }
+  };
+
   const renderContent = () => {
     if (loading) {
       return <div className="centered-message">Cargando perfiles...</div>;
@@ -447,6 +489,8 @@ const RiskAnalystDashboard = () => {
     const uploadedRequiredCount = requiredDocs.filter(docId => !!docByType[docId]).length;
     const analyzedCount = analyzedSet.size;
     const infocredStatus = infocredDoc ? 'PDF subido' : 'Pendiente';
+    const infocredScoreValue = perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? infocredScore || 'N/D';
+    const infocredRiskValue = perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? infocredRiskLevel || 'N/D';
 
     if (error && !isModalOpen) { // No mostrar error de fondo si el modal está abierto
       return <div className="centered-message error">Error: {error}</div>;
@@ -595,6 +639,11 @@ const RiskAnalystDashboard = () => {
                     }
                   />
                 </div>
+                <div className="metrica">
+                  <span className="metrica-titulo">Score INFOCRED</span>
+                  <span className="metrica-valor">{perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? 'N/D'}</span>
+                  <div className="muted">Nivel: {perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? 'N/D'} (buró)</div>
+                </div>
               </section>
 
               <section className="checklist-documentos">
@@ -689,6 +738,50 @@ const RiskAnalystDashboard = () => {
                     </div>
                   )}
                   {infocredError && <div className="error-text">Error: {infocredError}</div>}
+                </div>
+
+                <div className="infocred-meta">
+                  <h3>Score INFOCRED</h3>
+                  <p className="muted">Obligatorio: ingresa el score (300-850) y el nivel A-H tal como aparece en el reporte de INFOCRED.</p>
+                  <div className="infocred-meta-grid">
+                    <div>
+                      <label className="metrica-titulo" htmlFor="infocred-score">Score</label>
+                      <input
+                        id="infocred-score"
+                        type="number"
+                        min={300}
+                        max={850}
+                        value={infocredScore}
+                        onChange={(e) => setInfocredScore(e.target.value)}
+                        className="metrica-input"
+                        placeholder="Ej: 685"
+                      />
+                    </div>
+                    <div>
+                      <label className="metrica-titulo" htmlFor="infocred-risk">Nivel (A-H)</label>
+                      <select
+                        id="infocred-risk"
+                        value={infocredRiskLevel}
+                        onChange={(e) => setInfocredRiskLevel(e.target.value.toUpperCase())}
+                        className="metrica-input"
+                      >
+                        <option value="">Selecciona</option>
+                        {['A','B','C','D','E','F','G','H'].map(l => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <button
+                      type="button"
+                      className="btn-decision aprobar"
+                      onClick={handleSaveInfocredMeta}
+                      disabled={savingInfocredMeta}
+                    >
+                      {savingInfocredMeta ? 'Guardando...' : 'Guardar Score INFOCRED'}
+                    </button>
+                  </div>
                 </div>
               </section>
 
