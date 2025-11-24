@@ -74,6 +74,10 @@ const RiskAnalystDashboard = () => {
     return Number.isFinite(y) ? y : null;
   });
   const DOC_CACHE_KEY = 'risk-analyst-doc-cache';
+  const [showHistory, setShowHistory] = useState(false);
+  const [historial, setHistorial] = useState([]);
+  const [historialLoading, setHistorialLoading] = useState(false);
+  const [historialError, setHistorialError] = useState(null);
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
@@ -98,6 +102,77 @@ const RiskAnalystDashboard = () => {
       console.error("Error fetching risk profiles:", err);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchHistorial = useCallback(async () => {
+    setHistorialLoading(true);
+    setHistorialError(null);
+    try {
+      const { data: decisiones, error: decError } = await supabase
+        .from('decisiones_de_riesgo')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (decError) throw decError;
+
+      const perfilIds = (decisiones || []).map(d => d.perfil_riesgo_id).filter(Boolean);
+      let perfilesMap = {};
+      let solicitudesMap = {};
+      let oportunidadesMap = {};
+
+      if (perfilIds.length > 0) {
+        const { data: perfilesData, error: perfError } = await supabase
+          .from('perfiles_de_riesgo')
+          .select('id, solicitud_id, metricas_evaluacion, estado')
+          .in('id', perfilIds);
+        if (perfError) throw perfError;
+        perfilesMap = (perfilesData || []).reduce((acc, row) => {
+          acc[row.id] = row;
+          return acc;
+        }, {});
+
+        const solicitudIds = Object.values(perfilesMap).map((p: any) => p.solicitud_id).filter(Boolean);
+        if (solicitudIds.length > 0) {
+          const { data: solData, error: solErr } = await supabase
+            .from('solicitudes')
+            .select('id, nombre_completo, email, cedula_identidad, estado, created_at')
+            .in('id', solicitudIds);
+          if (solErr) throw solErr;
+          solicitudesMap = (solData || []).reduce((acc, row) => {
+            acc[row.id] = row;
+            return acc;
+          }, {});
+
+          const { data: oppData, error: oppErr } = await supabase
+            .from('oportunidades')
+            .select('solicitud_id, perfil_riesgo, plazo_meses, monto, estado')
+            .in('solicitud_id', solicitudIds);
+          if (oppErr) throw oppErr;
+          oportunidadesMap = (oppData || []).reduce((acc, row) => {
+            acc[row.solicitud_id] = row;
+            return acc;
+          }, {});
+        }
+      }
+
+      const merged = (decisiones || []).map(dec => {
+        const perfil = perfilesMap[dec.perfil_riesgo_id] || {};
+        const solicitud = solicitudesMap[(perfil as any).solicitud_id] || {};
+        const opp = oportunidadesMap[(perfil as any).solicitud_id] || {};
+        return {
+          ...dec,
+          perfil,
+          solicitud,
+          oportunidad: opp,
+        };
+      });
+      setHistorial(merged);
+    } catch (err) {
+      console.error('Error cargando historial:', err);
+      setHistorialError('No se pudo cargar el historial');
+    } finally {
+      setHistorialLoading(false);
     }
   }, []);
 
@@ -425,6 +500,9 @@ const RiskAnalystDashboard = () => {
   useEffect(() => {
     fetchPerfiles();
   }, [fetchPerfiles]);
+  useEffect(() => {
+    if (showHistory) fetchHistorial();
+  }, [showHistory, fetchHistorial]);
 
   // Restaurar scroll al volver al panel y persistir selección
   useEffect(() => {
@@ -537,9 +615,9 @@ const RiskAnalystDashboard = () => {
   };
 
   const renderContent = () => {
-    if (loading) {
-      return <div className="centered-message">Cargando perfiles...</div>;
-    }
+  if (loading) {
+    return <div className="centered-message">Cargando perfiles...</div>;
+  }
 
     const derivedIncome = Number(perfilSeleccionado?.ingreso_mensual || 0);
     const derivedSaldo = Number(perfilSeleccionado?.saldo_deuda_tc || perfilSeleccionado?.monto_solicitado || 0);
@@ -565,7 +643,7 @@ const RiskAnalystDashboard = () => {
       return <div className="centered-message error">Error: {error}</div>;
     }
 
-    if (perfiles.length === 0) {
+    if (!showHistory && perfiles.length === 0) {
       return (
         <div className="centered-message">
           <h2>No hay perfiles para revisar</h2>
@@ -578,7 +656,25 @@ const RiskAnalystDashboard = () => {
       <>
         <aside className="lista-perfiles">
           <header>
-            <h2>Perfiles a Revisar ({perfiles.length})</h2>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+              <h2 style={{margin:0}}>Perfiles a Revisar ({perfiles.length})</h2>
+              <div className="filter-group" style={{display:'flex',gap:6}}>
+                <button
+                  type="button"
+                  className={`filter-pill ${!showHistory ? 'filter-pill--active' : ''}`}
+                  onClick={() => setShowHistory(false)}
+                >
+                  En revisión
+                </button>
+                <button
+                  type="button"
+                  className={`filter-pill ${showHistory ? 'filter-pill--active' : ''}`}
+                  onClick={() => setShowHistory(true)}
+                >
+                  Historial
+                </button>
+              </div>
+            </div>
             <div className="filter-group">
               <button
                 type="button"
@@ -591,24 +687,55 @@ const RiskAnalystDashboard = () => {
             <HelpTooltip text="Estos son los perfiles de prestatarios que han completado la carga de documentos y están listos para un análisis de riesgo." />
           </header>
           <div className="perfiles-list">
-            {filteredPerfiles.map(perfil => (
-              <div 
-                key={perfil.id} 
-                className={`perfil-item ${perfilSeleccionado && perfilSeleccionado.id === perfil.id ? 'selected' : ''}`}
-                onClick={() => handleSelectPerfil(perfil)}
-              >
-                <div className="perfil-item-header">
-                  <div>
-                    <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
-                    <div className="muted">ID: {perfil.id}</div>
+            {showHistory ? (
+              historialLoading ? (
+                <div className="centered-message">Cargando historial...</div>
+              ) : historialError ? (
+                <div className="centered-message error">{historialError}</div>
+              ) : historial.length === 0 ? (
+                <div className="centered-message">
+                  <p>No hay decisiones registradas aún.</p>
+                </div>
+              ) : (
+                historial.map(item => (
+                  <div key={item.id} className="perfil-item">
+                    <div className="perfil-item-header">
+                      <div>
+                        <strong>{item.solicitud?.nombre_completo || 'Sin Nombre'}</strong>
+                        <div className="muted">Solicitud ID: {item.solicitud?.id || 'N/D'}</div>
+                      </div>
+                      <span>CI: {item.solicitud?.cedula_identidad || 'N/A'}</span>
+                    </div>
+                    <div className="perfil-item-body">
+                      <span>Decisión: {item.decision}</span>
+                      <span>Perfil: {item.oportunidad?.perfil_riesgo || 'N/D'}</span>
+                    </div>
+                    <div className="muted" style={{fontSize:'0.9em'}}>
+                      {new Date(item.created_at).toLocaleString('es-BO')} · Motivos: {(item.razones || []).join(', ') || '—'}
+                    </div>
                   </div>
-                  <span>CI: {perfil.cedula_identidad || 'N/A'}</span>
+                ))
+              )
+            ) : (
+              filteredPerfiles.map(perfil => (
+                <div 
+                  key={perfil.id} 
+                  className={`perfil-item ${perfilSeleccionado && perfilSeleccionado.id === perfil.id ? 'selected' : ''}`}
+                  onClick={() => handleSelectPerfil(perfil)}
+                >
+                  <div className="perfil-item-header">
+                    <div>
+                      <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
+                      <div className="muted">ID: {perfil.id}</div>
+                    </div>
+                    <span>CI: {perfil.cedula_identidad || 'N/A'}</span>
+                  </div>
+                  <div className="perfil-item-body">
+                    <span>DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')}</span>
+                  </div>
                 </div>
-                <div className="perfil-item-body">
-                  <span>DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
           <section className="help-requests-analyst">
             <header className="help-requests-header">
