@@ -275,17 +275,21 @@ const RiskAnalystDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const baseQuery = supabase
+      // Intentamos traer el perfil desde oportunidades; si falla por RLS o relación, hacemos fallback.
+      const { data: dataWithJoin, error: joinError } = await supabase
         .from('solicitudes')
+        .select('*, oportunidades (perfil_riesgo)')
         .eq('estado', 'documentos-en-revision')
         .order('created_at', { ascending: false });
 
-      // Intentamos traer el perfil desde oportunidades; si falla por RLS o relación, hacemos fallback.
-      const { data: dataWithJoin, error: joinError } = await baseQuery.select('*, oportunidades (perfil_riesgo)');
       let data = dataWithJoin;
       if (joinError) {
         console.warn('Fallo al unir oportunidades, reintentando sin relación:', joinError);
-        const { data: fallbackData, error: fallbackError } = await baseQuery.select('*');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('solicitudes')
+          .select('*')
+          .eq('estado', 'documentos-en-revision')
+          .order('created_at', { ascending: false });
         if (fallbackError) throw fallbackError;
         data = fallbackData;
       }
