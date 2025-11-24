@@ -275,20 +275,28 @@ const RiskAnalystDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      const baseQuery = supabase
         .from('solicitudes')
-        .select('*, oportunidades (perfil_riesgo)')
         .eq('estado', 'documentos-en-revision')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      // Intentamos traer el perfil desde oportunidades; si falla por RLS o relación, hacemos fallback.
+      const { data: dataWithJoin, error: joinError } = await baseQuery.select('*, oportunidades (perfil_riesgo)');
+      let data = dataWithJoin;
+      if (joinError) {
+        console.warn('Fallo al unir oportunidades, reintentando sin relación:', joinError);
+        const { data: fallbackData, error: fallbackError } = await baseQuery.select('*');
+        if (fallbackError) throw fallbackError;
+        data = fallbackData;
+      }
 
       const enriched = (data || []).map(item => {
         const oppPerfil =
           Array.isArray(item?.oportunidades) && item.oportunidades.length > 0
             ? item.oportunidades[0]?.perfil_riesgo
             : item?.oportunidades?.perfil_riesgo;
-        return { ...item, perfil_riesgo: item?.perfil_riesgo ?? oppPerfil ?? null };
+        const inferredPerfil = item?.perfil_riesgo ?? oppPerfil ?? item?.perfil ?? item?.risk_profile ?? null;
+        return { ...item, perfil_riesgo: inferredPerfil };
       });
 
       setPerfiles(enriched);
