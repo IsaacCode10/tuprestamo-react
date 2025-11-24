@@ -294,12 +294,38 @@ const RiskAnalystDashboard = () => {
         data = fallbackData;
       }
 
+      // Si no obtuvimos perfiles por join, intenta recuperarlos con una consulta independiente a oportunidades.
+      let oportunidadesMap = {};
+      if (data && data.length > 0) {
+        const solicitudIds = data.map(i => i.id).filter(Boolean);
+        if (solicitudIds.length > 0) {
+          const { data: oppData, error: oppError } = await supabase
+            .from('oportunidades')
+            .select('solicitud_id, perfil_riesgo')
+            .in('solicitud_id', solicitudIds);
+          if (!oppError && Array.isArray(oppData)) {
+            oportunidadesMap = oppData.reduce((acc, row) => {
+              acc[row.solicitud_id] = row.perfil_riesgo;
+              return acc;
+            }, {});
+          } else if (oppError) {
+            console.warn('No se pudo obtener perfil_riesgo desde oportunidades:', oppError);
+          }
+        }
+      }
+
       const enriched = (data || []).map(item => {
         const oppPerfil =
           Array.isArray(item?.oportunidades) && item.oportunidades.length > 0
             ? item.oportunidades[0]?.perfil_riesgo
             : item?.oportunidades?.perfil_riesgo;
-        const inferredPerfil = item?.perfil_riesgo ?? oppPerfil ?? item?.perfil ?? item?.risk_profile ?? null;
+        const inferredPerfil =
+          item?.perfil_riesgo ??
+          oppPerfil ??
+          oportunidadesMap[item?.id] ??
+          item?.perfil ??
+          item?.risk_profile ??
+          null;
         return { ...item, perfil_riesgo: inferredPerfil };
       });
 
