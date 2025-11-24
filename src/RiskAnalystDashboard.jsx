@@ -340,29 +340,16 @@ const RiskAnalystDashboard = () => {
         }
       }
 
-      // 3) Traer métricas (score_confianza) desde perfiles_de_riesgo
+      // 3) Traer métricas desde perfiles_de_riesgo
       let perfilesMap = {};
       if (solicitudIds.length > 0) {
-        let perfilesData = null;
-        // Primer intento: columnas extendidas
-        const { data: perfilesAttempt, error: perfilesError } = await supabase
+        const { data: perfilesData, error: perfilesError } = await supabase
           .from('perfiles_de_riesgo')
-          .select('solicitud_id, score_confianza, metricas_evaluacion, indice_confianza_datos')
+          .select('solicitud_id, metricas_evaluacion')
           .in('solicitud_id', solicitudIds);
 
         if (perfilesError) {
-          console.warn('No se pudo obtener métricas desde perfiles_de_riesgo (intento extendido):', perfilesError);
-          const { data: perfilesFallback, error: perfilesFallbackError } = await supabase
-            .from('perfiles_de_riesgo')
-            .select('solicitud_id, indice_confianza_datos')
-            .in('solicitud_id', solicitudIds);
-          if (!perfilesFallbackError && Array.isArray(perfilesFallback)) {
-            perfilesData = perfilesFallback;
-          } else if (perfilesFallbackError) {
-            console.warn('No se pudo obtener métricas desde perfiles_de_riesgo (fallback):', perfilesFallbackError);
-          }
-        } else {
-          perfilesData = perfilesAttempt;
+          console.warn('No se pudo obtener métricas desde perfiles_de_riesgo:', perfilesError);
         }
 
         if (Array.isArray(perfilesData)) {
@@ -383,9 +370,7 @@ const RiskAnalystDashboard = () => {
         const perfilMetrics = perfilesMap[item?.id] || {};
         const score =
           item?.score_confianza ??
-          perfilMetrics?.score_confianza ??
           perfilMetrics?.metricas_evaluacion?.score_confianza ??
-          perfilMetrics?.indice_confianza_datos ??
           null;
         return { ...item, perfil_riesgo: inferredPerfil, score_confianza: score, metricas_evaluacion: perfilMetrics?.metricas_evaluacion };
       });
