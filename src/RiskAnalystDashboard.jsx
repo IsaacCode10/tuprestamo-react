@@ -439,7 +439,7 @@ const RiskAnalystDashboard = () => {
       if (doc?.tipo_documento) acc[doc.tipo_documento] = doc;
       return acc;
     }, {});
-    const uploadedCount = documentos.length;
+    const uploadedRequiredCount = requiredDocs.filter(docId => !!docByType[docId]).length;
     const analyzedCount = analyzedSet.size;
     const infocredStatus = infocredDoc ? 'PDF subido' : 'Pendiente';
 
@@ -543,7 +543,7 @@ const RiskAnalystDashboard = () => {
                   </div>
                   <div>
                     <div className="muted">Documentos</div>
-                    <strong>{uploadedCount}/{requiredDocs.length || 'N/A'} subidos</strong>
+                    <strong>{uploadedRequiredCount}/{requiredDocs.length || 'N/A'} subidos</strong>
                     <div className="muted">{analyzedCount} analizados por IA</div>
                   </div>
                   <div>
