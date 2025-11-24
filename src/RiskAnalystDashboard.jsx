@@ -238,7 +238,6 @@ const RiskAnalystDashboard = () => {
             .maybeSingle();
           if (!error && data?.metricas_evaluacion) {
             const m = data.metricas_evaluacion;
-            setPerfilSeleccionado(prev => prev ? { ...prev, metricas_evaluacion: m } : prev);
             setInfocredScore(m.infocred_score ?? '');
             setInfocredRiskLevel(m.infocred_risk_level ?? '');
           }
@@ -254,7 +253,7 @@ const RiskAnalystDashboard = () => {
       setInfocredScore('');
       setInfocredRiskLevel('');
     }
-  }, [perfilSeleccionado?.id, perfilSeleccionado?.metricas_evaluacion, fetchDocumentos]);
+  }, [perfilSeleccionado?.id, fetchDocumentos]);
 
   const infocredDoc = documentos.find(doc => doc.tipo_documento === 'historial_infocred');
 
