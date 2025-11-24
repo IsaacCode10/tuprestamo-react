@@ -305,17 +305,33 @@ const RiskAnalystDashboard = () => {
       // 3) Traer métricas (score_confianza) desde perfiles_de_riesgo
       let perfilesMap = {};
       if (solicitudIds.length > 0) {
-        const { data: perfilesData, error: perfilesError } = await supabase
+        let perfilesData = null;
+        // Primer intento: columnas extendidas
+        const { data: perfilesAttempt, error: perfilesError } = await supabase
           .from('perfiles_de_riesgo')
-          .select('solicitud_id, score_confianza, metricas_evaluacion')
+          .select('solicitud_id, score_confianza, metricas_evaluacion, indice_confianza_datos')
           .in('solicitud_id', solicitudIds);
-        if (!perfilesError && Array.isArray(perfilesData)) {
+
+        if (perfilesError) {
+          console.warn('No se pudo obtener métricas desde perfiles_de_riesgo (intento extendido):', perfilesError);
+          const { data: perfilesFallback, error: perfilesFallbackError } = await supabase
+            .from('perfiles_de_riesgo')
+            .select('solicitud_id, indice_confianza_datos')
+            .in('solicitud_id', solicitudIds);
+          if (!perfilesFallbackError && Array.isArray(perfilesFallback)) {
+            perfilesData = perfilesFallback;
+          } else if (perfilesFallbackError) {
+            console.warn('No se pudo obtener métricas desde perfiles_de_riesgo (fallback):', perfilesFallbackError);
+          }
+        } else {
+          perfilesData = perfilesAttempt;
+        }
+
+        if (Array.isArray(perfilesData)) {
           perfilesMap = perfilesData.reduce((acc, row) => {
             acc[row.solicitud_id] = row;
             return acc;
           }, {});
-        } else if (perfilesError) {
-          console.warn('No se pudo obtener métricas desde perfiles_de_riesgo:', perfilesError);
         }
       }
 
@@ -327,7 +343,12 @@ const RiskAnalystDashboard = () => {
           item?.risk_profile ??
           null;
         const perfilMetrics = perfilesMap[item?.id] || {};
-        const score = item?.score_confianza ?? perfilMetrics?.score_confianza ?? perfilMetrics?.metricas_evaluacion?.score_confianza ?? null;
+        const score =
+          item?.score_confianza ??
+          perfilMetrics?.score_confianza ??
+          perfilMetrics?.metricas_evaluacion?.score_confianza ??
+          perfilMetrics?.indice_confianza_datos ??
+          null;
         return { ...item, perfil_riesgo: inferredPerfil, score_confianza: score, metricas_evaluacion: perfilMetrics?.metricas_evaluacion };
       });
 
