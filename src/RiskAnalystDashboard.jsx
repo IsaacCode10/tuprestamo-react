@@ -64,6 +64,7 @@ const RiskAnalystDashboard = () => {
   const [infocredScore, setInfocredScore] = useState('');
   const [infocredRiskLevel, setInfocredRiskLevel] = useState('');
   const [savingInfocredMeta, setSavingInfocredMeta] = useState(false);
+  const [metricsLoading, setMetricsLoading] = useState(false);
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
@@ -226,6 +227,27 @@ const RiskAnalystDashboard = () => {
       const risk = perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level;
       setInfocredScore(score ?? '');
       setInfocredRiskLevel(risk ?? '');
+      // traer métricas frescas desde perfiles_de_riesgo por si no vienen en la lista
+      (async () => {
+        setMetricsLoading(true);
+        try {
+          const { data, error } = await supabase
+            .from('perfiles_de_riesgo')
+            .select('metricas_evaluacion')
+            .eq('solicitud_id', perfilSeleccionado.id)
+            .maybeSingle();
+          if (!error && data?.metricas_evaluacion) {
+            const m = data.metricas_evaluacion;
+            setPerfilSeleccionado(prev => prev ? { ...prev, metricas_evaluacion: m } : prev);
+            setInfocredScore(m.infocred_score ?? '');
+            setInfocredRiskLevel(m.infocred_risk_level ?? '');
+          }
+        } catch (err) {
+          console.error('No se pudieron obtener métricas de perfil:', err);
+        } finally {
+          setMetricsLoading(false);
+        }
+      })();
     } else {
       setDocumentos([]);
       setInfocredSignedUrl(null);
@@ -450,13 +472,19 @@ const RiskAnalystDashboard = () => {
     }
     setSavingInfocredMeta(true);
     try {
-      const currentMetrics = perfilSeleccionado?.metricas_evaluacion || {};
-      const updatedMetrics = { ...currentMetrics, infocred_score: scoreVal, infocred_risk_level: riskVal };
-      const { error } = await supabase
-        .from('perfiles_de_riesgo')
-        .update({ metricas_evaluacion: updatedMetrics })
-        .eq('solicitud_id', perfilSeleccionado.id);
+      const { data, error } = await supabase.functions.invoke('guardar-score-infocred', {
+        body: {
+          solicitud_id: perfilSeleccionado.id,
+          infocred_score: scoreVal,
+          infocred_risk_level: riskVal,
+        },
+      });
       if (error) throw error;
+      const updatedMetrics = data?.metricas_evaluacion || {
+        ...(perfilSeleccionado?.metricas_evaluacion || {}),
+        infocred_score: scoreVal,
+        infocred_risk_level: riskVal,
+      };
       setPerfilSeleccionado(prev => prev ? { ...prev, metricas_evaluacion: updatedMetrics } : prev);
       alert('Score INFOCRED guardado.');
     } catch (err) {
