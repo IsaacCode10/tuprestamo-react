@@ -68,6 +68,11 @@ const RiskAnalystDashboard = () => {
 
   const SCROLL_STORAGE_KEY = 'risk-analyst-scroll';
   const SELECTED_PROFILE_KEY = 'risk-analyst-selected-id';
+  const [pendingScroll, setPendingScroll] = useState(() => {
+    const saved = sessionStorage.getItem(SCROLL_STORAGE_KEY);
+    const y = saved ? Number(saved) : null;
+    return Number.isFinite(y) ? y : null;
+  });
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
@@ -404,13 +409,6 @@ const RiskAnalystDashboard = () => {
 
   // Restaurar scroll al volver al panel y persistir selección
   useEffect(() => {
-    const saved = sessionStorage.getItem(SCROLL_STORAGE_KEY);
-    if (saved) {
-      const y = Number(saved);
-      if (!Number.isNaN(y)) {
-        setTimeout(() => window.scrollTo(0, y), 50);
-      }
-    }
     const saveScroll = () => {
       sessionStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY || 0));
     };
@@ -424,6 +422,16 @@ const RiskAnalystDashboard = () => {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
+
+  // Aplicar scroll pendiente cuando ya cargó la data
+  useEffect(() => {
+    if (pendingScroll !== null && !loading) {
+      setTimeout(() => {
+        window.scrollTo(0, pendingScroll);
+        setPendingScroll(null);
+      }, 50);
+    }
+  }, [pendingScroll, loading]);
 
   const handleInfocredUpload = async (file) => {
     if (!file || !perfilSeleccionado?.id) return;
