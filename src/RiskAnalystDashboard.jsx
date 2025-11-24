@@ -489,8 +489,8 @@ const RiskAnalystDashboard = () => {
     const uploadedRequiredCount = requiredDocs.filter(docId => !!docByType[docId]).length;
     const analyzedCount = analyzedSet.size;
     const infocredStatus = infocredDoc ? 'PDF subido' : 'Pendiente';
-    const infocredScoreValue = perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? infocredScore || 'N/D';
-    const infocredRiskValue = perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? infocredRiskLevel || 'N/D';
+    const infocredScoreValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? infocredScore) || 'N/D';
+    const infocredRiskValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? infocredRiskLevel) || 'N/D';
 
     if (error && !isModalOpen) { // No mostrar error de fondo si el modal está abierto
       return <div className="centered-message error">Error: {error}</div>;
