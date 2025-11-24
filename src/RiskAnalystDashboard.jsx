@@ -59,6 +59,7 @@ const RiskAnalystDashboard = () => {
   const [docLinksLoading, setDocLinksLoading] = useState({});
   const infocredInputRef = React.useRef(null);
   const COMISION_ORIGINACION = { A: 0.03, B: 0.04, C: 0.05 };
+  const TASA_INTERES_PRESTATARIO = { A: 15, B: 17, C: 20 };
   const DEFAULT_COMISION = 0.05; // fallback conservador
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
@@ -92,10 +93,14 @@ const RiskAnalystDashboard = () => {
   }, [fetchPerfiles]);
   */
 
+  const perfilRiesgo = useMemo(() => {
+    const raw = perfilSeleccionado?.perfil_riesgo || perfilSeleccionado?.perfil || perfilSeleccionado?.risk_profile;
+    return raw ? String(raw).toUpperCase() : null;
+  }, [perfilSeleccionado?.perfil_riesgo, perfilSeleccionado?.perfil, perfilSeleccionado?.risk_profile]);
+
   const comisionOriginacion = useMemo(() => {
-    const perfil = (perfilSeleccionado?.perfil_riesgo || '').toUpperCase();
-    return COMISION_ORIGINACION[perfil] ?? DEFAULT_COMISION;
-  }, [perfilSeleccionado?.perfil_riesgo]);
+    return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo]) ?? DEFAULT_COMISION;
+  }, [perfilRiesgo]);
 
   // Efecto para calcular el Gross-Up con la comisión según perfil
   useEffect(() => {
@@ -272,17 +277,25 @@ const RiskAnalystDashboard = () => {
     try {
       const { data, error } = await supabase
         .from('solicitudes')
-        .select('*')
+        .select('*, oportunidades (perfil_riesgo)')
         .eq('estado', 'documentos-en-revision')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setPerfiles(data || []);
-      if (data && data.length > 0) {
+      const enriched = (data || []).map(item => {
+        const oppPerfil =
+          Array.isArray(item?.oportunidades) && item.oportunidades.length > 0
+            ? item.oportunidades[0]?.perfil_riesgo
+            : item?.oportunidades?.perfil_riesgo;
+        return { ...item, perfil_riesgo: item?.perfil_riesgo ?? oppPerfil ?? null };
+      });
+
+      setPerfiles(enriched);
+      if (enriched.length > 0) {
         // Mantener el perfil seleccionado si aún existe en la nueva lista, o seleccionar el primero.
         setPerfilSeleccionado(prev => 
-          data.find(p => prev?.id === p.id) || data[0]
+          enriched.find(p => prev?.id === p.id) || enriched[0]
         );
       } else {
         setPerfilSeleccionado(null);
@@ -507,8 +520,15 @@ const RiskAnalystDashboard = () => {
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Perfil de Riesgo</span>
-                  <span className="metrica-valor">{(perfilSeleccionado.perfil_riesgo || 'N/D').toUpperCase()}</span>
+                  <span className="metrica-valor">{perfilRiesgo || 'N/D'}</span>
                   <div className="muted">Determina tasa y originación</div>
+                  <HelpTooltip
+                    text={
+                      perfilRiesgo
+                        ? `Perfil ${perfilRiesgo}: tasa prestatario ${TASA_INTERES_PRESTATARIO[perfilRiesgo] ?? 'N/D'}% anual; comisión de originación ${(comisionOriginacion * 100).toFixed(1)}%.`
+                        : 'Perfil aún no asignado. Se definirá tras el scorecard y validaciones.'
+                    }
+                  />
                 </div>
               </section>
 
@@ -626,7 +646,7 @@ const RiskAnalystDashboard = () => {
                   <div className="metrica-calculada">
                     <span className="metrica-titulo">Monto Total del Préstamo (Gross-Up)</span>
                     <span className="metrica-valor-calculado">Bs. {montoTotalPrestamo}</span>
-                    <HelpTooltip text={`Este es el monto total que se solicitará a los inversionistas. Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilSeleccionado?.perfil_riesgo || 'N/D'}).`} />
+                    <HelpTooltip text={`Este es el monto total que se solicitará a los inversionistas. Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilRiesgo || 'N/D'}).`} />
                   </div>
                 )}
               </section>
