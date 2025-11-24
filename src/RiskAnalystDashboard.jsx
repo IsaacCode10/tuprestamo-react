@@ -473,6 +473,12 @@ const RiskAnalystDashboard = () => {
   useEffect(() => {
     if (showHistory) fetchHistorial();
   }, [showHistory, fetchHistorial]);
+  useEffect(() => {
+    if (!showHistory && perfiles.length === 0) {
+      setShowHistory(true);
+      fetchHistorial();
+    }
+  }, [showHistory, perfiles.length, fetchHistorial]);
 
   // Restaurar scroll al volver al panel y persistir selección
   useEffect(() => {
