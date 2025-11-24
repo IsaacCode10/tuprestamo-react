@@ -73,6 +73,7 @@ const RiskAnalystDashboard = () => {
     const y = saved ? Number(saved) : null;
     return Number.isFinite(y) ? y : null;
   });
+  const DOC_CACHE_KEY = 'risk-analyst-doc-cache';
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
@@ -209,6 +210,18 @@ const RiskAnalystDashboard = () => {
 
   const fetchDocumentos = useCallback(async (solicitudId) => {
     if (!solicitudId) return;
+    // Si hay cache, úsalo para evitar parpadeo
+    const cacheRaw = sessionStorage.getItem(DOC_CACHE_KEY);
+    if (cacheRaw) {
+      try {
+        const cache = JSON.parse(cacheRaw);
+        if (cache[solicitudId]) {
+          setDocumentos(cache[solicitudId].documentos || []);
+          setAnalisisDocs(cache[solicitudId].analisisDocs || []);
+          setDocLoading(false);
+        }
+      } catch (_) {}
+    }
     setDocLoading(true);
     try {
       const { data, error } = await supabase
@@ -224,6 +237,12 @@ const RiskAnalystDashboard = () => {
       if (!analError) {
         setAnalisisDocs(analizados || []);
       }
+      // guardar en cache
+      try {
+        const cache = cacheRaw ? JSON.parse(cacheRaw) : {};
+        cache[solicitudId] = { documentos: data || [], analisisDocs: analizados || [] };
+        sessionStorage.setItem(DOC_CACHE_KEY, JSON.stringify(cache));
+      } catch (_) {}
     } catch (err) {
       console.error('Error cargando documentos:', err);
     } finally {
