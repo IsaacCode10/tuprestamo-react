@@ -643,6 +643,7 @@ const RiskAnalystDashboard = () => {
                   <span className="metrica-titulo">Score INFOCRED</span>
                   <span className="metrica-valor">{perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? 'N/D'}</span>
                   <div className="muted">Nivel: {perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? 'N/D'} (buró)</div>
+                  <HelpTooltip text="Score INFOCRED (300–850): 850 = menor probabilidad de default, 300 = mayor riesgo. Nivel A–H es la clase de riesgo del buró; A es menor riesgo, H es mayor." />
                 </div>
               </section>
 
