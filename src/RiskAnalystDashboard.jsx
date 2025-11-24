@@ -422,7 +422,7 @@ const RiskAnalystDashboard = () => {
           return acc;
         }, {});
 
-        const solicitudIds = Object.values(perfilesMap).map((p: any) => p.solicitud_id).filter(Boolean);
+        const solicitudIds = Object.values(perfilesMap).map(p => p.solicitud_id).filter(Boolean);
         if (solicitudIds.length > 0) {
           const { data: solData, error: solErr } = await supabase
             .from('solicitudes')
@@ -448,8 +448,9 @@ const RiskAnalystDashboard = () => {
 
       const merged = (decisiones || []).map(dec => {
         const perfil = perfilesMap[dec.perfil_riesgo_id] || {};
-        const solicitud = solicitudesMap[(perfil as any).solicitud_id] || {};
-        const opp = oportunidadesMap[(perfil as any).solicitud_id] || {};
+        const solicitudId = perfil?.solicitud_id;
+        const solicitud = solicitudId ? (solicitudesMap[solicitudId] || {}) : {};
+        const opp = solicitudId ? (oportunidadesMap[solicitudId] || {}) : {};
         return {
           ...dec,
           perfil,
