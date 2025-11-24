@@ -162,19 +162,70 @@ serve(async (req) => {
     // Correo al prestatario si tenemos Resend
     if (resend && solicitud.email) {
       try {
+        const nombre = solicitud.nombre_completo || "cliente";
+        const titulo = `${nombre}, tu propuesta de crédito está lista`;
+        const buttonUrl = (Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com") + "/dashboard-prestatario";
+        const montoFmt = monto.toLocaleString("es-BO");
+        const tasa = pricing ? pricing.tasa_prestatario : "N/D";
         await resend.emails.send({
           from: "Tu Prestamo <contacto@tuprestamobo.com>",
           to: [solicitud.email],
-          subject: "Tu propuesta de crédito está lista",
+          subject: titulo,
           html: `
-            <h1>Hola ${solicitud.nombre_completo || ""}</h1>
-            <p>Aprobamos tu solicitud. Ya tienes una propuesta lista en tu panel.</p>
-            <ul>
-              <li>Monto aprobado: Bs ${monto.toLocaleString("es-BO")}</li>
-              <li>Plazo: ${nuevoPlazo} meses</li>
-              <li>Tasa anual: ${pricing ? pricing.tasa_prestatario : "N/D"}%</li>
-            </ul>
-            <p>Ingresa a tu cuenta para aceptarla o rechazarla.</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${titulo}</title>
+</head>
+<body style="margin:0;padding:0;background:#F8F8F8;font-family: Arial, Helvetica, sans-serif;color:#222;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F8F8F8;padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background:#00445A;padding:18px 20px;">
+              <img src="https://www.tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Tu Préstamo" style="height:38px;display:block;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 20px 8px 20px;">
+              <h1 style="margin:0;font-size:22px;color:#00445A;font-weight:700;font-family: Montserrat, Arial, sans-serif;">${nombre}, tu propuesta está lista</h1>
+              <p style="margin:12px 0 0 0;font-size:15px;line-height:1.6;color:#222;">Aprobamos tu solicitud. Revisa y acepta tu propuesta de crédito en tu panel.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 20px 8px 20px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F8F8F8;border:1px solid #e9ecef;border-radius:10px;padding:14px;">
+                <tr>
+                  <td style="font-size:15px;line-height:1.6;color:#222;">
+                    <strong>Monto aprobado:</strong> Bs ${montoFmt}<br/>
+                    <strong>Plazo:</strong> ${nuevoPlazo} meses<br/>
+                    <strong>Tasa anual:</strong> ${tasa}%<br/>
+                    <span style="color:#00445A;">El desembolso se hará directo a tu banco acreedor.</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:14px 20px 24px 20px;">
+              <a href="${buttonUrl}" target="_blank" rel="noreferrer" style="display:inline-block;background:#26C2B2;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 18px;border-radius:6px;">Ir a mi propuesta</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 20px 18px 20px;font-size:13px;line-height:1.5;color:#555;border-top:1px solid #e9ecef;">
+              <p style="margin:12px 0 4px 0;">¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@tuprestamobo.com" style="color:#00445A;text-decoration:none;">soporte@tuprestamobo.com</a>.</p>
+              <p style="margin:0;color:#777;">Este es un correo automático. Por favor no respondas a esta dirección.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
           `,
         });
       } catch (e) {
