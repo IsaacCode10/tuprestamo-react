@@ -79,108 +79,6 @@ const RiskAnalystDashboard = () => {
   const [historialLoading, setHistorialLoading] = useState(false);
   const [historialError, setHistorialError] = useState(null);
 
-  /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
-  const fetchPerfiles = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase
-        .from('perfiles_de_riesgo')
-        .select('*')
-        .eq('estado', 'listo_para_revision');
-
-      if (error) throw error;
-
-      setPerfiles(data || []);
-      if (data && data.length > 0) {
-        setPerfilSeleccionado(data[0]);
-      } else {
-        setPerfilSeleccionado(null);
-      }
-    } catch (err) {
-      setError('No se pudieron cargar los perfiles. ' + err.message);
-      console.error("Error fetching risk profiles:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchHistorial = useCallback(async () => {
-    setHistorialLoading(true);
-    setHistorialError(null);
-    try {
-      const { data: decisiones, error: decError } = await supabase
-        .from('decisiones_de_riesgo')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (decError) throw decError;
-
-      const perfilIds = (decisiones || []).map(d => d.perfil_riesgo_id).filter(Boolean);
-      let perfilesMap = {};
-      let solicitudesMap = {};
-      let oportunidadesMap = {};
-
-      if (perfilIds.length > 0) {
-        const { data: perfilesData, error: perfError } = await supabase
-          .from('perfiles_de_riesgo')
-          .select('id, solicitud_id, metricas_evaluacion, estado')
-          .in('id', perfilIds);
-        if (perfError) throw perfError;
-        perfilesMap = (perfilesData || []).reduce((acc, row) => {
-          acc[row.id] = row;
-          return acc;
-        }, {});
-
-        const solicitudIds = Object.values(perfilesMap).map((p: any) => p.solicitud_id).filter(Boolean);
-        if (solicitudIds.length > 0) {
-          const { data: solData, error: solErr } = await supabase
-            .from('solicitudes')
-            .select('id, nombre_completo, email, cedula_identidad, estado, created_at')
-            .in('id', solicitudIds);
-          if (solErr) throw solErr;
-          solicitudesMap = (solData || []).reduce((acc, row) => {
-            acc[row.id] = row;
-            return acc;
-          }, {});
-
-          const { data: oppData, error: oppErr } = await supabase
-            .from('oportunidades')
-            .select('solicitud_id, perfil_riesgo, plazo_meses, monto, estado')
-            .in('solicitud_id', solicitudIds);
-          if (oppErr) throw oppErr;
-          oportunidadesMap = (oppData || []).reduce((acc, row) => {
-            acc[row.solicitud_id] = row;
-            return acc;
-          }, {});
-        }
-      }
-
-      const merged = (decisiones || []).map(dec => {
-        const perfil = perfilesMap[dec.perfil_riesgo_id] || {};
-        const solicitud = solicitudesMap[(perfil as any).solicitud_id] || {};
-        const opp = oportunidadesMap[(perfil as any).solicitud_id] || {};
-        return {
-          ...dec,
-          perfil,
-          solicitud,
-          oportunidad: opp,
-        };
-      });
-      setHistorial(merged);
-    } catch (err) {
-      console.error('Error cargando historial:', err);
-      setHistorialError('No se pudo cargar el historial');
-    } finally {
-      setHistorialLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPerfiles();
-  }, [fetchPerfiles]);
-  */
-
   const perfilRiesgo = useMemo(() => {
     const raw = perfilSeleccionado?.perfil_riesgo || perfilSeleccionado?.perfil || perfilSeleccionado?.risk_profile;
     return raw ? String(raw).toUpperCase() : null;
@@ -494,6 +392,77 @@ const RiskAnalystDashboard = () => {
       setError('No se pudieron cargar los perfiles.');
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchHistorial = useCallback(async () => {
+    setHistorialLoading(true);
+    setHistorialError(null);
+    try {
+      const { data: decisiones, error: decError } = await supabase
+        .from('decisiones_de_riesgo')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (decError) throw decError;
+
+      const perfilIds = (decisiones || []).map(d => d.perfil_riesgo_id).filter(Boolean);
+      let perfilesMap = {};
+      let solicitudesMap = {};
+      let oportunidadesMap = {};
+
+      if (perfilIds.length > 0) {
+        const { data: perfilesData, error: perfError } = await supabase
+          .from('perfiles_de_riesgo')
+          .select('id, solicitud_id, metricas_evaluacion, estado')
+          .in('id', perfilIds);
+        if (perfError) throw perfError;
+        perfilesMap = (perfilesData || []).reduce((acc, row) => {
+          acc[row.id] = row;
+          return acc;
+        }, {});
+
+        const solicitudIds = Object.values(perfilesMap).map((p: any) => p.solicitud_id).filter(Boolean);
+        if (solicitudIds.length > 0) {
+          const { data: solData, error: solErr } = await supabase
+            .from('solicitudes')
+            .select('id, nombre_completo, email, cedula_identidad, estado, created_at')
+            .in('id', solicitudIds);
+          if (solErr) throw solErr;
+          solicitudesMap = (solData || []).reduce((acc, row) => {
+            acc[row.id] = row;
+            return acc;
+          }, {});
+
+          const { data: oppData, error: oppErr } = await supabase
+            .from('oportunidades')
+            .select('solicitud_id, perfil_riesgo, plazo_meses, monto, estado')
+            .in('solicitud_id', solicitudIds);
+          if (oppErr) throw oppErr;
+          oportunidadesMap = (oppData || []).reduce((acc, row) => {
+            acc[row.solicitud_id] = row;
+            return acc;
+          }, {});
+        }
+      }
+
+      const merged = (decisiones || []).map(dec => {
+        const perfil = perfilesMap[dec.perfil_riesgo_id] || {};
+        const solicitud = solicitudesMap[(perfil as any).solicitud_id] || {};
+        const opp = oportunidadesMap[(perfil as any).solicitud_id] || {};
+        return {
+          ...dec,
+          perfil,
+          solicitud,
+          oportunidad: opp,
+        };
+      });
+      setHistorial(merged);
+    } catch (err) {
+      console.error('Error cargando historial:', err);
+      setHistorialError('No se pudo cargar el historial');
+    } finally {
+      setHistorialLoading(false);
     }
   }, []);
 
