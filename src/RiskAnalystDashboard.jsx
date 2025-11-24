@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import './RiskAnalystDashboard.css';
 import HelpTooltip from './components/HelpTooltip';
@@ -58,7 +58,8 @@ const RiskAnalystDashboard = () => {
   const [docLinks, setDocLinks] = useState({});
   const [docLinksLoading, setDocLinksLoading] = useState({});
   const infocredInputRef = React.useRef(null);
-  const TASA_COMISION = 0.08; // 8%
+  const COMISION_ORIGINACION = { A: 0.03, B: 0.04, C: 0.05 };
+  const DEFAULT_COMISION = 0.05; // fallback conservador
 
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
@@ -91,16 +92,21 @@ const RiskAnalystDashboard = () => {
   }, [fetchPerfiles]);
   */
 
-  // Efecto para calcular el Gross-Up
+  const comisionOriginacion = useMemo(() => {
+    const perfil = (perfilSeleccionado?.perfil_riesgo || '').toUpperCase();
+    return COMISION_ORIGINACION[perfil] ?? DEFAULT_COMISION;
+  }, [perfilSeleccionado?.perfil_riesgo]);
+
+  // Efecto para calcular el Gross-Up con la comisión según perfil
   useEffect(() => {
     const saldo = parseFloat(saldoDeudorVerificado);
-    if (saldo > 0) {
-      const montoCalculado = saldo / (1 - TASA_COMISION);
+    if (saldo > 0 && comisionOriginacion > 0 && comisionOriginacion < 1) {
+      const montoCalculado = saldo / (1 - comisionOriginacion);
       setMontoTotalPrestamo(montoCalculado.toFixed(2));
     } else {
       setMontoTotalPrestamo(null);
     }
-  }, [saldoDeudorVerificado]);
+  }, [saldoDeudorVerificado, comisionOriginacion]);
 
   const handleSelectPerfil = (perfil) => {
     setPerfilSeleccionado(perfil);
@@ -499,6 +505,11 @@ const RiskAnalystDashboard = () => {
                   <span className="metrica-valor">{perfilSeleccionado.score_confianza || scoreFallback}%</span>
                   <HelpTooltip text="Puntaje calculado basado en la completitud y consistencia de los datos y documentos. No es un score de crédito tradicional." />
                 </div>
+                <div className="metrica">
+                  <span className="metrica-titulo">Perfil de Riesgo</span>
+                  <span className="metrica-valor">{(perfilSeleccionado.perfil_riesgo || 'N/D').toUpperCase()}</span>
+                  <div className="muted">Determina tasa y originación</div>
+                </div>
               </section>
 
               <section className="checklist-documentos">
@@ -615,7 +626,7 @@ const RiskAnalystDashboard = () => {
                   <div className="metrica-calculada">
                     <span className="metrica-titulo">Monto Total del Préstamo (Gross-Up)</span>
                     <span className="metrica-valor-calculado">Bs. {montoTotalPrestamo}</span>
-                    <HelpTooltip text={`Este es el monto total que se solicitará a los inversionistas. Se calcula como: Saldo Verificado / (1 - ${TASA_COMISION * 100}% de comisión).`} />
+                    <HelpTooltip text={`Este es el monto total que se solicitará a los inversionistas. Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilSeleccionado?.perfil_riesgo || 'N/D'}).`} />
                   </div>
                 )}
               </section>
