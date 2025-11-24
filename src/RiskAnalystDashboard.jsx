@@ -275,58 +275,60 @@ const RiskAnalystDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      // Intentamos traer el perfil desde oportunidades; si falla por RLS o relación, hacemos fallback.
-      const { data: dataWithJoin, error: joinError } = await supabase
+      // 1) Traer solicitudes base
+      const { data: solicitudesData, error: solicitudesError } = await supabase
         .from('solicitudes')
-        .select('*, oportunidades (perfil_riesgo)')
+        .select('*')
         .eq('estado', 'documentos-en-revision')
         .order('created_at', { ascending: false });
+      if (solicitudesError) throw solicitudesError;
 
-      let data = dataWithJoin;
-      if (joinError) {
-        console.warn('Fallo al unir oportunidades, reintentando sin relación:', joinError);
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('solicitudes')
-          .select('*')
-          .eq('estado', 'documentos-en-revision')
-          .order('created_at', { ascending: false });
-        if (fallbackError) throw fallbackError;
-        data = fallbackData;
-      }
+      const solicitudIds = (solicitudesData || []).map(i => i.id).filter(Boolean);
 
-      // Si no obtuvimos perfiles por join, intenta recuperarlos con una consulta independiente a oportunidades.
+      // 2) Traer perfiles de riesgo desde oportunidades
       let oportunidadesMap = {};
-      if (data && data.length > 0) {
-        const solicitudIds = data.map(i => i.id).filter(Boolean);
-        if (solicitudIds.length > 0) {
-          const { data: oppData, error: oppError } = await supabase
-            .from('oportunidades')
-            .select('solicitud_id, perfil_riesgo')
-            .in('solicitud_id', solicitudIds);
-          if (!oppError && Array.isArray(oppData)) {
-            oportunidadesMap = oppData.reduce((acc, row) => {
-              acc[row.solicitud_id] = row.perfil_riesgo;
-              return acc;
-            }, {});
-          } else if (oppError) {
-            console.warn('No se pudo obtener perfil_riesgo desde oportunidades:', oppError);
-          }
+      if (solicitudIds.length > 0) {
+        const { data: oppData, error: oppError } = await supabase
+          .from('oportunidades')
+          .select('solicitud_id, perfil_riesgo')
+          .in('solicitud_id', solicitudIds);
+        if (!oppError && Array.isArray(oppData)) {
+          oportunidadesMap = oppData.reduce((acc, row) => {
+            acc[row.solicitud_id] = row.perfil_riesgo;
+            return acc;
+          }, {});
+        } else if (oppError) {
+          console.warn('No se pudo obtener perfil_riesgo desde oportunidades:', oppError);
         }
       }
 
-      const enriched = (data || []).map(item => {
-        const oppPerfil =
-          Array.isArray(item?.oportunidades) && item.oportunidades.length > 0
-            ? item.oportunidades[0]?.perfil_riesgo
-            : item?.oportunidades?.perfil_riesgo;
+      // 3) Traer métricas (score_confianza) desde perfiles_de_riesgo
+      let perfilesMap = {};
+      if (solicitudIds.length > 0) {
+        const { data: perfilesData, error: perfilesError } = await supabase
+          .from('perfiles_de_riesgo')
+          .select('solicitud_id, score_confianza, metricas_evaluacion')
+          .in('solicitud_id', solicitudIds);
+        if (!perfilesError && Array.isArray(perfilesData)) {
+          perfilesMap = perfilesData.reduce((acc, row) => {
+            acc[row.solicitud_id] = row;
+            return acc;
+          }, {});
+        } else if (perfilesError) {
+          console.warn('No se pudo obtener métricas desde perfiles_de_riesgo:', perfilesError);
+        }
+      }
+
+      const enriched = (solicitudesData || []).map(item => {
         const inferredPerfil =
           item?.perfil_riesgo ??
-          oppPerfil ??
           oportunidadesMap[item?.id] ??
           item?.perfil ??
           item?.risk_profile ??
           null;
-        return { ...item, perfil_riesgo: inferredPerfil };
+        const perfilMetrics = perfilesMap[item?.id] || {};
+        const score = item?.score_confianza ?? perfilMetrics?.score_confianza ?? perfilMetrics?.metricas_evaluacion?.score_confianza ?? null;
+        return { ...item, perfil_riesgo: inferredPerfil, score_confianza: score, metricas_evaluacion: perfilMetrics?.metricas_evaluacion };
       });
 
       setPerfiles(enriched);
