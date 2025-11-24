@@ -66,6 +66,9 @@ const RiskAnalystDashboard = () => {
   const [savingInfocredMeta, setSavingInfocredMeta] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
 
+  const SCROLL_STORAGE_KEY = 'risk-analyst-scroll';
+  const SELECTED_PROFILE_KEY = 'risk-analyst-selected-id';
+
   /* --- SECCIÓN DE FETCHING DE DATOS REALES (DESACTIVADA TEMPORALMENTE) ---
   const fetchPerfiles = useCallback(async () => {
     setLoading(true);
@@ -119,6 +122,9 @@ const RiskAnalystDashboard = () => {
 
   const handleSelectPerfil = (perfil) => {
     setPerfilSeleccionado(perfil);
+    if (perfil?.id) {
+      sessionStorage.setItem(SELECTED_PROFILE_KEY, String(perfil.id));
+    }
     // Limpiar los campos de cálculo al cambiar de perfil
     setSaldoDeudorVerificado('');
     setMontoTotalPrestamo(null);
@@ -376,9 +382,10 @@ const RiskAnalystDashboard = () => {
 
       setPerfiles(enriched);
       if (enriched.length > 0) {
-        // Mantener el perfil seleccionado si aún existe en la nueva lista, o seleccionar el primero.
+        const storedId = sessionStorage.getItem(SELECTED_PROFILE_KEY);
+        const storedMatch = storedId ? enriched.find(p => String(p.id) === storedId) : null;
         setPerfilSeleccionado(prev => 
-          enriched.find(p => prev?.id === p.id) || enriched[0]
+          storedMatch || enriched.find(p => prev?.id === p.id) || enriched[0]
         );
       } else {
         setPerfilSeleccionado(null);
@@ -394,6 +401,29 @@ const RiskAnalystDashboard = () => {
   useEffect(() => {
     fetchPerfiles();
   }, [fetchPerfiles]);
+
+  // Restaurar scroll al volver al panel y persistir selección
+  useEffect(() => {
+    const saved = sessionStorage.getItem(SCROLL_STORAGE_KEY);
+    if (saved) {
+      const y = Number(saved);
+      if (!Number.isNaN(y)) {
+        setTimeout(() => window.scrollTo(0, y), 50);
+      }
+    }
+    const saveScroll = () => {
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY || 0));
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') saveScroll();
+    };
+    window.addEventListener('beforeunload', saveScroll);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', saveScroll);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
 
   const handleInfocredUpload = async (file) => {
     if (!file || !perfilSeleccionado?.id) return;
