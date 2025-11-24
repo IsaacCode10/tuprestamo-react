@@ -48,6 +48,51 @@ const diagLog = (...args) => {
   if (isDev) console.log(...args);
 };
 
+const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading }) => {
+  const monto = Number(oportunidad?.monto || solicitud?.monto_solicitado || 0);
+  const plazo = Number(oportunidad?.plazo_meses || solicitud?.plazo_meses || 24);
+  const tasa = Number(oportunidad?.tasa_interes_prestatario || solicitud?.tasa_interes_tc || 0);
+  const originacion = Number(oportunidad?.comision_originacion_porcentaje || 0);
+  const tasaInversionista = Number(oportunidad?.tasa_rendimiento_inversionista || 0);
+  return (
+    <div className="borrower-dashboard" style={{ maxWidth: 900, margin: '0 auto' }}>
+      <div className="dashboard-header">
+        <h2>Propuesta de Crédito</h2>
+        <p className="muted">Desembolso directo a tu banco acreedor.</p>
+      </div>
+      <div className="cards-grid">
+        <div className="card">
+          <h4>Monto aprobado (bruto)</h4>
+          <div>Bs {monto.toLocaleString('es-BO')}</div>
+          <div className="muted">Incluye comisión de originación</div>
+        </div>
+        <div className="card">
+          <h4>Plazo</h4>
+          <div>{plazo} meses</div>
+        </div>
+        <div className="card">
+          <h4>Tasa prestatario</h4>
+          <div>{tasa}% anual</div>
+          <div className="muted">Originación: {originacion}%</div>
+        </div>
+        <div className="card">
+          <h4>Tasa inversionista</h4>
+          <div>{tasaInversionista}% anual</div>
+          <div className="muted">Visible al fondeo</div>
+        </div>
+      </div>
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3>¿Aceptas esta propuesta?</h3>
+        <p style={{ marginBottom: 12 }}>Al aceptar, publicaremos tu oportunidad para que los inversionistas la fondeen. El pago se hará directamente a tu banco acreedor.</p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button className="btn btn--primary" onClick={onAccept} disabled={loading}>Aceptar propuesta</button>
+          <button className="btn" onClick={onReject} disabled={loading}>No aceptar</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENTES DE VISTA APROBADA (SIN CAMBIOS) ---
 const LoanSummaryCard = ({ title, value, subtext, isPrimary = false }) => ( <div/> );
 const AmortizationTable = ({ schedule }) => ( <div/> );
@@ -858,6 +903,7 @@ const BorrowerDashboard = () => {
   const [error, setError] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [analyzedDocTypes, setAnalyzedDocTypes] = useState([]);
+  const [proposalLoading, setProposalLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = useCallback(async (opts = {}) => {
@@ -1013,11 +1059,43 @@ const BorrowerDashboard = () => {
     navigate('/auth');
   };
 
+  const handleProposalDecision = async (decision) => {
+    if (!solicitud?.id) return;
+    setProposalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('aceptar-propuesta-prestatario', {
+        body: { solicitud_id: solicitud.id, decision },
+      });
+      if (error) throw error;
+      trackEvent('Borrower_Proposal_Decision', { decision, solicitud_id: solicitud.id });
+      await fetchData({ silent: true });
+      alert(data?.message || 'Acción registrada.');
+    } catch (err) {
+      console.error('Error registrando decisión de propuesta:', err);
+      alert('No pudimos registrar tu decisión. Intenta nuevamente.');
+    } finally {
+      setProposalLoading(false);
+    }
+  };
+
   if (loading) return <div className="borrower-dashboard">Cargando tu panel...</div>;
   if (error) return <div className="borrower-dashboard" style={{ color: 'red' }}>Error: {error}</div>;
   
   if (solicitud?.estado === 'desembolsado' || solicitud?.estado === 'aprobado') {
     return <ApprovedLoanDashboard loan={mockLoanData} user={user} onLogout={handleLogout} />;
+  }
+
+  if (solicitud?.estado === 'aprobado_para_oferta') {
+    const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
+    return (
+      <BorrowerOfferView
+        solicitud={solicitud}
+        oportunidad={opp}
+        onAccept={() => handleProposalDecision('Aceptar')}
+        onReject={() => handleProposalDecision('Rechazar')}
+        loading={proposalLoading}
+      />
+    );
   }
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;

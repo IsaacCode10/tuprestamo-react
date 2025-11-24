@@ -132,17 +132,22 @@ const RiskAnalystDashboard = () => {
     setIsSavingDecision(true);
     try {
       const payload = {
-        profile_id: decisionData.profileId,
+        solicitud_id: perfilSeleccionado?.id,
         decision: decisionData.decision,
         motivo: decisionData.motivo,
         notas: decisionData.notas,
-        analyst_id: null,
-        created_at: new Date().toISOString(),
+        monto_bruto_aprobado: montoTotalPrestamo ? Number(montoTotalPrestamo) : null,
+        perfil_riesgo: perfilRiesgo,
+        plazo_meses: perfilSeleccionado?.plazo_meses || 24,
       };
-      const { error } = await supabase.from('risk_decisions').insert(payload);
+      const { data, error } = await supabase.functions.invoke('registrar-decision-final', {
+        body: payload,
+      });
       if (error) throw error;
       setError(null);
-      alert('Decisión registrada en el expediente.');
+      alert(data?.message || 'Decisión registrada.');
+      // refrescar perfiles para reflejar estado
+      fetchPerfiles();
     } catch (err) {
       console.error('Error guardando decisión:', err);
       alert('Hubo un inconveniente al guardar la decisión. Intenta nuevamente.');
