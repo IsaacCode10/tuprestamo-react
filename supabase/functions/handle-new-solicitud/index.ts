@@ -326,7 +326,7 @@ serve(async (req) => {
         comision_originacion_porcentaje: riskProfile.comision_originacion_porcentaje,
         cargo_servicio_seguro_porcentaje: 0.15,
         comision_servicio_inversionista_porcentaje: 1.0,
-        estado: 'disponible',
+        estado: 'borrador',
         ...loanCosts,
       }]).select().single();
 

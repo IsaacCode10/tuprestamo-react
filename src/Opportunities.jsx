@@ -72,9 +72,11 @@ const Opportunities = () => {
         .from('oportunidades')
         .select(`
           id, monto, plazo_meses, perfil_riesgo,
-          tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje
+          tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje,
+          solicitudes!inner(estado)
         `)
         .eq('estado', 'disponible')
+        .eq('solicitudes.estado', 'prestatario_acepto')
         .order('tasa_rendimiento_inversionista', { ascending: false });
 
       if (error) {
@@ -102,8 +104,9 @@ const Opportunities = () => {
     try {
       let query = supabase
         .from('oportunidades')
-        .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje')
-        .eq('estado', 'disponible');
+        .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje, solicitudes!inner(estado)')
+        .eq('estado', 'disponible')
+        .eq('solicitudes.estado', 'prestatario_acepto');
 
       if (filters.minRate) query = query.gte('tasa_rendimiento_inversionista', Number(filters.minRate));
       if (filters.maxMonths) query = query.lte('plazo_meses', Number(filters.maxMonths));
@@ -127,8 +130,9 @@ const Opportunities = () => {
     setLoading(true);
     const { data } = await supabase
       .from('oportunidades')
-      .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje')
+      .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje, solicitudes!inner(estado)')
       .eq('estado', 'disponible')
+      .eq('solicitudes.estado', 'prestatario_acepto')
       .order('tasa_rendimiento_inversionista', { ascending: false });
     setOpportunities(data || []);
     setLoading(false);

@@ -147,7 +147,7 @@ serve(async (req) => {
     const montoBase = montoCalculadoDesdeNeto || monto_bruto_aprobado || solicitud.monto_solicitado || 0;
     const monto = Number.isFinite(montoBase) ? montoBase : 0;
     const updateOportunidad: Record<string, unknown> = {
-      estado: "borrador", // aún no visible a inversionistas
+      estado: "borrador", // se quedará borrador hasta aceptación del prestatario
       monto,
       plazo_meses: nuevoPlazo,
     };
