@@ -57,8 +57,9 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   const breakdown = calcTPBreakdown(neto, tasa, plazo, originacionPct);
   const montoBruto = breakdown.bruto || Number(oportunidad?.monto || 0);
   const originacionMonto = breakdown.originacion || 0;
-  const cuotaTotal = breakdown.monthlyPaymentTotal || 0;
-  const adminSeguro = breakdown.avgServiceFee || 0;
+  const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
+  const cuotaTotal = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
+  const adminSeguro = adminSeguroFlat;
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
 
@@ -66,12 +67,10 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
     const items = [];
     const monthlyRate = tasa / 100 / 12;
     const payment = breakdown.monthlyPaymentAmort || 0;
-    const serviceFeeRate = 0.0015;
-    const minServiceFee = 10;
+    const serviceFee = adminSeguroFlat;
     let balance = montoBruto;
     for (let i = 1; i <= plazo; i++) {
       const interest = balance * monthlyRate;
-      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
       const principal = payment - interest;
       balance = Math.max(0, balance - principal);
       items.push({
