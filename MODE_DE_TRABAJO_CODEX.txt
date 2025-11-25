@@ -12,12 +12,17 @@ MODELO DE TRABAJO DE CODEX
 - Usar MCP para leer tablas/scripts si necesito contextos adicionales.
 
 3. Operaciones de Supabase
-- Ejecutar SQL directo desde Supabase CLI o copiar resultados para guiar el an·lisis.
+- Ejecutar SQL directo desde Supabase CLI o copiar resultados para guiar el an√°lisis.
 - Crear vistas/scripts por solicitud (te los paso listos para pegar).
 - Consultar tablas relevantes como documentos/analisis_documentos cuando investigamos flujos.
 
 4. Monitoreo y QA
-- Observo logs de deploy, checo que el nuevo .env estÈ consistente.
-- Probar en producciÛn y confirmar los cambios en UI con tu aprobaciÛn.
+- Observo logs de deploy, checo que el nuevo .env est√© consistente.
+- Probar en producci√≥n y confirmar los cambios en UI con tu aprobaci√≥n.
 - Actualizar STATUS.md o docs cuando cerramos funcionalidades.
 
+5. Formato de entrega de comandos
+- Cuando pidas comandos (git, build, deploy), los entrego juntos en un bloque de codigo para copiarlos de una sola vez, sin bullets intermedios.
+
+6. Deploy de Supabase
+- Si hay cambios en funciones/SQL de backend, te paso tambien los comandos de deploy de Supabase en un solo bloque listo para pegar.
