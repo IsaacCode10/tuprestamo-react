@@ -62,6 +62,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   const adminSeguro = adminSeguroFlat;
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
+  const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const schedule = (() => {
     const items = [];
@@ -94,24 +95,24 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
     {
       id: 'plazo',
       title: 'Plazo',
-      value: `${plazo} meses`,
+      value: `${Number(plazo || 0).toLocaleString('es-BO')} meses`,
     },
     {
       id: 'cuota',
       title: 'Cuota Mensual Tu Préstamo',
-      value: `Bs ${cuotaTotal.toFixed(2)}`,
+      value: formatMoney(cuotaTotal),
       tooltip: 'Cuota mensual final estimada: capital + interés + costo de admin/seguro.',
     },
     {
       id: 'monto',
       title: 'Monto Aprobado (bruto)',
-      value: `Bs ${montoBruto.toLocaleString('es-BO')}`,
+      value: formatMoney(montoBruto),
       tooltip: 'Bruto = saldo deudor verificado + comisión de originación (mínimo Bs 450 si corresponde).',
     },
     {
       id: 'admin',
       title: 'Costo Admin + Seguro mensual',
-      value: `Bs ${adminSeguro.toFixed(2)}`,
+      value: formatMoney(adminSeguro),
       tooltip: 'Costo de administración de plataforma + seguro de desgravamen. Mínimo 10 Bs/mes, baja con el saldo.',
     },
   ];
@@ -155,11 +156,11 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
           <tbody>
             <tr>
               <td>Costo del Crédito (Intereses + Comisiones)</td>
-              <td className="tp-col">Bs {costoCredito.toFixed(2)}</td>
+              <td className="tp-col">{formatMoney(costoCredito)}</td>
             </tr>
             <tr className="total-row">
               <td><strong>Total a Pagar (Capital + Costos)</strong></td>
-              <td className="tp-col"><strong>Bs {totalPagar.toFixed(2)}</strong></td>
+              <td className="tp-col"><strong>{formatMoney(totalPagar)}</strong></td>
             </tr>
           </tbody>
         </table>
@@ -209,11 +210,11 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
                   {schedule.map(row => (
                     <tr key={row.n}>
                       <td>{row.n}</td>
-                      <td>Bs {row.cuota.toFixed(2)}</td>
-                      <td>Bs {row.capital.toFixed(2)}</td>
-                      <td>Bs {row.interes.toFixed(2)}</td>
-                      <td>Bs {row.adminSeguro.toFixed(2)}</td>
-                      <td>Bs {row.saldo.toFixed(2)}</td>
+                      <td>{formatMoney(row.cuota)}</td>
+                      <td>{formatMoney(row.capital)}</td>
+                      <td>{formatMoney(row.interes)}</td>
+                      <td>{formatMoney(row.adminSeguro)}</td>
+                      <td>{formatMoney(row.saldo)}</td>
                     </tr>
                   ))}
                 </tbody>
