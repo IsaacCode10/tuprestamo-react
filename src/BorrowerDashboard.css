@@ -112,11 +112,8 @@
   color: #0d1a26;
 }
 
-.transparency-grid {
-  display: grid;
+.transparency-summary {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  margin-top: 8px;
 }
 
 .pill {

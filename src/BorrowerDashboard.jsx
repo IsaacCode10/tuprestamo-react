@@ -137,22 +137,22 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       </div>
 
       <div className="card transparency-card">
-        <h3>Transparencia Total</h3>
-        <div className="transparency-grid">
-          <div>
-            <div className="muted">Costo del crédito (interés + comisiones)</div>
-            <div className="offer-card-value">Bs {costoCredito.toFixed(2)}</div>
+        <h2>Transparencia Total</h2>
+        <div className="loan-summary-grid transparency-summary">
+          <div className="loan-summary-card">
+            <div className="summary-card-title">Costo del crédito (interés + comisiones)</div>
+            <div className="summary-card-value">Bs {costoCredito.toFixed(2)}</div>
           </div>
-          <div>
-            <div className="muted">Total a pagar (capital + costos)</div>
-            <div className="offer-card-value">Bs {totalPagar.toFixed(2)}</div>
+          <div className="loan-summary-card">
+            <div className="summary-card-title">Total a pagar (capital + costos)</div>
+            <div className="summary-card-value">Bs {totalPagar.toFixed(2)}</div>
           </div>
         </div>
       </div>
 
       <div className="card offer-cta">
         <div>
-          <h3>Tabla de amortización</h3>
+          <h2>Tabla de amortización</h2>
           <p className="muted">Consulta el detalle de tus cuotas con capital, interés y admin/seguro.</p>
         </div>
         <div className="offer-cta-actions">
@@ -162,7 +162,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
 
       <div className="card offer-cta">
         <div>
-          <h3>¿Aceptas esta propuesta?</h3>
+          <h2>¿Aceptas esta propuesta?</h2>
           <p className="muted">Al aceptar, publicaremos tu oportunidad para que los inversionistas la fondeen. El pago se hará directamente a tu banco acreedor.</p>
         </div>
         <div className="offer-cta-actions">
