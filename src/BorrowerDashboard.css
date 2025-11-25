@@ -1027,16 +1027,16 @@
 
 .loan-summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 0.75rem;
 }
 
 .loan-summary-card {
   background: #ffffff;
   border: 1px solid #e6f4f3;
   border-radius: 12px;
-  padding: 16px 12px;
+  padding: 12px 10px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(14, 107, 98, 0.06);
   display: flex;
@@ -1051,14 +1051,14 @@
 }
 
 .summary-card-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #385b64;
   margin: 0;
 }
 
 .summary-card-value {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #0e6b62;
   margin: 0;
