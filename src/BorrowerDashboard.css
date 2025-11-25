@@ -172,6 +172,11 @@
   flex-wrap: wrap;
 }
 
+.amort-card {
+  background: linear-gradient(135deg, rgba(38, 194, 178, 0.06), #fff);
+  border: 1px solid #e5eff2;
+}
+
 .offer-cta h3 {
   margin: 0 0 6px 0;
   color: #0d1a26;

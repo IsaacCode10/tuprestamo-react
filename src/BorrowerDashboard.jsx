@@ -172,13 +172,13 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
         </table>
       </div>
 
-      <div className="card offer-cta">
+      <div className="card offer-cta amort-card">
         <div>
           <h2>Tabla de amortización</h2>
           <p className="muted">Consulta el detalle de tus cuotas con capital, interés y admin/seguro.</p>
         </div>
         <div className="offer-cta-actions">
-          <button className="btn" onClick={() => setShowAmortModal(true)}>Ver tabla</button>
+          <button className="btn btn--primary" onClick={() => setShowAmortModal(true)}>Ver tabla</button>
         </div>
       </div>
 
