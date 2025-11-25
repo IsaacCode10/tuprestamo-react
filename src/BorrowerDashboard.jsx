@@ -261,7 +261,8 @@ const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
     <div className="borrower-dashboard borrower-offer-view">
       <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Propuesta publicada' }]} />
       <div className="dashboard-header">
-        <p>Tu oportunidad está publicada y fondeándose. Te avisaremos cuando esté lista para pagar tu tarjeta.</p>
+        <h2>Tu oportunidad está publicada</h2>
+        <p>Estamos fondeando tu crédito con nuestra comunidad de inversionistas. Cuando esté financiado, pagaremos tu tarjeta directamente en tu banco y te avisaremos por correo.</p>
       </div>
       <ProgressStepper currentStep="aprobado" allDocumentsUploaded />
 
