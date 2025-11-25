@@ -233,6 +233,81 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   );
 };
 
+const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
+  const neto = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
+  const plazo = Number(oportunidad?.plazo_meses || solicitud?.plazo_meses || 24);
+  const tasa = Number(oportunidad?.tasa_interes_prestatario || solicitud?.tasa_interes_tc || 0);
+  const originacionPct = Number(oportunidad?.comision_originacion_porcentaje || 0);
+  const breakdown = calcTPBreakdown(neto, tasa, plazo, originacionPct);
+  const montoBruto = breakdown.bruto || Number(oportunidad?.monto || 0);
+  const originacionMonto = breakdown.originacion || 0;
+  const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
+  const cuotaTotal = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
+  const adminSeguro = adminSeguroFlat;
+  const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
+  const totalPagar = neto + costoCredito;
+  const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const summaryItems = [
+    { id: 'tasa', title: 'Tasa Propuesta (anual)', value: `${tasa ? tasa.toFixed(1) : '0'}%` },
+    { id: 'plazo', title: 'Plazo', value: `${Number(plazo || 0).toLocaleString('es-BO')} meses` },
+    { id: 'cuota', title: 'Cuota Mensual Tu Préstamo', value: formatMoney(cuotaTotal), tooltip: 'Cuota mensual final: capital + interés + admin/seguro prorrateado.' },
+    { id: 'monto', title: 'Monto Aprobado (bruto)', value: formatMoney(montoBruto), tooltip: 'Bruto = saldo deudor verificado + comisión de originación.' },
+    { id: 'neto', title: 'Monto a pagar a tu banco (neto)', value: formatMoney(neto), tooltip: 'Saldo de tu tarjeta que liquidaremos directo en tu banco acreedor.' },
+    { id: 'admin', title: 'Costo Admin + Seguro mensual', value: formatMoney(adminSeguro), tooltip: 'Cargo prorrateado en la cuota. Calculado con 0,15% sobre saldo (mínimo 10 Bs) y distribuido en el plazo.' },
+  ];
+
+  return (
+    <div className="borrower-dashboard borrower-offer-view">
+      <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Propuesta publicada' }]} />
+      <div className="dashboard-header">
+        <p>Tu oportunidad está publicada y fondeándose. Te avisaremos cuando esté lista para pagar tu tarjeta.</p>
+      </div>
+      <ProgressStepper currentStep="aprobado" allDocumentsUploaded />
+
+      <div className="card">
+        <h2>Resumen de tu Solicitud</h2>
+        <div className="loan-summary-grid">
+          {summaryItems.map(item => (
+            <div key={item.id} className="loan-summary-card">
+              <div className="summary-card-title">{item.title}</div>
+              <div className="summary-card-value">{item.value}</div>
+              {item.tooltip && (
+                <div className="summary-card-help">
+                  <HelpTooltip text={item.tooltip} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card transparency-card">
+        <h2>Transparencia Total</h2>
+        <p className="muted">Desglose final del crédito a {plazo} meses</p>
+        <table className="transparency-table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th className="tp-col">Con Tu Préstamo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Costo del Crédito (Intereses + Comisiones)</td>
+              <td className="tp-col">{formatMoney(costoCredito)}</td>
+            </tr>
+            <tr className="total-row">
+              <td><strong>Total a Pagar (Capital + Costos)</strong></td>
+              <td className="tp-col"><strong>{formatMoney(totalPagar)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENTES DE VISTA APROBADA (SIN CAMBIOS) ---
 const LoanSummaryCard = ({ title, value, subtext, isPrimary = false }) => ( <div/> );
 const AmortizationTable = ({ schedule }) => ( <div/> );
@@ -1236,6 +1311,10 @@ const BorrowerDashboard = () => {
         loading={proposalLoading}
       />
     );
+  }
+  if (solicitud?.estado === 'prestatario_acepto') {
+    const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
+    return <BorrowerPublishedView solicitud={solicitud} oportunidad={opp} />;
   }
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;
