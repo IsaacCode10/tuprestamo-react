@@ -66,17 +66,20 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
     const items = [];
     const monthlyRate = tasa / 100 / 12;
     const payment = breakdown.monthlyPaymentAmort || 0;
+    const serviceFeeRate = 0.0015;
+    const minServiceFee = 10;
     let balance = montoBruto;
     for (let i = 1; i <= plazo; i++) {
       const interest = balance * monthlyRate;
+      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
       const principal = payment - interest;
       balance = Math.max(0, balance - principal);
       items.push({
         n: i,
-        cuota: payment + adminSeguro,
+        cuota: payment + serviceFee,
         capital: principal,
         interes: interest,
-        adminSeguro,
+        adminSeguro: serviceFee,
         saldo: balance,
       });
     }
