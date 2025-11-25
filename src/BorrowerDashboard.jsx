@@ -62,14 +62,6 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
 
-  const steps = [
-    { id: 'recibida', label: 'Solicitud recibida', status: 'completed' },
-    { id: 'verificacion', label: 'Verificación inicial', status: 'completed' },
-    { id: 'documentos', label: 'Sube tus documentos', status: 'completed' },
-    { id: 'revision', label: 'Revisión final', status: 'completed' },
-    { id: 'aprobado', label: 'Préstamo aprobado', status: 'active' },
-  ];
-
   const schedule = (() => {
     const items = [];
     const monthlyRate = tasa / 100 / 12;
@@ -91,67 +83,60 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
     return items;
   })();
 
+  const summaryItems = [
+    {
+      id: 'tasa',
+      title: 'Tasa Propuesta (anual)',
+      value: tasa ? `${tasa.toFixed(1)}%` : 'N/D',
+      extra: 'Excelente perfil',
+    },
+    {
+      id: 'plazo',
+      title: 'Plazo',
+      value: `${plazo} meses`,
+    },
+    {
+      id: 'cuota',
+      title: 'Cuota Mensual Tu Préstamo',
+      value: `Bs ${cuotaTotal.toFixed(2)}`,
+      extra: 'Incluye capital, interés y admin/seguro',
+    },
+    {
+      id: 'monto',
+      title: 'Monto Aprobado (bruto)',
+      value: `Bs ${montoBruto.toLocaleString('es-BO')}`,
+      extra: `Originación aplicada: Bs ${originacionMonto.toFixed(2)}`,
+    },
+    {
+      id: 'admin',
+      title: 'Costo Admin + Seguro mensual',
+      value: `Bs ${adminSeguro.toFixed(2)}`,
+      extra: 'Mínimo 10 Bs/m; decrece con el saldo',
+    },
+  ];
+
   return (
     <div className="borrower-dashboard borrower-offer-view">
-      <div className="offer-breadcrumb">
-        <span>Inicio</span>
-        <span className="crumb-sep">›</span>
-        <span>Mi solicitud</span>
-        <span className="crumb-sep">›</span>
-        <strong>Propuesta de crédito</strong>
+      <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Propuesta de Crédito' }]} />
+      <div className="dashboard-header">
+        <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
       </div>
+      <ProgressStepper currentStep="aprobado" allDocumentsUploaded />
 
-      <div className="offer-hero">
-        <div>
-          <p className="eyebrow">Propuesta</p>
-          <h2>Propuesta de Crédito</h2>
-          <p className="muted">Desembolso directo a tu banco acreedor.</p>
-        </div>
-        <div className="pill pill-outline">Etapa final</div>
-      </div>
-
-      <div className="offer-progress">
-        <ul className="progress-stepper">
-          {steps.map((step, idx) => (
-            <li key={step.id} className={`step ${step.status}`}>
-              <div className="step-icon">{idx + 1}</div>
-              <span className="step-label">{step.label}</span>
-            </li>
+      <div className="card">
+        <h2>Resumen de tu Solicitud</h2>
+        <div className="loan-summary-grid">
+          {summaryItems.map(item => (
+            <div key={item.id} className="loan-summary-card">
+              <div className="summary-card-title">{item.title}</div>
+              <div className="summary-card-value">{item.value}</div>
+              {item.extra && <div className="summary-card-subtext">{item.extra}</div>}
+            </div>
           ))}
-        </ul>
-      </div>
-
-      <div className="offer-summary">
-        <h3>Resumen de tu Solicitud</h3>
-        <div className="offer-summary-grid">
-          <div className="offer-summary-card">
-            <div className="summary-card-title">Tasa propuesta (anual)</div>
-            <div className="summary-card-value">{tasa ? `${tasa.toFixed(1)}%` : 'N/D'}</div>
-            <div className="summary-card-subtext">Excelente perfil</div>
-          </div>
-          <div className="offer-summary-card">
-            <div className="summary-card-title">Plazo</div>
-            <div className="summary-card-value">{plazo} meses</div>
-          </div>
-          <div className="offer-summary-card">
-            <div className="summary-card-title">Cuota mensual Tu Préstamo</div>
-            <div className="summary-card-value">Bs {cuotaTotal.toFixed(2)}</div>
-            <div className="summary-card-subtext">Incluye capital, interés y admin/seguro</div>
-          </div>
-          <div className="offer-summary-card">
-            <div className="summary-card-title">Monto aprobado (bruto)</div>
-            <div className="summary-card-value">Bs {montoBruto.toLocaleString('es-BO')}</div>
-            <div className="summary-card-subtext">Originación aplicada: Bs {originacionMonto.toFixed(2)}</div>
-          </div>
-          <div className="offer-summary-card">
-            <div className="summary-card-title">Costo admin + seguro mensual</div>
-            <div className="summary-card-value">Bs {adminSeguro.toFixed(2)}</div>
-            <div className="summary-card-subtext">Mínimo 10 Bs/m; decrece con el saldo</div>
-          </div>
         </div>
       </div>
 
-      <div className="offer-card transparency-card">
+      <div className="card transparency-card">
         <h3>Transparencia Total</h3>
         <div className="transparency-grid">
           <div>
@@ -165,7 +150,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
         </div>
       </div>
 
-      <div className="offer-card offer-cta">
+      <div className="card offer-cta">
         <div>
           <h3>Tabla de amortización</h3>
           <p className="muted">Consulta el detalle de tus cuotas con capital, interés y admin/seguro.</p>
@@ -175,7 +160,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
         </div>
       </div>
 
-      <div className="offer-card offer-cta">
+      <div className="card offer-cta">
         <div>
           <h3>¿Aceptas esta propuesta?</h3>
           <p className="muted">Al aceptar, publicaremos tu oportunidad para que los inversionistas la fondeen. El pago se hará directamente a tu banco acreedor.</p>

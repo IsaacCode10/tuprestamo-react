@@ -10,9 +10,8 @@
 
 .borrower-dashboard.borrower-offer-view {
   max-width: 960px;
-  background: linear-gradient(135deg, #f7fbfb 0%, #f2f6f7 100%);
-  border-radius: 16px;
-  padding: 2.5rem;
+  background: #f9f9f9;
+  padding: 2rem;
 }
 
 .offer-breadcrumb {
@@ -106,57 +105,6 @@
 
 .offer-card .muted {
   margin-top: 4px;
-}
-
-.offer-progress {
-  margin: 1rem 0 1.5rem 0;
-  background: #fff;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 68, 90, 0.08);
-  border: 1px solid #e5eff2;
-}
-
-.offer-summary {
-  margin: 1rem 0 1.5rem 0;
-}
-
-.offer-summary h3 {
-  margin: 0 0 10px 0;
-  color: #00445A;
-}
-
-.offer-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.offer-summary-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 6px 18px rgba(0, 68, 90, 0.08);
-  border: 1px solid #e5eff2;
-}
-
-.offer-summary-card .summary-card-title {
-  font-size: 0.95rem;
-  color: #4f6b73;
-  margin-bottom: 4px;
-  font-weight: 700;
-}
-
-.offer-summary-card .summary-card-value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #0d1a26;
-}
-
-.offer-summary-card .summary-card-subtext {
-  color: #55747b;
-  margin-top: 4px;
-  font-size: 0.9rem;
 }
 
 .transparency-card h3 {
