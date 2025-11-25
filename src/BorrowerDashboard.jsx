@@ -53,38 +53,60 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   const plazo = Number(oportunidad?.plazo_meses || solicitud?.plazo_meses || 24);
   const tasa = Number(oportunidad?.tasa_interes_prestatario || solicitud?.tasa_interes_tc || 0);
   const originacion = Number(oportunidad?.comision_originacion_porcentaje || 0);
-  const tasaInversionista = Number(oportunidad?.tasa_rendimiento_inversionista || 0);
+  const saldoVerificado = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
+  const ahorro = monto && saldoVerificado ? Math.max(0, monto - saldoVerificado) : null;
   return (
-    <div className="borrower-dashboard" style={{ maxWidth: 900, margin: '0 auto' }}>
-      <div className="dashboard-header">
-        <h2>Propuesta de Crédito</h2>
-        <p className="muted">Desembolso directo a tu banco acreedor.</p>
+    <div className="borrower-dashboard borrower-offer-view">
+      <div className="offer-breadcrumb">
+        <span>Inicio</span>
+        <span className="crumb-sep">›</span>
+        <span>Mi solicitud</span>
+        <span className="crumb-sep">›</span>
+        <strong>Propuesta de crédito</strong>
       </div>
-      <div className="cards-grid">
-        <div className="card">
-          <h4>Monto aprobado (bruto)</h4>
-          <div>Bs {monto.toLocaleString('es-BO')}</div>
+
+      <div className="offer-hero">
+        <div>
+          <p className="eyebrow">Propuesta</p>
+          <h2>Propuesta de Crédito</h2>
+          <p className="muted">Desembolso directo a tu banco acreedor.</p>
+        </div>
+        <div className="pill pill-outline">Etapa final</div>
+      </div>
+
+      <div className="offer-grid">
+        <div className="offer-card highlight">
+          <div className="offer-card-label">Monto aprobado (bruto)</div>
+          <div className="offer-card-value">Bs {monto.toLocaleString('es-BO')}</div>
           <div className="muted">Incluye comisión de originación</div>
+          {ahorro ? <div className="offer-chip">Comisión aprox: Bs {ahorro.toFixed(2)}</div> : null}
         </div>
-        <div className="card">
-          <h4>Plazo</h4>
-          <div>{plazo} meses</div>
+
+        <div className="offer-card">
+          <div className="offer-card-label">Plazo</div>
+          <div className="offer-card-value">{plazo} meses</div>
+          <div className="muted">Fijo durante toda la operación</div>
         </div>
-        <div className="card">
-          <h4>Tasa prestatario</h4>
-          <div>{tasa}% anual</div>
+
+        <div className="offer-card">
+          <div className="offer-card-label">Tasa prestatario</div>
+          <div className="offer-card-value">{tasa}% anual</div>
           <div className="muted">Originación: {originacion}%</div>
         </div>
-        <div className="card">
-          <h4>Tasa inversionista</h4>
-          <div>{tasaInversionista}% anual</div>
-          <div className="muted">Visible al fondeo</div>
+
+        <div className="offer-card">
+          <div className="offer-card-label">Desembolso</div>
+          <div className="offer-card-value">Bs {saldoVerificado.toLocaleString('es-BO')}</div>
+          <div className="muted">Pago directo a tu banco acreedor</div>
         </div>
       </div>
-      <div className="card" style={{ marginTop: 16 }}>
-        <h3>¿Aceptas esta propuesta?</h3>
-        <p style={{ marginBottom: 12 }}>Al aceptar, publicaremos tu oportunidad para que los inversionistas la fondeen. El pago se hará directamente a tu banco acreedor.</p>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+
+      <div className="offer-card offer-cta">
+        <div>
+          <h3>¿Aceptas esta propuesta?</h3>
+          <p className="muted">Al aceptar, publicaremos tu oportunidad para que los inversionistas la fondeen. El pago se hará directamente a tu banco acreedor.</p>
+        </div>
+        <div className="offer-cta-actions">
           <button className="btn btn--primary" onClick={onAccept} disabled={loading}>Aceptar propuesta</button>
           <button className="btn" onClick={onReject} disabled={loading}>No aceptar</button>
         </div>
