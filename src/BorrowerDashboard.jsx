@@ -129,7 +129,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       <div className="dashboard-header">
         <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
       </div>
-      <ProgressStepper currentStep="aprobado" allDocumentsUploaded />
+      <ProgressStepper currentStep="prestatario_acepto" allDocumentsUploaded />
 
       <div className="card">
         <h2>Resumen de tu Solicitud</h2>
@@ -569,9 +569,9 @@ const parseNumberValue = (value) => {
 
 // --- PROGRESS STEPPER CON LÓGICA DE UI MEJORADA ---
 const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
-  const steps = ['Solicitud Recibida', 'Verificación Inicial', 'Sube tus Documentos', 'Revisión Final', 'Préstamo Aprobado'];
+  const steps = ['Solicitud Recibida', 'Verificación Inicial', 'Sube tus Documentos', 'Revisión Final', 'Préstamo Aprobado', 'Propuesta Publicada'];
   const getStepStatus = (stepIndex) => {
-    const stepMap = { 'pre-aprobado': 2, 'documentos-en-revision': 3, 'aprobado': 4 };
+    const stepMap = { 'pre-aprobado': 2, 'documentos-en-revision': 3, 'aprobado': 4, 'prestatario_acepto': 5 };
     let currentStepIndex = stepMap[currentStep] ?? 0;
 
     if (currentStepIndex === 0 && currentStep !== 'pendiente') {
