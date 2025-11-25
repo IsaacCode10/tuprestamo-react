@@ -62,11 +62,6 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   const adminSeguro = adminSeguroFlat;
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
-  const tasaBanco = Number(solicitud?.tasa_interes_tc || 0);
-  const costoBanco = tasaBanco && plazo
-    ? ((neto * (tasaBanco / 100)) / 12) * plazo
-    : 0;
-  const totalBanco = neto + costoBanco;
 
   const schedule = (() => {
     const items = [];
@@ -154,19 +149,16 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
           <thead>
             <tr>
               <th>Concepto</th>
-              <th>Con tu Banco</th>
               <th className="tp-col">Con Tu Préstamo</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Costo del Crédito (Intereses + Comisiones)</td>
-              <td>Bs {costoBanco.toFixed(2)}</td>
               <td className="tp-col">Bs {costoCredito.toFixed(2)}</td>
             </tr>
             <tr className="total-row">
               <td><strong>Total a Pagar (Capital + Costos)</strong></td>
-              <td><strong>Bs {totalBanco.toFixed(2)}</strong></td>
               <td className="tp-col"><strong>Bs {totalPagar.toFixed(2)}</strong></td>
             </tr>
           </tbody>
