@@ -108,6 +108,69 @@
   margin-top: 4px;
 }
 
+.offer-progress {
+  margin: 1rem 0 1.5rem 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 68, 90, 0.08);
+  border: 1px solid #e5eff2;
+}
+
+.offer-summary {
+  margin: 1rem 0 1.5rem 0;
+}
+
+.offer-summary h3 {
+  margin: 0 0 10px 0;
+  color: #00445A;
+}
+
+.offer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.offer-summary-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 18px rgba(0, 68, 90, 0.08);
+  border: 1px solid #e5eff2;
+}
+
+.offer-summary-card .summary-card-title {
+  font-size: 0.95rem;
+  color: #4f6b73;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.offer-summary-card .summary-card-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0d1a26;
+}
+
+.offer-summary-card .summary-card-subtext {
+  color: #55747b;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.transparency-card h3 {
+  margin: 0 0 8px 0;
+  color: #0d1a26;
+}
+
+.transparency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -142,6 +205,57 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.offer-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.offer-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  width: min(960px, 95vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+  border: 1px solid #e5eff2;
+}
+
+.offer-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.offer-modal-body {
+  overflow: auto;
+}
+
+.amort-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.amort-table th,
+.amort-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e8eef0;
+  text-align: right;
+}
+
+.amort-table th:first-child,
+.amort-table td:first-child {
+  text-align: left;
 }
 
 .dashboard-header {

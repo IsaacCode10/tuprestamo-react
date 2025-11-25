@@ -49,12 +49,48 @@ const diagLog = (...args) => {
 };
 
 const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading }) => {
-  const monto = Number(oportunidad?.monto || solicitud?.monto_solicitado || 0);
+  const [showAmortModal, setShowAmortModal] = useState(false);
+  const neto = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
   const plazo = Number(oportunidad?.plazo_meses || solicitud?.plazo_meses || 24);
   const tasa = Number(oportunidad?.tasa_interes_prestatario || solicitud?.tasa_interes_tc || 0);
-  const originacion = Number(oportunidad?.comision_originacion_porcentaje || 0);
-  const saldoVerificado = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
-  const ahorro = monto && saldoVerificado ? Math.max(0, monto - saldoVerificado) : null;
+  const originacionPct = Number(oportunidad?.comision_originacion_porcentaje || 0);
+  const breakdown = calcTPBreakdown(neto, tasa, plazo, originacionPct);
+  const montoBruto = breakdown.bruto || Number(oportunidad?.monto || 0);
+  const originacionMonto = breakdown.originacion || 0;
+  const cuotaTotal = breakdown.monthlyPaymentTotal || 0;
+  const adminSeguro = breakdown.avgServiceFee || 0;
+  const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
+  const totalPagar = neto + costoCredito;
+
+  const steps = [
+    { id: 'recibida', label: 'Solicitud recibida', status: 'completed' },
+    { id: 'verificacion', label: 'Verificación inicial', status: 'completed' },
+    { id: 'documentos', label: 'Sube tus documentos', status: 'completed' },
+    { id: 'revision', label: 'Revisión final', status: 'completed' },
+    { id: 'aprobado', label: 'Préstamo aprobado', status: 'active' },
+  ];
+
+  const schedule = (() => {
+    const items = [];
+    const monthlyRate = tasa / 100 / 12;
+    const payment = breakdown.monthlyPaymentAmort || 0;
+    let balance = montoBruto;
+    for (let i = 1; i <= plazo; i++) {
+      const interest = balance * monthlyRate;
+      const principal = payment - interest;
+      balance = Math.max(0, balance - principal);
+      items.push({
+        n: i,
+        cuota: payment + adminSeguro,
+        capital: principal,
+        interes: interest,
+        adminSeguro,
+        saldo: balance,
+      });
+    }
+    return items;
+  })();
+
   return (
     <div className="borrower-dashboard borrower-offer-view">
       <div className="offer-breadcrumb">
@@ -74,30 +110,68 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
         <div className="pill pill-outline">Etapa final</div>
       </div>
 
-      <div className="offer-grid">
-        <div className="offer-card highlight">
-          <div className="offer-card-label">Monto aprobado (bruto)</div>
-          <div className="offer-card-value">Bs {monto.toLocaleString('es-BO')}</div>
-          <div className="muted">Incluye comisión de originación</div>
-          {ahorro ? <div className="offer-chip">Comisión aprox: Bs {ahorro.toFixed(2)}</div> : null}
-        </div>
+      <div className="offer-progress">
+        <ul className="progress-stepper">
+          {steps.map((step, idx) => (
+            <li key={step.id} className={`step ${step.status}`}>
+              <div className="step-icon">{idx + 1}</div>
+              <span className="step-label">{step.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        <div className="offer-card">
-          <div className="offer-card-label">Plazo</div>
-          <div className="offer-card-value">{plazo} meses</div>
-          <div className="muted">Fijo durante toda la operación</div>
+      <div className="offer-summary">
+        <h3>Resumen de tu Solicitud</h3>
+        <div className="offer-summary-grid">
+          <div className="offer-summary-card">
+            <div className="summary-card-title">Tasa propuesta (anual)</div>
+            <div className="summary-card-value">{tasa ? `${tasa.toFixed(1)}%` : 'N/D'}</div>
+            <div className="summary-card-subtext">Excelente perfil</div>
+          </div>
+          <div className="offer-summary-card">
+            <div className="summary-card-title">Plazo</div>
+            <div className="summary-card-value">{plazo} meses</div>
+          </div>
+          <div className="offer-summary-card">
+            <div className="summary-card-title">Cuota mensual Tu Préstamo</div>
+            <div className="summary-card-value">Bs {cuotaTotal.toFixed(2)}</div>
+            <div className="summary-card-subtext">Incluye capital, interés y admin/seguro</div>
+          </div>
+          <div className="offer-summary-card">
+            <div className="summary-card-title">Monto aprobado (bruto)</div>
+            <div className="summary-card-value">Bs {montoBruto.toLocaleString('es-BO')}</div>
+            <div className="summary-card-subtext">Originación aplicada: Bs {originacionMonto.toFixed(2)}</div>
+          </div>
+          <div className="offer-summary-card">
+            <div className="summary-card-title">Costo admin + seguro mensual</div>
+            <div className="summary-card-value">Bs {adminSeguro.toFixed(2)}</div>
+            <div className="summary-card-subtext">Mínimo 10 Bs/m; decrece con el saldo</div>
+          </div>
         </div>
+      </div>
 
-        <div className="offer-card">
-          <div className="offer-card-label">Tasa prestatario</div>
-          <div className="offer-card-value">{tasa}% anual</div>
-          <div className="muted">Originación: {originacion}%</div>
+      <div className="offer-card transparency-card">
+        <h3>Transparencia Total</h3>
+        <div className="transparency-grid">
+          <div>
+            <div className="muted">Costo del crédito (interés + comisiones)</div>
+            <div className="offer-card-value">Bs {costoCredito.toFixed(2)}</div>
+          </div>
+          <div>
+            <div className="muted">Total a pagar (capital + costos)</div>
+            <div className="offer-card-value">Bs {totalPagar.toFixed(2)}</div>
+          </div>
         </div>
+      </div>
 
-        <div className="offer-card">
-          <div className="offer-card-label">Desembolso</div>
-          <div className="offer-card-value">Bs {saldoVerificado.toLocaleString('es-BO')}</div>
-          <div className="muted">Pago directo a tu banco acreedor</div>
+      <div className="offer-card offer-cta">
+        <div>
+          <h3>Tabla de amortización</h3>
+          <p className="muted">Consulta el detalle de tus cuotas con capital, interés y admin/seguro.</p>
+        </div>
+        <div className="offer-cta-actions">
+          <button className="btn" onClick={() => setShowAmortModal(true)}>Ver tabla</button>
         </div>
       </div>
 
@@ -111,6 +185,43 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
           <button className="btn" onClick={onReject} disabled={loading}>No aceptar</button>
         </div>
       </div>
+
+      {showAmortModal && (
+        <div className="offer-modal-backdrop" onClick={() => setShowAmortModal(false)}>
+          <div className="offer-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="offer-modal-header">
+              <h4>Tabla de amortización</h4>
+              <button className="btn btn--ghost" onClick={() => setShowAmortModal(false)}>Cerrar</button>
+            </div>
+            <div className="offer-modal-body">
+              <table className="amort-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Cuota</th>
+                    <th>Capital</th>
+                    <th>Interés</th>
+                    <th>Admin/Seguro</th>
+                    <th>Saldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule.map(row => (
+                    <tr key={row.n}>
+                      <td>{row.n}</td>
+                      <td>Bs {row.cuota.toFixed(2)}</td>
+                      <td>Bs {row.capital.toFixed(2)}</td>
+                      <td>Bs {row.interes.toFixed(2)}</td>
+                      <td>Bs {row.adminSeguro.toFixed(2)}</td>
+                      <td>Bs {row.saldo.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
