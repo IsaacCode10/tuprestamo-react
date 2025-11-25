@@ -112,8 +112,39 @@
   color: #0d1a26;
 }
 
-.transparency-summary {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+.transparency-card > p.muted {
+  margin: 4px 0 12px 0;
+}
+
+.transparency-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  color: #173c45;
+}
+
+.transparency-table th,
+.transparency-table td {
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  text-align: left;
+}
+
+.transparency-table th {
+  background: #f5f7f8;
+  font-weight: 700;
+  color: #0d1a26;
+}
+
+.transparency-table td.tp-col,
+.transparency-table th.tp-col {
+  background: rgba(38, 194, 178, 0.08);
+  color: #0f7669;
+}
+
+.transparency-table .total-row td {
+  background: rgba(38, 194, 178, 0.08);
+  font-weight: 700;
 }
 
 .pill {
