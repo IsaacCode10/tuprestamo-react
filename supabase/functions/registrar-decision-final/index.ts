@@ -15,6 +15,7 @@ type DecisionPayload = {
   motivo?: string;
   notas?: string;
   monto_bruto_aprobado?: number;
+  saldo_deudor_verificado?: number;
   perfil_riesgo?: string;
   plazo_meses?: number;
 };
@@ -33,6 +34,7 @@ serve(async (req) => {
       motivo = null,
       notas = null,
       monto_bruto_aprobado = null,
+      saldo_deudor_verificado = null,
       perfil_riesgo,
       plazo_meses,
     } = body || {};
@@ -120,6 +122,12 @@ serve(async (req) => {
 
     const perfilKey = (perfil_riesgo || "").toUpperCase();
     const pricing = PRICING[perfilKey as keyof typeof PRICING];
+    const comisionPct = pricing?.comision_originacion ?? 0;
+    const netoVerificado = Number(saldo_deudor_verificado) > 0 ? Number(saldo_deudor_verificado) : null;
+    const montoCalculadoDesdeNeto =
+      netoVerificado && comisionPct >= 0 && comisionPct < 100
+        ? netoVerificado / (1 - comisionPct / 100)
+        : null;
 
     if (decision === "Rechazado") {
       await Promise.all([
@@ -136,7 +144,8 @@ serve(async (req) => {
 
     // Aprobado
     const nuevoPlazo = plazo_meses || solicitud.plazo_meses || 24;
-    const monto = monto_bruto_aprobado || solicitud.monto_solicitado || 0;
+    const montoBase = montoCalculadoDesdeNeto || monto_bruto_aprobado || solicitud.monto_solicitado || 0;
+    const monto = Number.isFinite(montoBase) ? montoBase : 0;
     const updateOportunidad: Record<string, unknown> = {
       estado: "borrador", // aún no visible a inversionistas
       monto,
@@ -154,7 +163,15 @@ serve(async (req) => {
     }
 
     await Promise.all([
-      supabase.from("solicitudes").update({ estado: "aprobado_para_oferta", monto_solicitado: monto, plazo_meses: nuevoPlazo }).eq("id", solicitud_id),
+      supabase
+        .from("solicitudes")
+        .update({
+          estado: "aprobado_para_oferta",
+          monto_solicitado: netoVerificado ?? monto,
+          saldo_deuda_tc: netoVerificado ?? solicitud.monto_solicitado,
+          plazo_meses: nuevoPlazo,
+        })
+        .eq("id", solicitud_id),
       supabase.from("perfiles_de_riesgo").update({ estado: "revisado_aprobado" }).eq("solicitud_id", solicitud_id),
       supabase.from("oportunidades").update(updateOportunidad).eq("solicitud_id", solicitud_id),
     ]);

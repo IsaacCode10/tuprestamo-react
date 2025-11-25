@@ -106,7 +106,8 @@ const RiskAnalystDashboard = () => {
       sessionStorage.setItem(SELECTED_PROFILE_KEY, String(perfil.id));
     }
     // Limpiar los campos de cálculo al cambiar de perfil
-    setSaldoDeudorVerificado('');
+    const netFromPerfil = perfil?.saldo_deuda_tc || perfil?.monto_solicitado || '';
+    setSaldoDeudorVerificado(netFromPerfil ? String(netFromPerfil) : '');
     setMontoTotalPrestamo(null);
     setInfocredError(null);
     setInfocredScore('');
@@ -123,12 +124,21 @@ const RiskAnalystDashboard = () => {
   const handleSubmitDecision = async (decisionData) => {
     setIsSavingDecision(true);
     try {
+      const netVerified = Number(saldoDeudorVerificado);
+      if (decisionData.decision === 'Aprobado') {
+        if (!netVerified || netVerified <= 0) {
+          alert('Ingresa el saldo deudor verificado antes de aprobar.');
+          setIsSavingDecision(false);
+          return;
+        }
+      }
       const payload = {
         solicitud_id: perfilSeleccionado?.id,
         decision: decisionData.decision,
         motivo: decisionData.motivo,
         notas: decisionData.notas,
         monto_bruto_aprobado: montoTotalPrestamo ? Number(montoTotalPrestamo) : null,
+        saldo_deudor_verificado: netVerified || null,
         perfil_riesgo: perfilRiesgo,
         plazo_meses: perfilSeleccionado?.plazo_meses || 24,
       };
