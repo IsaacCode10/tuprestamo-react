@@ -110,6 +110,12 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       tooltip: 'Bruto = saldo deudor verificado + comisión de originación (mínimo Bs 450 si corresponde).',
     },
     {
+      id: 'neto',
+      title: 'Monto a pagar a tu banco (neto)',
+      value: formatMoney(neto),
+      tooltip: 'Este es el saldo de tu tarjeta que liquidaremos directo en tu banco acreedor.',
+    },
+    {
       id: 'admin',
       title: 'Costo Admin + Seguro mensual',
       value: formatMoney(adminSeguro),
