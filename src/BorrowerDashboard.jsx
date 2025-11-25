@@ -103,18 +103,21 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       title: 'Cuota Mensual Tu Préstamo',
       value: `Bs ${cuotaTotal.toFixed(2)}`,
       extra: 'Incluye capital, interés y admin/seguro',
+      tooltip: 'Cuota mensual final estimada: capital + interés + costo de admin/seguro.',
     },
     {
       id: 'monto',
       title: 'Monto Aprobado (bruto)',
       value: `Bs ${montoBruto.toLocaleString('es-BO')}`,
       extra: `Originación aplicada: Bs ${originacionMonto.toFixed(2)}`,
+      tooltip: 'Bruto = saldo deudor verificado + comisión de originación (mínimo Bs 450 si corresponde).',
     },
     {
       id: 'admin',
       title: 'Costo Admin + Seguro mensual',
       value: `Bs ${adminSeguro.toFixed(2)}`,
       extra: 'Mínimo 10 Bs/m; decrece con el saldo',
+      tooltip: 'Costo de administración de plataforma + seguro de desgravamen. Mínimo 10 Bs/mes, baja con el saldo.',
     },
   ];
 
@@ -134,6 +137,11 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
               <div className="summary-card-title">{item.title}</div>
               <div className="summary-card-value">{item.value}</div>
               {item.extra && <div className="summary-card-subtext">{item.extra}</div>}
+              {item.tooltip && (
+                <div className="summary-card-help">
+                  <HelpTooltip text={item.tooltip} />
+                </div>
+              )}
             </div>
           ))}
         </div>
