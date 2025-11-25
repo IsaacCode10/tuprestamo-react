@@ -10,6 +10,7 @@ const OpportunityCard = ({ opp }) => {
   const comisionServicio = opp.comision_servicio_inversionista_porcentaje;
   const navigate = useNavigate();
   const rendimientoNeto = (rendimientoBruto * (1 - (comisionServicio / 100)));
+  const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const riskLabel = ({
     A: 'Conservador (A)',
@@ -24,7 +25,7 @@ const OpportunityCard = ({ opp }) => {
   return (
     <div className="opportunity-card">
       <div className="card-header">
-        <h3>Bs. {opp.monto.toLocaleString('es-BO')}</h3>
+        <h3>{formatMoney(opp.monto)}</h3>
         <span className={`risk-badge risk-${opp.perfil_riesgo}`}>{riskLabel}</span>
       </div>
       <p className="opportunity-id">ID: {opp.id}</p>
@@ -59,6 +60,7 @@ const Opportunities = () => {
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ minRate: '', maxMonths: '' });
+  const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -152,7 +154,7 @@ const Opportunities = () => {
         { label: 'Inicio', to: '/investor-dashboard' },
         { label: 'Oportunidades' },
       ]} />
-      <h2>Oportunidades de Inversión</h2>
+      <h2 className="opp-title">Oportunidades de Inversión</h2>
       <div className="filters-bar">
         <button className="btn btn--secondary" onClick={() => setShowFilters(v => !v)}>
           {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}

@@ -1,9 +1,53 @@
-﻿.risk-badge {  font-size: 1rem;  font-weight: 700;  padding: 0.35rem 0.75rem;  border-radius: 999px;  line-height: 1;  color: #fff;}/* Alineado al Brand Kit: A=accent, B=primary, C=accent-2 */.risk-A {  background-color: var(--accent-color); /* #26C2B2 */  color: #fff;}.risk-B {  background-color: var(--primary-color); /* #00445A */  color: #fff;}.risk-C {  background-color: var(--accent-color-2); /* #FFA800 */  color: var(--dark-bg); /* texto oscuro para mejor contraste */}
-/* Segmented control (moderno, sin gris plano) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --primary-color: #00445A;
+  --accent-color: #26C2B2;
+  --accent-color-2: #FFA800;
+  --text-dark: #0d1a26;
+  --text-muted: #55747b;
+  --card-border: #e5eff2;
+  --bg-soft: #f8f8f8;
+  --shadow-soft: 0 6px 18px rgba(0, 68, 90, 0.08);
+}
+
+.opportunities-container {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+h2.opp-title {
+  font-family: 'Montserrat', 'Segoe UI', sans-serif;
+  color: var(--primary-color);
+  margin: 0 0 12px 0;
+}
+
+.filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.filters-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filters-label {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* Segmented control */
 .segmented {
   display: inline-flex;
   align-items: center;
-  background: var(--light-alt-bg);
+  background: #f1f6f7;
   border: 1px solid rgba(0,0,0,0.06);
   border-radius: 999px;
   padding: 4px;
@@ -14,7 +58,7 @@
   border: 0;
   background: transparent;
   color: var(--primary-color);
-  font-family: var(--font-family);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-weight: 600;
   font-size: 0.95rem;
   padding: 8px 14px;
@@ -28,4 +72,104 @@
   background: var(--accent-color);
   color: #fff;
   box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+
+.opportunities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.opportunity-card {
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 16px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.opportunity-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.opportunity-card h3 {
+  margin: 0;
+  color: #0e6b62;
+  font-size: 1.4rem;
+  font-family: 'Montserrat', 'Segoe UI', sans-serif;
+}
+
+.opportunity-id {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.risk-badge {
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  line-height: 1;
+  color: #fff;
+}
+.risk-A { background-color: var(--accent-color); color: #fff; }
+.risk-B { background-color: var(--primary-color); color: #fff; }
+.risk-C { background-color: var(--accent-color-2); color: #0d1a26; }
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.metric-item .label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.metric-item .value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.returns-breakdown {
+  margin-top: 6px;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.card-footer {
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.invest-button {
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-weight: 700;
+}
+
+.invest-button:hover {
+  background-color: #1fa59d;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
