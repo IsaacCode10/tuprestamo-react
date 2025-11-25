@@ -58,6 +58,7 @@ const RiskAnalystDashboard = () => {
   const [docLinks, setDocLinks] = useState({});
   const [docLinksLoading, setDocLinksLoading] = useState({});
   const infocredInputRef = React.useRef(null);
+  const [expandedHistoryId, setExpandedHistoryId] = useState(null);
   const COMISION_ORIGINACION = { A: 0.03, B: 0.04, C: 0.05 };
   const TASA_INTERES_PRESTATARIO = { A: 15, B: 17, C: 20 };
   const DEFAULT_COMISION = 0.05; // fallback conservador
@@ -673,24 +674,64 @@ const RiskAnalystDashboard = () => {
                   <p>No hay decisiones registradas aún.</p>
                 </div>
               ) : (
-                historial.map(item => (
-                  <div key={item.id} className="perfil-item">
-                    <div className="perfil-item-header">
-                      <div>
-                        <strong>{item.solicitud?.nombre_completo || 'Sin Nombre'}</strong>
-                        <div className="muted">Solicitud ID: {item.solicitud?.id || 'N/D'}</div>
-                      </div>
-                      <span>CI: {item.solicitud?.cedula_identidad || 'N/A'}</span>
+                historial.map(item => {
+                  const isOpen = expandedHistoryId === item.id;
+                  const formattedDate = new Date(item.created_at).toLocaleString('es-BO');
+                  return (
+                    <div key={item.id} className={`perfil-item history-card ${isOpen ? 'open' : ''}`}>
+                      <button
+                        type="button"
+                        className="history-header"
+                        onClick={() => setExpandedHistoryId(isOpen ? null : item.id)}
+                      >
+                        <div className="history-title">
+                          <strong>{item.solicitud?.nombre_completo || 'Sin Nombre'}</strong>
+                          <div className="muted">Solicitud ID: {item.solicitud?.id || 'N/D'}</div>
+                        </div>
+                        <div className="history-meta">
+                          <span className={`pill ${item.decision?.toLowerCase() === 'aprobado' ? 'pill-aprobado' : 'pill-rechazado'}`}>
+                            {item.decision || 'N/D'}
+                          </span>
+                          <span className="pill pill-outline">Perfil {item.oportunidad?.perfil_riesgo || 'N/D'}</span>
+                          <span className="muted">{formattedDate}</span>
+                          <span className={`history-caret ${isOpen ? 'up' : 'down'}`} />
+                        </div>
+                      </button>
+                      {isOpen && (
+                        <div className="history-body">
+                          <div className="history-grid">
+                            <div>
+                              <div className="label">Razones</div>
+                              <ul className="history-reasons">
+                                {(item.razones || []).length > 0 ? (
+                                  item.razones.map(reason => <li key={reason}>{reason}</li>)
+                                ) : (
+                                  <li className="muted">Sin motivos registrados</li>
+                                )}
+                              </ul>
+                            </div>
+                            <div className="history-summary">
+                              <div className="label">Condiciones finales</div>
+                              <p>
+                                Monto: {item.oportunidad?.monto || 'N/D'} · Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m · Estado opp: {item.oportunidad?.estado || 'N/D'}
+                              </p>
+                              <p>
+                                Score INFOCRED: {item.perfil?.metricas_evaluacion?.infocred_score || 'N/D'} ({item.perfil?.metricas_evaluacion?.infocred_risk_level || 'N/D'})
+                              </p>
+                              {item.solicitud?.tasa_interes && (
+                                <p>Tasa: {item.solicitud.tasa_interes}%</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="history-footer">
+                            <span className="muted">CI: {item.solicitud?.cedula_identidad || 'N/A'}</span>
+                            <span className="pill pill-outline">Expediente #{item.perfil?.id || 'N/D'}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="perfil-item-body">
-                      <span>Decisión: {item.decision}</span>
-                      <span>Perfil: {item.oportunidad?.perfil_riesgo || 'N/D'}</span>
-                    </div>
-                    <div className="muted" style={{fontSize:'0.9em'}}>
-                      {new Date(item.created_at).toLocaleString('es-BO')} · Motivos: {(item.razones || []).join(', ') || '—'}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )
             ) : (
               filteredPerfiles.map(perfil => (

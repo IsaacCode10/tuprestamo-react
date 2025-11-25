@@ -64,8 +64,8 @@
 .perfil-item {
   padding: 15px 20px;
   border-bottom: 1px solid #e8e8e8;
-  cursor: pointer;
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .perfil-item:hover {
@@ -169,6 +169,127 @@
   margin: 0;
   color: #385b64;
   font-size: 0.85rem;
+}
+
+/* Historial - accordion limpio */
+.history-card {
+  border: 1px solid #dbe8ee;
+  border-radius: 12px;
+  margin: 12px 12px 0 12px;
+  padding: 0;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 68, 90, 0.06);
+  cursor: default;
+  border-bottom: none;
+}
+
+.history-card:first-of-type {
+  margin-top: 0;
+}
+
+.history-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.history-card:hover .history-header {
+  background: #f6fafb;
+}
+
+.history-title strong {
+  font-size: 1rem;
+  color: #0d1a26;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.history-body {
+  border-top: 1px solid #e8f1f4;
+  background: #f7fbfc;
+  padding: 14px 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.history-reasons {
+  margin: 8px 0 0 0;
+  padding-left: 18px;
+  color: #385b64;
+}
+
+.history-reasons li {
+  margin-bottom: 4px;
+}
+
+.history-summary p {
+  margin: 4px 0;
+  color: #385b64;
+}
+
+.label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #4f6b73;
+  font-weight: 700;
+}
+
+.history-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.history-caret {
+  width: 10px;
+  height: 10px;
+  border-left: 2px solid #55747b;
+  border-bottom: 2px solid #55747b;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.history-caret.up {
+  transform: rotate(135deg);
+}
+
+.pill-outline {
+  background: #fff;
+  border: 1px solid #dbe8ee;
+  color: #00445A;
+}
+
+.pill-aprobado {
+  background: rgba(38, 194, 178, 0.12);
+  border-color: rgba(38, 194, 178, 0.35);
+  color: #0f7669;
+}
+
+.pill-rechazado {
+  background: #fff4f2;
+  border-color: #f7c6c0;
+  color: #c24130;
 }
 
 /* --- Panel Principal del Scorecard --- */
@@ -518,6 +639,11 @@ section h2 {
 
 .centered-message.error {
   color: #cf1322;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* --- Verificación Manual y Cálculo --- */
