@@ -20,6 +20,8 @@ const AdminOperations = () => {
   const [payouts, setPayouts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [receiptFiles, setReceiptFiles] = useState({});
+  const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
 
   const loadIntents = async () => {
     setLoading(true);
@@ -60,6 +62,14 @@ const AdminOperations = () => {
     setLoading(false);
   };
 
+  const uploadReceipt = async (file, prefix = 'payouts') => {
+    if (!file) return null;
+    const path = `${prefix}/${Date.now()}_${file.name}`;
+    const { error, data } = await supabase.storage.from('comprobantes-pagos').upload(path, file);
+    if (error) throw error;
+    return data?.path || path;
+  };
+
   const updateIntentStatus = async (id, status) => {
     const { error } = await supabase.from('payment_intents').update({ status, paid_at: status === 'paid' ? new Date().toISOString() : null }).eq('id', id);
     if (error) {
@@ -72,17 +82,41 @@ const AdminOperations = () => {
   const updateBorrowerIntentStatus = async (id, status) => {
     const payload = { status };
     if (status === 'paid') payload.paid_at = new Date().toISOString();
-    const { error } = await supabase.from('borrower_payment_intents').update(payload).eq('id', id);
-    if (error) setError(error.message); else loadBorrowerIntents();
+    try {
+      if (status === 'paid') {
+        const file = borrowerReceiptFiles[id];
+        if (file) {
+          const path = await uploadReceipt(file, 'borrower');
+          payload.receipt_url = path;
+        }
+      }
+      const { error } = await supabase.from('borrower_payment_intents').update(payload).eq('id', id);
+      if (error) throw error;
+      loadBorrowerIntents();
+      setBorrowerReceiptFiles((prev) => ({ ...prev, [id]: null }));
+    } catch (e) {
+      setError((e).message || 'Error al actualizar cuota');
+    }
   };
 
   const updatePayoutStatus = async (id, status) => {
     const payload = { status };
     if (status === 'paid') payload.paid_at = new Date().toISOString();
-    const receipt = status === 'paid' ? window.prompt('Ingresa URL de comprobante (opcional):', '') : null;
-    if (receipt) payload.receipt_url = receipt;
-    const { error } = await supabase.from('payouts_inversionistas').update(payload).eq('id', id);
-    if (error) setError(error.message); else loadPayouts();
+    try {
+      if (status === 'paid') {
+        const file = receiptFiles[id];
+        if (file) {
+          const path = await uploadReceipt(file, 'payouts');
+          payload.receipt_url = path;
+        }
+      }
+      const { error } = await supabase.from('payouts_inversionistas').update(payload).eq('id', id);
+      if (error) throw error;
+      loadPayouts();
+      setReceiptFiles((prev) => ({ ...prev, [id]: null }));
+    } catch (e) {
+      setError((e).message || 'Error al actualizar payout');
+    }
   };
 
   useEffect(() => {
@@ -153,6 +187,7 @@ const AdminOperations = () => {
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Vence</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
               </tr>
             </thead>
@@ -165,6 +200,14 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.due_date ? new Date(i.due_date).toLocaleDateString('es-BO') : '—'}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    {i.receipt_url ? (
+                      <a href={i.receipt_url} target="_blank" rel="noreferrer">Ver comprobante</a>
+                    ) : '—'}
+                    <div style={{ marginTop: 6 }}>
+                      <input type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
+                    </div>
+                  </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="btn btn--primary" onClick={() => updateBorrowerIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
                     <button className="btn" onClick={() => updateBorrowerIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
@@ -173,7 +216,7 @@ const AdminOperations = () => {
               ))}
               {borrowerIntents.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay cuotas registradas</td>
+                  <td colSpan={8} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay cuotas registradas</td>
                 </tr>
               )}
             </tbody>
@@ -191,6 +234,7 @@ const AdminOperations = () => {
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
               </tr>
             </thead>
@@ -202,6 +246,14 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.investor_id}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(p.amount)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    {p.receipt_url ? (
+                      <a href={p.receipt_url} target="_blank" rel="noreferrer">Ver comprobante</a>
+                    ) : '—'}
+                    <div style={{ marginTop: 6 }}>
+                      <input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
+                    </div>
+                  </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')} disabled={p.status === 'paid'}>Marcar pagado</button>
                   </td>
@@ -209,7 +261,7 @@ const AdminOperations = () => {
               ))}
               {payouts.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts</td>
+                  <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts</td>
                 </tr>
               )}
             </tbody>
