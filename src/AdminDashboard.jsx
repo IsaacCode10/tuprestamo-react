@@ -320,7 +320,12 @@ const AdminDashboard = () => {
     <div className="loan-requests-list admin-dashboard">
       <AdminNav />
       <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/admin-dashboard' }, { label: 'Centro de Operaciones' }]} />
-      <h2>Centro de Operaciones</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+        <h2 style={{ margin: 0 }}>Centro de Operaciones</h2>
+        <button className="btn btn--primary" onClick={() => window.location.href = '/admin/operaciones'}>
+          Ir a Operaciones (Pagos)
+        </button>
+      </div>
       {alertMessage && (
         <div className="alert-banner" role="status">
           {alertMessage}
