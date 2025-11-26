@@ -37,13 +37,25 @@ serve(async (req) => {
 
     const { data: oportunidad, error: oppError } = await supabase
       .from("oportunidades")
-      .select("monto, plazo_meses, tasa_interes_prestatario, comision_originacion_porcentaje")
+      .select("id, monto, plazo_meses, tasa_interes_prestatario, comision_originacion_porcentaje")
       .eq("solicitud_id", solicitud_id)
       .maybeSingle();
     if (oppError) throw oppError;
 
-    const bruto = oportunidad?.monto ?? 0;
     const neto = solicitud.monto_solicitado ?? 0;
+    const comisionPct = Number(oportunidad?.comision_originacion_porcentaje) || 0;
+    let brutoCalc = oportunidad?.monto ?? neto;
+
+    // Regla de negocio: mínimo 450 hasta netos 10k; sobre 10k usar gross-up con comisión por perfil.
+    if (neto > 0) {
+      if (neto <= 10000) {
+        brutoCalc = neto + 450;
+      } else if (comisionPct > 0 && comisionPct < 100) {
+        brutoCalc = neto / (1 - comisionPct / 100);
+      }
+    }
+
+    const bruto = brutoCalc;
     const plazo = oportunidad?.plazo_meses ?? solicitud.plazo_meses ?? 24;
     const tasa = oportunidad?.tasa_interes_prestatario ?? solicitud.tasa_interes_tc ?? 0;
     const originacionPct = oportunidad?.comision_originacion_porcentaje ?? 0;
@@ -62,7 +74,7 @@ serve(async (req) => {
     // Aceptar
     await Promise.all([
       supabase.from("solicitudes").update({ estado: "prestatario_acepto" }).eq("id", solicitud_id),
-      supabase.from("oportunidades").update({ estado: "disponible" }).eq("solicitud_id", solicitud_id),
+      supabase.from("oportunidades").update({ estado: "disponible", monto: brutoCalc }).eq("solicitud_id", solicitud_id),
     ]);
 
     if (resend && solicitud.email) {
