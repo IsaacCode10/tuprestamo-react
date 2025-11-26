@@ -39,16 +39,16 @@ const OpportunityCard = ({ opp }) => {
       <div className="card-body">
         <div className="metrics-grid">
           <div className="metric-item">
-            <div className="metric-label">Rend. neto est.</div>
-            <div className="metric-value">{rendimientoNeto.toFixed(2)}%</div>
+            <div className="metric-label">Rend. anual</div>
+            <div className="metric-value">{rendimientoBruto.toFixed(2)}%</div>
           </div>
           <div className="metric-item">
             <div className="metric-label">Plazo</div>
             <div className="metric-value">{opp.plazo_meses} meses</div>
           </div>
           <div className="metric-item">
-            <div className="metric-label">Falta por fondear</div>
-            <div className="metric-value">{formatMoney(remainingAmount)}</div>
+            <div className="metric-label">Rend. neto est.</div>
+            <div className="metric-value">{rendimientoNeto.toFixed(2)}%</div>
           </div>
         </div>
       </div>
