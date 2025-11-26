@@ -22,6 +22,7 @@ const OpportunityDetail = () => {
   const [countdown, setCountdown] = useState(''); // Temporizador de expiración
   const [payMode, setPayMode] = useState('qr'); // 'qr' | 'transfer'
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [receiptFile, setReceiptFile] = useState(null);
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -135,7 +136,7 @@ const OpportunityDetail = () => {
     }
 
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 72); // expiración corta (72h)
+    expiresAt.setHours(expiresAt.getHours() + 48); // expiración: 48h
 
     try {
       const { data: intent, error: intentError } = await supabase.rpc('create_investment_intent', {
@@ -169,6 +170,36 @@ const OpportunityDetail = () => {
       setFormMessage({ type: 'error', text: 'Hubo un error al registrar tu inversión. Por favor, intenta de nuevo.' });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRenew = () => {
+    if (!intentInfo?.expected_amount) return;
+    setInvestmentAmount(String(intentInfo.expected_amount));
+    setIntentInfo(null);
+    setFormMessage({ type: '', text: '' });
+    setCountdown('');
+    setPayMode('qr');
+    handleInvestment({ preventDefault() {} });
+  };
+
+  const uploadReceipt = async () => {
+    try {
+      if (!receiptFile || !intentInfo?.id) return;
+      const path = `payment-intents/${intentInfo.id}_${receiptFile.name}`;
+      const { error: upErr, data } = await supabase.storage.from('comprobantes-pagos').upload(path, receiptFile, { upsert: true });
+      if (upErr) throw upErr;
+      const receiptUrl = data?.path || path;
+      const { error: updErr } = await supabase
+        .from('payment_intents')
+        .update({ receipt_url: receiptUrl })
+        .eq('id', intentInfo.id);
+      if (updErr) throw updErr;
+      setFormMessage({ type: 'success', text: 'Comprobante subido. Procesaremos tu pago al conciliar.' });
+      setReceiptFile(null);
+    } catch (e) {
+      console.error('Upload receipt error', e);
+      setFormMessage({ type: 'error', text: 'No pudimos subir el comprobante. Intenta nuevamente.' });
     }
   };
 
@@ -257,15 +288,15 @@ const OpportunityDetail = () => {
                       {fundedPercentage.toFixed(2)}%
                   </div>
               </div>
-              <p>
-                  <strong>Recaudado:</strong> Bs. {totalFunded.toLocaleString('es-BO')} de Bs. {totalGoal.toLocaleString('es-BO')}
-              </p>
-              {remainingAmount > 0 ? (
-                 <p><strong>Saldo por invertir:</strong> Bs. {remainingAmount.toLocaleString('es-BO')}</p>
-              ) : (
-                 <p><strong>¡Esta oportunidad ha sido completamente financiada!</strong></p>
-              )}
-          </div>
+          <p>
+              <strong>Recaudado:</strong> Bs. {totalFunded.toLocaleString('es-BO')} de Bs. {totalGoal.toLocaleString('es-BO')}
+          </p>
+          {remainingAmount > 0 ? (
+             <p><strong>Saldo por invertir:</strong> Bs. {remainingAmount.toLocaleString('es-BO')}</p>
+          ) : (
+             <p><strong>¡Esta oportunidad ha sido completamente financiada!</strong></p>
+          )}
+      </div>
 
           <div style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
             <div>
@@ -335,23 +366,32 @@ const OpportunityDetail = () => {
                   {isSubmitting ? 'Registrando...' : 'Invertir ahora'}
                 </button>
               </form>
-              {formMessage.text && (
-                <p style={{ color: formMessage.type === 'error' ? 'red' : '#0f5a62', marginTop: '15px', fontWeight: 600 }}>
-                  {formMessage.text}
-                </p>
-              )}
-              {intentInfo && (
-                <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
-                  <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada</p>
-                  <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
-                    <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
-                    <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
-                    <li>No subas comprobante; te avisaremos cuando conciliemos tu pago.</li>
+          {formMessage.text && (
+            <p style={{ color: formMessage.type === 'error' ? 'red' : '#0f5a62', marginTop: '15px', fontWeight: 600 }}>
+              {formMessage.text}
+            </p>
+          )}
+          {intentInfo && (
+            <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
+                  <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada (válida 48h)</p>
+              <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
+                <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
+                <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
                     <li>Usamos tu pago para cancelar tu tarjeta en tu banco.</li>
                   </ul>
-                  {countdown === 'Expirada' && (
-                    <p style={{ margin: 0, color: '#b71c1c', fontWeight: 700 }}>La reserva expiró. Genera una nueva para invertir.</p>
-                  )}
+                  <div style={{ marginTop: 8, color: '#0f5a62', fontWeight: 600 }}>
+                    Sube tu comprobante para acelerar la conciliación:
+                    <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} />
+                      <button className="btn btn--secondary" type="button" onClick={uploadReceipt} disabled={!receiptFile}>Subir comprobante</button>
+                    </div>
+                  </div>
+              {countdown === 'Expirada' && (
+                <div style={{ margin: 0, color: '#b71c1c', fontWeight: 700, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span>La reserva expiró.</span>
+                  <button className="btn btn--primary" type="button" onClick={handleRenew}>Renovar reserva</button>
+                </div>
+              )}
                 </div>
               )}
               {intentInfo && (
