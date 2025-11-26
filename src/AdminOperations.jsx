@@ -87,20 +87,26 @@ const AdminOperations = () => {
   };
 
   const updateBorrowerIntentStatus = async (id, status) => {
-    const payload = { status };
-    if (status === 'paid') payload.paid_at = new Date().toISOString();
     try {
       if (status === 'paid') {
         const file = borrowerReceiptFiles[id];
+        let receiptPath = null;
         if (file) {
-          const path = await uploadReceipt(file, 'borrower');
-          payload.receipt_url = path;
+          receiptPath = await uploadReceipt(file, 'borrower');
         }
+        const { error: rpcErr } = await supabase.rpc('process_borrower_payment', {
+          p_intent_id: id,
+          p_receipt_url: receiptPath,
+        });
+        if (rpcErr) throw rpcErr;
+        setBorrowerReceiptFiles((prev) => ({ ...prev, [id]: null }));
+      } else {
+        const payload = { status };
+        if (status === 'expired') payload.paid_at = null;
+        const { error } = await supabase.from('borrower_payment_intents').update(payload).eq('id', id);
+        if (error) throw error;
       }
-      const { error } = await supabase.from('borrower_payment_intents').update(payload).eq('id', id);
-      if (error) throw error;
       loadBorrowerIntents();
-      setBorrowerReceiptFiles((prev) => ({ ...prev, [id]: null }));
     } catch (e) {
       setError((e).message || 'Error al actualizar cuota');
     }
