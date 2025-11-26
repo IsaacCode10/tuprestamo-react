@@ -13,7 +13,7 @@
 
 .opportunities-container {
   padding: 24px;
-  max-width: 1100px;
+  max-width: 1280px;
   margin: 0 auto;
   font-family: 'Inter', 'Segoe UI', sans-serif;
 }
@@ -76,7 +76,7 @@ h2.opp-title {
 
 .opportunities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 18px;
 }
 
