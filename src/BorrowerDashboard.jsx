@@ -152,6 +152,17 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       <div className="card transparency-card">
         <h2>Transparencia Total</h2>
         <p className="muted">Desglose final del crédito a {plazo} meses</p>
+        <div style={{ margin: '8px 0', color: '#0d1a26' }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Costos Únicos al Desembolso</div>
+          <div style={{ fontWeight: 700 }}>
+            Comisión por Originación:{' '}
+            {neto <= 10000
+              ? 'Bs 450.00 (mínimo aplicado)'
+              : originacionPct
+                ? `${originacionPct}% aplicado en el bruto`
+                : 'N/D'}
+          </div>
+        </div>
         <table className="transparency-table">
           <thead>
             <tr>
@@ -160,16 +171,6 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Comisión de originación (se cobra una vez)</td>
-              <td className="tp-col">
-                {neto <= 10000
-                  ? 'Bs 450 (mínimo aplicado)'
-                  : originacionPct
-                    ? `${originacionPct}% aplicado en el bruto`
-                    : 'N/D'}
-              </td>
-            </tr>
             <tr>
               <td>Costo del Crédito (Intereses + Comisiones)</td>
               <td className="tp-col">{formatMoney(costoCredito)}</td>
@@ -296,6 +297,17 @@ const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
       <div className="card transparency-card">
         <h2>Transparencia Total</h2>
         <p className="muted">Desglose final del crédito a {plazo} meses</p>
+        <div style={{ margin: '8px 0', color: '#0d1a26' }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Costos Únicos al Desembolso</div>
+          <div style={{ fontWeight: 700 }}>
+            Comisión por Originación:{' '}
+            {neto <= 10000
+              ? 'Bs 450.00 (mínimo aplicado)'
+              : originacionPct
+                ? `${originacionPct}% aplicado en el bruto`
+                : 'N/D'}
+          </div>
+        </div>
         <table className="transparency-table">
           <thead>
             <tr>
@@ -304,16 +316,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Comisión de originación (se cobra una vez)</td>
-              <td className="tp-col">
-                {neto <= 10000
-                  ? 'Bs 450 (mínimo aplicado)'
-                  : originacionPct
-                    ? `${originacionPct}% aplicado en el bruto`
-                    : 'N/D'}
-              </td>
-            </tr>
             <tr>
               <td>Costo del Crédito (Intereses + Comisiones)</td>
               <td className="tp-col">{formatMoney(costoCredito)}</td>
