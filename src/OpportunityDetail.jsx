@@ -248,7 +248,7 @@ const OpportunityDetail = () => {
     : totalGoal - totalFunded;
 
   return (
-    <div className="opportunity-detail-container" style={{ maxWidth: '600px', margin: 'auto', padding: '20px' }}>
+    <div className="opportunity-detail-container" style={{ maxWidth: '1180px', margin: '0 auto', padding: '20px' }}>
       <InvestorBackBar fallbackTo="/oportunidades" label="Volver a Oportunidades" />
       <InvestorBreadcrumbs items={[
         { label: 'Inicio', to: '/investor-dashboard' },
@@ -257,125 +257,131 @@ const OpportunityDetail = () => {
       ]} />
       <h2>Detalles de la Oportunidad ID: {opportunity.id}</h2>
 
-      <div className="funding-progress" style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-          <h4>Progreso de Financiamiento</h4>
-          <div style={{ backgroundColor: '#e9ecef', borderRadius: '5px', height: '24px', marginBottom: '10px', overflow: 'hidden' }}>
-              <div style={{
-                  width: `${Math.min(fundedPercentage, 100)}%`,
-                  height: '100%',
-                  backgroundColor: '#28a745',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  transition: 'width 0.5s ease-in-out'
-              }}>
-                  {fundedPercentage.toFixed(2)}%
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 16, alignItems: 'start' }}>
+        {/* Columna izquierda: progreso + resumen + beneficios */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="funding-progress" style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px' }}>
+              <h4>Progreso de Financiamiento</h4>
+              <div style={{ backgroundColor: '#e9ecef', borderRadius: '5px', height: '24px', marginBottom: '10px', overflow: 'hidden' }}>
+                  <div style={{
+                      width: `${Math.min(fundedPercentage, 100)}%`,
+                      height: '100%',
+                      backgroundColor: '#28a745',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      transition: 'width 0.5s ease-in-out'
+                  }}>
+                      {fundedPercentage.toFixed(2)}%
+                  </div>
               </div>
+              <p>
+                  <strong>Recaudado:</strong> Bs. {totalFunded.toLocaleString('es-BO')} de Bs. {totalGoal.toLocaleString('es-BO')}
+              </p>
+              {remainingAmount > 0 ? (
+                 <p><strong>Saldo por invertir:</strong> Bs. {remainingAmount.toLocaleString('es-BO')}</p>
+              ) : (
+                 <p><strong>¡Esta oportunidad ha sido completamente financiada!</strong></p>
+              )}
           </div>
-          <p>
-              <strong>Recaudado:</strong> Bs. {totalFunded.toLocaleString('es-BO')} de Bs. {totalGoal.toLocaleString('es-BO')}
-          </p>
-          {remainingAmount > 0 ? (
-             <p><strong>Saldo por invertir:</strong> Bs. {remainingAmount.toLocaleString('es-BO')}</p>
-          ) : (
-             <p><strong>¡Esta oportunidad ha sido completamente financiada!</strong></p>
-          )}
-      </div>
 
-      <div style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-        <div>
-          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Monto de la oportunidad</p>
-          <p style={{ margin: 0, fontWeight: 700 }}>Bs. {opportunity.monto.toLocaleString('es-BO')}</p>
-        </div>
-        <div>
-          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Rendimiento anual</p>
-          <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoBruto.toFixed(2)}%</p>
-        </div>
-        <div>
-          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>
-            Rend. neto estimado
-            <span title="Incluye comisión de servicio 1% sobre cada pago (capital+interés)" style={{ marginLeft: 4, color: '#0f5a62' }}>ℹ️</span>
-          </p>
-          <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoNeto.toFixed(2)}%</p>
-        </div>
-        <div>
-          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Plazo</p>
-          <p style={{ margin: 0, fontWeight: 700 }}>{opportunity.plazo_meses} meses</p>
-        </div>
-        <div>
-          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Cupo restante</p>
-          <p style={{ margin: 0, fontWeight: 700 }}>Bs. {remainingAmount.toLocaleString('es-BO')}</p>
-        </div>
-      </div>
-
-      {remainingAmount > 0 ? (
-        <>
-        <div style={{ border: '1px solid #e6f2f4', background: '#f7fbfc', padding: '12px', borderRadius: 10, marginBottom: 12 }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#00445A' }}>¿Por qué invertir aquí?</p>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-            <span role="img" aria-label="calendario">📅</span>
-            <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Cobros mensuales de capital + interés.</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-            <span role="img" aria-label="reinvertir">🔄</span>
-            <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Reinvierte tus cobros para generar interés compuesto.</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-            <span role="img" aria-label="transparencia">🔍</span>
-            <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Transparencia: cobramos 1% sobre cada pago recibido; sin cargos ocultos.</div>
-          </div>
-        </div>
-        </div>
-
-        <div className="investment-form" style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '8px' }}>
-          <h3>Invertir en esta Oportunidad</h3>
-          <p style={{ marginTop: 0, color: '#0f5a62' }}>Paga el monto exacto con el QR en tu panel y confirmaremos tu fondeo al conciliar.</p>
-          <form onSubmit={handleInvestment}>
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
-              <input
-                type="number"
-                id="investmentAmount"
-                value={investmentAmount}
-                onChange={(e) => setInvestmentAmount(e.target.value)}
-                placeholder="Ej: 1000"
-                required
-                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-              />
+          <div style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+            <div>
+              <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Monto de la oportunidad</p>
+              <p style={{ margin: 0, fontWeight: 700 }}>Bs. {opportunity.monto.toLocaleString('es-BO')}</p>
             </div>
-            <button type="submit" disabled={isSubmitting} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-              {isSubmitting ? 'Registrando...' : 'Invertir ahora'}
-            </button>
-          </form>
-          {formMessage.text && (
-            <p style={{ color: formMessage.type === 'error' ? 'red' : '#0f5a62', marginTop: '15px', fontWeight: formMessage.type === 'error' ? 600 : 600 }}>
-              {formMessage.text}
-            </p>
-          )}
-          {intentInfo && (
-            <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
-              <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada</p>
-              <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
-                <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
-                <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
-                <li>No subas comprobante; te avisaremos cuando conciliemos tu pago.</li>
-                <li>Usamos tu pago para cancelar tu tarjeta en tu banco.</li>
-              </ul>
-              {countdown === 'Expirada' && (
-                <p style={{ margin: 0, color: '#b71c1c', fontWeight: 700 }}>La reserva expiró. Genera una nueva para invertir.</p>
+            <div>
+              <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Rendimiento anual</p>
+              <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoBruto.toFixed(2)}%</p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>
+                Rend. neto estimado
+                <span title="Incluye comisión de servicio 1% sobre cada pago (capital+interés)" style={{ marginLeft: 4, color: '#0f5a62' }}>ℹ️</span>
+              </p>
+              <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoNeto.toFixed(2)}%</p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Plazo</p>
+              <p style={{ margin: 0, fontWeight: 700 }}>{opportunity.plazo_meses} meses</p>
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Cupo restante</p>
+              <p style={{ margin: 0, fontWeight: 700 }}>Bs. {remainingAmount.toLocaleString('es-BO')}</p>
+            </div>
+          </div>
+
+          <div style={{ border: '1px solid #e6f2f4', background: '#f7fbfc', padding: '12px', borderRadius: 10 }}>
+            <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#00445A' }}>¿Por qué invertir aquí?</p>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <span role="img" aria-label="calendario">📅</span>
+                <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Cobros mensuales de capital + interés.</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <span role="img" aria-label="reinvertir">🔄</span>
+                <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Reinvierte tus cobros para generar interés compuesto.</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <span role="img" aria-label="transparencia">🔍</span>
+                <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Transparencia: cobramos 1% sobre cada pago recibido; sin cargos ocultos.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Columna derecha: formulario + reserva */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {remainingAmount > 0 ? (
+            <div className="investment-form" style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '8px' }}>
+              <h3>Invertir en esta Oportunidad</h3>
+              <p style={{ marginTop: 0, color: '#0f5a62' }}>Paga el monto exacto con el QR en tu panel y confirmaremos tu fondeo al conciliar.</p>
+              <form onSubmit={handleInvestment}>
+                <div style={{ marginBottom: '15px' }}>
+                  <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
+                  <input
+                    type="number"
+                    id="investmentAmount"
+                    value={investmentAmount}
+                    onChange={(e) => setInvestmentAmount(e.target.value)}
+                    placeholder="Ej: 1000"
+                    required
+                    style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                  />
+                </div>
+                <button type="submit" disabled={isSubmitting} className="btn btn--primary">
+                  {isSubmitting ? 'Registrando...' : 'Invertir ahora'}
+                </button>
+              </form>
+              {formMessage.text && (
+                <p style={{ color: formMessage.type === 'error' ? 'red' : '#0f5a62', marginTop: '15px', fontWeight: 600 }}>
+                  {formMessage.text}
+                </p>
+              )}
+              {intentInfo && (
+                <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
+                  <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada</p>
+                  <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
+                    <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
+                    <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
+                    <li>No subas comprobante; te avisaremos cuando conciliemos tu pago.</li>
+                    <li>Usamos tu pago para cancelar tu tarjeta en tu banco.</li>
+                  </ul>
+                  {countdown === 'Expirada' && (
+                    <p style={{ margin: 0, color: '#b71c1c', fontWeight: 700 }}>La reserva expiró. Genera una nueva para invertir.</p>
+                  )}
+                  {/* Placeholder de QR: se puede mostrar imagen/logo si se habilita más adelante */}
+                </div>
               )}
             </div>
-          )}
+          ) : null}
+          <button onClick={() => navigate('/investor-dashboard')} className="btn" style={{ alignSelf: 'flex-start' }}>
+            Volver a Oportunidades
+          </button>
         </div>
-        </>
-      ) : null}
-
-      <button onClick={() => navigate('/investor-dashboard')} style={{ marginTop: '20px' }}>
-        Volver a Oportunidades
-      </button>
+      </div>
     </div>
   );
 };
