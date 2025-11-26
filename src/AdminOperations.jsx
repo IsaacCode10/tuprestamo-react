@@ -16,6 +16,8 @@ const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimu
 const AdminOperations = () => {
   const [tab, setTab] = useState('intents');
   const [intents, setIntents] = useState([]);
+  const [borrowerIntents, setBorrowerIntents] = useState([]);
+  const [payouts, setPayouts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,6 +34,32 @@ const AdminOperations = () => {
     setLoading(false);
   };
 
+  const loadBorrowerIntents = async () => {
+    setLoading(true);
+    setError('');
+    const { data, error } = await supabase
+      .from('borrower_payment_intents')
+      .select('id, opportunity_id, borrower_id, expected_amount, status, due_date, paid_at, paid_amount, created_at')
+      .order('due_date', { ascending: true })
+      .limit(100);
+    if (error) setError(error.message);
+    setBorrowerIntents(data || []);
+    setLoading(false);
+  };
+
+  const loadPayouts = async () => {
+    setLoading(true);
+    setError('');
+    const { data, error } = await supabase
+      .from('payouts_inversionistas')
+      .select('id, opportunity_id, investor_id, amount, status, paid_at, receipt_url, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) setError(error.message);
+    setPayouts(data || []);
+    setLoading(false);
+  };
+
   const updateIntentStatus = async (id, status) => {
     const { error } = await supabase.from('payment_intents').update({ status, paid_at: status === 'paid' ? new Date().toISOString() : null }).eq('id', id);
     if (error) {
@@ -41,8 +69,26 @@ const AdminOperations = () => {
     }
   };
 
+  const updateBorrowerIntentStatus = async (id, status) => {
+    const payload = { status };
+    if (status === 'paid') payload.paid_at = new Date().toISOString();
+    const { error } = await supabase.from('borrower_payment_intents').update(payload).eq('id', id);
+    if (error) setError(error.message); else loadBorrowerIntents();
+  };
+
+  const updatePayoutStatus = async (id, status) => {
+    const payload = { status };
+    if (status === 'paid') payload.paid_at = new Date().toISOString();
+    const receipt = status === 'paid' ? window.prompt('Ingresa URL de comprobante (opcional):', '') : null;
+    if (receipt) payload.receipt_url = receipt;
+    const { error } = await supabase.from('payouts_inversionistas').update(payload).eq('id', id);
+    if (error) setError(error.message); else loadPayouts();
+  };
+
   useEffect(() => {
     loadIntents();
+    loadBorrowerIntents();
+    loadPayouts();
   }, []);
 
   return (
@@ -50,7 +96,8 @@ const AdminOperations = () => {
       <h2>Operaciones</h2>
       <div style={{ marginBottom: 12 }}>
         <TabButton active={tab === 'intents'} onClick={() => setTab('intents')}>Pagos de inversionistas</TabButton>
-        {/* placeholders para futuras pestañas */}
+        <TabButton active={tab === 'borrower'} onClick={() => setTab('borrower')}>Pagos de prestatarios</TabButton>
+        <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Payouts a inversionistas</TabButton>
       </div>
 
       {loading && <p>Cargando...</p>}
@@ -88,6 +135,81 @@ const AdminOperations = () => {
               {intents.length === 0 && (
                 <tr>
                   <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay intents</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'borrower' && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Prestatario</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Vence</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {borrowerIntents.map((i) => (
+                <tr key={i.id}>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.borrower_id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.due_date ? new Date(i.due_date).toLocaleDateString('es-BO') : '—'}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button className="btn btn--primary" onClick={() => updateBorrowerIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
+                    <button className="btn" onClick={() => updateBorrowerIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
+                  </td>
+                </tr>
+              ))}
+              {borrowerIntents.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay cuotas registradas</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'payouts' && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payouts.map((p) => (
+                <tr key={p.id}>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.opportunity_id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.investor_id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(p.amount)}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')} disabled={p.status === 'paid'}>Marcar pagado</button>
+                  </td>
+                </tr>
+              ))}
+              {payouts.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts</td>
                 </tr>
               )}
             </tbody>
