@@ -13,7 +13,6 @@ import Auth from '@/Auth.jsx';
 import AdminDashboard from '@/AdminDashboard.jsx';
 import InvestorDashboard from '@/InvestorDashboard.jsx';
 import MyInvestmentsList from '@/MyInvestmentsList.jsx';
-import WithdrawalForm from '@/WithdrawalForm.jsx';
 import InvestorVerification from './InvestorVerification.jsx';
 import InvestorManagementDashboard from '@/InvestorManagementDashboard.jsx';
 import Opportunities from '@/Opportunities.jsx';
@@ -167,7 +166,6 @@ function App() {
   const investorAreaPaths = [
     '/investor-dashboard',
     '/mis-inversiones',
-    '/retiro',
     '/oportunidades',
     '/verificar-cuenta',
     '/calculadora-inversionista'
@@ -218,14 +216,6 @@ function App() {
             element={
               <InvestorRoute profile={profile} loading={loading}>
                 <MyInvestmentsList />
-              </InvestorRoute>
-            }
-          />
-          <Route 
-            path="/retiro" 
-            element={
-              <InvestorRoute profile={profile} loading={loading}>
-                <WithdrawalForm />
               </InvestorRoute>
             }
           />
@@ -294,7 +284,6 @@ function App() {
 }
 
 export default App;
-
 
 
 

@@ -26,3 +26,12 @@ MODELO DE TRABAJO DE CODEX
 
 6. Deploy de Supabase
 - Si hay cambios en funciones/SQL de backend, te paso tambien los comandos de deploy de Supabase en un solo bloque listo para pegar.
+- En PowerShell, la invocación de edge functions es con Invoke-WebRequest (no usar el alias curl con flags de bash). Ejemplo:
+  ```
+  $project = "tu-project-ref"
+  $anon = "TU_SUPABASE_ANON_KEY"
+  Invoke-WebRequest -Method POST `
+    -Uri "https://$project.functions.supabase.co/<function-name>" `
+    -Headers @{ "Content-Type" = "application/json"; "Authorization" = "Bearer $anon" } `
+    -Body "{}"
+  ```

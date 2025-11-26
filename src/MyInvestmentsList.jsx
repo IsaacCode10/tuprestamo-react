@@ -111,11 +111,9 @@ const MyInvestmentsList = () => {
 
       <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Seguir Invirtiendo</button>
-        <button className="btn btn--secondary" onClick={() => navigate('/retiro')}>Solicitar Retiro</button>
       </div>
     </div>
   );
 };
 
 export default MyInvestmentsList;
-

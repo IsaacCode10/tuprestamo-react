@@ -18,6 +18,7 @@ const OpportunityDetail = () => {
   const [investmentAmount, setInvestmentAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState({ type: '', text: '' });
+  const [intentInfo, setIntentInfo] = useState(null); // Datos del intent/QR mostrado al usuario
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -48,7 +49,12 @@ const OpportunityDetail = () => {
       setError('Oportunidad no encontrada.');
       setOpportunity(null);
     } else {
-      setOpportunity(data);
+      // Normaliza faltantes para evitar NaN en UI
+      setOpportunity({
+        ...data,
+        total_funded: Number(data?.total_funded || 0),
+        saldo_pendiente: data?.saldo_pendiente != null ? Number(data.saldo_pendiente) : null,
+      });
     }
     setLoading(false);
   };
@@ -63,6 +69,7 @@ const OpportunityDetail = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormMessage({ type: '', text: '' });
+    setIntentInfo(null);
 
     const amount = parseFloat(investmentAmount);
     if (isNaN(amount) || amount <= 0) {
@@ -78,8 +85,18 @@ const OpportunityDetail = () => {
     }
 
     // Optional: Check if investment exceeds opportunity amount
-    if (amount > (opportunity.monto - opportunity.total_funded)) {
-        setFormMessage({ type: 'error', text: `El monto no puede exceder el saldo por invertir (Bs. ${(opportunity.monto - opportunity.total_funded).toLocaleString('es-BO')}).` });
+    const saldoPendiente = (opportunity?.saldo_pendiente != null)
+      ? opportunity.saldo_pendiente
+      : (opportunity.monto - (opportunity.total_funded || 0));
+
+    if (saldoPendiente <= 0) {
+      setFormMessage({ type: 'error', text: 'Esta oportunidad ya no tiene saldo pendiente por fondear.' });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (amount > saldoPendiente) {
+        setFormMessage({ type: 'error', text: `El monto no puede exceder el saldo por invertir (Bs. ${Number(saldoPendiente).toLocaleString('es-BO')}).` });
         setIsSubmitting(false);
         return;
     }
@@ -113,31 +130,55 @@ const OpportunityDetail = () => {
       return;
     }
 
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 72); // expiración corta (72h)
+
     try {
+      const { data: intent, error: intentError } = await supabase
+        .from('payment_intents')
+        .insert({
+          opportunity_id: Number(id),
+          investor_id: user.id,
+          expected_amount: amount,
+          status: 'pending',
+          payment_channel: 'qr_generico',
+          expires_at: expiresAt.toISOString(),
+        })
+        .select('id, expected_amount, expires_at')
+        .single();
+
+      if (intentError) throw intentError;
+
       const { error: insertError } = await supabase
         .from('inversiones')
         .insert({
-          opportunity_id: id,
+          opportunity_id: Number(id),
           investor_id: user.id,
           amount: amount,
+          status: 'pendiente_pago',
+          payment_intent_id: intent?.id || null,
         });
 
       if (insertError) {
         throw insertError;
       }
 
-      // --- Evento de Analítica: Inversión completada ---
-      trackEvent('Completed Investment', {
+      // --- Evento de Analítica: Reserva creada ---
+      trackEvent('Created Investment Intent', {
         investment_amount: amount,
         loan_id: id,
+        expires_at: expiresAt.toISOString(),
       });
       
-      setFormMessage({ type: 'success', text: '¡Tu intención de inversión ha sido registrada con éxito! Actualizando...' });
+      setFormMessage({ type: 'success', text: 'Tu reserva fue creada. Paga el monto exacto antes del vencimiento para confirmar tu fondeo.' });
+      setIntentInfo({
+        expected_amount: intent?.expected_amount || amount,
+        expires_at: intent?.expires_at || expiresAt.toISOString(),
+      });
       setInvestmentAmount('');
-      // Refresh data after successful investment to update progress bar
+      // Refresh data after successful intent to update barra (no suma hasta estado pagado)
       setTimeout(() => {
         fetchOpportunity();
-        setFormMessage({ type: '', text: '' }); // Clear message after refresh
       }, 2000); // Wait 2 seconds to let user read the message
 
     } catch (error) {
@@ -180,7 +221,9 @@ const OpportunityDetail = () => {
   const totalFunded = opportunity.total_funded || 0;
   const totalGoal = opportunity.monto;
   const fundedPercentage = totalGoal > 0 ? (totalFunded / totalGoal) * 100 : 0;
-  const remainingAmount = totalGoal - totalFunded;
+  const remainingAmount = opportunity.saldo_pendiente != null
+    ? opportunity.saldo_pendiente
+    : totalGoal - totalFunded;
 
   return (
     <div className="opportunity-detail-container" style={{ maxWidth: '600px', margin: 'auto', padding: '20px' }}>
@@ -253,6 +296,17 @@ const OpportunityDetail = () => {
               {formMessage.text}
             </p>
           )}
+          {intentInfo && (
+            <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
+              <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Pasos para confirmar tu fondeo</p>
+              <ol style={{ paddingLeft: 18, margin: '0 0 8px 0' }}>
+                <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR genérico.</li>
+                <li>Hazlo antes de <strong>{new Date(intentInfo.expires_at).toLocaleString('es-BO')}</strong>. Si vence, la reserva expira.</li>
+                <li>No necesitas subir comprobante; nosotros conciliamos el pago y te avisamos.</li>
+              </ol>
+              <p style={{ margin: 0, fontSize: 13, color: '#0f5a62' }}>Si ya pagaste, verás tu inversión como “pagada” al cerrar la conciliación.</p>
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -264,5 +318,3 @@ const OpportunityDetail = () => {
 };
 
 export default OpportunityDetail;
-
-

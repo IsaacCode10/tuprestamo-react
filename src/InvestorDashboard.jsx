@@ -48,7 +48,6 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
         <div className="dashboard-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem' }}>
           <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
           <button className="btn" onClick={() => navigate('/mis-inversiones')}>Mis Inversiones</button>
-          <button className="btn" onClick={() => navigate('/retiro')}>Solicitar Retiro</button>
           {verification !== 'verificado' && (
             <button className="btn" onClick={() => navigate('/verificar-cuenta')}>Verificar mi Cuenta</button>
           )}

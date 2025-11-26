@@ -76,14 +76,14 @@ h2.opp-title {
 
 .opportunities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
 }
 
 .opportunity-card {
   border: 1px solid var(--card-border);
   border-radius: 14px;
-  padding: 16px;
+  padding: 16px 18px;
   background: #ffffff;
   box-shadow: var(--shadow-soft);
   display: flex;
@@ -91,10 +91,10 @@ h2.opp-title {
   gap: 10px;
 }
 
-.opportunity-card .card-header {
+.opportunity-card .card-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .opportunity-card h3 {
@@ -124,8 +124,8 @@ h2.opp-title {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 10px 14px;
 }
 
 .metric-item .label {
@@ -139,25 +139,20 @@ h2.opp-title {
   color: var(--text-dark);
 }
 
-.returns-breakdown {
-  margin-top: 6px;
-  font-size: 0.92rem;
-  color: var(--text-muted);
-}
-
 .card-footer {
-  margin-top: 6px;
+  margin-top: 8px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
 .invest-button {
   background-color: var(--accent-color);
   color: #fff;
   border: none;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
   font-weight: 700;
@@ -168,8 +163,22 @@ h2.opp-title {
   transform: translateY(-1px);
 }
 
+.cta-copy .label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.cta-copy .value {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
 @media (max-width: 640px) {
   .metrics-grid {
     grid-template-columns: 1fr;
+  }
+  .card-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

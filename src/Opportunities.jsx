@@ -24,30 +24,38 @@ const OpportunityCard = ({ opp }) => {
 
   return (
     <div className="opportunity-card">
-      <div className="card-header">
-        <h3>{formatMoney(opp.monto)}</h3>
+      <div className="card-top">
+        <div>
+          <h3>{formatMoney(opp.monto)}</h3>
+          <p className="opportunity-id">ID: {opp.id}</p>
+        </div>
         <span className={`risk-badge risk-${opp.perfil_riesgo}`}>{riskLabel}</span>
       </div>
-      <p className="opportunity-id">ID: {opp.id}</p>
       <div className="card-body">
         <div className="metrics-grid">
           <div className="metric-item">
-            <div className="label">Rendimiento Anual</div>
+            <div className="label">Rendimiento anual</div>
             <div className="value">{rendimientoBruto.toFixed(2)}%</div>
           </div>
           <div className="metric-item">
             <div className="label">Plazo</div>
-            <div className="value">{opp.plazo_meses}</div>
-            <div className="label">meses</div>
+            <div className="value">{opp.plazo_meses} meses</div>
           </div>
-        </div>
-        <div className="returns-breakdown">
-          <span>Comisión de servicio: {comisionServicio}%</span>
-          <br />
-          <span>Tu rendimiento neto estimado: <strong>{rendimientoNeto.toFixed(2)}%</strong></span>
+          <div className="metric-item">
+            <div className="label">Comisión de servicio</div>
+            <div className="value">{comisionServicio}%</div>
+          </div>
+          <div className="metric-item">
+            <div className="label">Rendimiento neto estimado</div>
+            <div className="value">{rendimientoNeto.toFixed(2)}%</div>
+          </div>
         </div>
       </div>
       <div className="card-footer">
+        <div className="cta-copy">
+          <div className="label">Estado</div>
+          <div className="value">Publicada</div>
+        </div>
         <button className="invest-button" onClick={handleViewDetails}>Ver Detalles y Invertir</button>
       </div>
     </div>
@@ -70,16 +78,7 @@ const Opportunities = () => {
     const fetchOpportunities = async () => {
       setLoading(true);
       setError(null);
-      const { data, error } = await supabase
-        .from('oportunidades')
-        .select(`
-          id, monto, plazo_meses, perfil_riesgo,
-          tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje,
-          solicitudes!inner(estado)
-        `)
-        .eq('estado', 'disponible')
-        .eq('solicitudes.estado', 'prestatario_acepto')
-        .order('tasa_rendimiento_inversionista', { ascending: false });
+      const { data, error } = await supabase.rpc('get_opportunities_publicadas');
 
       if (error) {
         console.error('Error fetching opportunities:', error);
@@ -104,19 +103,12 @@ const Opportunities = () => {
     setLoading(true);
     setError(null);
     try {
-      let query = supabase
-        .from('oportunidades')
-        .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje, solicitudes!inner(estado)')
-        .eq('estado', 'disponible')
-        .eq('solicitudes.estado', 'prestatario_acepto');
-
-      if (filters.minRate) query = query.gte('tasa_rendimiento_inversionista', Number(filters.minRate));
-      if (filters.maxMonths) query = query.lte('plazo_meses', Number(filters.maxMonths));
-
-      query = query.order('tasa_rendimiento_inversionista', { ascending: false });
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc('get_opportunities_publicadas');
       if (error) throw error;
-      setOpportunities(data || []);
+      let list = data || [];
+      if (filters.minRate) list = list.filter(o => Number(o.tasa_rendimiento_inversionista || 0) >= Number(filters.minRate));
+      if (filters.maxMonths) list = list.filter(o => Number(o.plazo_meses || 0) <= Number(filters.maxMonths));
+      setOpportunities(list);
       trackEvent('Marketplace_Filter_Applied', { min_rate: filters.minRate, max_months: filters.maxMonths });
     } catch (e) {
       console.error('Filter fetch error:', e);
@@ -130,12 +122,7 @@ const Opportunities = () => {
     setFilters({ minRate: '', maxMonths: '' });
     navigate('/oportunidades', { replace: true });
     setLoading(true);
-    const { data } = await supabase
-      .from('oportunidades')
-      .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje, solicitudes!inner(estado)')
-      .eq('estado', 'disponible')
-      .eq('solicitudes.estado', 'prestatario_acepto')
-      .order('tasa_rendimiento_inversionista', { ascending: false });
+    const { data } = await supabase.rpc('get_opportunities_publicadas');
     setOpportunities(data || []);
     setLoading(false);
   };
