@@ -163,9 +163,11 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
             <tr>
               <td>Comisión de originación (se cobra una vez)</td>
               <td className="tp-col">
-                {montoSolicitado <= 10000
-                  ? 'Bs 450 (mínimo)'
-                  : `${comisionOriginacion ? `${comisionOriginacion}%` : '—'} (aplicada en el bruto)`}
+                {neto <= 10000
+                  ? 'Bs 450 (mínimo aplicado)'
+                  : originacionPct
+                    ? `${originacionPct}% aplicado en el bruto`
+                    : 'N/D'}
               </td>
             </tr>
             <tr>
@@ -302,6 +304,16 @@ const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td>Comisión de originación (se cobra una vez)</td>
+              <td className="tp-col">
+                {neto <= 10000
+                  ? 'Bs 450 (mínimo aplicado)'
+                  : originacionPct
+                    ? `${originacionPct}% aplicado en el bruto`
+                    : 'N/D'}
+              </td>
+            </tr>
             <tr>
               <td>Costo del Crédito (Intereses + Comisiones)</td>
               <td className="tp-col">{formatMoney(costoCredito)}</td>
