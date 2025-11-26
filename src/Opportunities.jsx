@@ -11,6 +11,9 @@ const OpportunityCard = ({ opp }) => {
   const navigate = useNavigate();
   const rendimientoNeto = (rendimientoBruto * (1 - (comisionServicio / 100)));
   const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const totalFunded = Number(opp.total_funded || 0);
+  const totalGoal = Number(opp.monto || 0);
+  const fundedPct = totalGoal > 0 ? Math.min(100, (totalFunded / totalGoal) * 100) : 0;
 
   const riskLabel = ({
     A: 'Conservador (A)',
@@ -51,6 +54,15 @@ const OpportunityCard = ({ opp }) => {
           </div>
         </div>
       </div>
+      <div className="funding-bar">
+        <div className="funding-track">
+          <div className="funding-fill" style={{ width: `${fundedPct.toFixed(2)}%` }} />
+        </div>
+        <div className="funding-meta">
+          <span>Recaudado: {formatMoney(totalFunded)} / {formatMoney(totalGoal)}</span>
+          <span>{fundedPct.toFixed(1)}%</span>
+        </div>
+      </div>
       <div className="card-footer">
         <div className="cta-copy">
           <div className="label">Estado</div>
@@ -68,6 +80,8 @@ const Opportunities = () => {
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ minRate: '', maxMonths: '' });
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 9; // 3x3 en desktop
   const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const navigate = useNavigate();
   const location = useLocation();
@@ -84,7 +98,13 @@ const Opportunities = () => {
         console.error('Error fetching opportunities:', error);
         setError('Error al cargar las oportunidades de inversión.');
       } else {
-        setOpportunities(data || []);
+        const list = (data || []).map(o => ({
+          ...o,
+          total_funded: Number(o?.total_funded || 0),
+          saldo_pendiente: o?.saldo_pendiente != null ? Number(o.saldo_pendiente) : null,
+          created_at: o?.created_at ? new Date(o.created_at) : null,
+        }));
+        setOpportunities(list);
       }
       setLoading(false);
     };
@@ -105,7 +125,12 @@ const Opportunities = () => {
     try {
       const { data, error } = await supabase.rpc('get_opportunities_publicadas');
       if (error) throw error;
-      let list = data || [];
+      let list = (data || []).map(o => ({
+        ...o,
+        total_funded: Number(o?.total_funded || 0),
+        saldo_pendiente: o?.saldo_pendiente != null ? Number(o.saldo_pendiente) : null,
+        created_at: o?.created_at ? new Date(o.created_at) : null,
+      }));
       if (filters.minRate) list = list.filter(o => Number(o.tasa_rendimiento_inversionista || 0) >= Number(filters.minRate));
       if (filters.maxMonths) list = list.filter(o => Number(o.plazo_meses || 0) <= Number(filters.maxMonths));
       setOpportunities(list);
@@ -123,9 +148,27 @@ const Opportunities = () => {
     navigate('/oportunidades', { replace: true });
     setLoading(true);
     const { data } = await supabase.rpc('get_opportunities_publicadas');
-    setOpportunities(data || []);
+    const list = (data || []).map(o => ({
+      ...o,
+      total_funded: Number(o?.total_funded || 0),
+      saldo_pendiente: o?.saldo_pendiente != null ? Number(o.saldo_pendiente) : null,
+      created_at: o?.created_at ? new Date(o.created_at) : null,
+    }));
+    setOpportunities(list);
     setLoading(false);
   };
+
+  const totalPages = Math.max(1, Math.ceil((opportunities || []).length / PAGE_SIZE));
+  const paginated = opportunities.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const lastPublished = (() => {
+    const withDate = opportunities.filter(o => o.created_at instanceof Date && !isNaN(o.created_at));
+    if (withDate.length === 0) return null;
+    const maxDate = new Date(Math.max(...withDate.map(o => o.created_at)));
+    return maxDate;
+  })();
+
+  const summaryText = `${opportunities.length} oportunidad${opportunities.length === 1 ? '' : 'es'} disponibles`;
 
   if (loading) {
     return <p>Cargando oportunidades...</p>;
@@ -142,6 +185,14 @@ const Opportunities = () => {
         { label: 'Oportunidades' },
       ]} />
       <h2 className="opp-title">Oportunidades de Inversión</h2>
+      <div className="opp-summary">
+        <div className="summary-left">
+          <div className="summary-count">{summaryText}</div>
+          <div className="summary-sub">
+            {lastPublished ? `Última publicada: ${lastPublished.toLocaleDateString('es-BO')}` : 'Publicaciones recientes disponibles'}
+          </div>
+        </div>
+      </div>
       <div className="filters-bar">
         <button className="btn btn--secondary" onClick={() => setShowFilters(v => !v)}>
           {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
@@ -205,9 +256,16 @@ const Opportunities = () => {
         </div>
       ) : (
         <div className="opportunities-grid">
-          {opportunities.map((opp) => (
+          {paginated.map((opp) => (
             <OpportunityCard key={opp.id} opp={opp} />
           ))}
+        </div>
+      )}
+      {opportunities.length > PAGE_SIZE && (
+        <div className="pagination">
+          <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Anterior</button>
+          <span className="page-info">Página {page} de {totalPages}</span>
+          <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Siguiente</button>
         </div>
       )}
     </div>

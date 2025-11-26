@@ -35,3 +35,6 @@ MODELO DE TRABAJO DE CODEX
     -Headers @{ "Content-Type" = "application/json"; "Authorization" = "Bearer $anon" } `
     -Body "{}"
   ```
+
+7. Bloque estándar de deploy (frontend + git)
+- Siempre te paso el bloque completo: `git add ... && git commit ... && npm run build && npx vercel --prod` en un solo bloque para copiar/pegar.
