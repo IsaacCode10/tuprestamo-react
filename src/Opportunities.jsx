@@ -232,9 +232,11 @@ const Opportunities = () => {
           <p style={{ fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem 0' }}>
             Cómo elegir: Conservador ≈10%, Balanceado ≈12%, Dinámico ≈15% anual.
           </p>
-          {filters.minRate && (
+          {(filters.minRate || filters.maxMonths) && (
             <p style={{ fontSize: '0.9rem', color: '#555', marginTop: 0 }}>
-              Selección actual: {filters.minRate === '10' ? 'Conservador (~10%)' : filters.minRate === '12' ? 'Balanceado (~12%)' : filters.minRate === '15' ? 'Dinámico (~15%)' : `${filters.minRate}%`}.
+              Selección actual:
+              {filters.minRate && <> {filters.minRate === '10' ? 'Conservador (~10%)' : filters.minRate === '12' ? 'Balanceado (~12%)' : filters.minRate === '15' ? 'Dinámico (~15%)' : `${filters.minRate}%`}</>}
+              {filters.maxMonths && <> · Plazo máximo: {filters.maxMonths}m</>}
             </p>
           )}
         </>
