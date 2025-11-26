@@ -30,27 +30,27 @@ const OpportunityCard = ({ opp }) => {
       <div className="card-top">
         <div>
           <h3>{formatMoney(opp.monto)}</h3>
-          <p className="opportunity-id">ID: {opp.id}</p>
+          <p className="opportunity-id">ID #{opp.id}</p>
         </div>
         <span className={`risk-badge risk-${opp.perfil_riesgo}`}>{riskLabel}</span>
       </div>
       <div className="card-body">
         <div className="metrics-grid">
           <div className="metric-item">
-            <div className="label">Rendimiento anual</div>
-            <div className="value">{rendimientoBruto.toFixed(2)}%</div>
+            <div className="metric-label">Rendimiento anual</div>
+            <div className="metric-value">{rendimientoBruto.toFixed(2)}%</div>
           </div>
           <div className="metric-item">
-            <div className="label">Plazo</div>
-            <div className="value">{opp.plazo_meses} meses</div>
+            <div className="metric-label">Plazo</div>
+            <div className="metric-value">{opp.plazo_meses} meses</div>
           </div>
           <div className="metric-item">
-            <div className="label">Comisión de servicio</div>
-            <div className="value">{comisionServicio}%</div>
+            <div className="metric-label">Comisión de servicio</div>
+            <div className="metric-value">{comisionServicio}%</div>
           </div>
           <div className="metric-item">
-            <div className="label">Rendimiento neto estimado</div>
-            <div className="value">{rendimientoNeto.toFixed(2)}%</div>
+            <div className="metric-label">Rendimiento neto estimado</div>
+            <div className="metric-value">{rendimientoNeto.toFixed(2)}%</div>
           </div>
         </div>
       </div>
