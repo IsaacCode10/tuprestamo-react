@@ -101,6 +101,11 @@ h2.opp-title {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 18px;
 }
+.opportunities-grid.opportunities-grid--compact {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 420px));
+  justify-content: center;
+  justify-items: center;
+}
 
 .opportunity-card {
   border: 1px solid var(--card-border);

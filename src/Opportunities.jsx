@@ -255,7 +255,7 @@ const Opportunities = () => {
           <button className="btn" onClick={() => navigate('/investor-dashboard')}>Volver al Panel</button>
         </div>
       ) : (
-        <div className="opportunities-grid">
+        <div className={['opportunities-grid', paginated.length <= 2 ? 'opportunities-grid--compact' : ''].filter(Boolean).join(' ')}>
           {paginated.map((opp) => (
             <OpportunityCard key={opp.id} opp={opp} />
           ))}
