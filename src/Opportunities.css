@@ -193,6 +193,11 @@ h2.opp-title {
   font-weight: 700;
   color: var(--text-dark);
 }
+.urgency-line {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
 
 .card-footer {
   margin-top: 8px;

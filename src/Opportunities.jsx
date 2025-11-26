@@ -14,6 +14,8 @@ const OpportunityCard = ({ opp }) => {
   const totalFunded = Number(opp.total_funded || 0);
   const totalGoal = Number(opp.monto || 0);
   const fundedPct = totalGoal > 0 ? Math.min(100, (totalFunded / totalGoal) * 100) : 0;
+  const remainingAmount = opp.saldo_pendiente != null ? Number(opp.saldo_pendiente) : Math.max(totalGoal - totalFunded, 0);
+  const remainingPct = totalGoal > 0 ? Math.max(0, (remainingAmount / totalGoal) * 100) : 0;
 
   const riskLabel = ({
     A: 'Conservador (A)',
@@ -37,20 +39,16 @@ const OpportunityCard = ({ opp }) => {
       <div className="card-body">
         <div className="metrics-grid">
           <div className="metric-item">
-            <div className="metric-label">Rendimiento anual</div>
-            <div className="metric-value">{rendimientoBruto.toFixed(2)}%</div>
+            <div className="metric-label">Rend. neto est.</div>
+            <div className="metric-value">{rendimientoNeto.toFixed(2)}%</div>
           </div>
           <div className="metric-item">
             <div className="metric-label">Plazo</div>
             <div className="metric-value">{opp.plazo_meses} meses</div>
           </div>
           <div className="metric-item">
-            <div className="metric-label">Comisión de servicio</div>
-            <div className="metric-value">{comisionServicio}%</div>
-          </div>
-          <div className="metric-item">
-            <div className="metric-label">Rendimiento neto estimado</div>
-            <div className="metric-value">{rendimientoNeto.toFixed(2)}%</div>
+            <div className="metric-label">Falta por fondear</div>
+            <div className="metric-value">{formatMoney(remainingAmount)}</div>
           </div>
         </div>
       </div>
@@ -62,13 +60,18 @@ const OpportunityCard = ({ opp }) => {
           <span>Recaudado: {formatMoney(totalFunded)} / {formatMoney(totalGoal)}</span>
           <span>{fundedPct.toFixed(1)}%</span>
         </div>
+        {remainingAmount > 0 ? (
+          <div className="urgency-line">Faltan {formatMoney(remainingAmount)} ({remainingPct.toFixed(1)}%)</div>
+        ) : (
+          <div className="urgency-line">Fondeada</div>
+        )}
       </div>
       <div className="card-footer">
         <div className="cta-copy">
           <div className="label">Estado</div>
           <div className="value">Publicada</div>
         </div>
-        <button className="invest-button" onClick={handleViewDetails}>Ver Detalles y Invertir</button>
+        <button className="invest-button" onClick={handleViewDetails}>Invertir ahora</button>
       </div>
     </div>
   );
