@@ -337,7 +337,7 @@ const OpportunityDetail = () => {
           {remainingAmount > 0 ? (
             <div className="investment-form" style={{ border: '1px solid #ddd', padding: '16px', borderRadius: '8px' }}>
               <h3>Invertir en esta Oportunidad</h3>
-              <p style={{ marginTop: 0, color: '#0f5a62' }}>Paga el monto exacto con el QR en tu panel y confirmaremos tu fondeo al conciliar.</p>
+              <p style={{ marginTop: 0, color: '#0f5a62' }}>Ingresa tu monto y registraremos tu reserva. Te daremos las instrucciones de pago para confirmarla.</p>
               <form onSubmit={handleInvestment}>
                 <div style={{ marginBottom: '15px' }}>
                   <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
