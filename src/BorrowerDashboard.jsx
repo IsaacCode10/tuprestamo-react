@@ -161,6 +161,14 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
           </thead>
           <tbody>
             <tr>
+              <td>Comisión de originación (se cobra una vez)</td>
+              <td className="tp-col">
+                {montoSolicitado <= 10000
+                  ? 'Bs 450 (mínimo)'
+                  : `${comisionOriginacion ? `${comisionOriginacion}%` : '—'} (aplicada en el bruto)`}
+              </td>
+            </tr>
+            <tr>
               <td>Costo del Crédito (Intereses + Comisiones)</td>
               <td className="tp-col">{formatMoney(costoCredito)}</td>
             </tr>
