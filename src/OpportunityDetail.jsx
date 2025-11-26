@@ -20,6 +20,8 @@ const OpportunityDetail = () => {
   const [formMessage, setFormMessage] = useState({ type: '', text: '' });
   const [intentInfo, setIntentInfo] = useState(null); // Datos del intent/QR mostrado al usuario
   const [countdown, setCountdown] = useState(''); // Temporizador de expiración
+  const [payMode, setPayMode] = useState('qr'); // 'qr' | 'transfer'
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -136,34 +138,11 @@ const OpportunityDetail = () => {
     expiresAt.setHours(expiresAt.getHours() + 72); // expiración corta (72h)
 
     try {
-      const { data: intent, error: intentError } = await supabase
-        .from('payment_intents')
-        .insert({
-          opportunity_id: Number(id),
-          investor_id: user.id,
-          expected_amount: amount,
-          status: 'pending',
-          payment_channel: 'qr_generico',
-          expires_at: expiresAt.toISOString(),
-        })
-        .select('id, expected_amount, expires_at')
-        .single();
-
+      const { data: intent, error: intentError } = await supabase.rpc('create_investment_intent', {
+        p_opportunity_id: Number(id),
+        p_amount: amount,
+      });
       if (intentError) throw intentError;
-
-      const { error: insertError } = await supabase
-        .from('inversiones')
-        .insert({
-          opportunity_id: Number(id),
-          investor_id: user.id,
-          amount: amount,
-          status: 'pendiente_pago',
-          payment_intent_id: intent?.id || null,
-        });
-
-      if (insertError) {
-        throw insertError;
-      }
 
       // --- Evento de Analítica: Reserva creada ---
       trackEvent('Created Investment Intent', {
@@ -176,6 +155,7 @@ const OpportunityDetail = () => {
       setIntentInfo({
         expected_amount: intent?.expected_amount || amount,
         expires_at: intent?.expires_at || expiresAt.toISOString(),
+        payment_channel: intent?.payment_channel || 'qr',
       });
       setCountdown(''); // se recalcula en useEffect
       setInvestmentAmount('');
@@ -372,7 +352,36 @@ const OpportunityDetail = () => {
                   {countdown === 'Expirada' && (
                     <p style={{ margin: 0, color: '#b71c1c', fontWeight: 700 }}>La reserva expiró. Genera una nueva para invertir.</p>
                   )}
-                  {/* Placeholder de QR: se puede mostrar imagen/logo si se habilita más adelante */}
+                </div>
+              )}
+              {intentInfo && (
+                <div style={{ marginTop: 14, borderTop: '1px solid #e6f2f4', paddingTop: 12 }}>
+                  <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#00445A' }}>Medios de pago</p>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                    <button type="button" className={['btn', payMode === 'qr' ? 'btn--primary' : 'btn--secondary'].join(' ')} onClick={() => setPayMode('qr')}>
+                      QR
+                    </button>
+                    <button type="button" className={['btn', payMode === 'transfer' ? 'btn--primary' : 'btn--secondary'].join(' ')} onClick={() => { setPayMode('transfer'); setShowTransferModal(true); }}>
+                      Transferencia
+                    </button>
+                  </div>
+                  {payMode === 'qr' && (
+                    <div style={{ padding: 10, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                      <p style={{ margin: 0, color: '#0f5a62', fontWeight: 600 }}>Escanea este QR para pagar tu reserva</p>
+                      <img src="/Logo-Tu-Prestamo.png" alt="QR de pago Tu Préstamo" style={{ width: 180, height: 180, objectFit: 'contain' }} />
+                      <small style={{ color: '#55747b' }}>Monto exacto: Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+                    </div>
+                  )}
+                  {payMode === 'transfer' && (
+                    <div style={{ padding: 10, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <p style={{ margin: 0, color: '#0f5a62', fontWeight: 600 }}>Datos de transferencia</p>
+                      <div style={{ color: '#0d1a26' }}>Banco: Ganadero · Cuenta Corriente</div>
+                      <div style={{ color: '#0d1a26' }}>N° de cuenta: 000-0000000</div>
+                      <div style={{ color: '#0d1a26' }}>Beneficiario: Tu Préstamo Bolivia SRL</div>
+                      <div style={{ color: '#0d1a26' }}>Moneda: Bolivianos</div>
+                      <small style={{ color: '#55747b' }}>Monto exacto: Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
