@@ -18,33 +18,28 @@ Este documento describe el flujo de usuario y técnico completo, desde la solici
 
 ---
 
-## Fase 2: Dashboard Provisional y Carga de Documentos [🚧 En Progreso]
+## Fase 2: Dashboard Provisional y Carga de Documentos [✅ Completado]
 
 1.  **Acceso al Dashboard de Conversión:** El usuario ingresa a su `BorrowerDashboard.jsx`, que le muestra una **simulación de su cuota y ahorro potencial** basada en los datos estimados que proveyó.
 2.  **Objetivo: Motivar la Carga:** El propósito de este dashboard es actuar como una **herramienta de conversión**, mostrando los beneficios para incentivar al usuario a completar el siguiente paso.
 3.  **Transparencia:** Junto a los cálculos provisionales, se muestra un aviso legal claro: *"LA CUOTA MENSUAL FINAL SE DEFINIRÁ CUANDO CONFIRMEMOS TU SALDO DEUDOR"*.
 4.  **Carga de Documentos:** El usuario sube los documentos requeridos (CI, extracto de tarjeta, etc.) a través del mismo dashboard.
-5.  **Síntesis de Perfil (Automático):** `[🚧 En Progreso / 🔒 Bloqueado por Supabase]` Una vez completada la carga, se dispara la Edge Function `sintetizar-perfil-riesgo` para consolidar la información y prepararla para la revisión del analista.
+5.  **Síntesis de Perfil:** `[🚧 En Progreso]` La revisión es manual desde el Scorecard; la función `sintetizar-perfil-riesgo` queda pendiente para automatizar.
 
 ---
 
-## Fase 3: Verificación y Aprobación Final (Flujo del Analista) [🚧 Parcialmente Completado]
+## Fase 3: Verificación y Aprobación Final (Flujo del Analista) [✅ Completado]
 
 1.  **Revisión del Perfil:** `[✅ Completado]` El analista de riesgo (Sarai) ve el nuevo perfil en su `RiskAnalystDashboard.jsx` (Scorecard Digital).
 2.  **Verificación de Documentos:** `[✅ Completado]` Sarai revisa los documentos para validar la información del cliente directamente desde el Scorecard.
-3.  **Paso Crítico: Verificación de Deuda:** `[❌ Pendiente]`
-    *   Sarai abre el **extracto de la tarjeta de crédito**.
-    *   Compara el `monto_solicitado` por el cliente con el saldo real.
-    *   **Funcionalidad Faltante:** Se debe añadir un campo en el Scorecard para que Sarai ingrese el `saldo_deudor_verificado`.
-4.  **Cálculo "Gross-Up" (Automático):** `[❌ Pendiente]`
-    *   Al guardar el `saldo_deudor_verificado`, el sistema **automáticamente** debe calcular el `monto_total_del_prestamo` final.
-    *   **Fórmula:** `Monto Total del Préstamo = Saldo Deudor Verificado / (1 - Tasa de Comisión)`
-5.  **Decisión Final:** `[✅ Completado]` Con los datos disponibles, Sarai toma la decisión final de "Aprobar" o "Rechazar" en el sistema a través de un modal.
+3.  **Paso Crítico: Verificación de Deuda:** `[✅ Completado]` El analista ingresa el **saldo deudor verificado** en el Scorecard.
+4.  **Cálculo "Gross-Up" (Automático):** `[✅ Completado]` Se calcula el monto bruto con mínimo Bs 450 hasta 10k o % por perfil sobre 10k.
+5.  **Decisión Final:** `[✅ Completado]` El modal registra en `decisiones_de_riesgo`, actualiza estados y dispara el correo de propuesta.
 
 ---
 
-## Fase 4: Desembolso Dirigido [❌ Pendiente]
+## Fase 4: Desembolso Dirigido [🚧 En Progreso]
 
-1.  **Notificación al Prestatario:** El prestatario es notificado de la aprobación final y ve los términos finales (no editables) en su dashboard.
-2.  **Desembolso Indirecto:** El equipo de operaciones de Tu Préstamo transfiere el `monto_neto_desembolsado` (que es igual al `saldo_deudor_verificado`) directamente a la institución financiera del cliente para liquidar la deuda de la tarjeta de crédito.
-3.  **Cierre del Ciclo:** Se confirma el cierre de la deuda y el préstamo del cliente con Tu Préstamo queda oficialmente activo.
+1.  **Notificación al Prestatario:** `[✅]` Correo de propuesta branded con CTA; dashboard de propuesta muestra términos finales, admin/seguro prorrateado y tabla de amortización.
+2.  **Publicación a inversionistas:** `[✅]` Al aceptar la propuesta, la oportunidad queda `disponible` para fondeo.
+3.  **Desembolso dirigido:** `[❌ Pendiente]` Automatizar el pago directo al banco acreedor, generar comprobante para el prestatario y marcar el préstamo como activo.

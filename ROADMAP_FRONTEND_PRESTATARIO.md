@@ -1,74 +1,34 @@
-# Roadmap de Frontend del Prestatario
+# Roadmap de Frontend del Prestatario (MVP actual)
 
-Este documento describe el viaje del usuario prestatario a través de la interfaz de la aplicación, explicando qué componentes de React ve en cada etapa.
-
-**Leyenda de Estados:**
-*   `[✅ Completado]`
-*   `[🚧 En Progreso]`
-*   `[🔒 Bloqueado]`
-*   `[❌ Pendiente]`
+Describe el recorrido visible en la UI, desde el landing hasta el pago mensual con QR, alineado a transparencia total. Leyenda: `[✅ Completado]` `[🚧 En Progreso]` `[❌ Pendiente]`.
 
 ---
 
-### **Etapa 1: Descubrimiento y Solicitud (Usuario Anónimo) [✅ Completado]**
+### Etapa 1: Descubrimiento y Solicitud [✅]
+- **Landing + simulador**: calculadora pública y CTA a solicitar.
+- **Formulario inicial (`LoanRequestForm.jsx`)**: datos básicos + consentimiento buró.
 
-El usuario llega a la página principal y queremos captar su interés y datos iniciales.
+### Etapa 2: Activación de cuenta [✅]
+- **Correo de bienvenida** con enlace a elegir contraseña.
+- **`BorrowerActivateAccount.jsx`** para setear contraseña y entrar al panel.
 
-1.  **Descubrimiento y Simulación (`LandingPage.jsx`, `PublicSavingsCalculator.jsx`)**
-    *   El usuario explora la página principal y puede usar una calculadora pública para estimar ahorros.
+### Etapa 3: Dashboard de conversión y documentos [✅]
+- **`BorrowerDashboard.jsx`** muestra cuota estimada y ahorro potencial (sobre monto estimado) con disclaimer: “La cuota final se define al confirmar tu saldo deudor”.
+- CTA a **cargar documentos** requeridos; estado de pendientes/OK.
 
-2.  **Solicitud Inicial y Consentimiento (`LoanRequestForm.jsx`)**
-    *   Se abre el formulario modal principal donde el usuario ingresa su información básica.
-    *   **Punto Clave (Infocred):** Se incluye el texto legal y la casilla de autorización para consulta de burós de crédito.
+### Etapa 4: Oferta final y publicación [✅]
+- Estado **En revisión** hasta que riesgo valida documentos.
+- Vista de **propuesta** con monto bruto (incluye originación), neto a banco, tasa, plazo, admin+seguro, tabla de amortización y transparencia total.
+- CTA **Aceptar** → la oportunidad pasa a `disponible` para inversionistas; el prestatario ve “Publicada”.
+- Se muestra **comisión de originación** destacada bajo “Costos Únicos al Desembolso”.
 
----
+### Etapa 5: Préstamo activo y pagos mensuales [🚧]
+- Al fondearse, el panel debe cambiar a **Préstamo Activo** y mostrar plan de pagos.
+- **QR mensual en el panel**: generar y mostrar QR / datos de pago cada mes (hoy manual). Texto claro de fecha límite y monto.
+- **Subida de comprobante**: el prestatario puede subir evidencia de pago mensual (bucket privado).
+- Estado de cuota: pendiente/pagada/mora. Notificación in-app al registrar pago.
 
-### **Etapa 2: Activación de la Cuenta [✅ Completado]**
-
-El sistema ya tiene los datos básicos del prospecto y lo invita a crear su cuenta.
-
-1.  **Recepción de Correo de Bienvenida**
-    *   El usuario recibe un email automático con un enlace único para activar su cuenta.
-
-2.  **Creación de Contraseña (`BorrowerActivateAccount.jsx`)**
-    *   Al hacer clic en el enlace, es llevado a una página especial para elegir y confirmar su contraseña.
-
----
-
-### **Etapa 3: Dashboard Provisional y Carga de Documentos (Conversión) [🚧 En Progreso]**
-
-El usuario ya tiene acceso a su panel de control, que ahora actúa como una herramienta de conversión.
-
-1.  **Dashboard de Conversión (`BorrowerDashboard.jsx`)**
-    *   Al iniciar sesión, el usuario ve un dashboard diseñado para motivarlo a completar el proceso.
-    *   **Cálculos Provisionales:** Se le presenta una **cuota mensual promedio estimada** y visualizaciones de ahorro potencial, calculadas a partir de los datos que él mismo proveyó.
-    *   **Disclaimer de Transparencia:** Para gestionar sus expectativas, se muestra un aviso claro:
-        > *"LA CUOTA MENSUAL FINAL SE DEFINIRÁ CUANDO CONFIRMEMOS TU SALDO DEUDOR"*
-
-2.  **Llamada a la Acción: Carga de Documentos (`BorrowerDashboard.jsx`)**
-    *   El objetivo del dashboard es llevar al usuario a la sección de carga de documentos.
-    *   La interfaz muestra la lista de documentos requeridos y permite su subida, confirmando cada éxito y actualizando los pendientes.
-
----
-
-### **Etapa 4: Evaluación y Oferta [🚧 Parcialmente Completado]**
-
-El usuario ha subido todos sus documentos y ahora espera la respuesta del sistema.
-
-1.  **Estado "En Revisión" (`BorrowerDashboard.jsx`) [✅ Completado]**
-    *   Una vez que todos los documentos están subidos, el dashboard cambia su estado a "Tu solicitud está siendo revisada".
-
-2.  **Visualización de la Oferta (Componente `LoanOffer.jsx`) [❌ Pendiente]**
-    *   Cuando su préstamo es aprobado, el dashboard debe mostrar: "¡Tenemos una oferta para ti!".
-    *   Se debe construir el componente que muestre los detalles finales de la oferta (monto, tasa, etc.) y los botones para "Aceptar" o "Rechazar".
-
----
-
-### **Etapa 5: Desembolso y Ciclo del Préstamo [❌ Pendiente]**
-
-1.  **Firma y Desembolso (Flujo Futuro)**
-    *   Al aceptar la oferta, se debe iniciar el proceso legal y de desembolso.
-    *   El dashboard debe actualizarse a "Préstamo Activo".
-
-2.  **Visualización de Pagos (`BorrowerDashboard.jsx`)**
-    *   El dashboard deberá mostrar el plan de pagos, fechas de vencimiento y estado de cuotas del préstamo activo.
+### Etapa 6: Experiencia continua [🚧]
+- Historial de pagos y próximos vencimientos en cards compactas.
+- Alertas in-app y, si aplica, email/SMS recordatorio (cuidar quota de Resend).
+- Botón de soporte / ayuda contextual para pagos.

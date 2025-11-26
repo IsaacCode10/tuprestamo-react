@@ -1,86 +1,33 @@
-# Roadmap de Backend del Prestatario (V2 - Actualizado)
+# Roadmap de Backend del Prestatario (MVP actual)
 
-Este documento detalla los procesos del lado del servidor que dan soporte al viaje del prestatario, reflejando el modelo de decisión automática.
-
-**Leyenda de Estados:**
-*   `[✅ Completado]`
-*   `[🚧 En Progreso]`
-*   `[🔒 Bloqueado]`
-*   `[❌ Pendiente]`
+Flujo server-side desde la solicitud hasta el pago mensual y comprobantes. Leyenda: `[✅ Completado]` `[🚧 En Progreso]` `[❌ Pendiente]`.
 
 ---
 
-### **Etapa 1: Solicitud y Decisión Automática (Motor de Decisión) [✅ Completado]**
+### Etapa 1: Solicitud y decisión inicial [✅]
+- Insert en `solicitudes` vía `LoanRequestForm.jsx` con consentimiento buró.
+- Trigger → edge `handle-new-solicitud`: scorecard, perfil de riesgo, cálculo preliminar, creación de `oportunidad` provisional y cuenta Auth.
+- Actualiza `solicitudes` a `pre-aprobado` o `rechazado` y envía correo de bienvenida/estado.
 
-Esta etapa se inicia cuando el usuario anónimo envía el primer formulario y se resuelve en segundos.
+### Etapa 2: Activación y documentos [✅]
+- Magic link/activación de contraseña.
+- Documentos se almacenan y el estado se refleja en `BorrowerDashboard.jsx`. IA/auto-parse pendiente.
 
-1.  **Recepción y Disparo (Trigger)**
-    *   El frontend envía los datos del `LoanRequestForm.jsx`.
-    *   Se inserta una nueva fila en la tabla `solicitudes`.
-    *   **Acción Crítica:** Un trigger en la base de datos detecta la nueva fila e invoca la Edge Function `handle-new-solicitud`, pasándole los datos de la solicitud.
+### Etapa 3: Síntesis y propuesta final [🚧]
+- Función `sintetizar-perfil-riesgo` pendiente de automatizar; hoy revisión manual en Scorecard.
+- Analista registra `saldo_deudor_verificado`, calcula monto bruto (incluye originación mínima 450), tasa y plazo; guarda en `decisiones_de_riesgo`, `oportunidades` y `solicitudes`.
+- Edge/envío de correo de propuesta final; dashboard muestra transparencia (incluye comisión de originación bajo Costos Únicos al Desembolso).
 
-2.  **Ejecución del Motor de Decisión (`handle-new-solicitud`)**
-    *   La función recibe los datos y ejecuta el `runRiskScorecard` para asignar un perfil de riesgo (A, B, C, o Rechazado).
-    *   Se abren dos posibles caminos:
+### Etapa 4: Publicación y fondeo [✅]
+- Al aceptar la propuesta, la `oportunidad` pasa a `disponible` y se publica en el marketplace inversionista.
+- El monto publicado coincide con el monto aprobado (bruto), evitando discrepancias.
 
-    **A) Si es Pre-Aprobado (Perfil A, B, o C):**
-    1.  **Cálculo de Costos Provisionales:** Se realiza un cálculo de costos (cuota promedio, etc.) basado en el **monto estimado** por el cliente. El propósito de este cálculo es alimentar el **dashboard de conversión** inicial.
-    2.  **Creación de la Oportunidad:** Se inserta una nueva fila en la tabla `oportunidades` con el `solicitud_id`, el perfil de riesgo, y los costos **provisionales** calculados.
-    3.  **Creación de Usuario:** Se crea una nueva cuenta para el prestatario en Supabase Auth.
-    4.  **Envío de Correo de Activación:** Se genera un "magic link" y se envía un correo de bienvenida, invitando al usuario a activar su cuenta y ver su dashboard provisional.
-    5.  **Actualización de la Solicitud:** Se actualiza la fila original en `solicitudes` al estado `pre-aprobado`, enlazando el `user_id` y el `opportunity_id` recién creados.
+### Etapa 5: Préstamo activo y cobranza [🚧]
+- `borrower_payment_intents`: cuotas mensuales con `expected_amount`, `due_date`, `status`, `receipt_url` opcional.
+- Operaciones marca pago vía RPC `process_borrower_payment` (puede adjuntar comprobante). Genera `payouts_inversionistas` pendientes descontando 1% comisión servicio.
+- Bucket `comprobantes-pagos` guarda recibos (público-no, privado). Notificaciones in-app al registrar pago.
+- Pendiente: generación automática del plan de pagos y cron de vencimientos/notificaciones.
 
-    **B) Si es Rechazado:**
-    1.  **Actualización de la Solicitud:** Se actualiza la fila en `solicitudes` al estado `rechazado`.
-    2.  **Envío de Correo de Notificación:** Se envía un correo al usuario informándole que su solicitud no pudo ser procesada en este momento.
-
----
-
-### **Etapa 2: Activación de Usuario [✅ Completado]**
-
-1.  **Manejo de Contraseña**
-    *   El frontend (`BorrowerActivateAccount.jsx`) se comunica con Supabase Auth.
-    *   Supabase Auth valida el token del usuario, actualiza su estado a "activo" y almacena de forma segura su nueva contraseña.
-
----
-
-### **Etapa 3: Análisis de Documentos (Proceso Asíncrono) [🚧 En Progreso]**
-
-Ocurre a medida que el usuario sube sus documentos en su dashboard.
-
-1.  **Recepción y Análisis IA**
-    *   Cada subida de archivo desde el `BorrowerDashboard.jsx` dispara la función `analizar-documento`.
-    *   La IA extrae la información relevante del documento.
-    *   El resultado se guarda en la tabla `analisis_documentos`.
-    *   *Nota: La implementación de la IA para la extracción de datos aún está en desarrollo.*
-
----
-
-### **Etapa 4: Síntesis del Perfil de Riesgo [🚧 En Progreso / 🔒 Bloqueado]**
-
-Se activa automáticamente cuando todos los documentos requeridos han sido analizados.
-
-1.  **Verificación e Invocación**
-    *   Una lógica (`checkAndTriggerSynthesis`) verifica que todos los documentos para una solicitud están completos y analizados.
-    *   Si es así, se invoca la Edge Function `sintetizar-perfil-riesgo`.
-
-2.  **Consolidación y Creación del Perfil**
-    *   La función une todos los datos de `analisis_documentos` y `solicitudes`.
-    *   Calcula métricas finales (DTI verificado, etc.).
-    *   Inserta una única fila en la tabla `perfiles_de_riesgo` con estado `listo_para_revision`.
-    *   ***Nota: La Edge Function está desarrollada, pero su despliegue y pruebas están bloqueados por inestabilidad de la plataforma Supabase (timeouts y gestión de secretos).***
-
----
-
-### **Etapa 5: Decisión Humana Final y Activación del Préstamo [✅ Completado]**
-
-Aquí interviene el analista de riesgo para la aprobación definitiva.
-
-1.  **Revisión y Decisión del Analista**
-    *   El analista revisa el perfil completo en su `RiskAnalystDashboard.jsx`.
-    *   Registra la decisión final ("Aprobar" / "Rechazar") en la tabla `decisiones_de_riesgo`.
-    *   ***Nota: Implementado a través del Scorecard Digital en el frontend, que escribe directamente en la tabla `decisiones_de_riesgo` y actualiza el estado en `perfiles_de_riesgo` a 'Revisado'.***
-
-2.  **Activación de la Oportunidad [❌ Pendiente]**
-    *   Si la decisión fue "Aprobar", el sistema actualiza el estado de la `oportunidad` (creada en la Etapa 1) a `aprobado` o `financiado`.
-    *   Esta acción hace que el préstamo sea visible para los inversionistas y da inicio al proceso de desembolso.
+### Etapa 6: Payouts a inversionistas y cierre [🚧]
+- RPC `mark_payout_paid` permite a Operaciones cargar comprobante y notificar inversionistas.
+- Falta: completar UI/portafolio para que prestatario vea histórico de pagos y próximos vencimientos.
