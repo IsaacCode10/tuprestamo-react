@@ -19,6 +19,7 @@ const OpportunityDetail = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState({ type: '', text: '' });
   const [intentInfo, setIntentInfo] = useState(null); // Datos del intent/QR mostrado al usuario
+  const [countdown, setCountdown] = useState(''); // Temporizador de expiración
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -70,6 +71,7 @@ const OpportunityDetail = () => {
     setIsSubmitting(true);
     setFormMessage({ type: '', text: '' });
     setIntentInfo(null);
+    setCountdown('');
 
     const amount = parseFloat(investmentAmount);
     if (isNaN(amount) || amount <= 0) {
@@ -175,6 +177,7 @@ const OpportunityDetail = () => {
         expected_amount: intent?.expected_amount || amount,
         expires_at: intent?.expires_at || expiresAt.toISOString(),
       });
+      setCountdown(''); // se recalcula en useEffect
       setInvestmentAmount('');
       // Refresh data after successful intent to update barra (no suma hasta estado pagado)
       setTimeout(() => {
@@ -188,6 +191,25 @@ const OpportunityDetail = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Countdown para expiración del intent
+  useEffect(() => {
+    if (!intentInfo?.expires_at) return;
+    const target = new Date(intentInfo.expires_at).getTime();
+    const tick = () => {
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        setCountdown('Expirada');
+        return;
+      }
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setCountdown(`${hours}h ${minutes}m restantes`);
+    };
+    tick();
+    const id = setInterval(tick, 60 * 1000);
+    return () => clearInterval(id);
+  }, [intentInfo?.expires_at]);
 
 
   if (loading) {
@@ -262,18 +284,33 @@ const OpportunityDetail = () => {
           )}
       </div>
 
-      <div style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-        <p><strong>Monto Total de la Oportunidad:</strong> Bs. {opportunity.monto.toLocaleString('es-BO')}</p>
-        <p><strong>Perfil de Riesgo:</strong> {opportunity.perfil_riesgo}</p>
-        <p><strong>Rendimiento Anual Bruto:</strong> {rendimientoBruto.toFixed(2)}%</p>
-        <p><strong>Plazo:</strong> {opportunity.plazo_meses} meses</p>
-        <p><strong>Comisión de Servicio:</strong> {comisionServicio}%</p>
-        <p><strong>Rendimiento Neto Estimado:</strong> {rendimientoNeto.toFixed(2)}%</p>
+      <div style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+        <div>
+          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Monto de la oportunidad</p>
+          <p style={{ margin: 0, fontWeight: 700 }}>Bs. {opportunity.monto.toLocaleString('es-BO')}</p>
+        </div>
+        <div>
+          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Rendimiento anual</p>
+          <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoBruto.toFixed(2)}%</p>
+        </div>
+        <div>
+          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Rend. neto estimado</p>
+          <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoNeto.toFixed(2)}%</p>
+        </div>
+        <div>
+          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Plazo</p>
+          <p style={{ margin: 0, fontWeight: 700 }}>{opportunity.plazo_meses} meses</p>
+        </div>
+        <div>
+          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Cupo restante</p>
+          <p style={{ margin: 0, fontWeight: 700 }}>Bs. {remainingAmount.toLocaleString('es-BO')}</p>
+        </div>
       </div>
 
       {remainingAmount > 0 ? (
         <div className="investment-form" style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '8px' }}>
           <h3>Invertir en esta Oportunidad</h3>
+          <p style={{ marginTop: 0, color: '#0f5a62' }}>Paga el monto exacto con el QR en tu panel y confirmaremos tu fondeo al conciliar.</p>
           <form onSubmit={handleInvestment}>
             <div style={{ marginBottom: '15px' }}>
               <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
@@ -288,23 +325,26 @@ const OpportunityDetail = () => {
               />
             </div>
             <button type="submit" disabled={isSubmitting} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-              {isSubmitting ? 'Registrando...' : 'Quiero Invertir'}
+              {isSubmitting ? 'Registrando...' : 'Invertir ahora'}
             </button>
           </form>
           {formMessage.text && (
-            <p style={{ color: formMessage.type === 'error' ? 'red' : 'green', marginTop: '15px' }}>
+            <p style={{ color: formMessage.type === 'error' ? 'red' : '#0f5a62', marginTop: '15px', fontWeight: formMessage.type === 'error' ? 600 : 600 }}>
               {formMessage.text}
             </p>
           )}
           {intentInfo && (
             <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
-              <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Pasos para confirmar tu fondeo</p>
-              <ol style={{ paddingLeft: 18, margin: '0 0 8px 0' }}>
-                <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR genérico.</li>
-                <li>Hazlo antes de <strong>{new Date(intentInfo.expires_at).toLocaleString('es-BO')}</strong>. Si vence, la reserva expira.</li>
-                <li>No necesitas subir comprobante; nosotros conciliamos el pago y te avisamos.</li>
-              </ol>
-              <p style={{ margin: 0, fontSize: 13, color: '#0f5a62' }}>Si ya pagaste, verás tu inversión como “pagada” al cerrar la conciliación.</p>
+              <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada</p>
+              <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
+                <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
+                <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
+                <li>No subas comprobante; te avisaremos cuando conciliemos tu pago.</li>
+                <li>Usamos tu pago para cancelar tu tarjeta en tu banco.</li>
+              </ul>
+              {countdown === 'Expirada' && (
+                <p style={{ margin: 0, color: '#b71c1c', fontWeight: 700 }}>La reserva expiró. Genera una nueva para invertir.</p>
+              )}
             </div>
           )}
         </div>
