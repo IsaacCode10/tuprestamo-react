@@ -13,6 +13,7 @@ type Opportunity = {
   perfil_riesgo: string | null
   tasa_rendimiento_inversionista: number | null
   comision_servicio_inversionista_porcentaje: number | null
+  created_at?: string | null
 }
 
 const MAX_RECIPIENTS = 200 // proteger free tier Resend
@@ -58,12 +59,7 @@ const renderHtml = (ops: Opportunity[], appBase: string) => {
           </tr>
           <tr>
             <td style="padding:18px 20px; text-align:center;">
-              <a href="${appBase}/oportunidades" target="_blank" style="display:inline-block; background:#26C2B2; color:#fff; text-decoration:none; font-weight:700; padding:12px 20px; border-radius:8px;">Ver oportunidades</a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 20px 18px 20px; font-size:12px; color:#556; line-height:1.5;">
-              Recibes este correo porque estás registrado como inversionista verificado. Enviamos como digest semanal para cuidar la cuota gratuita de Resend.
+              <a href="${appBase}/oportunidades" target="_blank" style="display:inline-block; background:#26C2B2; color:#fff; text-decoration:none; font-weight:700; padding:12px 20px; border-radius:10px; box-shadow:0 4px 10px rgba(0,68,90,0.15);">Ver oportunidades</a>
             </td>
           </tr>
         </table>
@@ -97,13 +93,18 @@ serve(async (req) => {
     // 1) Oportunidades disponibles (solo las que se publicaron y aún tienen cupo)
     const { data: opps, error: oppErr } = await supabase
       .from('oportunidades')
-      .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje')
+      .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista, comision_servicio_inversionista_porcentaje, created_at, solicitudes:solicitud_id(estado)')
       .eq('estado', 'disponible')
       .order('created_at', { ascending: false })
       .limit(20)
     if (oppErr) throw oppErr
 
-    if (!opps || opps.length === 0) {
+    const filteredOpps = (opps || []).filter((o: any) => {
+      const solicitudEstado = Array.isArray(o.solicitudes) && o.solicitudes.length > 0 ? o.solicitudes[0]?.estado : null
+      return solicitudEstado === 'prestatario_acepto'
+    })
+
+    if (!filteredOpps || filteredOpps.length === 0) {
       return new Response(JSON.stringify({ message: 'Sin oportunidades disponibles; no se envía digest.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
@@ -127,9 +128,9 @@ serve(async (req) => {
       })
     }
 
-    const html = renderHtml(opps, appBase)
-    const text = `Tienes ${opps.length} oportunidad(es) disponibles. Ingresa a ${appBase}/oportunidades para ver detalles.`
-    const subject = `Oportunidades publicadas - ${opps.length} abiertas`
+    const html = renderHtml(filteredOpps, appBase)
+    const text = `Tienes ${filteredOpps.length} oportunidad(es) disponibles. Ingresa a ${appBase}/oportunidades para ver detalles.`
+    const subject = `Oportunidades publicadas - ${filteredOpps.length} abiertas`
     const toList = investors.map(i => i.email as string)
 
     await resend.emails.send({

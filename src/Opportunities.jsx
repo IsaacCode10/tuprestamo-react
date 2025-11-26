@@ -76,6 +76,7 @@ const OpportunityCard = ({ opp }) => {
 
 const Opportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
+  const [allOpportunities, setAllOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -104,7 +105,9 @@ const Opportunities = () => {
           saldo_pendiente: o?.saldo_pendiente != null ? Number(o.saldo_pendiente) : null,
           created_at: o?.created_at ? new Date(o.created_at) : null,
         }));
+        setAllOpportunities(list);
         setOpportunities(list);
+        setPage(1);
       }
       setLoading(false);
     };
@@ -119,43 +122,24 @@ const Opportunities = () => {
     }
   }, [location.search]);
 
-  const applyFilters = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase.rpc('get_opportunities_publicadas');
-      if (error) throw error;
-      let list = (data || []).map(o => ({
-        ...o,
-        total_funded: Number(o?.total_funded || 0),
-        saldo_pendiente: o?.saldo_pendiente != null ? Number(o.saldo_pendiente) : null,
-        created_at: o?.created_at ? new Date(o.created_at) : null,
-      }));
-      if (filters.minRate) list = list.filter(o => Number(o.tasa_rendimiento_inversionista || 0) >= Number(filters.minRate));
-      if (filters.maxMonths) list = list.filter(o => Number(o.plazo_meses || 0) <= Number(filters.maxMonths));
-      setOpportunities(list);
-      trackEvent('Marketplace_Filter_Applied', { min_rate: filters.minRate, max_months: filters.maxMonths });
-    } catch (e) {
-      console.error('Filter fetch error:', e);
-      setError('No se pudieron aplicar los filtros.');
-    } finally {
-      setLoading(false);
-    }
+  // Reaplicar filtros en memoria cuando cambian filtros o base de datos
+  useEffect(() => {
+    let list = [...allOpportunities];
+    if (filters.minRate) list = list.filter(o => Number(o.tasa_rendimiento_inversionista || 0) >= Number(filters.minRate));
+    if (filters.maxMonths) list = list.filter(o => Number(o.plazo_meses || 0) <= Number(filters.maxMonths));
+    setOpportunities(list);
+    setPage(1);
+  }, [filters, allOpportunities]);
+
+  const handleFilterChange = (nextFilters) => {
+    setFilters(nextFilters);
+    trackEvent('Marketplace_Filter_Applied', { min_rate: nextFilters.minRate, max_months: nextFilters.maxMonths });
   };
 
   const resetFilters = async () => {
     setFilters({ minRate: '', maxMonths: '' });
-    navigate('/oportunidades', { replace: true });
-    setLoading(true);
-    const { data } = await supabase.rpc('get_opportunities_publicadas');
-    const list = (data || []).map(o => ({
-      ...o,
-      total_funded: Number(o?.total_funded || 0),
-      saldo_pendiente: o?.saldo_pendiente != null ? Number(o.saldo_pendiente) : null,
-      created_at: o?.created_at ? new Date(o.created_at) : null,
-    }));
-    setOpportunities(list);
-    setLoading(false);
+    setOpportunities(allOpportunities);
+    setPage(1);
   };
 
   const totalPages = Math.max(1, Math.ceil((opportunities || []).length / PAGE_SIZE));
@@ -169,6 +153,9 @@ const Opportunities = () => {
   })();
 
   const summaryText = `${opportunities.length} oportunidad${opportunities.length === 1 ? '' : 'es'} disponibles`;
+  const totalText = allOpportunities.length > 0 && opportunities.length !== allOpportunities.length
+    ? `Mostrando ${opportunities.length} de ${allOpportunities.length}`
+    : null;
 
   if (loading) {
     return <p>Cargando oportunidades...</p>;
@@ -192,6 +179,11 @@ const Opportunities = () => {
             {lastPublished ? `Última publicada: ${lastPublished.toLocaleDateString('es-BO')}` : 'Publicaciones recientes disponibles'}
           </div>
         </div>
+        {totalText && (
+          <div className="summary-count" style={{ color: '#55747b', fontWeight: 600 }}>
+            {totalText}
+          </div>
+        )}
       </div>
       <div className="filters-bar">
         <button className="btn btn--secondary" onClick={() => setShowFilters(v => !v)}>
@@ -210,7 +202,7 @@ const Opportunities = () => {
                     role="tab"
                     aria-pressed={active}
                     className={['segmented__item', active ? 'is-active' : ''].filter(Boolean).join(' ')}
-                    onClick={() => { setFilters(f => ({ ...f, minRate: String(r) })); applyFilters(); }}
+                    onClick={() => handleFilterChange({ ...filters, minRate: String(r) })}
                   >{r}%</button>
                 );
               })}
@@ -226,7 +218,7 @@ const Opportunities = () => {
                     role="tab"
                     aria-pressed={active}
                     className={['segmented__item', active ? 'is-active' : ''].filter(Boolean).join(' ')}
-                    onClick={() => { setFilters(f => ({ ...f, maxMonths: String(m) })); applyFilters(); }}
+                    onClick={() => handleFilterChange({ ...filters, maxMonths: String(m) })}
                   >{m}m</button>
                 );
               })}
