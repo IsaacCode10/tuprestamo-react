@@ -71,11 +71,18 @@ const AdminOperations = () => {
   };
 
   const updateIntentStatus = async (id, status) => {
-    const { error } = await supabase.from('payment_intents').update({ status, paid_at: status === 'paid' ? new Date().toISOString() : null }).eq('id', id);
-    if (error) {
-      setError(error.message);
-    } else {
+    try {
+      if (status === 'paid') {
+        // Usar RPC para recalcular fondeo e inversiones pagadas
+        const { error: rpcErr } = await supabase.rpc('mark_payment_intent_paid', { p_intent_id: id });
+        if (rpcErr) throw rpcErr;
+      } else {
+        const { error } = await supabase.from('payment_intents').update({ status }).eq('id', id);
+        if (error) throw error;
+      }
       loadIntents();
+    } catch (e) {
+      setError((e).message || 'Error al actualizar intent');
     }
   };
 
