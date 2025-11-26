@@ -28,6 +28,7 @@ import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
 import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
 import Profile from './Profile.jsx';
 import NotAvailable from './NotAvailable.jsx'; // <-- IMPORTAMOS LA NUEVA PÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂGINA
+import AdminOperations from '@/AdminOperations.jsx';
 
 // Componente "Guardia" especÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­fico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
@@ -157,6 +158,7 @@ function App() {
     '/investor-dashboard',
     '/admin/manage-investors',
     '/dashboard-analista',
+    '/admin/operaciones',
     '/borrower-dashboard',
     '/perfil'
   ];
@@ -200,6 +202,14 @@ function App() {
             element={
               <AdminRoute profile={profile} loading={loading}>
                 <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route 
+            path="/admin/operaciones" 
+            element={
+              <AdminRoute profile={profile} loading={loading}>
+                <AdminOperations />
               </AdminRoute>
             }
           />
@@ -284,7 +294,4 @@ function App() {
 }
 
 export default App;
-
-
-
 
