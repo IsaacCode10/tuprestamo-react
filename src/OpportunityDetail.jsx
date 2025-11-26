@@ -294,7 +294,10 @@ const OpportunityDetail = () => {
           <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoBruto.toFixed(2)}%</p>
         </div>
         <div>
-          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Rend. neto estimado</p>
+          <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>
+            Rend. neto estimado
+            <span title="Incluye comisión de servicio 1% sobre cada pago (capital+interés)" style={{ marginLeft: 4, color: '#0f5a62' }}>ℹ️</span>
+          </p>
           <p style={{ margin: 0, fontWeight: 700 }}>{rendimientoNeto.toFixed(2)}%</p>
         </div>
         <div>
@@ -311,20 +314,20 @@ const OpportunityDetail = () => {
         <>
         <div style={{ border: '1px solid #e6f2f4', background: '#f7fbfc', padding: '12px', borderRadius: 10, marginBottom: 12 }}>
           <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#00445A' }}>¿Por qué invertir aquí?</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span role="img" aria-label="calendario">📅</span>
-              <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Cobros mensuales de capital + interés (no al final como un DPF).</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span role="img" aria-label="reinvertir">🔄</span>
-              <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Reinvierte tus cobros para generar interés compuesto.</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span role="img" aria-label="transparencia">🔍</span>
-              <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Transparencia: cobramos 1% sobre cada pago recibido; sin cargos ocultos.</div>
-            </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span role="img" aria-label="calendario">📅</span>
+            <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Cobros mensuales de capital + interés.</div>
           </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span role="img" aria-label="reinvertir">🔄</span>
+            <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Reinvierte tus cobros para generar interés compuesto.</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span role="img" aria-label="transparencia">🔍</span>
+            <div style={{ fontSize: '0.95rem', color: '#0f5a62' }}>Transparencia: cobramos 1% sobre cada pago recibido; sin cargos ocultos.</div>
+          </div>
+        </div>
         </div>
 
         <div className="investment-form" style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '8px' }}>
