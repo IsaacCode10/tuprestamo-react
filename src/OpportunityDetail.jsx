@@ -27,6 +27,7 @@ const OpportunityDetail = () => {
   const fileInputRef = useRef(null);
   const qrSrc = '/qr-pago.png'; // QR estático desde /public; reemplazar por QR dinámico si se dispone
   const [showQrModal, setShowQrModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -240,6 +241,27 @@ const OpportunityDetail = () => {
     setCountdown('');
     setPayMode('qr');
     handleInvestment({ preventDefault() {} });
+  };
+
+  const cancelCurrentIntent = async () => {
+    if (!intentInfo?.id) return;
+    setIsCancelling(true);
+    try {
+      const { error: cancelErr } = await supabase.rpc('cancel_investment_intent', {
+        p_payment_intent_id: intentInfo.id,
+      });
+      if (cancelErr) throw cancelErr;
+      setFormMessage({ type: 'success', text: 'Reserva cancelada. Ingresa un nuevo monto si deseas cambiar tu inversión.' });
+      setIntentInfo(null);
+      setCountdown('');
+      setInvestmentAmount('');
+      fetchOpportunity();
+    } catch (e) {
+      console.error('Error cancelling intent', e);
+      setFormMessage({ type: 'error', text: 'No pudimos cancelar la reserva. Intenta nuevamente.' });
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const uploadReceipt = async (fileOverride = null) => {
@@ -485,6 +507,9 @@ const OpportunityDetail = () => {
                     />
                     <button className="btn btn--secondary" type="button" onClick={triggerFileSelect}>
                       Subir comprobante
+                    </button>
+                    <button className="btn" type="button" onClick={cancelCurrentIntent} disabled={isCancelling}>
+                      Cambiar monto
                     </button>
                   </div>
               {countdown === 'Expirada' && (
