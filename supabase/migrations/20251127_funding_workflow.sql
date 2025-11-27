@@ -8,6 +8,13 @@
 
 set check_function_bodies = off;
 
+-- Asegura que podamos redefinir las funciones aunque cambie el retorno
+drop function if exists public.get_opportunity_details_with_funding(bigint);
+drop function if exists public.create_investment_intent(bigint, numeric);
+drop function if exists public.mark_payment_intent_paid(uuid, numeric);
+drop function if exists public.expire_payment_intents_sql();
+drop function if exists public.get_contract_payload(bigint);
+
 create or replace function public.get_opportunity_details_with_funding(p_opportunity_id bigint)
 returns table (
   id bigint,
