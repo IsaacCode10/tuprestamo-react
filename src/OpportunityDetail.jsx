@@ -25,7 +25,7 @@ const OpportunityDetail = () => {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [receiptFile, setReceiptFile] = useState(null);
   const fileInputRef = useRef(null);
-  const qrSrc = '/Logo-Tu-Prestamo.png'; // TODO: reemplazar por QR dinámico cuando esté disponible
+  const qrSrc = '/qr-pago.png'; // QR estático desde /public; reemplazar por QR dinámico si se dispone
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
