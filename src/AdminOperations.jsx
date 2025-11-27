@@ -18,6 +18,7 @@ const AdminOperations = () => {
   const [intents, setIntents] = useState([]);
   const [borrowerIntents, setBorrowerIntents] = useState([]);
   const [payouts, setPayouts] = useState([]);
+  const [investorMap, setInvestorMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [receiptFiles, setReceiptFiles] = useState({});
@@ -32,7 +33,21 @@ const AdminOperations = () => {
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) setError(error.message);
-    setIntents(data || []);
+    const rows = data || [];
+    setIntents(rows);
+    // cargar perfiles para mostrar nombre/email en vez de UUID
+    const investorIds = Array.from(new Set(rows.map(r => r.investor_id).filter(Boolean)));
+    if (investorIds.length > 0) {
+      const { data: profs, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, nombre_completo, email')
+        .in('id', investorIds);
+      if (!profErr && profs) {
+        const map = {};
+        profs.forEach(p => { map[p.id] = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim(); });
+        setInvestorMap(map);
+      }
+    }
     setLoading(false);
   };
 
@@ -174,12 +189,12 @@ const AdminOperations = () => {
             <tbody>
               {intents.map((i) => (
                 <tr key={i.id}>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.id}</td>
-                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.investor_id}</td>
-                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
-                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{investorMap[i.investor_id] || i.investor_id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
                 <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                   {i.receipt_url ? <a className="btn" href={supabase.storage.from('comprobantes-pagos').getPublicUrl(i.receipt_url).data.publicUrl} target="_blank" rel="noreferrer">Ver</a> : '—'}
                 </td>
