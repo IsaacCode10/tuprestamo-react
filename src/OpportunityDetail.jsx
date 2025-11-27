@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { trackEvent } from '@/analytics.js';
@@ -23,6 +23,7 @@ const OpportunityDetail = () => {
   const [payMode, setPayMode] = useState('qr'); // 'qr' | 'transfer'
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [receiptFile, setReceiptFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -183,11 +184,12 @@ const OpportunityDetail = () => {
     handleInvestment({ preventDefault() {} });
   };
 
-  const uploadReceipt = async () => {
+  const uploadReceipt = async (fileOverride = null) => {
     try {
-      if (!receiptFile || !intentInfo?.id) return;
-      const path = `payment-intents/${intentInfo.id}_${receiptFile.name}`;
-      const { error: upErr, data } = await supabase.storage.from('comprobantes-pagos').upload(path, receiptFile, { upsert: true });
+      const file = fileOverride || receiptFile;
+      if (!file || !intentInfo?.id) return;
+      const path = `payment-intents/${intentInfo.id}_${file.name}`;
+      const { error: upErr, data } = await supabase.storage.from('comprobantes-pagos').upload(path, file, { upsert: true });
       if (upErr) throw upErr;
       const receiptUrl = data?.path || path;
       const { error: updErr } = await supabase
@@ -200,6 +202,22 @@ const OpportunityDetail = () => {
     } catch (e) {
       console.error('Upload receipt error', e);
       setFormMessage({ type: 'error', text: 'No pudimos subir el comprobante. Intenta nuevamente.' });
+    }
+  };
+
+  const handleSelectReceipt = (e) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      setReceiptFile(file);
+      uploadReceipt(file);
+    }
+    // reset input to allow reselect same file
+    e.target.value = '';
+  };
+
+  const triggerFileSelect = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -377,14 +395,18 @@ const OpportunityDetail = () => {
               <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
                 <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
                 <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
-                    <li>Usamos tu pago para cancelar tu tarjeta en tu banco.</li>
-                  </ul>
-                  <div style={{ marginTop: 8, color: '#0f5a62', fontWeight: 600 }}>
-                    Sube tu comprobante para acelerar la conciliación:
-                    <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} />
-                      <button className="btn btn--secondary" type="button" onClick={uploadReceipt} disabled={!receiptFile}>Subir comprobante</button>
-                    </div>
+              </ul>
+                  <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={handleSelectReceipt}
+                      style={{ display: 'none' }}
+                    />
+                    <button className="btn btn--secondary" type="button" onClick={triggerFileSelect}>
+                      Subir comprobante
+                    </button>
                   </div>
               {countdown === 'Expirada' && (
                 <div style={{ margin: 0, color: '#b71c1c', fontWeight: 700, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
