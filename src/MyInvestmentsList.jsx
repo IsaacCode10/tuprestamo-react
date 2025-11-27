@@ -11,7 +11,6 @@ const MyInvestmentsList = () => {
   const [error, setError] = useState(null);
   const [rows, setRows] = useState([]);
   const [payouts, setPayouts] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [oppsById, setOppsById] = useState({});
 
   useEffect(() => {
@@ -58,15 +57,6 @@ const MyInvestmentsList = () => {
         if (payoutErr) throw payoutErr;
         setPayouts(payoutRows || []);
 
-        // Notificaciones in-app
-        const { data: notifRows, error: notifErr } = await supabase
-          .from('notifications')
-          .select('id, title, body, created_at, read_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10);
-        if (notifErr) throw notifErr;
-        setNotifications(notifRows || []);
       } catch (e) {
         console.error('Error loading portfolio:', e);
         setError('No pudimos cargar tu portafolio. Intenta de nuevo.');
@@ -169,27 +159,6 @@ const MyInvestmentsList = () => {
               </table>
             </div>
           )}
-        </>
-      )}
-
-      {notifications.length > 0 && (
-        <>
-          <h3 style={{ marginTop: 24 }}>Notificaciones</h3>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 8 }}>
-            {notifications.map(n => (
-              <li key={n.id} style={{ padding: 12, border: '1px solid #eee', borderRadius: 8, background: n.read_at ? '#fafafa' : '#eef9f8' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{n.title}</div>
-                    <div style={{ color: '#444' }}>{n.body}</div>
-                  </div>
-                  <div style={{ minWidth: 140, textAlign: 'right', color: '#666', fontSize: 12 }}>
-                    {new Date(n.created_at).toLocaleString('es-BO')}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
         </>
       )}
 

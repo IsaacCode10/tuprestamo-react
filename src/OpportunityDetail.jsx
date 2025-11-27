@@ -191,12 +191,15 @@ const OpportunityDetail = () => {
         expires_at: expiresAt.toISOString(),
       });
       
-      setFormMessage({ type: 'success', text: 'Tu reserva fue creada. Paga el monto exacto antes del vencimiento para confirmar tu fondeo.' });
-      setIntentInfo({
+      const intentPayload = {
+        id: intent?.id,
         expected_amount: intent?.expected_amount || amount,
         expires_at: intent?.expires_at || expiresAt.toISOString(),
         payment_channel: intent?.payment_channel || 'qr',
-      });
+        status: intent?.status || 'pending',
+      };
+      setFormMessage({ type: 'success', text: 'Tu reserva fue creada. Paga el monto exacto antes del vencimiento para confirmar tu fondeo.' });
+      setIntentInfo(intentPayload);
       setCountdown(''); // se recalcula en useEffect
       setInvestmentAmount('');
       // Notificación in-app al inversionista
@@ -205,7 +208,9 @@ const OpportunityDetail = () => {
           await supabase.from('notifications').insert({
             user_id: user.id,
             title: 'Reserva creada',
-            body: `Reserva Bs ${Number(intent?.expected_amount || amount).toLocaleString('es-BO', { minimumFractionDigits: 2 })} vence ${new Date(intent?.expires_at || expiresAt).toLocaleString('es-BO')}`,
+            body: `Reserva Bs ${Number(intentPayload.expected_amount).toLocaleString('es-BO', { minimumFractionDigits: 2 })} vence ${new Date(intentPayload.expires_at).toLocaleString('es-BO')}`,
+            link_url: `/oportunidades/${id}`,
+            type: 'investment_intent',
           });
         }
       } catch (notifErr) {

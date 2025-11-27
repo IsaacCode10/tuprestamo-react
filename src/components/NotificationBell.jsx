@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './NotificationBell.css';
 
-const NotificationBell = ({ notifications, onOpen }) => {
+const NotificationBell = ({ notifications, onOpen, onItemClick }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -20,14 +20,22 @@ const NotificationBell = ({ notifications, onOpen }) => {
           </div>
           <div className="notifications-list">
             {notifications.length > 0 ? (
-              notifications.map(notification => (
-                <div key={notification.id} className={`notification-item ${notification.read ? 'read' : ''}`}>
-                  <div className="notification-content">
-                    <p className="notification-message">{notification.message}</p>
-                    <span className="notification-time">{notification.time}</span>
+              notifications.map(notification => {
+                const clickable = typeof onItemClick === 'function';
+                return (
+                  <div
+                    key={notification.id}
+                    className={`notification-item ${notification.read ? 'read' : ''}`}
+                    onClick={() => clickable ? onItemClick(notification) : null}
+                    style={{ cursor: clickable ? 'pointer' : 'default' }}
+                  >
+                    <div className="notification-content">
+                      <p className="notification-message">{notification.message}</p>
+                      <span className="notification-time">{notification.time}</span>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="no-notifications">No tienes notificaciones nuevas.</p>
             )}

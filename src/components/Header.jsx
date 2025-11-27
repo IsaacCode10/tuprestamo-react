@@ -58,12 +58,18 @@ const Header = () => {
       if (!user) return;
       const { data, error } = await supabase
         .from('notifications')
-        .select('id, title, body, created_at, read_at')
+        .select('id, title, body, link_url, created_at, read_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(15);
       if (!error && Array.isArray(data)) {
-        const mapped = data.map(n => ({ id: n.id, message: n.title || n.body, time: new Date(n.created_at).toLocaleString('es-BO'), read: !!n.read_at }));
+        const mapped = data.map(n => ({
+          id: n.id,
+          message: n.title || n.body,
+          time: new Date(n.created_at).toLocaleString('es-BO'),
+          read: !!n.read_at,
+          link: n.link_url || null,
+        }));
         setNotifications(mapped);
       }
     } catch (_) { /* noop */ }
@@ -81,12 +87,18 @@ const Header = () => {
         if (!user) return;
         const { data, error } = await supabase
           .from('notifications')
-          .select('id, title, body, created_at, read_at')
+          .select('id, title, body, link_url, created_at, read_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(15);
         if (!error && Array.isArray(data)) {
-          const mapped = data.map(n => ({ id: n.id, message: n.title || n.body, time: new Date(n.created_at).toLocaleString('es-BO'), read: !!n.read_at }));
+          const mapped = data.map(n => ({
+            id: n.id,
+            message: n.title || n.body,
+            time: new Date(n.created_at).toLocaleString('es-BO'),
+            read: !!n.read_at,
+            link: n.link_url || null,
+          }));
           setNotifications(mapped);
         }
       } catch (_) { /* noop */ }
@@ -104,7 +116,13 @@ const Header = () => {
         .channel('notif_' + user.id)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
           const r = payload.new;
-          setNotifications(prev => ([{ id: r.id, message: r.title || r.body, time: new Date(r.created_at).toLocaleString('es-BO'), read: !!r.read_at }, ...prev]).slice(0, 15));
+          setNotifications(prev => ([{
+            id: r.id,
+            message: r.title || r.body,
+            time: new Date(r.created_at).toLocaleString('es-BO'),
+            read: !!r.read_at,
+            link: r.link_url || null,
+          }, ...prev]).slice(0, 15));
         })
         .subscribe();
     })();
@@ -118,6 +136,24 @@ const Header = () => {
       await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', user.id).is('read_at', null);
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (_) { /* noop */ }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && notif?.id) {
+        await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', notif.id);
+      }
+    } catch (_) { /* noop */ }
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    if (notif?.link) {
+      try {
+        const url = new URL(notif.link);
+        navigate(url.pathname + (url.search || ''));
+      } catch {
+        navigate(notif.link);
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -392,7 +428,7 @@ const Header = () => {
                 {isMenuOpen && (
                   <div className="header__dropdown-menu">
                     <div className="header__dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: 10 }} onClick={(e) => e.stopPropagation()}>
-                      <NotificationBell notifications={notifications} />
+                      <NotificationBell notifications={notifications} onItemClick={handleNotificationClick} />
                       <span>Notificaciones</span>
                       <span className="notif-pill">{unreadCount}</span>
                     </div>
