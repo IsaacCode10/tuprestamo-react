@@ -28,7 +28,7 @@ const AdminOperations = () => {
     setError('');
     const { data, error } = await supabase
       .from('payment_intents')
-      .select('id, opportunity_id, investor_id, expected_amount, status, expires_at, paid_at, paid_amount, created_at')
+      .select('id, opportunity_id, investor_id, expected_amount, status, expires_at, paid_at, paid_amount, created_at, receipt_url')
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) setError(error.message);
@@ -167,6 +167,7 @@ const AdminOperations = () => {
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Expira</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comprobante</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
               </tr>
             </thead>
@@ -174,16 +175,19 @@ const AdminOperations = () => {
               {intents.map((i) => (
                 <tr key={i.id}>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.investor_id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
-                    <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
-                  </td>
-                </tr>
+                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
+                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.investor_id}</td>
+                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
+                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
+                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                  {i.receipt_url ? <a className="btn" href={supabase.storage.from('comprobantes-pagos').getPublicUrl(i.receipt_url).data.publicUrl} target="_blank" rel="noreferrer">Ver</a> : '—'}
+                </td>
+                <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
+                  <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
+                </td>
+              </tr>
               ))}
               {intents.length === 0 && (
                 <tr>

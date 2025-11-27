@@ -268,6 +268,16 @@ const OpportunityDetail = () => {
     try {
       const file = fileOverride || receiptFile;
       if (!file || !intentInfo?.id) return;
+      const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type)) {
+        setFormMessage({ type: 'error', text: 'Formato no permitido. Usa PDF o imagen (JPG/PNG/WebP).' });
+        return;
+      }
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setFormMessage({ type: 'error', text: 'El archivo supera 5MB. Sube un comprobante más ligero.' });
+        return;
+      }
       const path = `payment-intents/${intentInfo.id}_${file.name}`;
       const { error: upErr, data } = await supabase.storage.from('comprobantes-pagos').upload(path, file, { upsert: true });
       if (upErr) throw upErr;
