@@ -1,0 +1,288 @@
+-- SQL helpers for fondeo, intents y contrato/mandato (MVP)
+-- Incluye RPCs:
+-- 1) get_opportunity_details_with_funding(opportunity_id)
+-- 2) create_investment_intent(opportunity_id, amount)
+-- 3) mark_payment_intent_paid(payment_intent_id, paid_amount?)
+-- 4) expire_payment_intents_sql() para cron/manual
+-- 5) get_contract_payload(opportunity_id) para generar PDF/acuse
+
+set check_function_bodies = off;
+
+create or replace function public.get_opportunity_details_with_funding(p_opportunity_id bigint)
+returns table (
+  id bigint,
+  created_at timestamptz,
+  solicitud_id bigint,
+  monto numeric,
+  plazo_meses integer,
+  tasa_interes_anual numeric,
+  motivo text,
+  riesgo text,
+  estado text,
+  perfil_riesgo text,
+  tasa_interes_prestatario numeric,
+  tasa_rendimiento_inversionista numeric,
+  comision_originacion_porcentaje numeric,
+  comision_servicio_inversionista_porcentaje numeric,
+  user_id uuid,
+  cargo_servicio_seguro_porcentaje numeric,
+  interes_total numeric,
+  comision_servicio_seguro_total numeric,
+  costo_total_credito numeric,
+  cuota_promedio numeric,
+  saldo_deudor_verificado numeric,
+  total_funded numeric,
+  saldo_pendiente numeric
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_total_paid numeric;
+begin
+  select coalesce(sum(amount), 0)
+  into v_total_paid
+  from inversiones
+  where opportunity_id = p_opportunity_id
+    and status = 'pagado';
+
+  return query
+  select
+    o.id,
+    o.created_at,
+    o.solicitud_id,
+    o.monto,
+    o.plazo_meses,
+    o.tasa_interes_anual,
+    o.motivo,
+    o.riesgo,
+    o.estado,
+    o.perfil_riesgo,
+    o.tasa_interes_prestatario,
+    o.tasa_rendimiento_inversionista,
+    o.comision_originacion_porcentaje,
+    o.comision_servicio_inversionista_porcentaje,
+    o.user_id,
+    o.cargo_servicio_seguro_porcentaje,
+    o.interes_total,
+    o.comision_servicio_seguro_total,
+    o.costo_total_credito,
+    o.cuota_promedio,
+    o.saldo_deudor_verificado,
+    v_total_paid as total_funded,
+    greatest(o.monto - v_total_paid, 0) as saldo_pendiente
+  from oportunidades o
+  where o.id = p_opportunity_id;
+end;
+$$;
+
+
+create or replace function public.create_investment_intent(p_opportunity_id bigint, p_amount numeric)
+returns payment_intents
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_op oportunidades%rowtype;
+  v_total_paid numeric;
+  v_reserved numeric;
+  v_available numeric;
+  v_expires_at timestamptz;
+  v_intent payment_intents%rowtype;
+begin
+  select *
+  into v_op
+  from oportunidades
+  where id = p_opportunity_id
+    and estado in ('disponible', 'fondeada', 'activo')
+  limit 1;
+
+  if not found then
+    raise exception 'Oportunidad no disponible o inexistente';
+  end if;
+
+  select coalesce(sum(amount), 0)
+  into v_total_paid
+  from inversiones
+  where opportunity_id = p_opportunity_id
+    and status = 'pagado';
+
+  select coalesce(sum(amount), 0)
+  into v_reserved
+  from inversiones
+  where opportunity_id = p_opportunity_id
+    and status in ('pendiente_pago', 'intencion');
+
+  v_available := greatest(v_op.monto - v_total_paid - v_reserved, 0);
+
+  if p_amount <= 0 then
+    raise exception 'El monto debe ser mayor a cero';
+  end if;
+
+  if p_amount > v_available then
+    raise exception 'No hay saldo disponible para este monto (cupo: %)', v_available;
+  end if;
+
+  v_expires_at := now() + interval '48 hours';
+
+  insert into payment_intents (
+    id,
+    opportunity_id,
+    investor_id,
+    expected_amount,
+    status,
+    reference_code,
+    payment_channel,
+    expires_at,
+    created_at,
+    updated_at
+  )
+  values (
+    gen_random_uuid(),
+    p_opportunity_id,
+    auth.uid(),
+    p_amount,
+    'pending',
+    encode(gen_random_bytes(6), 'hex'),
+    'qr_generico',
+    v_expires_at,
+    now(),
+    now()
+  )
+  returning * into v_intent;
+
+  insert into inversiones (opportunity_id, investor_id, amount, status, payment_intent_id, created_at)
+  values (p_opportunity_id, auth.uid(), p_amount, 'pendiente_pago', v_intent.id, now());
+
+  return v_intent;
+end;
+$$;
+
+
+create or replace function public.mark_payment_intent_paid(p_payment_intent_id uuid, p_paid_amount numeric default null)
+returns payment_intents
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_intent payment_intents%rowtype;
+  v_total_paid numeric;
+begin
+  update payment_intents
+  set status = 'paid',
+      paid_at = now(),
+      paid_amount = coalesce(p_paid_amount, expected_amount),
+      updated_at = now()
+  where id = p_payment_intent_id
+  returning * into v_intent;
+
+  if not found then
+    raise exception 'Intento de pago no encontrado';
+  end if;
+
+  update inversiones
+  set status = 'pagado'
+  where payment_intent_id = v_intent.id;
+
+  select coalesce(sum(amount), 0)
+  into v_total_paid
+  from inversiones
+  where opportunity_id = v_intent.opportunity_id
+    and status = 'pagado';
+
+  update oportunidades
+  set estado = case
+    when v_total_paid >= oportunidades.monto then 'fondeada'
+    else oportunidades.estado
+  end
+  where id = v_intent.opportunity_id;
+
+  return v_intent;
+end;
+$$;
+
+
+create or replace function public.expire_payment_intents_sql()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update payment_intents
+  set status = 'expired',
+      updated_at = now()
+  where status = 'pending'
+    and expires_at < now();
+
+  update inversiones
+  set status = 'expirado'
+  where payment_intent_id in (
+    select id from payment_intents
+    where status = 'expired'
+  );
+end;
+$$;
+
+
+create or replace function public.get_contract_payload(p_opportunity_id bigint)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_payload jsonb;
+begin
+  with invs as (
+    select
+      opportunity_id,
+      sum(case when status = 'pagado' then amount else 0 end) as total_pagado,
+      jsonb_agg(
+        jsonb_build_object(
+          'investor_id', investor_id,
+          'amount', amount,
+          'status', status
+        )
+      ) filter (where investor_id is not null) as inversionistas
+    from inversiones
+    where opportunity_id = p_opportunity_id
+    group by opportunity_id
+  )
+  select jsonb_build_object(
+    'opportunity', jsonb_build_object(
+      'id', o.id,
+      'monto_bruto', o.monto,
+      'monto_neto', o.saldo_deudor_verificado,
+      'plazo_meses', o.plazo_meses,
+      'tasa_interes_prestatario', o.tasa_interes_prestatario,
+      'perfil_riesgo', o.perfil_riesgo,
+      'comision_originacion_porcentaje', o.comision_originacion_porcentaje,
+      'cargo_servicio_seguro_porcentaje', o.cargo_servicio_seguro_porcentaje,
+      'cuota_promedio', o.cuota_promedio
+    ),
+    'borrower', jsonb_build_object(
+      'nombre_completo', s.nombre_completo,
+      'cedula_identidad', s.cedula_identidad,
+      'email', s.email,
+      'telefono', s.telefono,
+      'departamento', s.departamento
+    ),
+    'funding', jsonb_build_object(
+      'total_pagado', coalesce(i.total_pagado, 0),
+      'monto_objetivo', o.monto,
+      'inversionistas', coalesce(i.inversionistas, '[]'::jsonb)
+    )
+  )
+  into v_payload
+  from oportunidades o
+  left join solicitudes s on s.id = o.solicitud_id
+  left join invs i on i.opportunity_id = o.id
+  where o.id = p_opportunity_id;
+
+  return coalesce(v_payload, '{}'::jsonb);
+end;
+$$;

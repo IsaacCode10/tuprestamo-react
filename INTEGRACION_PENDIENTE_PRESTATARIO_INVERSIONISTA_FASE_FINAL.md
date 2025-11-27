@@ -3,9 +3,9 @@
 Objetivo: cerrar el flujo end-to-end sin custodia, usando QR genérico hoy y dejando bases listas para pasar a QR/API bancaria trazable. Incluye marketplace, fondeo, desembolso dirigido y cobranza/distribución mensual.
 
 ## Checklist MVP rápido (prioridad)
-- Crear tablas y RLS: `inversiones`, `payment_intents`, `movimientos`, `desembolsos` (nombres a confirmar).
-- RPC `get_opportunity_details_with_funding` para detalle + barra de fondeo.
-- Conciliación manual (CSV) con estados de intentos de pago; reservado para webhook PSP/API banco.
+- Tablas + RLS listas: `inversiones`, `payment_intents`, `movimientos`, `desembolsos`.
+- RPC `get_opportunity_details_with_funding` para detalle + barra de fondeo (fuente única de saldo pendiente/overbooking).
+- Conciliación manual (CSV) que actualiza intents/reservas y sube oportunidades a `fondeada`; reservado para webhook PSP/API banco.
 - Trigger/lógica: al 100% fondeo marcar `fondeada`, expirar reservas y crear orden de pago dirigido.
 - Ledger básico: registrar cobro prestatario y distribución inversionista (comisión plataforma incluida).
 - UI: QR pago en detalle de oportunidad; QR mensual en panel prestatario; estados claros en portafolio.
@@ -103,13 +103,32 @@ Objetivo: cerrar el flujo end-to-end sin custodia, usando QR genérico hoy y dej
 - Trazabilidad de pagos a inversionistas: registrar `movimientos` y estado de payout; requiere disciplina operativa hasta automatizar.
 
 ## 10) Próximos pasos concretos (orden sugerido)
-1) Crear migración de `payment_intents`, `inversiones`, `movimientos`, `desembolsos` con RLS.  
-2) Implementar RPC `get_opportunity_details_with_funding`.  
-3) Ajustar front de detalle de oportunidad para usar el RPC y mostrar QR/instrucciones + expiración.  
-4) Añadir expiración de reservas y lógica de bloqueo de overbooking en front y en DB (constraint o trigger).  
-5) Implementar script/función de conciliación manual (lee CSV) que actualiza intents/inversiones.  
-6) Al fondear, set `oportunidades.estado=fondeada` y crear registro en `desembolsos`; preparar UI prestatario con QR mensual.  
-7) Crear ledger de `movimientos` y flujo de distribución al confirmar cada pago de prestatario.  
-8) Añadir notificaciones (inversionista: pago recibido/reserva expirada; prestatario: fondeo completado/pago mensual disponible).  
-9) Documentar operativa diaria y checklist de conciliación.  
-10) Planificar integración PSP/API banco: usar campos reservados y probar con sandbox cuando esté disponible.
+**Plan de trabajo para hoy (orden sugerido)**
+1) Migraciones + RLS: `payment_intents`, `inversiones`, `movimientos`, `desembolsos`.  
+2) RPC `get_opportunity_details_with_funding` y consumirlo en front (detalle/portafolio) para barra de fondeo y saldo disponible.  
+3) Front fondeo inversionista: QR/instrucciones + expiración, estado de la reserva, bloqueo de overbooking, expiración de reservas.  
+4) Conciliación manual (CSV) que marca `payment_intents`/`inversiones` pagados, expira pendientes y sube a `fondeada` cuando llegue al 100%.  
+5) Desembolso dirigido al banco acreedor: set `oportunidades.estado=fondeada` → crear `desembolsos`, marcar `activo` tras pago y mostrar comprobante en prestatario.  
+6) Cobranza prestatario: schedule mensual, `borrower_payment_intents` con QR, estados pagado/pendiente/mora.  
+7) Distribución inversionistas: ledger `movimientos`, comisión 1%, admin/seguro, pro-rata y marcado de payouts manuales.  
+8) Notificaciones y analítica: eventos clave (Viewed Marketplace, Created Intent, Uploaded Receipt, Intent Paid, Payout Received) e identify; notifs de reserva expirada, fondeo completado, pago recibido.  
+9) Operativa diaria: checklist de conciliación, expiración y pagos a inversionistas; reportes de “unmatched”.  
+10) SEO/launch: desplegar sitemap (calculadora/inversionista) y reindexar en Search Console; QA e2e y vercel prod.
+
+## 11) Contrato y mandato (MVP sin firma electrónica)
+- Cuándo: al marcar `fondeada` (total pagado = `oportunidades.monto`), generar PDF de contrato + mandato de pago dirigido y notificar.
+- Datos a usar:
+  - Prestatario (`solicitudes`): `nombre_completo`, `cedula_identidad`, `email`, `telefono`, `departamento`.
+  - Préstamo (`oportunidades`): `id`, `monto` (bruto), `saldo_deudor_verificado` (neto a pagar al banco), `plazo_meses`, `tasa_interes_prestatario`, `riesgo`/`perfil_riesgo`, `comision_originacion_porcentaje`, `cargo_servicio_seguro_porcentaje`, `cuota_promedio`.
+  - Inversionistas (`inversiones` pagadas): `investor_id`, `amount` y datos básicos (nombre/email) para acuse de participación.
+  - Desembolso (`desembolsos`): `comprobante_url`, `paid_at` para el correo post-pago al banco acreedor.
+- Contenido mínimo del PDF:
+  1) Encabezado con logo (public/Logo-Tu-Prestamo.png), colores #00445A / #26C2B2, fecha y número de operación (`oportunidades.id`).
+  2) Contrato de préstamo: monto bruto, neto a pagar al banco, tasa, plazo, cronograma (tabla), comisiones (originación, admin+seguro prorrateado), obligación de pago y cesión/participación permitida.
+  3) Mandato de pago dirigido: autorización del prestatario para que Tu Préstamo pague su tarjeta con los fondos de inversionistas.
+  4) Declaración de riesgos y mora básica (si se define interés/cargo por mora).
+  5) Firma/acuse: clickwrap (hash + storage) por ahora; sello Tu Préstamo.
+- Notificaciones:
+  - Prestatario: al fondear, email/notif “Tu préstamo fue fondeado; pagaremos tu banco” con link/adjunto al PDF.
+  - Tras pago dirigido: email/notif con `desembolsos.comprobante_url`, cronograma y QR de primera cuota.
+  - Inversionista: email/acuse con monto y % (amount / `oportunidades.monto`), recordando que los pagos dependen del préstamo subyacente.
