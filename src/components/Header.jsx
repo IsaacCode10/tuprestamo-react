@@ -357,7 +357,8 @@ const Header = () => {
                             const { data, error } = await supabase
                               .from('inversiones')
                               .select('amount, opportunity_id')
-                              .eq('investor_id', user.id);
+                              .eq('investor_id', user.id)
+                              .eq('status', 'pagado');
                             if (!error && Array.isArray(data)) {
                               const totalInvested = data.reduce((acc, r) => acc + Number(r.amount || 0), 0);
                               const positions = new Set(data.map(r => r.opportunity_id)).size;
