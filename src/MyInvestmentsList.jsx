@@ -52,7 +52,7 @@ const MyInvestmentsList = () => {
         // Payouts recibidos / pendientes
         const { data: payoutRows, error: payoutErr } = await supabase
           .from('payouts_inversionistas')
-          .select('id, opportunity_id, expected_amount, paid_amount, status, receipt_url, created_at, paid_at')
+          .select('*')
           .eq('investor_id', user.id)
           .order('created_at', { ascending: false });
         if (payoutErr) throw payoutErr;
@@ -151,7 +151,7 @@ const MyInvestmentsList = () => {
                   {payouts.map(p => {
                     const o = oppsById[p.opportunity_id] || {};
                     const fecha = p.paid_at || p.created_at;
-                    const montoCobrado = p.paid_amount ?? p.expected_amount ?? 0;
+                    const montoCobrado = p.paid_amount ?? p.expected_amount ?? p.amount ?? 0;
                     return (
                       <tr key={p.id}>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>

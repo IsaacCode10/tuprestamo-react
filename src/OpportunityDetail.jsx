@@ -12,6 +12,7 @@ const OpportunityDetail = () => {
   const [opportunity, setOpportunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(null);
   // Analítica centralizada via trackEvent
 
   // New state for the investment form
@@ -65,10 +66,47 @@ const OpportunityDetail = () => {
   };
 
   useEffect(() => {
+    const loadUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+    };
+    loadUser();
+  }, []);
+
+  useEffect(() => {
     if (id) {
       fetchOpportunity();
+      fetchExistingIntent();
     }
-  }, [id]);
+  }, [id, userId]);
+
+  const fetchExistingIntent = async () => {
+    try {
+      if (!id || !userId) return;
+      const { data, error: intentErr } = await supabase
+        .from('payment_intents')
+        .select('id, expected_amount, expires_at, status, payment_channel, receipt_url')
+        .eq('investor_id', userId)
+        .eq('opportunity_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (intentErr) throw intentErr;
+      if (data) {
+        setIntentInfo({
+          id: data.id,
+          expected_amount: data.expected_amount,
+          expires_at: data.expires_at,
+          status: data.status,
+          payment_channel: data.payment_channel,
+          receipt_url: data.receipt_url,
+        });
+        setCountdown('');
+      }
+    } catch (e) {
+      console.error('Error fetching existing intent', e);
+    }
+  };
 
   const handleInvestment = async (e) => {
     e.preventDefault();
@@ -161,9 +199,22 @@ const OpportunityDetail = () => {
       });
       setCountdown(''); // se recalcula en useEffect
       setInvestmentAmount('');
+      // Notificación in-app al inversionista
+      try {
+        if (user?.id) {
+          await supabase.from('notifications').insert({
+            user_id: user.id,
+            title: 'Reserva creada',
+            body: `Reserva Bs ${Number(intent?.expected_amount || amount).toLocaleString('es-BO', { minimumFractionDigits: 2 })} vence ${new Date(intent?.expires_at || expiresAt).toLocaleString('es-BO')}`,
+          });
+        }
+      } catch (notifErr) {
+        console.warn('No se pudo registrar la notificación de reserva', notifErr);
+      }
       // Refresh data after successful intent to update barra (no suma hasta estado pagado)
       setTimeout(() => {
         fetchOpportunity();
+        fetchExistingIntent();
       }, 2000); // Wait 2 seconds to let user read the message
 
     } catch (error) {
