@@ -98,11 +98,13 @@ const MyInvestmentsList = () => {
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Plazo</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Riesgo</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {rows.map(r => {
                 const o = oppsById[r.opportunity_id] || {};
+                const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
                 return (
                   <tr key={r.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{new Date(r.created_at).toLocaleDateString('es-BO')}</td>
@@ -112,6 +114,15 @@ const MyInvestmentsList = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.plazo_meses != null ? `${o.plazo_meses} meses` : 'n/d'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.perfil_riesgo || 'n/d'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{r.status || 'intencion'}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                      {isPendingPayment ? (
+                        <button className="btn btn--primary" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
+                          Pagar ahora
+                        </button>
+                      ) : (
+                        <span style={{ color: '#777' }}>-</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
