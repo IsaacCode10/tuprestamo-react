@@ -26,6 +26,7 @@ const OpportunityDetail = () => {
   const [receiptFile, setReceiptFile] = useState(null);
   const fileInputRef = useRef(null);
   const qrSrc = '/qr-pago.png'; // QR estático desde /public; reemplazar por QR dinámico si se dispone
+  const [showQrModal, setShowQrModal] = useState(false);
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -285,7 +286,8 @@ const OpportunityDetail = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'qr-tuprestamo.png';
+      const filename = qrSrc.split('/').pop() || 'qr-pago.png';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -295,6 +297,8 @@ const OpportunityDetail = () => {
       setFormMessage({ type: 'error', text: 'No pudimos descargar el QR. Intenta nuevamente.' });
     }
   };
+
+  const closeQrModal = () => setShowQrModal(false);
 
   // Countdown para expiración del intent
   useEffect(() => {
@@ -505,7 +509,16 @@ const OpportunityDetail = () => {
                   {payMode === 'qr' && (
                     <div style={{ padding: 10, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
                       <p style={{ margin: 0, color: '#0f5a62', fontWeight: 600 }}>Escanea este QR para pagar tu reserva</p>
-                      <img src={qrSrc} alt="QR de pago Tu Préstamo" style={{ width: 180, height: 180, objectFit: 'contain' }} />
+                      <div
+                        onClick={() => setShowQrModal(true)}
+                        style={{ cursor: 'zoom-in', borderRadius: 12, padding: 6, transition: 'transform 0.2s', display: 'inline-block' }}
+                      >
+                        <img
+                          src={qrSrc}
+                          alt="QR de pago Tu Préstamo"
+                          style={{ width: 220, height: 220, objectFit: 'contain', display: 'block' }}
+                        />
+                      </div>
                       <small style={{ color: '#55747b' }}>Monto exacto: Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
                       <button className="btn" type="button" onClick={handleDownloadQr} style={{ marginTop: 6 }}>
                         Descargar QR
@@ -531,8 +544,43 @@ const OpportunityDetail = () => {
           </button>
         </div>
       </div>
+      {showQrModal && <QrModal src={qrSrc} onClose={closeQrModal} />}
     </div>
   );
 };
 
 export default OpportunityDetail;
+
+// Modal ligero para ampliar el QR (sin dependencias adicionales)
+const QrModal = ({ src, onClose }) => {
+  if (!src) return null;
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.45)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: 16,
+    }} onClick={onClose}>
+      <div
+        style={{
+          background: '#fff',
+          padding: 16,
+          borderRadius: 12,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img src={src} alt="QR ampliado" style={{ maxWidth: '100%', maxHeight: '80vh', display: 'block', margin: '0 auto' }} />
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <button className="btn" type="button" onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  );
+};
