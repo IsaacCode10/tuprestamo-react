@@ -243,6 +243,7 @@
                     <h3>El Cálculo Clave: Gross-Up</h3>
                     <p>Garantizamos la liquidación del 100% de la deuda del prestatario calculando el préstamo con nuestra comisión ya incluida.</p>
                     <p><strong>Fórmula:</strong> <code>Monto Total = Saldo a Pagar / (1 - Tasa Comisión)</code></p>
+                    <p><strong>Mínimo operativo:</strong> Para netos ≤ Bs 10.000 se aplica originación fija Bs 450 (bruto = neto + 450); sobre 10k se usa gross-up con 3/4/5% según perfil.</p>
                 </div>
             </div>
             
@@ -261,8 +262,8 @@
                     <h3>Comisiones</h3>
                     <p><strong>Para el Prestatario:</strong></p>
                     <ul>
-                        <li><strong>Originación (pago único):</strong> 3% a 5% según el riesgo.</li>
-                        <li><strong>Servicio y Seguro:</strong> 0.15% mensual sobre saldo.</li>
+                        <li><strong>Originación (pago único):</strong> Mínimo Bs 450 hasta 10k; sobre 10k, 3% (A) / 4% (B) / 5% (C) con gross-up.</li>
+                        <li><strong>Servicio y Seguro:</strong> 0.15% mensual sobre saldo con mínimo 10 Bs. En la UI se prorratea en cuotas iguales para mantener la cuota fija.</li>
                     </ul>
                     <p><strong>Para el Inversionista:</strong></p>
                     <ul>
@@ -284,24 +285,25 @@
                     </div>
                 </div>
                 <div class="flow-phase">
-                    <h3><span class="status-tag">🚧</span> Fase 2: Carga y Síntesis de Perfil</h3>
+                    <h3><span class="status-tag">✅</span> Fase 2: Carga y Síntesis de Perfil</h3>
                     <div class="flow-steps">
                         <div class="flow-step"><div class="step-title">Carga de Documentos</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
-                        <div class="flow-step"><div class="step-title">Síntesis de Perfil (Automático)</div><div class="step-tags"><span class="tag tag-backend">Backend</span><span class="tag tag-admin">🔒</span></div></div>
+                        <div class="flow-step"><div class="step-title">Síntesis de Perfil (Manual/Pendiente)</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
                     </div>
                 </div>
                 <div class="flow-phase">
-                    <h3><span class="status-tag">🚧</span> Fase 3: Verificación y Aprobación</h3>
+                    <h3><span class="status-tag">✅</span> Fase 3: Verificación y Aprobación</h3>
                     <div class="flow-steps">
                         <div class="flow-step"><div class="step-title">Revisión en Scorecard</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
                         <div class="flow-step"><div class="step-title">Decisión Final (Aprobar/Rechazar)</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
-                        <div class="flow-step"><div class="step-title">Guardar Decisión</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Guardar Decisión y Correo de Propuesta</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
                     </div>
                 </div>
                 <div class="flow-phase">
-                    <h3><span class="status-tag">❌</span> Fase 4: Desembolso Dirigido</h3>
+                    <h3><span class="status-tag">🚧</span> Fase 4: Desembolso Dirigido</h3>
                     <div class="flow-steps">
-                        <div class="flow-step"><div class="step-title">Notificación al Prestatario</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
+                        <div class="flow-step"><div className="step-title">Propuesta en Dashboard</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
+                        <div class="flow-step"><div class="step-title">Publicación a Inversionistas</div><div class="step-tags"><span class="tag tag-backend">Backend</span></div></div>
                         <div class="flow-step"><div class="step-title">Desembolso a Institución Financiera</div><div class="step-tags"><span class="tag tag-manual">Manual</span></div></div>
                     </div>
                 </div>
@@ -320,7 +322,7 @@
                     </div>
                 </div>
                 <div class="flow-phase">
-                    <h3><span class="status-tag">❌</span> Fase 2: Fondeo de Oportunidades (MVP)</h3>
+                    <h3><span class="status-tag">🚧</span> Fase 2: Fondeo de Oportunidades (MVP)</h3>
                     <div class="flow-steps">
                         <div class="flow-step"><div class="step-title">Explorar Oportunidades</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>
                         <div class="flow-step"><div class="step-title">Notificar Intención de Fondeo</div><div class="step-tags"><span class="tag tag-frontend">Frontend</span></div></div>

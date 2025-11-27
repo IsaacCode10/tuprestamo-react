@@ -6,11 +6,13 @@ Parámetros confirmados
 
 - Ticket promedio: Bs 17.000
 - Tasas prestatario por nivel: A 15% – B 17% – C 20%
-- Originación por nivel: A 3% – B 4% – C 5% (ingreso mes de desembolso)
+- Originación: mínimo Bs 450 hasta neto 10.000; sobre netos >10.000 aplicar A 3% – B 4% – C 5% con gross-up (ingreso mes de desembolso)
 - Comisión inversionista: 1% sobre cada pago mensual (capital + interés)
 - Servicio+Seguro mensual sobre saldo deudor:
   - Servicio plataforma: 0,10% (ingreso de la plataforma)
   - Seguro desgravamen: 0,50% (pass-through; no ingreso)
+  - **Mínimo mensual combinado:** 10 Bs (aplica si 0,15% del saldo < 10 Bs)
+  - **Presentación (UI propuesta):** el total de admin/seguro calculado con la regla anterior se prorratea en partes iguales entre las cuotas para mostrar una **cuota fija**; no altera el costo total.
 - Mora (EL) conservadora: 2% anual aplicada proporcionalmente a cobros/servicio
 - Bancos: sin comisiones por transferencias/retiros
 - Timing: publicación y fondeo el mismo mes

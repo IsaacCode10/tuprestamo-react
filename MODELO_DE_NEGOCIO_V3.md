@@ -36,6 +36,10 @@ Para resolver esto, el **Monto Total del Préstamo** debe ser una cifra "bruta" 
 ### Fórmula Clave:
 `Monto Total del Préstamo = Saldo Deudor Verificado / (1 - Tasa de Comisión)`
 
+**Excepción por mínimo operativo (MVP):**
+* Si el **saldo verificado ≤ Bs. 10.000**, la **originación es fija de Bs. 450** y el **monto bruto = neto + 450** (marcamos `minApplied=true`).
+* Si el **saldo verificado > Bs. 10.000**, se aplica la fórmula de gross-up con la comisión por perfil (A 3%, B 4%, C 5%).
+
 **Ejemplo del Flujo Correcto:**
 1.  **Saldo Deudor Verificado (Neto a Pagar):** Bs. 10,000
 2.  **Cálculo del Préstamo (Bruto):**
@@ -66,3 +70,9 @@ Para maximizar la conversión, el flujo operativo se enriquece con una experienc
     > *"LA CUOTA MENSUAL FINAL SE DEFINIRÁ CUANDO CONFIRMEMOS TU SALDO DEUDOR"*
 
 3.  **Puente a la Verificación:** Este dashboard provisional actúa como una herramienta de conversión, incentivando al usuario a proceder con la carga de documentos para llegar a la **Verificación** (Paso 2 del flujo operativo) y obtener su oferta final.
+
+## Cargos Recurrentes al Prestatario (MVP)
+
+* **Admin + Seguro:** `0,15% mensual` sobre saldo, con **mínimo 10 Bs/mes** (cargo decreciente incluido en la cuota simulada).
+* **Base de cálculo:** Siempre el saldo deudor verificado (neto). El bruto se calcula vía gross-up o suma del mínimo según corresponda.
+* **Presentación en la propuesta:** Para mantener una **cuota fija comunicada al cliente**, el total de admin/seguro calculado con la regla anterior se **prorratea en partes iguales** entre las cuotas y se suma a la cuota de capital+interés. El costo total no cambia; solo la presentación.

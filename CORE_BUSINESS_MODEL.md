@@ -24,11 +24,13 @@ Clasificamos a cada prestatario en un nivel de riesgo (A, B, C) basado en nuestr
 Nuestras comisiones están diseñadas para ser claras y alineadas al riesgo.
 
 *   **Para el Prestatario:**
-    *   **Comisión por Originación (Variable):** Un pago único al desembolso, que premia a los mejores perfiles.
-        *   **Nivel A:** 3.0%
-        *   **Nivel B:** 4.0%
-        *   **Nivel C:** 5.0%
-    *   **Comisión por Servicio y Seguro:** `0.15% mensual` sobre el **saldo deudor**, con un **mínimo de 10 Bs por mes**. Unifica los costos de administración y el seguro de desgravamen en un solo cargo transparente y decreciente.
+    *   **Comisión por Originación (Variable con mínimo):** Un pago único al desembolso, que premia a los mejores perfiles.
+        *   **Regla de mínimo:** Para netos ≤ Bs 10.000, se cobra Bs 450 fijos (bruto = neto + 450).
+        *   **Sobre netos > 10.000:** se aplica gross-up con el % por nivel para mantener el neto intacto:
+            *   **Nivel A:** 3.0%
+            *   **Nivel B:** 4.0%
+            *   **Nivel C:** 5.0%
+    *   **Comisión por Servicio y Seguro:** `0.15% mensual` sobre el **saldo deudor**, con un **mínimo de 10 Bs por mes**. Unifica los costos de administración y el seguro de desgravamen en un solo cargo transparente y decreciente. En la UI de propuesta mostramos un cargo mensual **prorrateado fijo** (total de admin/seguro dividido entre las cuotas) para mantener la cuota fija comunicada, sin alterar el costo total calculado con la regla oficial.
 
 *   **Para el Inversionista:**
     *   **Comisión por Servicio:** `1%` sobre **cada pago recibido** (capital + interés). Este modelo nos alinea con el éxito del inversionista, cobrando sobre el flujo de caja total que ayudamos a generar.
