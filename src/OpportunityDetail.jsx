@@ -25,6 +25,7 @@ const OpportunityDetail = () => {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [receiptFile, setReceiptFile] = useState(null);
   const fileInputRef = useRef(null);
+  const qrSrc = '/Logo-Tu-Prestamo.png'; // TODO: reemplazar por QR dinámico cuando esté disponible
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -277,6 +278,24 @@ const OpportunityDetail = () => {
     }
   };
 
+  const handleDownloadQr = async () => {
+    try {
+      const response = await fetch(qrSrc);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'qr-tuprestamo.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Error descargando QR', e);
+      setFormMessage({ type: 'error', text: 'No pudimos descargar el QR. Intenta nuevamente.' });
+    }
+  };
+
   // Countdown para expiración del intent
   useEffect(() => {
     if (!intentInfo?.expires_at) return;
@@ -486,8 +505,11 @@ const OpportunityDetail = () => {
                   {payMode === 'qr' && (
                     <div style={{ padding: 10, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
                       <p style={{ margin: 0, color: '#0f5a62', fontWeight: 600 }}>Escanea este QR para pagar tu reserva</p>
-                      <img src="/Logo-Tu-Prestamo.png" alt="QR de pago Tu Préstamo" style={{ width: 180, height: 180, objectFit: 'contain' }} />
+                      <img src={qrSrc} alt="QR de pago Tu Préstamo" style={{ width: 180, height: 180, objectFit: 'contain' }} />
                       <small style={{ color: '#55747b' }}>Monto exacto: Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+                      <button className="btn" type="button" onClick={handleDownloadQr} style={{ marginTop: 6 }}>
+                        Descargar QR
+                      </button>
                     </div>
                   )}
                   {payMode === 'transfer' && (
