@@ -421,7 +421,7 @@ const Header = () => {
                 <button onClick={() => { setOpenCenterMenu(null); setIsMenuOpen(!isMenuOpen); }} className="header__user-button">
                   {displayName}
                   {unreadCount > 0 && (
-                    <span className="user-notif-dot" aria-label={`${unreadCount} notificaciones sin leer`}></span>
+                    <span className="user-notif-dot" aria-label={`${unreadCount} notificaciones sin leer`}>{unreadCount}</span>
                   )}
                   <span className={`header__user-arrow ${isMenuOpen ? 'open' : ''}`} aria-hidden="true"></span>
                 </button>
