@@ -88,12 +88,17 @@ serve(async (req) => {
           <td style="padding:8px; text-align:right;">
             <div style="font-size:12px; color:#4a6575;">Sin reinversi&oacute;n</div>
             <div style="white-space:nowrap; font-weight:700;">${fmt(tpSimple)}</div>
-            <div style="font-size:12px; color:#4a6575; margin-top:2px;">Con reinversi&oacute;n mensual</div>
-            <div style="white-space:nowrap; font-weight:800; color:#0c6b78;">${fmt(tpCompound)}</div>
+            <div style="font-size:12px; color:#4a6575; margin-top:6px; background:#f6fffe; border:1px solid #a8ede6; border-radius:8px; padding:6px 8px; display:inline-block;">
+              <div>Con reinversi&oacute;n mensual</div>
+              <div style="white-space:nowrap; font-weight:800; color:#0c6b78;">${fmt(tpCompound)}</div>
+            </div>
           </td>
           <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(dpf)}</td>
           <td style="padding:8px; text-align:right;">
-            <div style="white-space:nowrap; background:#e6fffb; border:1px solid #a8ede6; color:#006d75; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block;">${fmt(extraCompound)}</div>
+            <div style="white-space:nowrap; background:#e6fffb; border:1px solid #a8ede6; color:#006d75; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block;"
+              title="Si reinviertes mensualmente los pagos recibidos obtienes este extra frente al DPF.">
+              ${fmt(extraCompound)}
+            </div>
             <div style="font-size:12px; color:#4a6575; margin-top:4px;">Sin reinversi&oacute;n: ${fmt(extraSimple)}</div>
           </td>
         </tr>

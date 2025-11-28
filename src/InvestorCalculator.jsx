@@ -288,16 +288,23 @@ function Scenarios({ amount, years, dpfRate, rates }) {
               <tr key={r} style={{ borderTop: '1px solid #f0f0f0' }}>
                 <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]} ({ratePercents[i]})</td>
                 <td className="scenario-cell scenario-cell--tp">
-                  <div className="scenario-subtext">Sin reinversi&oacute;n</div>
-                  <div className="scenario-amount">Bs&nbsp;{Math.round(tpSimple).toLocaleString('es-BO')}</div>
-                  <div className="scenario-subtext">Con reinversi&oacute;n mensual</div>
-                  <div className="scenario-amount scenario-amount--strong">Bs&nbsp;{Math.round(tpCompound).toLocaleString('es-BO')}</div>
+                  <div className="scenario-line">
+                    <span className="scenario-tag">Sin reinversi&oacute;n</span>
+                    <span className="scenario-amount">Bs&nbsp;{Math.round(tpSimple).toLocaleString('es-BO')}</span>
+                  </div>
+                  <div className="scenario-line scenario-line--highlight">
+                    <span className="scenario-tag">Con reinversi&oacute;n mensual</span>
+                    <span className="scenario-amount scenario-amount--strong">Bs&nbsp;{Math.round(tpCompound).toLocaleString('es-BO')}</span>
+                  </div>
                 </td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
                   <span className="scenario-amount">Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
                 </td>
                 <td className="scenario-cell scenario-cell--gain">
-                  <span className="scenario-badge">
+                  <span
+                    className="scenario-badge"
+                    title="Si reinviertes mensualmente los pagos recibidos obtienes este extra frente al DPF."
+                  >
                     Bs&nbsp;{Math.round(extraCompound).toLocaleString('es-BO')}
                   </span>
                   <div className="scenario-subtext">Sin reinversi&oacute;n: Bs&nbsp;{Math.round(extraSimple).toLocaleString('es-BO')}</div>

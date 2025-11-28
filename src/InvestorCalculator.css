@@ -76,6 +76,9 @@ tbody tr + tr { border-top: 1px solid #f0f0f0; }
 .scenario-cell--gain { align-items: flex-end; }
 .scenario-subtext { color: #4a6575; font-size: 0.88rem; font-weight: 600; }
 .scenario-amount--strong { color: #0c6b78; font-weight: 800; }
+.scenario-line { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.scenario-line--highlight { background: #f6fffe; padding: 6px 8px; border-radius: 8px; border: 1px solid #a8ede6; }
+.scenario-tag { font-size: 0.82rem; color: #4a6575; font-weight: 600; }
 
 /* Versus table (inversionista) */
 .rate-compare { margin-bottom: 16px; }
@@ -113,4 +116,7 @@ tbody tr + tr { border-top: 1px solid #f0f0f0; }
   .scenario-amount { white-space: nowrap; }
   .scenario-cell { gap: 3px; }
   .scenario-subtext { font-size: 0.8rem; }
+  .scenario-line { align-items: flex-start; }
+  .scenario-line--highlight { padding: 6px; }
+  .scenario-tag { font-size: 0.78rem; }
 }
