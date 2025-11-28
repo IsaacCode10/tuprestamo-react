@@ -13,22 +13,6 @@ function calculateReturns(amount, years, rate) {
   return a * Math.pow(1 + r, t)
 }
 
-function calculateSimpleReturns(amount, years, rate) {
-  const a = Number(amount || 0)
-  const t = Number(years || 0)
-  const r = Number(rate || 0)
-  if (a <= 0 || t <= 0 || r <= 0) return a
-  return a * (1 + r * t)
-}
-
-function calculateMonthlyCompoundReturns(amount, years, rate) {
-  const a = Number(amount || 0)
-  const t = Number(years || 0)
-  const r = Number(rate || 0)
-  if (a <= 0 || t <= 0 || r <= 0) return a
-  return a * Math.pow(1 + r / 12, 12 * t)
-}
-
 export default function InvestorCalculator() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -265,10 +249,8 @@ function Scenarios({ amount, years, dpfRate, rates }) {
           <tr>
             <th style={{ textAlign: 'center', padding: 8 }}>Escenario</th>
             <th style={{ textAlign: 'center', padding: 8 }}>
-              Tu Pr&eacute;stamo<br />(sin reinversi&oacute;n)
-            </th>
-            <th style={{ textAlign: 'center', padding: 8 }}>
-              Tu Pr&eacute;stamo<br />(con reinversi&oacute;n)
+              Tu Pr&eacute;stamo
+              <br />(final)
             </th>
             <th style={{ textAlign: 'center', padding: 8 }}>
               DPF
@@ -282,31 +264,21 @@ function Scenarios({ amount, years, dpfRate, rates }) {
         </thead>
         <tbody>
           {rates.map((r, i) => {
-            const tpSimple = calculateSimpleReturns(amount, years, r)
-            const tpCompound = calculateMonthlyCompoundReturns(amount, years, r)
-            const extraSimple = Math.max(0, tpSimple - dpfEnd)
-            const extraCompound = Math.max(0, tpCompound - dpfEnd)
+            const tpEnd = calculateReturns(amount, years, r)
+            const extra = Math.max(0, tpEnd - dpfEnd)
             return (
               <tr key={r} style={{ borderTop: '1px solid #f0f0f0' }}>
                 <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]} ({ratePercents[i]})</td>
-                <td className="scenario-cell scenario-cell--tp scenario-cell--plain">
-                  <span className="scenario-amount">Bs&nbsp;{Math.round(tpSimple).toLocaleString('es-BO')}</span>
-                </td>
-                <td className="scenario-cell scenario-cell--tp scenario-cell--highlight">
-                  <span className="scenario-amount scenario-amount--strong">Bs&nbsp;{Math.round(tpCompound).toLocaleString('es-BO')}</span>
-                  <span className="scenario-subtext">Con reinversi&oacute;n mensual</span>
+                <td style={{ padding: 8, textAlign: 'right' }}>
+                  <span className="scenario-amount">Bs&nbsp;{Math.round(tpEnd).toLocaleString('es-BO')}</span>
                 </td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
                   <span className="scenario-amount">Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
                 </td>
-                <td className="scenario-cell scenario-cell--gain">
-                  <span
-                    className="scenario-badge"
-                    title="Si reinviertes mensualmente los pagos recibidos obtienes este extra frente al DPF."
-                  >
-                    Bs&nbsp;{Math.round(extraCompound).toLocaleString('es-BO')}
+                <td style={{ padding: 8, textAlign: 'right' }}>
+                  <span className="scenario-badge">
+                    Bs&nbsp;{Math.round(extra).toLocaleString('es-BO')}
                   </span>
-                  <div className="scenario-subtext">Sin reinversi&oacute;n: Bs&nbsp;{Math.round(extraSimple).toLocaleString('es-BO')}</div>
                 </td>
               </tr>
             )
