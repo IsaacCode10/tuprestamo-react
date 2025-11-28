@@ -13,6 +13,14 @@ function calculateReturns(amount, years, rate) {
   return a * Math.pow(1 + r, t)
 }
 
+function calculateMonthlyCompoundReturns(amount, years, rate) {
+  const a = Number(amount || 0)
+  const t = Number(years || 0)
+  const r = Number(rate || 0)
+  if (a <= 0 || t <= 0 || r <= 0) return a
+  return a * Math.pow(1 + r / 12, 12 * t)
+}
+
 export default function InvestorCalculator() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -265,7 +273,9 @@ function Scenarios({ amount, years, dpfRate, rates }) {
         <tbody>
           {rates.map((r, i) => {
             const tpEnd = calculateReturns(amount, years, r)
+            const tpReinvest = calculateMonthlyCompoundReturns(amount, years, r)
             const extra = Math.max(0, tpEnd - dpfEnd)
+            const extraReinvest = Math.max(0, tpReinvest - dpfEnd)
             return (
               <tr key={r} style={{ borderTop: '1px solid #f0f0f0' }}>
                 <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]} ({ratePercents[i]})</td>
@@ -276,7 +286,10 @@ function Scenarios({ amount, years, dpfRate, rates }) {
                   <span className="scenario-amount">Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
                 </td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
-                  <span className="scenario-badge">
+                  <span
+                    className="scenario-badge"
+                    title={`Si reinviertes mensualmente tus pagos, la ganancia adicional sería Bs ${Math.round(extraReinvest).toLocaleString('es-BO')}.`}
+                  >
                     Bs&nbsp;{Math.round(extra).toLocaleString('es-BO')}
                   </span>
                 </td>
