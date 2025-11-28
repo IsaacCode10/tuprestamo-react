@@ -85,13 +85,10 @@ serve(async (req) => {
       const tableRows = scenarios.map(({ label, rate, tpSimple, tpCompound, extraSimple, extraCompound }) => `
         <tr style="border-top:1px solid #f0f0f0">
           <td style="padding:8px;">${label} (${Math.round(rate*100)}%)</td>
-          <td style="padding:8px; text-align:right;">
-            <div style="font-size:12px; color:#4a6575;">Sin reinversi&oacute;n</div>
-            <div style="white-space:nowrap; font-weight:700;">${fmt(tpSimple)}</div>
-            <div style="font-size:12px; color:#4a6575; margin-top:6px; background:#f6fffe; border:1px solid #a8ede6; border-radius:8px; padding:6px 8px; display:inline-block;">
-              <div>Con reinversi&oacute;n mensual</div>
-              <div style="white-space:nowrap; font-weight:800; color:#0c6b78;">${fmt(tpCompound)}</div>
-            </div>
+          <td style="padding:8px; text-align:right; background:#f9fbfd; border:1px solid #e6e9ec; border-radius:8px;">${fmt(tpSimple)}</td>
+          <td style="padding:8px; text-align:right; background:#f6fffe; border:1px solid #a8ede6; border-radius:8px;">
+            <div style="white-space:nowrap; font-weight:800; color:#0c6b78;">${fmt(tpCompound)}</div>
+            <div style="font-size:12px; color:#4a6575;">Con reinversi&oacute;n mensual</div>
           </td>
           <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(dpf)}</td>
           <td style="padding:8px; text-align:right;">

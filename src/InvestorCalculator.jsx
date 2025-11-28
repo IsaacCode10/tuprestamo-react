@@ -265,8 +265,10 @@ function Scenarios({ amount, years, dpfRate, rates }) {
           <tr>
             <th style={{ textAlign: 'center', padding: 8 }}>Escenario</th>
             <th style={{ textAlign: 'center', padding: 8 }}>
-              Tu Pr&eacute;stamo
-              <br />(final)
+              Tu Pr&eacute;stamo<br />(sin reinversi&oacute;n)
+            </th>
+            <th style={{ textAlign: 'center', padding: 8 }}>
+              Tu Pr&eacute;stamo<br />(con reinversi&oacute;n)
             </th>
             <th style={{ textAlign: 'center', padding: 8 }}>
               DPF
@@ -287,15 +289,12 @@ function Scenarios({ amount, years, dpfRate, rates }) {
             return (
               <tr key={r} style={{ borderTop: '1px solid #f0f0f0' }}>
                 <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]} ({ratePercents[i]})</td>
-                <td className="scenario-cell scenario-cell--tp">
-                  <div className="scenario-line">
-                    <span className="scenario-tag">Sin reinversi&oacute;n</span>
-                    <span className="scenario-amount">Bs&nbsp;{Math.round(tpSimple).toLocaleString('es-BO')}</span>
-                  </div>
-                  <div className="scenario-line scenario-line--highlight">
-                    <span className="scenario-tag">Con reinversi&oacute;n mensual</span>
-                    <span className="scenario-amount scenario-amount--strong">Bs&nbsp;{Math.round(tpCompound).toLocaleString('es-BO')}</span>
-                  </div>
+                <td className="scenario-cell scenario-cell--tp scenario-cell--plain">
+                  <span className="scenario-amount">Bs&nbsp;{Math.round(tpSimple).toLocaleString('es-BO')}</span>
+                </td>
+                <td className="scenario-cell scenario-cell--tp scenario-cell--highlight">
+                  <span className="scenario-amount scenario-amount--strong">Bs&nbsp;{Math.round(tpCompound).toLocaleString('es-BO')}</span>
+                  <span className="scenario-subtext">Con reinversi&oacute;n mensual</span>
                 </td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
                   <span className="scenario-amount">Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
