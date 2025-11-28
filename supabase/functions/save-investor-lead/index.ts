@@ -65,6 +65,8 @@ serve(async (req) => {
 
       const fmt = (n: number) => `Bs ${Math.round(n).toLocaleString('es-BO')}`
       const compound = (amt: number, yrs: number, rate: number) => amt * Math.pow(1 + rate, yrs)
+      const compoundMonthly = (amt: number, yrs: number, rate: number) => amt * Math.pow(1 + rate / 12, 12 * yrs)
+      const simple = (amt: number, yrs: number, rate: number) => amt * (1 + rate * yrs)
       const dpf = compound(amount, term_years, (body.tasa_dpf ?? 0.03))
       const anosLabel = term_years === 1 ? 'a&ntilde;o' : 'a&ntilde;os'
       const term_months = Math.round(term_years * 12)
@@ -73,17 +75,27 @@ serve(async (req) => {
         { label: 'Balanceado (B)', rate: 0.12 },
         { label: 'Dinamico (C)',  rate: 0.15 },
       ].map(s => {
-        const tp = compound(amount, term_years, s.rate)
-        const extra = Math.max(0, tp - dpf)
-        return { ...s, tp, extra }
+        const tpSimple = simple(amount, term_years, s.rate)
+        const tpCompound = compoundMonthly(amount, term_years, s.rate)
+        const extraSimple = Math.max(0, tpSimple - dpf)
+        const extraCompound = Math.max(0, tpCompound - dpf)
+        return { ...s, tpSimple, tpCompound, extraSimple, extraCompound }
       })
       const dpfRatePct = `${((body.tasa_dpf ?? 0.03) * 100).toFixed(1)}%`
-      const tableRows = scenarios.map(({ label, rate, tp, extra }) => `
+      const tableRows = scenarios.map(({ label, rate, tpSimple, tpCompound, extraSimple, extraCompound }) => `
         <tr style="border-top:1px solid #f0f0f0">
           <td style="padding:8px;">${label} (${Math.round(rate*100)}%)</td>
-          <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(tp)}</td>
+          <td style="padding:8px; text-align:right;">
+            <div style="font-size:12px; color:#4a6575;">Sin reinversi&oacute;n</div>
+            <div style="white-space:nowrap; font-weight:700;">${fmt(tpSimple)}</div>
+            <div style="font-size:12px; color:#4a6575; margin-top:2px;">Con reinversi&oacute;n mensual</div>
+            <div style="white-space:nowrap; font-weight:800; color:#0c6b78;">${fmt(tpCompound)}</div>
+          </td>
           <td style="padding:8px; text-align:right; white-space:nowrap;">${fmt(dpf)}</td>
-          <td style="padding:8px; text-align:right;"><span style="white-space:nowrap; background:#e6fffb; border:1px solid #a8ede6; color:#006d75; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block;">${fmt(extra)}</span></td>
+          <td style="padding:8px; text-align:right;">
+            <div style="white-space:nowrap; background:#e6fffb; border:1px solid #a8ede6; color:#006d75; font-weight:800; padding:4px 10px; border-radius:12px; display:inline-block;">${fmt(extraCompound)}</div>
+            <div style="font-size:12px; color:#4a6575; margin-top:4px;">Sin reinversi&oacute;n: ${fmt(extraSimple)}</div>
+          </td>
         </tr>
       `).join('')
       const extraHtml = `

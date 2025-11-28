@@ -71,6 +71,11 @@ tbody tr + tr { border-top: 1px solid #f0f0f0; }
   border-radius: 12px;
   display: inline-block;
 }
+.scenario-cell { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.scenario-cell--tp { align-items: flex-end; }
+.scenario-cell--gain { align-items: flex-end; }
+.scenario-subtext { color: #4a6575; font-size: 0.88rem; font-weight: 600; }
+.scenario-amount--strong { color: #0c6b78; font-weight: 800; }
 
 /* Versus table (inversionista) */
 .rate-compare { margin-bottom: 16px; }
@@ -106,4 +111,6 @@ tbody tr + tr { border-top: 1px solid #f0f0f0; }
     box-sizing: border-box;
   }
   .scenario-amount { white-space: nowrap; }
+  .scenario-cell { gap: 3px; }
+  .scenario-subtext { font-size: 0.8rem; }
 }
