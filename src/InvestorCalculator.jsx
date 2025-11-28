@@ -244,13 +244,22 @@ function Scenarios({ amount, years, dpfRate, rates }) {
   return (
     <div>
       <h3 style={{ textAlign: 'center' }}>Escenarios de retorno</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="scenario-table">
         <thead>
           <tr>
             <th style={{ textAlign: 'center', padding: 8 }}>Escenario</th>
-            <th style={{ textAlign: 'center', padding: 8 }}>Tu Pr&eacute;stamo (final)</th>
-            <th style={{ textAlign: 'center', padding: 8 }}>DPF (final, {(dpfRate*100).toFixed(1)}%)</th>
-            <th style={{ textAlign: 'center', padding: 8 }}>Ganancia adicional</th>
+            <th style={{ textAlign: 'center', padding: 8 }}>
+              Tu Pr&eacute;stamo
+              <br />(final)
+            </th>
+            <th style={{ textAlign: 'center', padding: 8 }}>
+              DPF
+              <br />(final, {(dpfRate*100).toFixed(1)}%)
+            </th>
+            <th style={{ textAlign: 'center', padding: 8 }}>
+              Ganancia
+              <br />adicional
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -261,23 +270,13 @@ function Scenarios({ amount, years, dpfRate, rates }) {
               <tr key={r} style={{ borderTop: '1px solid #f0f0f0' }}>
                 <td style={{ padding: 8, textAlign: 'center' }}>{labels[i]} ({ratePercents[i]})</td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
-                  <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(tpEnd).toLocaleString('es-BO')}</span>
+                  <span className="scenario-amount">Bs&nbsp;{Math.round(tpEnd).toLocaleString('es-BO')}</span>
                 </td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
-                  <span style={{ whiteSpace: 'nowrap' }}>Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
+                  <span className="scenario-amount">Bs&nbsp;{Math.round(dpfEnd).toLocaleString('es-BO')}</span>
                 </td>
                 <td style={{ padding: 8, textAlign: 'right' }}>
-                  <span style={{
-                    whiteSpace: 'nowrap',
-                    background: '#e6fffb',
-                    border: '1px solid #a8ede6',
-                    color: '#006d75',
-                    fontWeight: 800,
-                    fontSize: '1.05rem',
-                    padding: '4px 10px',
-                    borderRadius: 12,
-                    display: 'inline-block'
-                  }}>
+                  <span className="scenario-badge">
                     Bs&nbsp;{Math.round(extra).toLocaleString('es-BO')}
                   </span>
                 </td>

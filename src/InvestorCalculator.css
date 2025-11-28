@@ -57,6 +57,21 @@ th, td { padding: 8px; }
 thead th { border-bottom: 2px solid #eef2f3; }
 tbody tr + tr { border-top: 1px solid #f0f0f0; }
 
+/* Escenarios de retorno */
+.scenario-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.scenario-amount { white-space: nowrap; }
+.scenario-badge {
+  white-space: nowrap;
+  background: #e6fffb;
+  border: 1px solid #a8ede6;
+  color: #006d75;
+  font-weight: 800;
+  font-size: 1.05rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
 /* Versus table (inversionista) */
 .rate-compare { margin-bottom: 16px; }
 .rate-compare__title { text-align: center; margin: 0 0 10px 0; font-size: 1.1rem; color: #2c3e50; }
@@ -74,4 +89,21 @@ tbody tr + tr { border-top: 1px solid #f0f0f0; }
 
 @media (max-width: 700px) {
   .rate-compare__grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .scenario-table { table-layout: fixed; font-size: 0.94rem; }
+  .scenario-table th, .scenario-table td { padding: 6px 4px; word-break: break-word; }
+  .scenario-table th { font-size: 0.86rem; line-height: 1.2; }
+  .scenario-table td:first-child { text-align: left; }
+  .scenario-table td { text-align: center; }
+  .scenario-badge {
+    width: 100%;
+    text-align: center;
+    font-size: 0.95rem;
+    padding: 6px 6px;
+    white-space: normal;
+    box-sizing: border-box;
+  }
+  .scenario-amount { white-space: nowrap; }
 }
