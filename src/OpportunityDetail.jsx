@@ -46,7 +46,7 @@ const OpportunityDetail = () => {
     // Call the RPC function instead of a direct select
     const { data, error: rpcError } = await supabase
       .rpc('get_opportunity_details_with_funding', {
-        p_opportunity_id: id
+        p_opportunity_id: Number(id)
       })
       .single(); // The RPC returns a single record
 

@@ -16,6 +16,7 @@ const OpportunityCard = ({ opp }) => {
   const fundedPct = totalGoal > 0 ? Math.min(100, (totalFunded / totalGoal) * 100) : 0;
   const remainingAmount = opp.saldo_pendiente != null ? Number(opp.saldo_pendiente) : Math.max(totalGoal - totalFunded, 0);
   const remainingPct = totalGoal > 0 ? Math.max(0, (remainingAmount / totalGoal) * 100) : 0;
+  const isFunded = remainingAmount <= 0;
 
   const riskLabel = ({
     A: 'Conservador (A)',
@@ -69,9 +70,11 @@ const OpportunityCard = ({ opp }) => {
       <div className="card-footer">
         <div className="cta-copy">
           <div className="label">Estado</div>
-          <div className="value">Publicada</div>
+          <div className="value">{isFunded ? 'Fondeada' : 'Publicada'}</div>
         </div>
-        <button className="invest-button" onClick={handleViewDetails}>Invertir ahora</button>
+        <button className="invest-button" onClick={handleViewDetails}>
+          {isFunded ? 'Ver detalle' : 'Invertir ahora'}
+        </button>
       </div>
     </div>
   );

@@ -36,13 +36,27 @@ const MyInvestmentsList = () => {
         setRows(invs || []);
         const oppIds = Array.from(new Set((invs || []).map(r => r.opportunity_id).filter(Boolean)));
         if (oppIds.length > 0) {
-          const { data: opps, error: oppErr } = await supabase
-            .from('oportunidades')
-            .select('id, monto, plazo_meses, perfil_riesgo, tasa_rendimiento_inversionista')
-            .in('id', oppIds);
-          if (oppErr) throw oppErr;
+          const opps = await Promise.all(oppIds.map(async (oid) => {
+            const { data, error } = await supabase
+              .rpc('get_opportunity_details_with_funding', { p_opportunity_id: oid })
+              .single();
+            if (error) {
+              console.warn('No se pudo cargar oportunidad', oid, error);
+              return null;
+            }
+            return {
+              id: data.id,
+              monto: data.monto,
+              plazo_meses: data.plazo_meses,
+              perfil_riesgo: data.perfil_riesgo,
+              tasa_rendimiento_inversionista: data.tasa_rendimiento_inversionista,
+              total_funded: Number(data?.total_funded || 0),
+              saldo_pendiente: data?.saldo_pendiente != null ? Number(data.saldo_pendiente) : null,
+              estado: data?.estado,
+            };
+          }));
           const map = {};
-          (opps || []).forEach(o => { map[o.id] = o; });
+          (opps || []).filter(Boolean).forEach(o => { map[o.id] = o; });
           setOppsById(map);
         } else {
           setOppsById({});
@@ -105,6 +119,9 @@ const MyInvestmentsList = () => {
               {rows.map(r => {
                 const o = oppsById[r.opportunity_id] || {};
                 const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
+                const remaining = o.saldo_pendiente != null ? o.saldo_pendiente : null;
+                const isFondeada = remaining !== null ? remaining <= 0 : false;
+                const canPayNow = isPendingPayment && !isFondeada;
                 return (
                   <tr key={r.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{new Date(r.created_at).toLocaleDateString('es-BO')}</td>
@@ -113,9 +130,9 @@ const MyInvestmentsList = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.tasa_rendimiento_inversionista != null ? `${Number(o.tasa_rendimiento_inversionista).toFixed(2)}%` : 'n/d'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.plazo_meses != null ? `${o.plazo_meses} meses` : 'n/d'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.perfil_riesgo || 'n/d'}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{r.status || 'intencion'}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{isFondeada ? 'Fondeada' : (r.status || 'intencion')}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                      {isPendingPayment ? (
+                      {canPayNow ? (
                         <button className="btn btn--primary" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
                           Pagar ahora
                         </button>
