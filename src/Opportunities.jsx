@@ -173,10 +173,16 @@ const Opportunities = () => {
 
   return (
     <div className="opportunities-container">
-      <InvestorBreadcrumbs items={[
-        { label: 'Inicio', to: '/investor-dashboard' },
-        { label: 'Oportunidades' },
-      ]} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <InvestorBreadcrumbs items={[
+          { label: 'Inicio', to: '/investor-dashboard' },
+          { label: 'Oportunidades' },
+        ]} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Oportunidades</button>
+          <button className="btn" onClick={() => navigate('/mis-inversiones')}>Mis inversiones</button>
+        </div>
+      </div>
       <h2 className="opp-title">Oportunidades de Inversión</h2>
       <div className="opp-summary">
         <div className="summary-left">
