@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 
 const InvestorDashboard = ({ profile, refetchProfile }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [toast, setToast] = useState(null);
 
   // Estado local del perfil para reflejar cambios en tiempo real
@@ -12,6 +13,13 @@ const InvestorDashboard = ({ profile, refetchProfile }) => {
   useEffect(() => {
     setLocalProfile(profile);
   }, [profile]);
+
+  // Redirige automáticamente al marketplace para reducir fricción (pero mantiene botones por si navega a otras secciones)
+  useEffect(() => {
+    if (location.pathname === '/investor-dashboard') {
+      navigate('/oportunidades', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const verification = localProfile?.estado_verificacion || 'no_iniciado';
 
