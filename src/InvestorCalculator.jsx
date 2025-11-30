@@ -265,8 +265,19 @@ function Scenarios({ amount, years, dpfRate, rates }) {
               <br />(final, {(dpfRate*100).toFixed(1)}%)
             </th>
             <th style={{ textAlign: 'center', padding: 8 }}>
-              Ganancia
-              <br />adicional
+              <div className="scenario-header-with-tooltip">
+                <span>
+                  Ganancia
+                  <br />adicional
+                </span>
+                <span
+                  className="tooltip-icon"
+                  title="Si reinviertes mensualmente tus pagos, la ganancia adicional crece. Pasa el mouse por el monto para ver cuánto subiría."
+                  aria-label="Ayuda sobre ganancia adicional"
+                >
+                  ?
+                </span>
+              </div>
             </th>
           </tr>
         </thead>

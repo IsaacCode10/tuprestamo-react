@@ -71,6 +71,33 @@ tbody tr + tr { border-top: 1px solid #f0f0f0; }
   border-radius: 12px;
   display: inline-block;
 }
+.scenario-header-with-tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+.tooltip-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e6fffb;
+  border: 1px solid #a8ede6;
+  color: #006d75;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: help;
+  line-height: 1;
+}
+.tooltip-icon:hover {
+  background: #d3f7f0;
+  border-color: #26C2B2;
+  color: #00445A;
+}
 
 /* Versus table (inversionista) */
 .rate-compare { margin-bottom: 16px; }
