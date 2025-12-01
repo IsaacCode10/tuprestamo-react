@@ -24,6 +24,7 @@ const AdminOperations = () => {
   const [receiptFiles, setReceiptFiles] = useState({});
   const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
   const [infoMessage, setInfoMessage] = useState('');
+  const [lastRefreshed, setLastRefreshed] = useState(null);
 
   const loadIntents = async () => {
     setLoading(true);
@@ -89,6 +90,15 @@ const AdminOperations = () => {
     } catch (e) {
       setError((e).message || 'No se pudo reabrir la oportunidad');
     }
+  };
+
+  const refreshAll = async () => {
+    setLoading(true);
+    setError('');
+    setInfoMessage('');
+    await Promise.all([loadIntents(), loadBorrowerIntents(), loadPayouts()]);
+    setLastRefreshed(new Date());
+    setLoading(false);
   };
 
   const uploadReceipt = async (file, prefix = 'payouts') => {
@@ -168,19 +178,25 @@ const AdminOperations = () => {
   };
 
   useEffect(() => {
-    loadIntents();
-    loadBorrowerIntents();
-    loadPayouts();
+    refreshAll();
+    const interval = setInterval(() => { refreshAll(); }, 30000); // auto refresh cada 30s
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="admin-ops" style={{ maxWidth: 1200, margin: '0 auto', padding: 16 }}>
       <h2>Operaciones</h2>
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <TabButton active={tab === 'intents'} onClick={() => setTab('intents')}>Pagos de inversionistas</TabButton>
         <TabButton active={tab === 'review'} onClick={() => setTab('review')}>Por conciliar</TabButton>
         <TabButton active={tab === 'borrower'} onClick={() => setTab('borrower')}>Pagos de prestatarios</TabButton>
         <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Payouts a inversionistas</TabButton>
+        <button className="btn btn--secondary" onClick={refreshAll} disabled={loading}>Refrescar</button>
+        {lastRefreshed && (
+          <span style={{ color: '#55747b', fontSize: '0.9rem' }}>
+            Actualizado: {lastRefreshed.toLocaleTimeString('es-BO')}
+          </span>
+        )}
       </div>
 
       {loading && <p>Cargando...</p>}
