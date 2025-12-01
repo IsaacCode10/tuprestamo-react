@@ -16,7 +16,7 @@ const OpportunityDetail = () => {
   // Analítica centralizada via trackEvent
 
   // New state for the investment form
-  const [investmentAmount, setInvestmentAmount] = useState('');
+  const [investmentAmount, setInvestmentAmount] = useState(''); // texto en formato es-BO (puntos miles, coma decimales)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState({ type: '', text: '' });
   const [intentInfo, setIntentInfo] = useState(null); // Datos del intent/QR mostrado al usuario
@@ -111,6 +111,24 @@ const OpportunityDetail = () => {
     }
   };
 
+  const parseLocaleAmount = (raw) => {
+    if (!raw || !raw.trim()) return { ok: false, value: null, error: 'Ingresa un monto válido.' };
+    const onlyAllowed = raw.replace(/\s+/g, '');
+    // Acepta dígitos, puntos de miles y coma decimal; ejemplo válido: 9.000,55 o 9000,55 o 9000
+    const localeRegex = /^(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/;
+    const simpleRegex = /^\d+(,\d{1,2})?$/;
+    if (!localeRegex.test(onlyAllowed) && !simpleRegex.test(onlyAllowed)) {
+      return { ok: false, value: null, error: 'Usa formato 1.234,56 (coma para decimales, punto para miles).' };
+    }
+    const normalized = onlyAllowed.replace(/\./g, '').replace(',', '.');
+    if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
+      return { ok: false, value: null, error: 'Solo se permiten hasta 2 decimales.' };
+    }
+    const num = parseFloat(normalized);
+    if (isNaN(num) || num <= 0) return { ok: false, value: null, error: 'Ingresa un monto válido mayor a cero.' };
+    return { ok: true, value: num };
+  };
+
   const handleInvestment = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -118,12 +136,13 @@ const OpportunityDetail = () => {
     setIntentInfo(null);
     setCountdown('');
 
-    const amount = parseFloat(investmentAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setFormMessage({ type: 'error', text: 'Por favor, ingresa un monto válido.' });
+    const parsed = parseLocaleAmount(investmentAmount);
+    if (!parsed.ok) {
+      setFormMessage({ type: 'error', text: parsed.error });
       setIsSubmitting(false);
       return;
     }
+    const amount = parsed.value;
 
     if (amount < 700) {
       setFormMessage({ type: 'error', text: 'La inversión mínima es de 700 Bs.' });
@@ -185,7 +204,11 @@ const OpportunityDetail = () => {
         p_opportunity_id: Number(id),
         p_amount: amount,
       });
-      if (intentError) throw intentError;
+      if (intentError) {
+        const msg = intentError?.message || '';
+        setFormMessage({ type: 'error', text: msg.includes('No hay saldo disponible') ? msg : 'Hubo un error al registrar tu inversión. Revisa el monto y vuelve a intentar.' });
+        throw intentError;
+      }
 
       // --- Evento de Analítica: Reserva creada ---
       trackEvent('Created Investment Intent', {
@@ -512,11 +535,18 @@ const OpportunityDetail = () => {
                 <div style={{ marginBottom: '15px' }}>
                   <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     id="investmentAmount"
                     value={investmentAmount}
-                    onChange={(e) => setInvestmentAmount(e.target.value)}
-                    placeholder="Ej: 1000"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Solo permitir dígitos, punto y coma para respetar formato es-BO
+                      if (/^[0-9.,]*$/.test(val)) {
+                        setInvestmentAmount(val);
+                      }
+                    }}
+                    placeholder="Ej: 9.000,55"
                     required
                     style={{ width: '100%', padding: '8px', marginTop: '5px' }}
                   />
