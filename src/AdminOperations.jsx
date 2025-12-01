@@ -164,6 +164,7 @@ const AdminOperations = () => {
       <h2>Operaciones</h2>
       <div style={{ marginBottom: 12 }}>
         <TabButton active={tab === 'intents'} onClick={() => setTab('intents')}>Pagos de inversionistas</TabButton>
+        <TabButton active={tab === 'review'} onClick={() => setTab('review')}>Por conciliar</TabButton>
         <TabButton active={tab === 'borrower'} onClick={() => setTab('borrower')}>Pagos de prestatarios</TabButton>
         <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Payouts a inversionistas</TabButton>
       </div>
@@ -207,6 +208,60 @@ const AdminOperations = () => {
               {intents.length === 0 && (
                 <tr>
                   <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay intents</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'review' && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Expira</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comprobante</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {intents
+                .filter((i) => ['pending', 'unmatched'].includes((i.status || '').toLowerCase()))
+                .sort((a, b) => {
+                  const aExp = a.expires_at ? new Date(a.expires_at).getTime() : Infinity;
+                  const bExp = b.expires_at ? new Date(b.expires_at).getTime() : Infinity;
+                  return aExp - bExp;
+                })
+                .map((i) => (
+                  <tr key={i.id}>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{investorMap[i.investor_id] || i.investor_id}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                      {i.receipt_url ? (
+                        <a className="btn" href={supabase.storage.from('comprobantes-pagos').getPublicUrl(i.receipt_url).data.publicUrl} target="_blank" rel="noreferrer">Ver</a>
+                      ) : (
+                        <span style={{ color: '#888' }}>Sin comprobante</span>
+                      )}
+                    </td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
+                      <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
+                    </td>
+                  </tr>
+                ))}
+              {intents.filter((i) => ['pending', 'unmatched'].includes((i.status || '').toLowerCase())).length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay pagos pendientes por conciliar</td>
                 </tr>
               )}
             </tbody>

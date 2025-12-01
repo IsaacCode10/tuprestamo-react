@@ -304,6 +304,21 @@ const OpportunityDetail = () => {
       } catch (notifErr) {
         console.warn('No se pudo registrar la notificación del comprobante', notifErr);
       }
+      // Alerta a Operaciones por email (via edge function configurable)
+      try {
+        await supabase.functions.invoke('payment-intent-alert', {
+          body: {
+            type: 'receipt_uploaded',
+            intent_id: intentInfo.id,
+            opportunity_id: Number(id),
+            expected_amount: intentInfo.expected_amount || amount,
+            status: intentInfo.status,
+            expires_at: intentInfo.expires_at,
+          },
+        });
+      } catch (fnErr) {
+        console.warn('No se pudo enviar alerta a Operaciones', fnErr);
+      }
     } catch (e) {
       console.error('Upload receipt error', e);
       setFormMessage({ type: 'error', text: 'No pudimos subir el comprobante. Intenta nuevamente.' });
