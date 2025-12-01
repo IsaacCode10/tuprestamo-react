@@ -76,3 +76,31 @@ Para maximizar la conversión de prospectos pre-aprobados a solicitantes complet
 3.  **Objetivo Estratégico:** El propósito de este dashboard provisional es **motivar al usuario a completar el proceso de carga de documentos** al mostrarle de forma tangible e inmediata el valor de nuestro producto.
 
 4.  **Cálculo Final:** El cálculo oficial y definitivo (incluyendo el "Gross-Up") se realiza únicamente después de que un analista **verifica el saldo deudor real** en los documentos del cliente.
+
+#### **6. Organización y Roles Clave (Operación MVP)**
+
+- **CEO (Isaac Alfaro):** define reglas de negocio, marketing/embudo, valida en producción; no modifica código.
+- **CTO (Codex):** implementación técnica end-to-end (frontend/backend/infra), mantiene documentación y despliegues.
+- **Operaciones (Karen Bejarano):** concilia pagos de inversionistas y prestatarios, sube PDF de INFOCRED al panel del analista, revisa panel de Operaciones. Rol sugerido en `profiles.role`: `ops` o `admin`.
+- **Analista de Riesgo (Sarai Arispe):** decide aprobar/rechazar con la documentación completa; rol `analista` en `profiles.role`.
+- **Accesos:** `profiles.role` define permisos (admin/ops/analista/prestatario/inversionista). Emails actuales: Isaac `alfaro.isaac10@gmail.com`, Karen `karen@tuprestamobo.com`, Sarai `<email_de_sarai>`.
+
+#### **7. Alertas y Comunicaciones Operativas**
+
+- **Notificaciones a Operaciones:** envío por email (Resend) al subir comprobante de pago inversionista y al marcar un intent como pagado. Remitente: `notificaciones@tuprestamobo.com`.
+- **Destinatarios configurables:** variables de entorno en Supabase `OPS_ALERT_TO` (p. ej. `karen@tuprestamobo.com`) y `OPS_ALERT_CC` (p. ej. `contacto@tuprestamobo.com`). Se pueden cambiar sin tocar código.
+- **In-app:** inversionistas reciben notificación interna al crear reserva y al subir comprobante; Operaciones ve intentos pendientes/por conciliar en el panel.
+
+#### **8. Regla de pre-aprobación (DTI)**
+
+- **Cálculo del DTI (Debt-to-Income) en pre-funnel:** usando la deuda de tarjeta declarada (`saldo_deuda_tc`) y tasa anual (`tasa_interes_tc`), se estima la cuota mensual como interés mensual + 1% del saldo (amortización mínima). Fórmula:
+  - Interés mensual = `saldo_deuda_tc * (tasa_interes_tc / 100) / 12`
+  - Amortización mínima = `saldo_deuda_tc * 0.01`
+  - Cuota estimada = interés mensual + amortización mínima
+  - DTI = `(cuota estimada / ingreso_mensual) * 100`
+- **Filtros automáticos:** rechazar si `ingreso_mensual < 3.000 Bs` o si `DTI > 50%`.
+- **Scorecard inicial (si pasa los filtros):**
+  - Ingresos: >8k (+3), 5–8k (+2), 3–5k (+1)
+  - DTI: <30% (+3), 30–40% (+2), 40–50% (+1)
+  - Antigüedad laboral: ≥24m (+2), 12–23m (+1)
+  - Resultado: total ≥7 → Perfil A; ≥5 → Perfil B; ≥2 → Perfil C; <2 → Rechazado.
