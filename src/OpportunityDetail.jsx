@@ -114,16 +114,26 @@ const OpportunityDetail = () => {
   const parseLocaleAmount = (raw) => {
     if (!raw || !raw.trim()) return { ok: false, value: null, error: 'Ingresa un monto válido.' };
     const onlyAllowed = raw.replace(/\s+/g, '');
-    // Acepta dígitos, puntos de miles y coma decimal; ejemplo válido: 9.000,55 o 9000,55 o 9000
-    const localeRegex = /^(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/;
-    const simpleRegex = /^\d+(,\d{1,2})?$/;
-    if (!localeRegex.test(onlyAllowed) && !simpleRegex.test(onlyAllowed)) {
-      return { ok: false, value: null, error: 'Usa formato 1.234,56 (coma para decimales, punto para miles).' };
+    // Permitir ambos: 1.234,56 o 1,234.56 (puntos o comas como miles/decimales)
+    // 1) detectar separador decimal (último . o , si hay ambos, toma el último)
+    const lastDot = onlyAllowed.lastIndexOf('.');
+    const lastComma = onlyAllowed.lastIndexOf(',');
+    const decimalIdx = Math.max(lastDot, lastComma);
+    let integerPart = onlyAllowed;
+    let decimalPart = '';
+    if (decimalIdx !== -1) {
+      integerPart = onlyAllowed.slice(0, decimalIdx);
+      decimalPart = onlyAllowed.slice(decimalIdx + 1);
     }
-    const normalized = onlyAllowed.replace(/\./g, '').replace(',', '.');
-    if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
+    // Validar que resto sean dígitos/puntos/commas en miles
+    const intClean = integerPart.replace(/[.,]/g, '');
+    if (!/^\d+$/.test(intClean)) {
+      return { ok: false, value: null, error: 'Usa solo números con . o , para separar miles/decimales.' };
+    }
+    if (decimalPart && !/^\d{1,2}$/.test(decimalPart)) {
       return { ok: false, value: null, error: 'Solo se permiten hasta 2 decimales.' };
     }
+    const normalized = decimalPart ? `${intClean}.${decimalPart}` : intClean;
     const num = parseFloat(normalized);
     if (isNaN(num) || num <= 0) return { ok: false, value: null, error: 'Ingresa un monto válido mayor a cero.' };
     return { ok: true, value: num };
@@ -541,11 +551,11 @@ const OpportunityDetail = () => {
                     value={investmentAmount}
                     onChange={(e) => {
                       const val = e.target.value;
-                      // Solo permitir dígitos, punto y coma para respetar formato es-BO
-                      if (/^[0-9.,]*$/.test(val)) {
-                        setInvestmentAmount(val);
-                      }
-                    }}
+                    // Solo permitir dígitos, punto y coma
+                    if (/^[0-9.,]*$/.test(val)) {
+                      setInvestmentAmount(val);
+                    }
+                  }}
                     placeholder="Ej: 9.000,55"
                     required
                     style={{ width: '100%', padding: '8px', marginTop: '5px' }}
