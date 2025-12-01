@@ -36,7 +36,23 @@ const AdminOperations = () => {
       .limit(100);
     if (error) setError(error.message);
     const rows = data || [];
-    setIntents(rows);
+    // Generar links firmados para comprobantes (bucket privado)
+    const intentsWithLinks = await Promise.all(rows.map(async (r) => {
+      let receipt_signed_url = null;
+      if (r.receipt_url) {
+        try {
+          const { data: signed, error: signErr } = await supabase
+            .storage
+            .from('comprobantes-pagos')
+            .createSignedUrl(r.receipt_url, 60 * 60); // 1h
+          if (!signErr && signed?.signedUrl) {
+            receipt_signed_url = signed.signedUrl;
+          }
+        } catch (_) {}
+      }
+      return { ...r, receipt_signed_url };
+    }));
+    setIntents(intentsWithLinks);
     // cargar perfiles para mostrar nombre/email en vez de UUID
     const investorIds = Array.from(new Set(rows.map(r => r.investor_id).filter(Boolean)));
     if (investorIds.length > 0) {
@@ -232,7 +248,11 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {i.receipt_url ? <a className="btn" href={supabase.storage.from('comprobantes-pagos').getPublicUrl(i.receipt_url).data.publicUrl} target="_blank" rel="noreferrer">Ver</a> : '—'}
+                    {i.receipt_signed_url ? (
+                      <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={!canPay}>Marcar pagado</button>
@@ -284,8 +304,8 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                      {i.receipt_url ? (
-                        <a className="btn" href={supabase.storage.from('comprobantes-pagos').getPublicUrl(i.receipt_url).data.publicUrl} target="_blank" rel="noreferrer">Ver</a>
+                      {i.receipt_signed_url ? (
+                        <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
                       ) : (
                         <span style={{ color: '#888' }}>Sin comprobante</span>
                       )}
