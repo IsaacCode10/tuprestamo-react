@@ -14,3 +14,6 @@ grant execute on function public.expire_payment_intents_sql()
 
 grant execute on function public.get_contract_payload(bigint)
   to authenticated, service_role;
+
+grant execute on function public.reopen_opportunity_if_unfunded(bigint)
+  to authenticated, service_role;

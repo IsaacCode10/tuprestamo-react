@@ -299,3 +299,35 @@ begin
   return coalesce(v_payload, '{}'::jsonb);
 end;
 $$;
+
+create or replace function public.reopen_opportunity_if_unfunded(p_opportunity_id bigint)
+returns oportunidades
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_total_paid numeric;
+  v_op oportunidades%rowtype;
+begin
+  select * into v_op from oportunidades where id = p_opportunity_id for update;
+  if not found then
+    raise exception 'Oportunidad no existe';
+  end if;
+
+  select coalesce(sum(amount), 0) into v_total_paid
+  from inversiones
+  where opportunity_id = p_opportunity_id
+    and lower(trim(status)) = 'pagado';
+
+  if v_total_paid > 0 then
+    raise exception 'No se puede reabrir; tiene pagos acreditados (%)', v_total_paid;
+  end if;
+
+  update oportunidades
+  set estado = 'disponible'
+  where id = p_opportunity_id;
+
+  return (select * from oportunidades where id = p_opportunity_id);
+end;
+$$;

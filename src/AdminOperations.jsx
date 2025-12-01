@@ -23,6 +23,7 @@ const AdminOperations = () => {
   const [error, setError] = useState('');
   const [receiptFiles, setReceiptFiles] = useState({});
   const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
+  const [infoMessage, setInfoMessage] = useState('');
 
   const loadIntents = async () => {
     setLoading(true);
@@ -75,6 +76,19 @@ const AdminOperations = () => {
     if (error) setError(error.message);
     setPayouts(data || []);
     setLoading(false);
+  };
+
+  const reopenOpportunity = async (opportunityId) => {
+    try {
+      setError('');
+      setInfoMessage('');
+      const { error } = await supabase.rpc('reopen_opportunity_if_unfunded', { p_opportunity_id: opportunityId });
+      if (error) throw error;
+      setInfoMessage(`Oportunidad ${opportunityId} reabierta a disponible (sin pagos acreditados).`);
+      loadIntents();
+    } catch (e) {
+      setError((e).message || 'No se pudo reabrir la oportunidad');
+    }
   };
 
   const uploadReceipt = async (file, prefix = 'payouts') => {
@@ -171,6 +185,7 @@ const AdminOperations = () => {
 
       {loading && <p>Cargando...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {infoMessage && <p style={{ color: '#0f5a62', fontWeight: 600 }}>{infoMessage}</p>}
 
       {tab === 'intents' && (
         <div style={{ overflowX: 'auto' }}>
@@ -206,6 +221,7 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={!canPay}>Marcar pagado</button>
                       <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={!canExpire}>Expirar</button>
+                      <button className="btn" onClick={() => reopenOpportunity(i.opportunity_id)} disabled={statusLower === 'paid'}>Reabrir (sin pagos)</button>
                     </td>
                   </tr>
                 );
