@@ -146,6 +146,14 @@ const OpportunityDetail = () => {
     setIntentInfo(null);
     setCountdown('');
 
+    // Refresca sesión y valida usuario antes de intentar RPC
+    const { data: { user: freshUser } } = await supabase.auth.getUser();
+    if (!freshUser?.id) {
+      setFormMessage({ type: 'error', text: 'Tu sesión expiró. Inicia sesión para invertir.' });
+      setIsSubmitting(false);
+      return;
+    }
+
     const parsed = parseLocaleAmount(investmentAmount);
     if (!parsed.ok) {
       setFormMessage({ type: 'error', text: parsed.error });
@@ -216,8 +224,13 @@ const OpportunityDetail = () => {
       });
       if (intentError) {
         const msg = intentError?.message || '';
-        setFormMessage({ type: 'error', text: msg.includes('No hay saldo disponible') ? msg : 'Hubo un error al registrar tu inversión. Revisa el monto y vuelve a intentar.' });
-        throw intentError;
+        if (msg) {
+          setFormMessage({ type: 'error', text: msg });
+        } else {
+          setFormMessage({ type: 'error', text: 'Hubo un error al registrar tu inversión. Revisa el monto y vuelve a intentar.' });
+        }
+        setIsSubmitting(false);
+        return;
       }
 
       // --- Evento de Analítica: Reserva creada ---

@@ -17,7 +17,13 @@ declare
   v_available numeric;
   v_expires_at timestamptz;
   v_intent payment_intents%rowtype;
+  v_investor uuid;
 begin
+  v_investor := auth.uid();
+  if v_investor is null then
+    raise exception 'Debes iniciar sesión para invertir';
+  end if;
+
   select *
   into v_op
   from oportunidades
@@ -68,7 +74,7 @@ begin
   values (
     gen_random_uuid(),
     p_opportunity_id,
-    auth.uid(),
+    v_investor,
     p_amount,
     'pending',
     encode(extensions.gen_random_bytes(6), 'hex'),
