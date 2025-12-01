@@ -289,6 +289,21 @@ const OpportunityDetail = () => {
       if (updErr) throw updErr;
       setFormMessage({ type: 'success', text: 'Comprobante subido. Procesaremos tu pago al conciliar.' });
       setReceiptFile(null);
+      // Notificación in-app para que el inversionista tenga trazabilidad del comprobante
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase.from('notifications').insert({
+            user_id: user.id,
+            title: 'Comprobante enviado',
+            body: 'Recibimos tu comprobante. Operaciones lo conciliarán pronto.',
+            link_url: `/oportunidades/${id}`,
+            type: 'investment_receipt_uploaded',
+          });
+        }
+      } catch (notifErr) {
+        console.warn('No se pudo registrar la notificación del comprobante', notifErr);
+      }
     } catch (e) {
       console.error('Upload receipt error', e);
       setFormMessage({ type: 'error', text: 'No pudimos subir el comprobante. Intenta nuevamente.' });
