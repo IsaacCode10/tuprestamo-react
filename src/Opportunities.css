@@ -18,6 +18,24 @@
   font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
+.opportunities-nav-actions .btn {
+  border: none;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+.opportunities-nav-actions .btn.btn--primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+.opportunities-nav-actions .btn {
+  background: #f0f2f5;
+  color: var(--primary-color);
+}
+.opportunities-nav-actions .btn:not(.btn--primary):hover {
+  background: #e1e6ea;
+}
+
 h2.opp-title {
   font-family: 'Montserrat', 'Segoe UI', sans-serif;
   color: var(--primary-color);

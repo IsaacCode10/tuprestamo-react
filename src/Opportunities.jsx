@@ -173,7 +173,7 @@ const Opportunities = () => {
 
   return (
     <div className="opportunities-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <div className="opportunities-nav-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <InvestorBreadcrumbs items={[
           { label: 'Inicio', to: '/investor-dashboard' },
           { label: 'Oportunidades' },
