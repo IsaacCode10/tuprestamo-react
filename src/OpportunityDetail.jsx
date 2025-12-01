@@ -432,6 +432,25 @@ const OpportunityDetail = () => {
     return <p>Cargando detalles de la oportunidad...</p>;
   }
 
+  const renderFormMessage = () => {
+    if (!formMessage.text) return null;
+    const isError = formMessage.type === 'error';
+    const styles = {
+      background: isError ? '#ffe6e6' : '#e6fffb',
+      border: `1px solid ${isError ? '#ffb3b3' : '#a8ede6'}`,
+      color: isError ? '#8b0000' : '#0f5a62',
+      padding: '12px',
+      borderRadius: '8px',
+      fontWeight: 700,
+      marginTop: '15px',
+    };
+    return (
+      <div style={styles} role="status" aria-live="polite">
+        {formMessage.text}
+      </div>
+    );
+  };
+
   if (error) {
     return (
       <div>
@@ -549,11 +568,11 @@ const OpportunityDetail = () => {
         </div>
 
         {/* Columna derecha: formulario + reserva */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {remainingAmount > 0 ? (
-            <div className="investment-form" style={{ border: '1px solid #ddd', padding: '16px', borderRadius: '8px' }}>
-              <h3>Invertir en esta Oportunidad</h3>
-              <p style={{ marginTop: 0, color: '#0f5a62' }}>Ingresa tu monto y registraremos tu reserva. Te daremos las instrucciones de pago para confirmarla.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {remainingAmount > 0 ? (
+              <div className="investment-form" style={{ border: '1px solid #ddd', padding: '16px', borderRadius: '8px' }}>
+                <h3>Invertir en esta Oportunidad</h3>
+                <p style={{ marginTop: 0, color: '#0f5a62' }}>Ingresa tu monto y registraremos tu reserva. Te daremos las instrucciones de pago para confirmarla.</p>
               <form onSubmit={handleInvestment}>
                 <div style={{ marginBottom: '15px' }}>
                   <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
@@ -578,13 +597,9 @@ const OpportunityDetail = () => {
                   {isSubmitting ? 'Registrando...' : 'Invertir ahora'}
                 </button>
               </form>
-          {formMessage.text && (
-            <p style={{ color: formMessage.type === 'error' ? 'red' : '#0f5a62', marginTop: '15px', fontWeight: 600 }}>
-              {formMessage.text}
-            </p>
-          )}
-          {intentInfo && (
-            <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
+              {renderFormMessage()}
+              {intentInfo && (
+                <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
                   <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada (válida 48h)</p>
               <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
                 <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
