@@ -28,6 +28,8 @@ const OpportunityDetail = () => {
   const qrSrc = '/qr-pago.png'; // QR estático desde /public; reemplazar por QR dinámico si se dispone
   const [showQrModal, setShowQrModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const reviewEventSentRef = useRef(false);
+  const expireEventSentRef = useRef(false);
 
   const intentStatus = (intentInfo?.status || '').toLowerCase();
   const receiptUnderReview = intentStatus === 'pending' && !!intentInfo?.receipt_url;
@@ -85,6 +87,27 @@ const OpportunityDetail = () => {
       fetchExistingIntent();
     }
   }, [id, userId]);
+
+  // Track pago en revisión mostrado
+  useEffect(() => {
+    if (receiptUnderReview && intentInfo?.id && !reviewEventSentRef.current) {
+      reviewEventSentRef.current = true;
+      trackEvent('Payment Under Review Shown', {
+        opportunity_id: Number(id),
+        intent_id: intentInfo.id,
+        expected_amount: intentInfo.expected_amount,
+        intent_status: intentInfo.status,
+        expires_at: intentInfo.expires_at,
+        has_receipt: true,
+      });
+    }
+  }, [receiptUnderReview, intentInfo, id]);
+
+  // Reset trackers al cambiar de intent
+  useEffect(() => {
+    reviewEventSentRef.current = false;
+    expireEventSentRef.current = false;
+  }, [intentInfo?.id]);
 
   const fetchExistingIntent = async () => {
     try {
@@ -353,6 +376,19 @@ const OpportunityDetail = () => {
       } catch (notifErr) {
         console.warn('No se pudo registrar la notificación del comprobante', notifErr);
       }
+      // Telemetría: recibo subido
+      try {
+        trackEvent('Receipt Uploaded', {
+          opportunity_id: Number(id),
+          intent_id: intentInfo.id,
+          expected_amount: intentInfo.expected_amount,
+          intent_status: intentInfo.status,
+          expires_at: intentInfo.expires_at,
+          file_type: file.type,
+        });
+      } catch (teErr) {
+        console.warn('No se pudo trackear Receipt Uploaded', teErr);
+      }
       // Alerta a Operaciones por email (via edge function configurable)
       try {
         await supabase.functions.invoke('payment-intent-alert', {
@@ -429,6 +465,20 @@ const OpportunityDetail = () => {
     const id = setInterval(tick, 60 * 1000);
     return () => clearInterval(id);
   }, [intentInfo?.expires_at]);
+
+  // Track intent expirado (vista UI)
+  useEffect(() => {
+    if (countdown === 'Expirada' && intentInfo?.id && !expireEventSentRef.current) {
+      expireEventSentRef.current = true;
+      trackEvent('Payment Intent Expired', {
+        opportunity_id: Number(id),
+        intent_id: intentInfo.id,
+        expected_amount: intentInfo.expected_amount,
+        intent_status: intentInfo.status,
+        expires_at: intentInfo.expires_at,
+      });
+    }
+  }, [countdown, intentInfo, id]);
 
 
   if (loading) {

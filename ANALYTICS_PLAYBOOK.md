@@ -1,58 +1,56 @@
-# Playbook de Analítica de Producto — TU PRESTAMO (Mixpanel)
+# Playbook de Analítica — Tu Préstamo (Mixpanel)
 
-Filosofía: medimos lo esencial para tomar decisiones y crecer, sin inflar costos. Mantener una taxonomía clara, eventos limpios y propiedades útiles.
+Filosofía: medir lo esencial para tomar decisiones y crecer sin inflar costos. Taxonomía clara, eventos limpios y propiedades útiles. Todo en este archivo (se integró el addendum).
 
 ---
 
-### Herramienta
-- Mixpanel Browser SDK con autocapture y Session Replay muestreado.
-- Producción únicamente por defecto. En `dev/preview` no se envían eventos.
+## Plan y alcance
+- Plan objetivo: Starter/Free por 3–6 meses; volumen esperado MVP <150k eventos/trim (cabe bien).
+- Subir a Growth solo si rebasamos límites sostenidos o necesitamos exportaciones/SSO/retención extendida.
+- Session Replay muestreado (bajo) y sin heartbeats por defecto.
 
-### Arquitectura Técnica
-- Servicio central: `src/analytics.js` expone `initMixpanel`, `trackEvent`, `identifyUser`, `setSuperProperties`.
-- Reglas globales en el wrapper:
-  - Deduplicación de eventos por nombre en ventana de 2s.
-  - Batching activo (`batch_requests`, `batch_size: 20`).
-  - Session Replay muestreado por ruta (públicas vs dashboards).
-  - Active Ping opcional (apagado por defecto) con límites estrictos.
+## Herramienta y entornos
+- Mixpanel Browser SDK con autocapture + Session Replay muestreado.
+- Producción únicamente por defecto; en `dev/preview` no se envían eventos.
 
-### UTMs y Atribución
-- En init: se registran `referrer_domain`, `landing_page` y UTMs con dos modalidades:
-  - First-touch: `utm_first_*`, `first_gclid`, `first_fbclid` (via `register_once`).
-  - Last-touch: `utm_last_*`, `last_gclid`, `last_fbclid` (via `register`).
-- Enriquecimiento automático de eventos clave: `Campaign Lead` y `Signed Up` adjuntan UTMs actuales.
-- Buenas prácticas: mantener lista corta y consistente de `utm_source` y nombres de campaña.
+## Arquitectura técnica (`src/analytics.js`)
+- Expuestos: `initMixpanel`, `trackEvent`, `identifyUser`, `setSuperProperties`, `resetMixpanel`.
+- Reglas globales: dedup 2s por nombre, batching (`batch_requests`, `batch_size: 20`), Session Replay por muestreo, Active Ping opcional (apagado por defecto, máx 5 pings/sesión).
 
-### Session Replay y Costos
-- Muestreo recomendado (ajustable por .env):
-  - Públicos: 5% (`VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT`).
-  - Dashboards autenticados: 15% (`VITE_MIXPANEL_REPLAY_AUTH_PERCENT`).
-- Active Ping (opcional): medir “tiempo activo” real cada 60s solo con pestaña visible e interacción reciente, máximo 5 pings/sesión. Apagado por defecto (`VITE_MIXPANEL_ENABLE_ACTIVE_PING=false`).
+## Session Replay y Active Ping
+- Muestreo recomendado (ajustable por .env): públicos 5% (`VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT`), dashboards 15% (`VITE_MIXPANEL_REPLAY_AUTH_PERCENT`). `record_sessions_percent` siempre en 0; el wrapper decide.
+- Active Ping opcional (`VITE_MIXPANEL_ENABLE_ACTIVE_PING=false`): cada 60s, solo pestaña visible + interacción <30s, máx 5 por sesión, compuerta cross-tab. Apagado en rutas públicas.
 
-### Taxonomía de Eventos (Title Case)
+## UTMs y atribución
+- En init se registran `referrer_domain`, `landing_page` y UTMs:
+  - First-touch (`register_once`): `utm_first_*`, `first_gclid`, `first_fbclid`.
+  - Last-touch (`register`): `utm_last_*`, `last_gclid`, `last_fbclid`.
+- Enriquecimiento automático: `Campaign Lead` y `Signed Up` adjuntan UTMs actuales.
+
+## Taxonomía base (Title Case)
 - Autenticación: `Signed Up`, `Logged In`, `Logged Out`, `Login Failed`.
 - Growth: `Campaign Lead` (con UTMs).
-- Prestatario:
-  - `Viewed Loan Application Form`
-  - `Started Loan Application`
-  - `Submitted Loan Application` { loan_amount, loan_term }
-  - `Viewed Borrower Dashboard`
-  - Documentos: `Started Document Upload`, `Successfully Uploaded Document`, `Failed Document Upload` { document_type, error_message }
-- Inversionista:
-  - `Viewed Marketplace`
-  - `Viewed Loan Details` { loan_id, loan_amount }
-  - `Completed Investment` { investment_amount, loan_id }
-- Calculadora (pública):
-  - `Interacted With Calculator` { input_changed }
-  - `Calculated Loan Result` { result_amount, result_term, monthly_payment }
+- Prestatario: `Viewed Loan Application Form`, `Started Loan Application`, `Submitted Loan Application` { loan_amount, loan_term }, `Viewed Borrower Dashboard`; docs: `Started Document Upload` / `Successfully Uploaded Document` / `Failed Document Upload` { document_type, error_message }.
+- Calculadora pública: `Interacted With Calculator` { input_changed }, `Calculated Loan Result` { result_amount, result_term, monthly_payment }.
 
-### Higiene de Datos
-- Meta: 5–15 eventos por sesión. Evitar ruido de formularios `onChange` salvo acciones clave.
-- Propiedades comunes: rol (`borrower`/`investor`), dispositivo, `utm_*`, `referrer_domain`.
-- Identidad: `identifyUser(user_id, { $email, role })` tras login/registro.
-- Reset en logout: `resetMixpanel()` limpia superprops y sesión.
+## Taxonomía clave — Inversionista (MVP fondeo)
+- Descubrimiento: `Viewed Marketplace`; `Viewed Loan Details` { loan_id, loan_amount, remaining_amount, risk, rate }.
+- Reserva/pago:
+  - `Created Investment Intent` { opportunity_id, amount, payment_channel, expires_at }.
+  - `Receipt Uploaded` { opportunity_id, intent_id, expected_amount, intent_status, expires_at, file_type }.
+  - `Payment Under Review Shown` { opportunity_id, intent_id, expected_amount, intent_status, expires_at, has_receipt }.
+  - `Payment Intent Expired` { opportunity_id, intent_id, expected_amount, intent_status, expires_at } (cliente ve la expiración).
+  - `Payment Marked Paid` (cuando Operaciones marque pagado; props: opportunity_id, intent_id, paid_amount, paid_at).
+- Notificaciones y navegación: `Notification Clicked` { type, destination, opportunity_id }, `Portfolio Viewed` { investments_count, pending_reviews }.
+- Payouts (cuando apliquen): `Payout Received` { opportunity_id, amount, installment_no, status }.
 
-### Variables de Entorno útiles (.env.local)
+## Higiene de datos
+- Meta: 5–15 eventos por sesión. Evitar onChange ruidosos.
+- Props comunes: rol (`borrower`/`investor`), dispositivo, `utm_*`, `referrer_domain`.
+- Identidad: `identifyUser(user_id, { $email, role, kyc_status })` tras login/registro. `resetMixpanel()` en logout.
+- Dedup en wrapper: ventana 2s. Eventos de UI se envían solo una vez por intent/opportunity (respetar guards en componentes).
+
+## Variables de entorno (.env.local)
 - `VITE_MIXPANEL_TOKEN=...`
 - `VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT=5`
 - `VITE_MIXPANEL_REPLAY_AUTH_PERCENT=15`
@@ -60,7 +58,14 @@ Filosofía: medimos lo esencial para tomar decisiones y crecer, sin inflar costo
 - `VITE_MIXPANEL_ACTIVE_PING_INTERVAL_MS=60000`
 - `VITE_MIXPANEL_ACTIVE_PING_MAX=5`
 
-### Escalamiento de Plan
-- Empezar con Starter/Free: volumen estimado del MVP (<150k eventos/trim) cabe bien.
-- Subir a Growth si: superas límites del free de forma sostenida, requieres retención extendida/exports/Groups/SSO, o crece el equipo y la gobernanza.
+## Gobernanza y escalamiento
+- Revisar cuota mensual de eventos/replays antes de subir muestreo.
+- Si se requieren exports/SSO/retención extendida → evaluar Growth.
+
+## Qué estamos trackeando hoy (MVP inversionista)
+- Vistas: `Viewed Marketplace`, `Viewed Loan Details`.
+- Reserva: `Created Investment Intent`.
+- Comprobante: `Receipt Uploaded`, `Payment Under Review Shown`, `Payment Intent Expired` (cliente).
+- Notifs: insert en DB + `Notification Clicked` (UI).
+- Pendiente a añadir cuando esté en back: `Payment Marked Paid`, `Payout Received`.
 
