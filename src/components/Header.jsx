@@ -79,6 +79,13 @@ const Header = () => {
   useEffect(() => {
     loadNotifications();
   }, []);
+
+  // Permitir refrescar notificaciones desde otras vistas (evento custom)
+  useEffect(() => {
+    const handler = () => { loadNotifications(); };
+    window.addEventListener('tp-refresh-notifications', handler);
+    return () => window.removeEventListener('tp-refresh-notifications', handler);
+  }, []);
   // Cargar notificaciones al abrir el menÃº de usuario
   useEffect(() => {
     const load = async () => {

@@ -372,6 +372,9 @@ const OpportunityDetail = () => {
             link_url: '/mis-inversiones',
             type: 'investment_receipt_uploaded',
           });
+          try {
+            window.dispatchEvent(new Event('tp-refresh-notifications'));
+          } catch (_) { /* noop */ }
         }
       } catch (notifErr) {
         console.warn('No se pudo registrar la notificación del comprobante', notifErr);
