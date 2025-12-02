@@ -272,21 +272,25 @@ const AdminDashboard = () => {
       });
 
       // Fondeo: totales y mes actual (fondeada/activo/cerrado/en_mora)
+      let funding = { monthCount: 0, monthAmount: 0, totalCount: 0, totalAmount: 0 };
       const { data: funded, error: fundErr } = await supabase
         .from('oportunidades')
         .select('id, monto, estado, created_at, updated_at')
         .in('estado', ['fondeada', 'activo', 'cerrado', 'en_mora']);
-      if (fundErr) throw fundErr;
-      const funding = (funded || []).reduce((acc, o) => {
-        const refDate = o.updated_at ? new Date(o.updated_at) : new Date(o.created_at);
-        acc.totalCount += 1;
-        acc.totalAmount += Number(o.monto || 0);
-        if (refDate >= monthStart) {
-          acc.monthCount += 1;
-          acc.monthAmount += Number(o.monto || 0);
-        }
-        return acc;
-      }, { monthCount: 0, monthAmount: 0, totalCount: 0, totalAmount: 0 });
+      if (fundErr) {
+        console.warn('No se pudo cargar fondeo para KPIs', fundErr);
+      } else if (funded) {
+        funding = funded.reduce((acc, o) => {
+          const refDate = o.updated_at ? new Date(o.updated_at) : new Date(o.created_at);
+          acc.totalCount += 1;
+          acc.totalAmount += Number(o.monto || 0);
+          if (refDate >= monthStart) {
+            acc.monthCount += 1;
+            acc.monthAmount += Number(o.monto || 0);
+          }
+          return acc;
+        }, funding);
+      }
       setFundingStats(funding);
 
     } catch (err) {
