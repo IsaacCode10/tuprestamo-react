@@ -35,22 +35,47 @@ serve(async (req) => {
         ? `Comprobante recibido – Intent ${payload.intent_id}`
         : `Pago conciliado – Intent ${payload.intent_id}`
 
-    const lines = [
-      `Intent: ${payload.intent_id}`,
-      payload.opportunity_id ? `Oportunidad: ${payload.opportunity_id}` : null,
-      payload.expected_amount != null ? `Monto: Bs ${Number(payload.expected_amount).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : null,
-      payload.status ? `Estado: ${payload.status}` : null,
-      payload.expires_at ? `Vence: ${payload.expires_at}` : null,
-      'Acción sugerida: revisar en /admin/operaciones y conciliar.',
-    ].filter(Boolean)
+    const amountStr =
+      payload.expected_amount != null
+        ? `Bs ${Number(payload.expected_amount).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : 'n/d'
 
     const html = `
-      <div style="font-family: Arial, sans-serif; color: #222">
-        <p>${payload.type === 'receipt_uploaded' ? 'El inversionista subió un comprobante.' : 'Pago marcado como conciliado.'}</p>
-        <ul>
-          ${lines.map((l) => `<li>${l}</li>`).join('')}
-        </ul>
-        <p><a href="https://tuprestamobo.com/admin/operaciones" style="color:#00445A;">Ir al panel de Operaciones</a></p>
+      <div style="font-family: Arial, sans-serif; color: #0d1a26; background:#f7fbfc; padding:16px;">
+        <div style="max-width:600px; margin:0 auto; background:#fff; border:1px solid #e6f2f4; border-radius:10px; overflow:hidden;">
+          <div style="padding:18px 20px; border-bottom:1px solid #e6f2f4; background:#00445A;">
+            <h2 style="margin:0; color:#fff; font-size:18px; font-weight:700;">${subject}</h2>
+            <p style="margin:6px 0 0 0; color:#cde9f3; font-size:13px;">Alerta operativa • Tu Préstamo</p>
+          </div>
+          <div style="padding:18px 20px; line-height:1.5;">
+            <p style="margin:0 0 10px 0; font-weight:600; color:#0f5a62;">
+              ${payload.type === 'receipt_uploaded' ? 'El inversionista subió un comprobante. Revisa y concilia.' : 'Pago marcado como conciliado. Actualiza el estado si aplica.'}
+            </p>
+            <table cellpadding="0" cellspacing="0" style="width:100%; border-collapse:collapse; margin:0 0 12px 0;">
+              <tbody>
+                <tr>
+                  <td style="padding:6px 0; font-weight:600; color:#00445A;">Intent</td>
+                  <td style="padding:6px 0; color:#0d1a26;">${payload.intent_id}</td>
+                </tr>
+                ${payload.opportunity_id ? `<tr><td style="padding:6px 0; font-weight:600; color:#00445A;">Oportunidad</td><td style="padding:6px 0; color:#0d1a26;">${payload.opportunity_id}</td></tr>` : ''}
+                <tr>
+                  <td style="padding:6px 0; font-weight:600; color:#00445A;">Monto</td>
+                  <td style="padding:6px 0; color:#0d1a26;">${amountStr}</td>
+                </tr>
+                ${payload.status ? `<tr><td style="padding:6px 0; font-weight:600; color:#00445A;">Estado</td><td style="padding:6px 0; color:#0d1a26;">${payload.status}</td></tr>` : ''}
+                ${payload.expires_at ? `<tr><td style="padding:6px 0; font-weight:600; color:#00445A;">Vence</td><td style="padding:6px 0; color:#0d1a26;">${payload.expires_at}</td></tr>` : ''}
+              </tbody>
+            </table>
+            <div style="margin:16px 0 0 0;">
+              <a href="https://tuprestamobo.com/admin/operaciones" style="display:inline-block; padding:10px 16px; background:#26C2B2; color:#fff; text-decoration:none; border-radius:6px; font-weight:700;">
+                Ir al panel de Operaciones
+              </a>
+            </div>
+          </div>
+          <div style="padding:14px 20px; background:#f7fbfc; color:#55747b; font-size:12px; border-top:1px solid #e6f2f4;">
+            Este aviso es automático. Revisa el intent en Operaciones y concilia según corresponda.
+          </div>
+        </div>
       </div>
     `
 
