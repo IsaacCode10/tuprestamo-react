@@ -342,8 +342,8 @@ const OpportunityDetail = () => {
           await supabase.from('notifications').insert({
             user_id: user.id,
             title: 'Comprobante enviado',
-            body: 'Recibimos tu comprobante. Operaciones lo conciliarán pronto.',
-            link_url: `/oportunidades/${id}`,
+            body: 'Estamos procesando tu pago. Apenas confirmemos la acreditación, tu reserva se marcará como "Pagada". Puedes ver el estado en Mis inversiones.',
+            link_url: '/mis-inversiones',
             type: 'investment_receipt_uploaded',
           });
         }
