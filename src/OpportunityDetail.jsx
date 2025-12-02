@@ -29,6 +29,9 @@ const OpportunityDetail = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const intentStatus = (intentInfo?.status || '').toLowerCase();
+  const receiptUnderReview = intentStatus === 'pending' && !!intentInfo?.receipt_url;
+
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
   if (opportunity && opportunity.id) {
@@ -573,6 +576,17 @@ const OpportunityDetail = () => {
               <div className="investment-form" style={{ border: '1px solid #ddd', padding: '16px', borderRadius: '8px' }}>
                 <h3>Invertir en esta Oportunidad</h3>
                 <p style={{ marginTop: 0, color: '#0f5a62' }}>Ingresa tu monto y registraremos tu reserva. Te daremos las instrucciones de pago para confirmarla.</p>
+                {receiptUnderReview && (
+                  <div style={{ marginTop: 8, marginBottom: 12, padding: 12, borderRadius: 8, background: '#f0f9f8', border: '1px solid #26C2B2', color: '#00445A' }}>
+                    <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Pago en revisión</p>
+                    <p style={{ margin: 0 }}>Ya invertiste Bs. {Number(intentInfo?.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Estamos validando tu pago; verás tu inversión como “Pagada” cuando se acredite.</p>
+                    <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" className="btn" onClick={() => navigate('/mis-inversiones')}>
+                        Ver estado en Mis inversiones
+                      </button>
+                    </div>
+                  </div>
+                )}
               <form onSubmit={handleInvestment}>
                 <div style={{ marginBottom: '15px' }}>
                   <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
@@ -591,10 +605,11 @@ const OpportunityDetail = () => {
                     placeholder="Ej: 9.000,55"
                     required
                     style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+                    disabled={receiptUnderReview}
                   />
                 </div>
-                <button type="submit" disabled={isSubmitting} className="btn btn--primary">
-                  {isSubmitting ? 'Registrando...' : 'Invertir ahora'}
+                <button type="submit" disabled={isSubmitting || receiptUnderReview} className="btn btn--primary">
+                  {receiptUnderReview ? 'Pago en revisión' : isSubmitting ? 'Registrando...' : 'Invertir ahora'}
                 </button>
               </form>
               {renderFormMessage()}
