@@ -356,7 +356,7 @@ const OpportunityDetail = () => {
       const receiptUrl = data?.path || path;
       const { error: updErr } = await supabase
         .from('payment_intents')
-        .update({ receipt_url: receiptUrl })
+        .update({ receipt_url: receiptUrl, updated_at: new Date().toISOString() })
         .eq('id', intentInfo.id);
       if (updErr) throw updErr;
       setFormMessage({ type: 'success', text: 'Comprobante subido. Procesaremos tu pago al conciliar.' });
