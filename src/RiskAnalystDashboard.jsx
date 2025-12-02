@@ -37,7 +37,7 @@ const RiskAnalystDashboard = () => {
   const [loading, setLoading] = useState(false); // Inicia en false
   const [error, setError] = useState(null);
   const [perfilSeleccionado, setPerfilSeleccionado] = useState(null);
-  const [showOnlyComplete, setShowOnlyComplete] = useState(false);
+  const [viewMode, setViewMode] = useState('review'); // review | history | complete
   // ----------------------------------
 
   // State para el modal
@@ -318,6 +318,9 @@ const RiskAnalystDashboard = () => {
     }
   };
 
+  const showOnlyComplete = viewMode === 'complete';
+  const showHistory = viewMode === 'history';
+
   const filteredPerfiles = showOnlyComplete
     ? perfiles.filter(p => isProfileComplete(p))
     : perfiles;
@@ -483,14 +486,14 @@ const RiskAnalystDashboard = () => {
     fetchPerfiles();
   }, [fetchPerfiles]);
   useEffect(() => {
-    if (showHistory) fetchHistorial();
-  }, [showHistory, fetchHistorial]);
+    if (viewMode === 'history') fetchHistorial();
+  }, [viewMode, fetchHistorial]);
   useEffect(() => {
-    if (!showHistory && perfiles.length === 0) {
-      setShowHistory(true);
+    if (viewMode !== 'history' && perfiles.length === 0) {
+      setViewMode('history');
       fetchHistorial();
     }
-  }, [showHistory, perfiles.length, fetchHistorial]);
+  }, [viewMode, perfiles.length, fetchHistorial]);
 
   // Restaurar scroll al volver al panel y persistir selección
   useEffect(() => {
@@ -649,15 +652,15 @@ const RiskAnalystDashboard = () => {
               <div className="filter-group" style={{display:'flex',gap:6}}>
                 <button
                   type="button"
-                  className={`filter-pill ${!showHistory ? 'filter-pill--active' : ''}`}
-                  onClick={() => setShowHistory(false)}
+                  className={`filter-pill ${viewMode === 'review' ? 'filter-pill--active' : ''}`}
+                  onClick={() => setViewMode('review')}
                 >
                   En revisión
                 </button>
                 <button
                   type="button"
-                  className={`filter-pill ${showHistory ? 'filter-pill--active' : ''}`}
-                  onClick={() => setShowHistory(true)}
+                  className={`filter-pill ${viewMode === 'history' ? 'filter-pill--active' : ''}`}
+                  onClick={() => setViewMode('history')}
                 >
                   Historial
                 </button>
@@ -666,10 +669,10 @@ const RiskAnalystDashboard = () => {
             <div className="filter-group">
               <button
                 type="button"
-                className={`filter-pill ${showOnlyComplete ? 'filter-pill--active' : ''}`}
-                onClick={() => setShowOnlyComplete(prev => !prev)}
+                className={`filter-pill ${viewMode === 'complete' ? 'filter-pill--active' : ''}`}
+                onClick={() => setViewMode(viewMode === 'complete' ? 'review' : 'complete')}
               >
-                {showOnlyComplete ? 'Todos los perfiles' : 'Solo completos'}
+                {viewMode === 'complete' ? 'Todos los perfiles' : 'Solo completos'}
               </button>
             </div>
             <HelpTooltip text="Estos son los perfiles de prestatarios que han completado la carga de documentos y están listos para un análisis de riesgo." />
