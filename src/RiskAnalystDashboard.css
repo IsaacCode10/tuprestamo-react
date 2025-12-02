@@ -19,6 +19,8 @@
   flex-direction: column;
   position: relative; /* Necesario para que z-index funcione */
   z-index: 10;       /* Eleva este panel por encima de sus hermanos */
+  height: calc(100vh - 80px);
+  min-height: 0;
 }
 
 .lista-perfiles header {
@@ -59,10 +61,12 @@
 .perfiles-list {
   overflow-y: auto;
   flex-grow: 1;
+  max-height: calc(100vh - 200px);
+  padding: 4px 0;
 }
 
 .perfil-item {
-  padding: 15px 20px;
+  padding: 12px 14px;
   border-bottom: 1px solid #e8e8e8;
   transition: background-color 0.2s ease;
   cursor: pointer;
@@ -85,19 +89,19 @@
 }
 
 .perfil-item-header strong {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #0d1a26;
 }
 
 .perfil-item-header span {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #8c8c8c;
 }
 
 .perfil-item-body {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #595959;
 }
 
