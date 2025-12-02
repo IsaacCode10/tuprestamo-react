@@ -12,6 +12,7 @@ const MyInvestmentsList = () => {
   const [rows, setRows] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const [oppsById, setOppsById] = useState({});
+  const [intentsMap, setIntentsMap] = useState({ byId: {}, byOpportunity: {} });
 
   useEffect(() => {
     trackEvent('Viewed Portfolio');
@@ -62,6 +63,24 @@ const MyInvestmentsList = () => {
           setOppsById({});
         }
 
+        // Intents del inversionista (para saber si ya subió comprobante)
+        const { data: intentRows, error: intentErr } = await supabase
+          .from('payment_intents')
+          .select('id, opportunity_id, status, receipt_url, created_at')
+          .eq('investor_id', user.id)
+          .order('created_at', { ascending: false });
+        if (intentErr) throw intentErr;
+        const byId = {};
+        const byOpportunity = {};
+        (intentRows || []).forEach((row) => {
+          byId[row.id] = row;
+          // Guarda el más reciente por oportunidad
+          if (!byOpportunity[row.opportunity_id]) {
+            byOpportunity[row.opportunity_id] = row;
+          }
+        });
+        setIntentsMap({ byId, byOpportunity });
+
         // Payouts recibidos / pendientes
         const { data: payoutRows, error: payoutErr } = await supabase
           .from('payouts_inversionistas')
@@ -82,6 +101,25 @@ const MyInvestmentsList = () => {
   }, []);
 
   const hasRows = useMemo(() => (rows || []).length > 0, [rows]);
+  const hasReviewNotice = useMemo(() => {
+    return (rows || []).some((r) => {
+      const intent = intentsMap.byOpportunity[r.opportunity_id];
+      const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
+      return isPendingPayment && intent?.receipt_url;
+    });
+  }, [rows, intentsMap]);
+
+  const formatStatus = (r, o, intent) => {
+    const isFondeada = o?.saldo_pendiente != null ? o.saldo_pendiente <= 0 : false;
+    const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
+    const hasReceipt = !!intent?.receipt_url;
+    const intentPending = (intent?.status || '').toLowerCase() === 'pending';
+    if (isFondeada) return 'Fondeada';
+    if (isPendingPayment && hasReceipt && intentPending) return 'Pago en revisión';
+    if (isPendingPayment) return 'Pendiente de pago';
+    if ((r.status || '').toLowerCase() === 'pagado') return 'Pagado';
+    return r.status || 'intencion';
+  };
 
   if (loading) return <p>Cargando tu portafolio...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
@@ -118,10 +156,12 @@ const MyInvestmentsList = () => {
             <tbody>
               {rows.map(r => {
                 const o = oppsById[r.opportunity_id] || {};
+                const intent = intentsMap.byOpportunity[r.opportunity_id];
                 const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
                 const remaining = o.saldo_pendiente != null ? o.saldo_pendiente : null;
                 const isFondeada = remaining !== null ? remaining <= 0 : false;
-                const canPayNow = isPendingPayment && !isFondeada;
+                const showReview = isPendingPayment && intent?.receipt_url && (intent?.status || '').toLowerCase() === 'pending';
+                const canPayNow = isPendingPayment && !isFondeada && !showReview;
                 return (
                   <tr key={r.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{new Date(r.created_at).toLocaleDateString('es-BO')}</td>
@@ -130,12 +170,14 @@ const MyInvestmentsList = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.tasa_rendimiento_inversionista != null ? `${Number(o.tasa_rendimiento_inversionista).toFixed(2)}%` : 'n/d'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.plazo_meses != null ? `${o.plazo_meses} meses` : 'n/d'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.perfil_riesgo || 'n/d'}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{isFondeada ? 'Fondeada' : (r.status || 'intencion')}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatus(r, o, intent)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                       {canPayNow ? (
                         <button className="btn btn--primary" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
                           Pagar ahora
                         </button>
+                      ) : showReview ? (
+                        <span style={{ color: '#d9534f', fontWeight: 600 }}>Estamos validando tu pago</span>
                       ) : (
                         <span style={{ color: '#777' }}>-</span>
                       )}
@@ -152,7 +194,7 @@ const MyInvestmentsList = () => {
         <>
           <h3 style={{ marginTop: 24 }}>Cobros recibidos / próximos pagos</h3>
           {payouts.length === 0 ? (
-            <p style={{ color: '#555' }}>Aún no registramos cobros de esta oportunidad. Te avisaremos cuando se acredite.</p>
+            <p style={{ color: '#555' }}>{hasReviewNotice ? 'Recibimos tu comprobante. Te avisaremos cuando se acredite.' : 'Aún no registramos cobros de esta oportunidad. Te avisaremos cuando se acredite.'}</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
