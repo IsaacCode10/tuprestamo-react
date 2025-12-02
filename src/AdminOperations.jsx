@@ -25,13 +25,31 @@ const AdminOperations = () => {
   const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
   const [infoMessage, setInfoMessage] = useState('');
   const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [seenReceipts, setSeenReceipts] = useState(() => {
+    try {
+      const raw = localStorage.getItem('ops_seen_receipts');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const markReceiptSeen = (intentId, updatedAt) => {
+    if (!intentId) return;
+    const ts = updatedAt ? new Date(updatedAt).getTime() : Date.now();
+    setSeenReceipts((prev) => {
+      const next = { ...prev, [intentId]: ts };
+      try { localStorage.setItem('ops_seen_receipts', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   const loadIntents = async () => {
     setLoading(true);
     setError('');
     const { data, error } = await supabase
       .from('payment_intents')
-      .select('id, opportunity_id, investor_id, expected_amount, status, expires_at, paid_at, paid_amount, created_at, receipt_url')
+      .select('id, opportunity_id, investor_id, expected_amount, status, expires_at, paid_at, paid_amount, created_at, updated_at, receipt_url')
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) setError(error.message);
@@ -199,6 +217,13 @@ const AdminOperations = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const isNewReceipt = (intent) => {
+    if (!intent?.receipt_signed_url || !intent?.updated_at) return false;
+    const lastSeen = seenReceipts[intent.id] || 0;
+    const updatedTs = new Date(intent.updated_at).getTime();
+    return updatedTs > lastSeen;
+  };
+
   return (
     <div className="admin-ops" style={{ maxWidth: 1200, margin: '0 auto', padding: 16 }}>
       <h2>Operaciones</h2>
@@ -245,11 +270,29 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{investorMap[i.investor_id] || i.investor_id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     {i.receipt_signed_url ? (
-                      <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <a
+                          className="btn"
+                          href={i.receipt_signed_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={() => markReceiptSeen(i.id, i.updated_at)}
+                        >
+                          Ver
+                        </a>
+                        {isNewReceipt(i) && (
+                          <span style={{ background: '#ffefef', color: '#b71c1c', padding: '4px 8px', borderRadius: 999, fontSize: '0.8rem', fontWeight: 700 }}>
+                            Nuevo comprobante
+                          </span>
+                        )}
+                        <span style={{ color: '#55747b', fontSize: '0.85rem' }}>
+                          Actualizado {i.updated_at ? new Date(i.updated_at).toLocaleString('es-BO') : '—'}
+                        </span>
+                      </div>
                     ) : (
                       '—'
                     )}
