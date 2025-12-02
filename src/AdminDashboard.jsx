@@ -179,6 +179,12 @@ const AdminDashboard = () => {
     totalPendientes: 0, totalPreAprobados: 0, totalRechazados: 0,
     perfilA: 0, perfilB: 0, perfilC: 0
   });
+  const [fundingStats, setFundingStats] = useState({
+    monthCount: 0,
+    monthAmount: 0,
+    totalCount: 0,
+    totalAmount: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
@@ -226,6 +232,9 @@ const AdminDashboard = () => {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
 
       const statsPayload = processedRequests.reduce((acc, r) => {
         const memoEstado = normalizedStatus(r.estado);
@@ -261,6 +270,24 @@ const AdminDashboard = () => {
         perfilB: statsPayload.perfiles.perfilB || 0,
         perfilC: statsPayload.perfiles.perfilC || 0,
       });
+
+      // Fondeo: totales y mes actual (fondeada/activo/cerrado/en_mora)
+      const { data: funded, error: fundErr } = await supabase
+        .from('oportunidades')
+        .select('id, monto, estado, created_at, updated_at')
+        .in('estado', ['fondeada', 'activo', 'cerrado', 'en_mora']);
+      if (fundErr) throw fundErr;
+      const funding = (funded || []).reduce((acc, o) => {
+        const refDate = o.updated_at ? new Date(o.updated_at) : new Date(o.created_at);
+        acc.totalCount += 1;
+        acc.totalAmount += Number(o.monto || 0);
+        if (refDate >= monthStart) {
+          acc.monthCount += 1;
+          acc.monthAmount += Number(o.monto || 0);
+        }
+        return acc;
+      }, { monthCount: 0, monthAmount: 0, totalCount: 0, totalAmount: 0 });
+      setFundingStats(funding);
 
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -339,6 +366,16 @@ const AdminDashboard = () => {
               <KpiCard title="Monto Pre-Aprobado Hoy" value={formatCurrency(stats.montoPreAprobadoHoy)} />
               <KpiCard title="Total Pre-Aprobadas" value={stats.totalPreAprobados} type="total-approved" />
               <KpiCard title="Total Rechazadas" value={stats.totalRechazados} type="total-rejected" />
+              <KpiCard
+                title="Fondeadas (mes)"
+                value={fundingStats.monthCount}
+                subtitle={`${formatCurrency(fundingStats.monthAmount)} este mes`}
+              />
+              <KpiCard
+                title="Fondeadas (total)"
+                value={fundingStats.totalCount}
+                subtitle={formatCurrency(fundingStats.totalAmount)}
+              />
             </div>
           <RiskDistributionChart stats={stats} />
         </>
