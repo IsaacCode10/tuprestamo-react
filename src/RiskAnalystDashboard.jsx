@@ -327,10 +327,11 @@ const RiskAnalystDashboard = () => {
     setError(null);
     try {
       // 1) Traer solicitudes base
+      const estadosAnalista = ['documentos-en-revision', 'pre-aprobado', 'pre_aprobado'];
       const { data: solicitudesData, error: solicitudesError } = await supabase
         .from('solicitudes')
         .select('*')
-        .eq('estado', 'documentos-en-revision')
+        .in('estado', estadosAnalista)
         .order('created_at', { ascending: false });
       if (solicitudesError) throw solicitudesError;
 
