@@ -76,6 +76,11 @@
   transition: background-color 0.2s ease-in-out;
 }
 
+.notification-item:not(.read) {
+  border-left: 4px solid #d9534f; /* resalta no leídas en rojo */
+  background-color: #fff7f7;
+}
+
 .notification-item:last-child {
   border-bottom: none;
 }
