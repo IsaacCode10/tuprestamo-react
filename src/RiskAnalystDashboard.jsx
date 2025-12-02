@@ -75,7 +75,6 @@ const RiskAnalystDashboard = () => {
     return Number.isFinite(y) ? y : null;
   });
   const DOC_CACHE_KEY = 'risk-analyst-doc-cache';
-  const [showHistory, setShowHistory] = useState(false);
   const [historial, setHistorial] = useState([]);
   const [historialLoading, setHistorialLoading] = useState(false);
   const [historialError, setHistorialError] = useState(null);
