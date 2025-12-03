@@ -756,12 +756,10 @@ const RiskAnalystDashboard = () => {
                   <div className="perfil-item-header">
                     <div>
                       <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
-                      <div className="muted">ID: {perfil.id}</div>
+                      <div className="muted">
+                        ID: {perfil.id} · DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')} · CI: {perfil.cedula_identidad || 'N/A'}
+                      </div>
                     </div>
-                    <span>CI: {perfil.cedula_identidad || 'N/A'}</span>
-                  </div>
-                  <div className="perfil-item-body">
-                    <span>DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')}</span>
                   </div>
                 </div>
               ))

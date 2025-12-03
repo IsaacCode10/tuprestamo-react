@@ -71,6 +71,9 @@
   border-bottom: 1px solid #e8e8e8;
   transition: background-color 0.2s ease;
   cursor: pointer;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 4px;
 }
 
 .perfil-item:hover {
@@ -94,16 +97,10 @@
   color: #0d1a26;
 }
 
-.perfil-item-header span {
-  font-size: 0.78rem;
-  color: #8c8c8c;
-}
-
-.perfil-item-body {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.82rem;
-  color: #595959;
+.perfil-item .muted {
+  font-size: 0.8rem;
+  color: #73808c;
+  line-height: 1.35;
 }
 
 .help-requests-analyst {
