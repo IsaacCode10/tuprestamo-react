@@ -1,0 +1,181 @@
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1?target=deno'
+import { corsHeaders } from '../_shared/cors.ts'
+
+type ContractPayload = {
+  opportunity?: {
+    id?: number
+    monto_bruto?: number
+    monto_neto?: number
+    plazo_meses?: number
+    tasa_interes_prestatario?: number
+    perfil_riesgo?: string
+    comision_originacion_porcentaje?: number
+    cargo_servicio_seguro_porcentaje?: number
+    cuota_promedio?: number
+  }
+  borrower?: {
+    nombre_completo?: string
+    cedula_identidad?: string
+    email?: string
+    telefono?: string
+    departamento?: string
+  }
+  funding?: {
+    total_pagado?: number
+    monto_objetivo?: number
+    inversionistas?: Array<{ investor_id?: string; amount?: number; status?: string }>
+  }
+}
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || ''
+const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+const BUCKET = 'contratos'
+
+const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    if (req.method !== 'POST') {
+      return json({ error: 'Method not allowed' }, 405)
+    }
+
+    const { opportunity_id } = await req.json()
+    if (!opportunity_id) {
+      return json({ error: 'opportunity_id requerido' }, 400)
+    }
+
+    const { data: payload, error: payloadErr } = await supabaseAdmin
+      .rpc('get_contract_payload', { p_opportunity_id: opportunity_id })
+    if (payloadErr) throw payloadErr
+
+    const contractPayload = (payload || {}) as ContractPayload
+    const pdfBytes = await buildPdf(contractPayload)
+
+    const path = `opportunity-${opportunity_id}/contrato_${Date.now()}.pdf`
+    const uploadRes = await supabaseAdmin.storage
+      .from(BUCKET)
+      .upload(path, new Blob([pdfBytes], { type: 'application/pdf' }), { upsert: true })
+    if (uploadRes.error) throw uploadRes.error
+
+    // Guarda referencia en tabla de desembolsos (si existe la fila)
+    await supabaseAdmin
+      .from('desembolsos')
+      .update({ contract_url: path })
+      .eq('opportunity_id', opportunity_id)
+
+    const { data: signed } = await supabaseAdmin
+      .storage
+      .from(BUCKET)
+      .createSignedUrl(path, 60 * 60 * 24 * 7) // 7 días
+
+    return json({
+      ok: true,
+      path,
+      signedUrl: signed?.signedUrl || null,
+    })
+  } catch (e) {
+    console.error('generate-contract error:', e)
+    return json({ error: (e as Error).message || 'Error generando contrato' }, 500)
+  }
+})
+
+async function buildPdf(payload: ContractPayload): Promise<Uint8Array> {
+  const doc = await PDFDocument.create()
+  const page = doc.addPage([612, 792]) // Carta
+  const { width, height } = page.getSize()
+  const font = await doc.embedFont(StandardFonts.Helvetica)
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
+
+  let y = height - 50
+  const lineHeight = 14
+
+  const drawText = (text: string, opts?: { bold?: boolean; size?: number; color?: ReturnType<typeof rgb> }) => {
+    const size = opts?.size || 12
+    const textColor = opts?.color || rgb(0.05, 0.1, 0.14)
+    const usedFont = opts?.bold ? fontBold : font
+    page.drawText(text, { x: 50, y, size, font: usedFont, color: textColor })
+    y -= lineHeight
+  }
+
+  const drawBlock = (title: string, lines: string[]) => {
+    drawText(title, { bold: true, size: 14, color: rgb(0, 0.28, 0.35) })
+    lines.forEach((l) => drawText(l))
+    y -= 6
+  }
+
+  const opp = payload.opportunity || {}
+  const borrower = payload.borrower || {}
+  const funding = payload.funding || {}
+  const investors = Array.isArray(funding.inversionistas) ? funding.inversionistas : []
+
+  drawText('Contrato de préstamo y mandato de pago dirigido', { bold: true, size: 16, color: rgb(0, 0.35, 0.4) })
+  drawText(`Operación: ${opp.id ?? 'N/D'} • Fecha: ${new Date().toLocaleDateString('es-BO')}`, { size: 11 })
+  y -= 8
+
+  drawBlock('1) Partes y datos del préstamo', [
+    `Prestatario: ${borrower.nombre_completo || 'N/D'} (${borrower.cedula_identidad || 'sin CI'})`,
+    `Contacto: ${borrower.email || 'correo n/d'} • Tel: ${borrower.telefono || 'n/d'} • Dpto: ${borrower.departamento || 'n/d'}`,
+    `Monto bruto aprobado: Bs ${formatMoney(opp.monto_bruto)}`,
+    `Monto neto a pagar al banco acreedor: Bs ${formatMoney(opp.monto_neto)}`,
+    `Plazo: ${opp.plazo_meses || 'n/d'} meses • Tasa prestatario: ${opp.tasa_interes_prestatario || 0}% • Perfil: ${opp.perfil_riesgo || 'n/d'}`,
+    `Cuota estimada (referencial): Bs ${formatMoney(opp.cuota_promedio)}`,
+  ])
+
+  drawBlock('2) Fondeo por inversionistas', [
+    `Meta de fondeo: Bs ${formatMoney(funding.monto_objetivo)}`,
+    `Monto acreditado: Bs ${formatMoney(funding.total_pagado)}`,
+    investors.length > 0 ? 'Participaciones:' : 'Sin participaciones registradas',
+  ])
+
+  investors.forEach((inv) => {
+    const pct = funding.monto_objetivo
+      ? ((Number(inv.amount || 0) / Number(funding.monto_objetivo || 1)) * 100).toFixed(2)
+      : null
+    drawText(`• ${inv.investor_id || 'inversionista'} – Bs ${formatMoney(inv.amount)} (${pct ? `${pct}%` : 'n/d'})`, {
+      size: 11,
+    })
+  })
+  y -= 4
+
+  drawBlock('3) Mandato de pago dirigido', [
+    'El prestatario autoriza a Tu Préstamo a pagar el saldo de su tarjeta/crédito directamente al banco acreedor usando los fondos fondeados.',
+    'Al ejecutarse el pago dirigido, el préstamo se considera desembolsado y comienza el cronograma de cuotas.',
+    'El comprobante del pago al banco formará parte de este contrato.',
+  ])
+
+  drawBlock('4) Cronograma y obligaciones', [
+    'Se aplicará un cronograma de cuota fija mensual: capital + interés + admin/seguro según las condiciones aprobadas.',
+    'Los pagos deben realizarse en las fechas de vencimiento publicadas en el panel del prestatario.',
+    'Incumplimientos pueden generar cargos por mora conforme a la política vigente.',
+  ])
+
+  drawBlock('5) Declaración de riesgos', [
+    'Inversionistas: los retornos dependen del pago del prestatario. No existe garantía estatal ni custodia de fondos.',
+    'Prestatario: la tasa es fija, pero el impago puede afectar su historial crediticio y derivar en gestiones de cobranza.',
+  ])
+
+  drawBlock('6) Aceptación y sello', [
+    'Este documento es un acuse digital. Las acciones en la plataforma constituyen aceptación (clickwrap).',
+    `Hash de control: op-${opp.id || 'n/a'}-${Date.now()}`,
+  ])
+
+  return await doc.save()
+}
+
+function formatMoney(v?: number) {
+  const num = Number(v || 0)
+  return num.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function json(obj: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+  })
+}

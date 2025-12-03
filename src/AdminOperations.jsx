@@ -330,9 +330,33 @@ const AdminOperations = () => {
       });
       if (rpcErr) throw rpcErr;
 
+      // Generar contrato PDF automático y actualizar desembolso
+      try {
+        const { data: contractRes, error: contractErr } = await supabase.functions.invoke('generate-contract', {
+          body: { opportunity_id: disbRow.opportunity_id },
+        });
+        if (contractErr) throw contractErr;
+        if (contractRes?.path) {
+          await supabase.from('desembolsos')
+            .update({ contract_url: contractRes.path })
+            .eq('opportunity_id', disbRow.opportunity_id);
+        }
+      } catch (genErr) {
+        console.warn('No se pudo generar contrato automáticamente', genErr);
+      }
+
+      // Notificar prestatario e inversionistas (campana) + email prestatario
+      try {
+        await supabase.functions.invoke('notify-directed-payment', {
+          body: { opportunity_id: disbRow.opportunity_id },
+        });
+      } catch (notifErr) {
+        console.warn('No se pudo notificar desembolso', notifErr);
+      }
+
       setDisbReceiptFiles((prev) => ({ ...prev, [disbRow.id]: null }));
       setDisbContractFiles((prev) => ({ ...prev, [disbRow.id]: null }));
-      setInfoMessage('Pago dirigido registrado y cronograma generado.');
+      setInfoMessage('Pago dirigido registrado, cronograma generado y contrato listo.');
       loadDisbursements();
       loadBorrowerIntents();
     } catch (e) {

@@ -258,6 +258,45 @@ const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
   const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const [disbursement, setDisbursement] = useState(null);
+  const [contractLink, setContractLink] = useState(null);
+  const [loadingDisb, setLoadingDisb] = useState(false);
+  const [disbError, setDisbError] = useState('');
+
+  useEffect(() => {
+    const fetchDisbursement = async () => {
+      if (!oportunidad?.id) return;
+      setLoadingDisb(true);
+      setDisbError('');
+      try {
+        const { data, error } = await supabase
+          .from('desembolsos')
+          .select('id, estado, monto_bruto, monto_neto, comprobante_url, contract_url, paid_at, created_at')
+          .eq('opportunity_id', oportunidad.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        setDisbursement(data);
+        if (data?.contract_url) {
+          const { data: signed, error: signedErr } = await supabase
+            .storage
+            .from('contratos')
+            .createSignedUrl(data.contract_url, 60 * 60);
+          if (signedErr) throw signedErr;
+          setContractLink(signed?.signedUrl || null);
+        } else {
+          setContractLink(null);
+        }
+      } catch (err) {
+        console.error('Error cargando desembolso:', err);
+        setDisbError('No pudimos cargar el desembolso/contrato. Intenta más tarde.');
+      } finally {
+        setLoadingDisb(false);
+      }
+    };
+    fetchDisbursement();
+  }, [oportunidad?.id]);
 
   const summaryItems = [
     { id: 'tasa', title: 'Tasa Propuesta (anual)', value: `${tasa ? tasa.toFixed(1) : '0'}%` },
@@ -327,6 +366,35 @@ const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
           </tbody>
         </table>
       </div>
+
+      {(oportunidad?.estado === 'fondeada' || oportunidad?.estado === 'activo' || disbursement) && (
+        <div className="card">
+          <h2>Pago dirigido y contrato</h2>
+          <p className="muted">Te avisaremos por correo cuando paguemos tu tarjeta. Aquí verás el comprobante y tu contrato PDF.</p>
+          {loadingDisb && <p className="muted">Cargando información de desembolso...</p>}
+          {disbError && <p style={{ color: 'red' }}>{disbError}</p>}
+          {disbursement ? (
+            <div style={{ display: 'grid', gap: 8 }}>
+              <div><strong>Estado:</strong> {disbursement.estado || 'pendiente'} {disbursement.paid_at ? `(pagado ${new Date(disbursement.paid_at).toLocaleString('es-BO')})` : ''}</div>
+              <div><strong>Monto neto al banco:</strong> {formatMoney(disbursement.monto_neto || neto)}</div>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {disbursement.comprobante_url ? (
+                  <a className="btn" href={disbursement.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante banco</a>
+                ) : (
+                  <span className="muted">Comprobante en proceso</span>
+                )}
+                {contractLink ? (
+                  <a className="btn btn--primary" href={contractLink} target="_blank" rel="noreferrer">Descargar contrato PDF</a>
+                ) : (
+                  <span className="muted">Contrato en proceso</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="muted">Aún no registramos el desembolso. Te avisaremos cuando esté listo.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
