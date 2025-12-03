@@ -145,9 +145,10 @@ h2.opp-title {
 }
 .opportunity-card .funded-ribbon {
   position: absolute;
-  top: 12px;
-  left: -38px;
-  padding: 8px 60px;
+  top: 18%;
+  left: -40%;
+  width: 180%;
+  padding: 10px 0;
   background: repeating-linear-gradient(
     45deg,
     #c2d1d8,
@@ -161,6 +162,7 @@ h2.opp-title {
   text-transform: uppercase;
   transform: rotate(-45deg);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  text-align: center;
   pointer-events: none;
 }
 
