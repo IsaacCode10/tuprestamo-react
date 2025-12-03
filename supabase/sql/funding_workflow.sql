@@ -176,6 +176,7 @@ as $$
 declare
   v_intent payment_intents%rowtype;
   v_total_paid numeric;
+  v_op oportunidades%rowtype;
 begin
   update payment_intents
   set status = 'paid',
@@ -199,12 +200,23 @@ begin
   where opportunity_id = v_intent.opportunity_id
     and status = 'pagado';
 
-  update oportunidades
-  set estado = case
-    when v_total_paid >= oportunidades.monto then 'fondeada'
-    else oportunidades.estado
-  end
-  where id = v_intent.opportunity_id;
+  select * into v_op from oportunidades where id = v_intent.opportunity_id;
+
+  if v_op.id is null then
+    raise exception 'Oportunidad no encontrada';
+  end if;
+
+  if v_total_paid >= coalesce(v_op.monto, 0) then
+    update oportunidades
+    set estado = 'fondeada'
+    where id = v_intent.opportunity_id;
+
+    -- Crear desembolso pendiente si no existe
+    if not exists (select 1 from desembolsos where opportunity_id = v_intent.opportunity_id) then
+      insert into desembolsos (opportunity_id, monto_bruto, monto_neto, estado, created_at)
+      values (v_intent.opportunity_id, v_op.monto, v_op.saldo_deudor_verificado, 'pendiente', now());
+    end if;
+  end if;
 
   return v_intent;
 end;
