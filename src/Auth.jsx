@@ -109,10 +109,26 @@ const Auth = () => {
                 <button
                   type="button"
                   className="toggle-password-btn"
-                  onClick={() => setShowLoginPassword((prev) => !prev)}
                   aria-label={showLoginPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showLoginPassword}
+                  onMouseDown={() => setShowLoginPassword(true)}
+                  onMouseUp={() => setShowLoginPassword(false)}
+                  onMouseLeave={() => setShowLoginPassword(false)}
+                  onTouchStart={() => setShowLoginPassword(true)}
+                  onTouchEnd={() => setShowLoginPassword(false)}
                 >
-                  {showLoginPassword ? 'Ocultar' : 'Ver'}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M12 5c-5 0-9 4.5-9 7s4 7 9 7 9-4.5 9-7-4-7-9-7Zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5Zm0-8.2A3.2 3.2 0 0 0 8.8 12 3.2 3.2 0 0 0 12 15.2 3.2 3.2 0 0 0 15.2 12 3.2 3.2 0 0 0 12 8.8Z"
+                    />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -171,10 +187,26 @@ const Auth = () => {
                 <button
                   type="button"
                   className="toggle-password-btn"
-                  onClick={() => setShowSignupPassword((prev) => !prev)}
                   aria-label={showSignupPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showSignupPassword}
+                  onMouseDown={() => setShowSignupPassword(true)}
+                  onMouseUp={() => setShowSignupPassword(false)}
+                  onMouseLeave={() => setShowSignupPassword(false)}
+                  onTouchStart={() => setShowSignupPassword(true)}
+                  onTouchEnd={() => setShowSignupPassword(false)}
                 >
-                  {showSignupPassword ? 'Ocultar' : 'Ver'}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M12 5c-5 0-9 4.5-9 7s4 7 9 7 9-4.5 9-7-4-7-9-7Zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5Zm0-8.2A3.2 3.2 0 0 0 8.8 12 3.2 3.2 0 0 0 12 15.2 3.2 3.2 0 0 0 15.2 12 3.2 3.2 0 0 0 12 8.8Z"
+                    />
+                  </svg>
                 </button>
               </div>
             </div>
