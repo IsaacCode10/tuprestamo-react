@@ -37,12 +37,13 @@ const AdminOperations = () => {
     }
   });
 
-  const sendNotificationsForPaidIntent = async (intentRow, fundedInfo) => {
+  const sendNotificationsForPaidIntent = async (intentRow, fundedInfoRaw) => {
     if (!intentRow) return;
     const investorId = intentRow.investor_id;
     const opportunityId = intentRow.opportunity_id;
     const expectedAmount = intentRow.expected_amount || 0;
     const notificationsPayload = [];
+    const fundedInfo = Array.isArray(fundedInfoRaw) ? fundedInfoRaw[0] : fundedInfoRaw;
 
     // Notificación al inversionista: pago verificado
     if (investorId) {
@@ -97,16 +98,14 @@ const AdminOperations = () => {
         notificationsPayload.push({
           user_id: borrowerId,
           title: 'Tu préstamo fue fondeado',
-          body: `Fondecemos ${formatMoney(montoTotal)}. Pagaremos tu tarjeta${bankName ? ` en ${bankName}` : ''} en las próximas horas.`,
+          body: `Tu préstamo fue fondeado. Ahora pagaremos directamente a tu banco${bankName ? ` (${bankName})` : ''} por ${formatMoney(montoTotal)}.`,
           link_url: '/panel-prestatario',
           type: 'loan_funded',
         });
       }
     }
 
-    if (notificationsPayload.length > 0) {
-      await supabase.from('notifications').insert(notificationsPayload);
-    }
+    if (notificationsPayload.length > 0) await supabase.from('notifications').insert(notificationsPayload);
   };
 
   const markReceiptSeen = (intentId, updatedAt) => {
@@ -240,14 +239,18 @@ const AdminOperations = () => {
         if (rpcErr) throw rpcErr;
         // Notificaciones básicas al inversionista/prestatario
         try {
-          const fundedInfo = Array.isArray(rpcData) && rpcData.length > 0 ? rpcData[0] : null;
-          await sendNotificationsForPaidIntent(intentRow, fundedInfo);
+          await sendNotificationsForPaidIntent(intentRow, rpcData);
         } catch (notifErr) {
           console.warn('No se pudieron enviar notificaciones', notifErr);
         }
+        // Marcar visto para evitar falso "nuevo comprobante" por updated_at
+        markReceiptSeen(id, new Date());
+        // Optimista: actualizar estado en memoria
+        setIntents((prev) => prev.map((i) => (i.id === id ? { ...i, status: 'paid' } : i)));
       } else {
         const { error } = await supabase.from('payment_intents').update({ status }).eq('id', id);
         if (error) throw error;
+        if (status === 'expired') markReceiptSeen(id, new Date());
       }
       loadIntents();
       loadDisbursements();
