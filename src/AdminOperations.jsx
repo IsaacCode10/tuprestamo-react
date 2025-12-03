@@ -18,11 +18,14 @@ const AdminOperations = () => {
   const [intents, setIntents] = useState([]);
   const [borrowerIntents, setBorrowerIntents] = useState([]);
   const [payouts, setPayouts] = useState([]);
+  const [disbursements, setDisbursements] = useState([]);
   const [investorMap, setInvestorMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [receiptFiles, setReceiptFiles] = useState({});
   const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
+  const [disbReceiptFiles, setDisbReceiptFiles] = useState({});
+  const [disbContractFiles, setDisbContractFiles] = useState({});
   const [infoMessage, setInfoMessage] = useState('');
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [seenReceipts, setSeenReceipts] = useState(() => {
@@ -185,6 +188,19 @@ const AdminOperations = () => {
     setLoading(false);
   };
 
+  const loadDisbursements = async () => {
+    setLoading(true);
+    setError('');
+    const { data, error } = await supabase
+      .from('desembolsos')
+      .select('id, opportunity_id, monto_bruto, monto_neto, estado, comprobante_url, contract_url, paid_at, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) setError(error.message);
+    setDisbursements(data || []);
+    setLoading(false);
+  };
+
   const reopenOpportunity = async (opportunityId) => {
     try {
       setError('');
@@ -202,7 +218,7 @@ const AdminOperations = () => {
     setLoading(true);
     setError('');
     setInfoMessage('');
-    await Promise.all([loadIntents(), loadBorrowerIntents(), loadPayouts()]);
+    await Promise.all([loadIntents(), loadBorrowerIntents(), loadPayouts(), loadDisbursements()]);
     setLastRefreshed(new Date());
     setLoading(false);
   };
@@ -234,6 +250,7 @@ const AdminOperations = () => {
         if (error) throw error;
       }
       loadIntents();
+      loadDisbursements();
     } catch (e) {
       setError((e).message || 'Error al actualizar intent');
     }
@@ -291,6 +308,38 @@ const AdminOperations = () => {
     }
   };
 
+  const registerDirectedPayment = async (disbRow) => {
+    try {
+      if (!disbRow?.opportunity_id) return;
+      const receiptFile = disbReceiptFiles[disbRow.id];
+      const contractFile = disbContractFiles[disbRow.id];
+      let receiptPath = disbRow.comprobante_url || null;
+      let contractPath = disbRow.contract_url || null;
+
+      if (receiptFile) {
+        receiptPath = await uploadReceipt(receiptFile, 'desembolsos');
+      }
+      if (contractFile) {
+        contractPath = await uploadReceipt(contractFile, 'contratos');
+      }
+
+      const { error: rpcErr } = await supabase.rpc('registrar_pago_dirigido', {
+        p_opportunity_id: disbRow.opportunity_id,
+        p_comprobante_url: receiptPath,
+        p_contract_url: contractPath,
+      });
+      if (rpcErr) throw rpcErr;
+
+      setDisbReceiptFiles((prev) => ({ ...prev, [disbRow.id]: null }));
+      setDisbContractFiles((prev) => ({ ...prev, [disbRow.id]: null }));
+      setInfoMessage('Pago dirigido registrado y cronograma generado.');
+      loadDisbursements();
+      loadBorrowerIntents();
+    } catch (e) {
+      setError((e).message || 'Error al registrar pago dirigido');
+    }
+  };
+
   useEffect(() => {
     refreshAll();
     const interval = setInterval(() => { refreshAll(); }, 30000); // auto refresh cada 30s
@@ -312,6 +361,7 @@ const AdminOperations = () => {
         <TabButton active={tab === 'review'} onClick={() => setTab('review')}>Por conciliar</TabButton>
         <TabButton active={tab === 'borrower'} onClick={() => setTab('borrower')}>Pagos de prestatarios</TabButton>
         <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Payouts a inversionistas</TabButton>
+        <TabButton active={tab === 'disbursements'} onClick={() => setTab('disbursements')}>Desembolso dirigido</TabButton>
         <button className="btn btn--secondary" onClick={refreshAll} disabled={loading}>Refrescar</button>
         {lastRefreshed && (
           <span style={{ color: '#55747b', fontSize: '0.9rem' }}>
@@ -535,6 +585,61 @@ const AdminOperations = () => {
               {payouts.length === 0 && (
                 <tr>
                   <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'disbursements' && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto bruto / neto</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comprobante / Contrato</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {disbursements.map((d) => (
+                <tr key={d.id}>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{d.id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{d.opportunity_id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    {formatMoney(d.monto_bruto || 0)}
+                    <div className="muted">Neto banco: {formatMoney(d.monto_neto || 0)}</div>
+                  </td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    {d.estado}
+                    <div className="muted">{d.paid_at ? `Pagado: ${new Date(d.paid_at).toLocaleString('es-BO')}` : 'Pendiente'}</div>
+                  </td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {d.comprobante_url ? <a href={d.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante</a> : <span className="muted">Sin comprobante</span>}
+                      <input type="file" accept=".pdf,image/*" onChange={(e) => setDisbReceiptFiles(prev => ({ ...prev, [d.id]: e.target.files?.[0] || null }))} />
+                      {d.contract_url ? <a href={d.contract_url} target="_blank" rel="noreferrer">Ver contrato</a> : <span className="muted">Sin contrato</span>}
+                      <input type="file" accept=".pdf" onChange={(e) => setDisbContractFiles(prev => ({ ...prev, [d.id]: e.target.files?.[0] || null }))} />
+                    </div>
+                  </td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      className="btn btn--primary"
+                      disabled={d.estado === 'pagado'}
+                      onClick={() => registerDirectedPayment(d)}
+                    >
+                      Registrar pago dirigido
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {disbursements.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay desembolsos registrados</td>
                 </tr>
               )}
             </tbody>
