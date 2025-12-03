@@ -117,7 +117,9 @@ as $$
     greatest(o.monto - coalesce(sum(case when i.status = 'pagado' then i.amount else 0 end), 0), 0) as saldo_pendiente
   from oportunidades o
   left join inversiones i on i.opportunity_id = o.id
+  join solicitudes s on s.id = o.solicitud_id
   where o.estado in ('disponible', 'fondeada')
+    and s.estado = 'prestatario_acepto'
   group by o.id, o.created_at, o.monto, o.plazo_meses, o.tasa_rendimiento_inversionista, o.comision_servicio_inversionista_porcentaje, o.perfil_riesgo, o.estado
   order by o.created_at desc;
 $$;
