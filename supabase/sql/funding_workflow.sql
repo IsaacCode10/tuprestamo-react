@@ -5,6 +5,7 @@
 -- 3) mark_payment_intent_paid(payment_intent_id, paid_amount?)
 -- 4) expire_payment_intents_sql() para cron/manual
 -- 5) get_contract_payload(opportunity_id) para generar PDF/acuse
+-- 6) get_opportunities_publicadas() listado marketplace (incluye fondeadas)
 
 set check_function_bodies = off;
 
@@ -75,6 +76,42 @@ begin
   from oportunidades o
   where o.id = p_opportunity_id;
 end;
+$$;
+
+-- Listado público de oportunidades (incluye fondeadas para vitrina)
+create or replace function public.get_opportunities_publicadas()
+returns table (
+  id bigint,
+  created_at timestamptz,
+  monto numeric,
+  plazo_meses integer,
+  tasa_rendimiento_inversionista numeric,
+  comision_servicio_inversionista_porcentaje numeric,
+  perfil_riesgo text,
+  estado text,
+  total_funded numeric,
+  saldo_pendiente numeric
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    o.id,
+    o.created_at,
+    o.monto,
+    o.plazo_meses,
+    o.tasa_rendimiento_inversionista,
+    o.comision_servicio_inversionista_porcentaje,
+    o.perfil_riesgo,
+    o.estado,
+    coalesce(sum(case when i.status = 'pagado' then i.amount else 0 end), 0) as total_funded,
+    greatest(o.monto - coalesce(sum(case when i.status = 'pagado' then i.amount else 0 end), 0), 0) as saldo_pendiente
+  from oportunidades o
+  left join inversiones i on i.opportunity_id = o.id
+  where o.estado in ('disponible', 'fondeada')
+  group by o.id, o.created_at, o.monto, o.plazo_meses, o.tasa_rendimiento_inversionista, o.comision_servicio_inversionista_porcentaje, o.perfil_riesgo, o.estado
+  order by o.created_at desc;
 $$;
 
 

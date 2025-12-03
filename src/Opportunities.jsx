@@ -29,7 +29,7 @@ const OpportunityCard = ({ opp }) => {
   };
 
   return (
-    <div className="opportunity-card">
+    <div className={`opportunity-card ${isFunded ? 'is-funded' : ''}`}>
       <div className="card-top">
         <div>
           <h3>{formatMoney(opp.monto)}</h3>
@@ -64,7 +64,7 @@ const OpportunityCard = ({ opp }) => {
         {remainingAmount > 0 ? (
           <div className="urgency-line">Faltan {formatMoney(remainingAmount)} ({remainingPct.toFixed(1)}%)</div>
         ) : (
-          <div className="urgency-line">Fondeada</div>
+          <div className="urgency-line funded-pill">100% fondeada</div>
         )}
       </div>
       <div className="card-footer">
@@ -72,9 +72,13 @@ const OpportunityCard = ({ opp }) => {
           <div className="label">Estado</div>
           <div className="value">{isFunded ? 'Fondeada' : 'Publicada'}</div>
         </div>
-        <button className="invest-button" onClick={handleViewDetails}>
-          {isFunded ? 'Ver detalle' : 'Invertir ahora'}
-        </button>
+        {isFunded ? (
+          <div className="pill-disabled">No disponible (100% fondeada)</div>
+        ) : (
+          <button className="invest-button" onClick={handleViewDetails}>
+            Invertir ahora
+          </button>
+        )}
       </div>
     </div>
   );

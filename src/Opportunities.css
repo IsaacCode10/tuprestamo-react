@@ -135,6 +135,12 @@ h2.opp-title {
   flex-direction: column;
   gap: 10px;
 }
+.opportunity-card.is-funded {
+  background: #f6f8f9;
+  border-color: #dbe4e8;
+  box-shadow: none;
+  opacity: 0.9;
+}
 
 .opportunity-card .card-top {
   display: flex;
@@ -215,6 +221,17 @@ h2.opp-title {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--primary-color);
+}
+.urgency-line.funded-pill {
+  color: #0d1a26;
+}
+.pill-disabled {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #e5ecef;
+  color: #506068;
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .card-footer {
