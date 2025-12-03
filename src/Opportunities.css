@@ -134,12 +134,34 @@ h2.opp-title {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  overflow: hidden;
 }
 .opportunity-card.is-funded {
   background: #f6f8f9;
   border-color: #dbe4e8;
   box-shadow: none;
   opacity: 0.9;
+}
+.opportunity-card .funded-ribbon {
+  position: absolute;
+  top: 12px;
+  left: -38px;
+  padding: 8px 60px;
+  background: repeating-linear-gradient(
+    45deg,
+    #c2d1d8,
+    #c2d1d8 10px,
+    #b3c2c8 10px,
+    #b3c2c8 20px
+  );
+  color: #1f2f38;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  pointer-events: none;
 }
 
 .opportunity-card .card-top {

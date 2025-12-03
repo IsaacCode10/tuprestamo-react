@@ -30,6 +30,7 @@ const OpportunityCard = ({ opp }) => {
 
   return (
     <div className={`opportunity-card ${isFunded ? 'is-funded' : ''}`}>
+      {isFunded && <div className="funded-ribbon">FONDEADA</div>}
       <div className="card-top">
         <div>
           <h3>{formatMoney(opp.monto)}</h3>
