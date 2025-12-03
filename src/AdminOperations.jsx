@@ -34,6 +34,78 @@ const AdminOperations = () => {
     }
   });
 
+  const sendNotificationsForPaidIntent = async (intentRow, fundedInfo) => {
+    if (!intentRow) return;
+    const investorId = intentRow.investor_id;
+    const opportunityId = intentRow.opportunity_id;
+    const expectedAmount = intentRow.expected_amount || 0;
+    const notificationsPayload = [];
+
+    // Notificación al inversionista: pago verificado
+    if (investorId) {
+      notificationsPayload.push({
+        user_id: investorId,
+        title: 'Pago verificado',
+        body: `Validamos tu pago de ${formatMoney(expectedAmount)}. Tu participación se activa cuando la oportunidad alcance 100% del fondeo.`,
+        link_url: '/mis-inversiones',
+        type: 'investment_payment_verified',
+      });
+    }
+
+    // Si con este pago se fondeó al 100%
+    const isFunded = fundedInfo?.funded;
+    if (isFunded) {
+      // Traer datos de oportunidad y prestatario
+      let opp = null;
+      try {
+        const { data: oppRow } = await supabase
+          .from('oportunidades')
+          .select('id, user_id, solicitud_id, monto')
+          .eq('id', opportunityId)
+          .maybeSingle();
+        opp = oppRow;
+      } catch (_) {}
+
+      if (investorId) {
+        notificationsPayload.push({
+          user_id: investorId,
+          title: 'Oportunidad fondeada',
+          body: `Se completó el fondeo de la oportunidad ${opportunityId}. Próximo paso: pago dirigido al banco y cronograma de cuotas.`,
+          link_url: '/mis-inversiones',
+          type: 'opportunity_funded',
+        });
+      }
+
+      const borrowerId = opp?.user_id;
+      let bankName = null;
+      if (opp?.solicitud_id) {
+        try {
+          const { data: solRow } = await supabase
+            .from('solicitudes')
+            .select('bancos_deuda')
+            .eq('id', opp.solicitud_id)
+            .maybeSingle();
+          bankName = solRow?.bancos_deuda || null;
+        } catch (_) {}
+      }
+
+      if (borrowerId) {
+        const montoTotal = opp?.monto || fundedInfo?.objetivo || 0;
+        notificationsPayload.push({
+          user_id: borrowerId,
+          title: 'Tu préstamo fue fondeado',
+          body: `Fondecemos ${formatMoney(montoTotal)}. Pagaremos tu tarjeta${bankName ? ` en ${bankName}` : ''} en las próximas horas.`,
+          link_url: '/panel-prestatario',
+          type: 'loan_funded',
+        });
+      }
+    }
+
+    if (notificationsPayload.length > 0) {
+      await supabase.from('notifications').insert(notificationsPayload);
+    }
+  };
+
   const markReceiptSeen = (intentId, updatedAt) => {
     if (!intentId) return;
     const ts = updatedAt ? new Date(updatedAt).getTime() : Date.now();
@@ -147,8 +219,16 @@ const AdminOperations = () => {
     try {
       if (status === 'paid') {
         // Usar RPC para recalcular fondeo e inversiones pagadas
-        const { error: rpcErr } = await supabase.rpc('mark_payment_intent_paid', { p_intent_id: id });
+        const intentRow = intents.find((i) => i.id === id);
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('mark_payment_intent_paid', { p_payment_intent_id: id });
         if (rpcErr) throw rpcErr;
+        // Notificaciones básicas al inversionista/prestatario
+        try {
+          const fundedInfo = Array.isArray(rpcData) && rpcData.length > 0 ? rpcData[0] : null;
+          await sendNotificationsForPaidIntent(intentRow, fundedInfo);
+        } catch (notifErr) {
+          console.warn('No se pudieron enviar notificaciones', notifErr);
+        }
       } else {
         const { error } = await supabase.from('payment_intents').update({ status }).eq('id', id);
         if (error) throw error;
