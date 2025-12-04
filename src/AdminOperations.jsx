@@ -247,6 +247,11 @@ const AdminOperations = () => {
       if (status === 'paid') {
         // Usar RPC para recalcular fondeo e inversiones pagadas
         const intentRow = intents.find((i) => i.id === id);
+        const normalized = (intentRow?.status || '').toString().trim().toLowerCase();
+        if (!['pending', 'unmatched'].includes(normalized)) {
+          logOps('Click ignorado: intent no payable', { id, status: intentRow?.status });
+          return;
+        }
         logOps('Marcando pagado', { id, currentStatus: intentRow?.status });
         const { data: rpcData, error: rpcErr } = await supabase.rpc('mark_payment_intent_paid', { p_payment_intent_id: id });
         if (rpcErr) throw rpcErr;
@@ -435,6 +440,7 @@ const AdminOperations = () => {
                 const statusLower = (i.status || '').toString().trim().toLowerCase();
                 const canPay = ['pending', 'unmatched'].includes(statusLower);
                 const canExpire = statusLower === 'pending';
+                const payBtnStyle = canPay ? {} : { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' };
                 return (
                   <tr key={i.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
@@ -468,8 +474,8 @@ const AdminOperations = () => {
                       '—'
                     )}
                   </td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={!canPay}>Marcar pagado</button>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <button className="btn btn--primary" style={payBtnStyle} onClick={() => updateIntentStatus(i.id, 'paid')} disabled={!canPay}>Marcar pagado</button>
                       <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={!canExpire}>Expirar</button>
                       <button className="btn" onClick={() => reopenOpportunity(i.opportunity_id)} disabled={statusLower === 'paid'}>Reabrir (sin pagos)</button>
                     </td>
@@ -525,7 +531,14 @@ const AdminOperations = () => {
                       )}
                     </td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={(i.status || '').toString().trim().toLowerCase() === 'paid'}>Marcar pagado</button>
+                      <button
+                        className="btn btn--primary"
+                        style={['pending', 'unmatched'].includes((i.status || '').toString().trim().toLowerCase()) ? {} : { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' }}
+                        onClick={() => updateIntentStatus(i.id, 'paid')}
+                        disabled={(i.status || '').toString().trim().toLowerCase() === 'paid'}
+                      >
+                        Marcar pagado
+                      </button>
                       <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={(i.status || '').toString().trim().toLowerCase() === 'expired'}>Expirar</button>
                     </td>
                   </tr>
