@@ -680,11 +680,12 @@ const AdminOperations = () => {
                       <input type="file" accept=".pdf" onChange={(e) => setDisbContractFiles(prev => ({ ...prev, [d.id]: e.target.files?.[0] || null }))} />
                     </div>
                   </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                     <button
                       className="btn btn--primary"
                       disabled={d.estado === 'pagado'}
                       onClick={() => registerDirectedPayment(d)}
+                      title="Sube el comprobante del pago al banco (y opcionalmente el contrato) y luego pulsa aquí. Generaremos el contrato automático y notificaremos al prestatario e inversionistas."
                     >
                       Registrar pago dirigido
                     </button>
