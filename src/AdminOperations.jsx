@@ -418,7 +418,7 @@ const AdminOperations = () => {
             </thead>
             <tbody>
               {intents.map((i) => {
-                const statusLower = (i.status || '').toLowerCase();
+                const statusLower = (i.status || '').toString().trim().toLowerCase();
                 const canPay = ['pending', 'unmatched'].includes(statusLower);
                 const canExpire = statusLower === 'pending';
                 return (
@@ -511,8 +511,8 @@ const AdminOperations = () => {
                       )}
                     </td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
-                      <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
+                      <button className="btn btn--primary" onClick={() => updateIntentStatus(i.id, 'paid')} disabled={(i.status || '').toString().trim().toLowerCase() === 'paid'}>Marcar pagado</button>
+                      <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={(i.status || '').toString().trim().toLowerCase() === 'expired'}>Expirar</button>
                     </td>
                   </tr>
                 ))}
