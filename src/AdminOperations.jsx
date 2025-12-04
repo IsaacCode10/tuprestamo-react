@@ -369,7 +369,7 @@ const AdminOperations = () => {
 
   useEffect(() => {
     refreshAll();
-    const interval = setInterval(() => { refreshAll(); }, 30000); // auto refresh cada 30s
+    const interval = setInterval(() => { refreshAll(); }, 300000); // auto refresh cada 5min
     return () => clearInterval(interval);
   }, []);
 
