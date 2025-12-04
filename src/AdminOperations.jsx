@@ -13,6 +13,13 @@ const TabButton = ({ active, onClick, children }) => (
 
 const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const logOps = (...args) => {
+  try {
+    // Debug siempre visible en consola del navegador para seguimiento en producción
+    console.log('[Ops]', ...args);
+  } catch (_) {}
+};
+
 const AdminOperations = () => {
   const [tab, setTab] = useState('intents');
   const [intents, setIntents] = useState([]);
@@ -144,6 +151,11 @@ const AdminOperations = () => {
       }
       return { ...r, receipt_signed_url };
     }));
+    logOps('Intents cargados', intentsWithLinks.map((r) => ({
+      id: r.id,
+      status: r.status,
+      canPay: ['pending', 'unmatched'].includes((r.status || '').toString().trim().toLowerCase()),
+    })));
     setIntents(intentsWithLinks);
     // cargar perfiles para mostrar nombre/email en vez de UUID
     const investorIds = Array.from(new Set(rows.map(r => r.investor_id).filter(Boolean)));
@@ -235,11 +247,13 @@ const AdminOperations = () => {
       if (status === 'paid') {
         // Usar RPC para recalcular fondeo e inversiones pagadas
         const intentRow = intents.find((i) => i.id === id);
+        logOps('Marcando pagado', { id, currentStatus: intentRow?.status });
         const { data: rpcData, error: rpcErr } = await supabase.rpc('mark_payment_intent_paid', { p_payment_intent_id: id });
         if (rpcErr) throw rpcErr;
         // Notificaciones básicas al inversionista/prestatario
         try {
           await sendNotificationsForPaidIntent(intentRow, rpcData);
+          logOps('Notificaciones enviadas para intent', id);
         } catch (notifErr) {
           console.warn('No se pudieron enviar notificaciones', notifErr);
         }
