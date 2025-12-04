@@ -689,6 +689,24 @@ const AdminOperations = () => {
                     >
                       Registrar pago dirigido
                     </button>
+                    <span
+                      title="Sube el comprobante del pago al banco antes de registrar. El contrato se genera automático y se notifican prestatario e inversionistas."
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: '#e5ecef',
+                        color: '#1f2f38',
+                        fontWeight: 800,
+                        fontSize: '0.9rem',
+                        cursor: 'help',
+                      }}
+                    >
+                      ?
+                    </span>
                   </td>
                 </tr>
               ))}
