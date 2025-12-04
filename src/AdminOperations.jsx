@@ -405,9 +405,9 @@ const AdminOperations = () => {
       <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <TabButton active={tab === 'intents'} onClick={() => setTab('intents')}>Pagos de inversionistas</TabButton>
         <TabButton active={tab === 'review'} onClick={() => setTab('review')}>Por conciliar</TabButton>
+        <TabButton active={tab === 'disbursements'} onClick={() => setTab('disbursements')}>Desembolso dirigido</TabButton>
         <TabButton active={tab === 'borrower'} onClick={() => setTab('borrower')}>Pagos de prestatarios</TabButton>
         <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Payouts a inversionistas</TabButton>
-        <TabButton active={tab === 'disbursements'} onClick={() => setTab('disbursements')}>Desembolso dirigido</TabButton>
         <button className="btn btn--secondary" onClick={refreshAll} disabled={loading}>Refrescar</button>
         {lastRefreshed && (
           <span style={{ color: '#55747b', fontSize: '0.9rem' }}>
