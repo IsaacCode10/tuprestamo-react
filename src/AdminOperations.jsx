@@ -386,6 +386,23 @@ const AdminOperations = () => {
     }
   };
 
+  const uploadDisbReceiptImmediate = async (disbRow, file) => {
+    if (!file || !disbRow?.id) return;
+    try {
+      setInfoMessage('Subiendo comprobante...');
+      const path = await uploadReceipt(file, 'desembolsos');
+      const { error } = await supabase
+        .from('desembolsos')
+        .update({ comprobante_url: path })
+        .eq('id', disbRow.id);
+      if (error) throw error;
+      setInfoMessage('Comprobante guardado. Listo para registrar el pago dirigido.');
+      loadDisbursements();
+    } catch (e) {
+      setError((e).message || 'No pudimos guardar el comprobante');
+    }
+  };
+
   useEffect(() => {
     refreshAll();
     const interval = setInterval(() => { refreshAll(); }, 300000); // auto refresh cada 5min
@@ -675,7 +692,7 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {d.comprobante_url ? <a href={d.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante</a> : <span className="muted">Sin comprobante</span>}
-                      <input type="file" accept=".pdf,image/*" onChange={(e) => setDisbReceiptFiles(prev => ({ ...prev, [d.id]: e.target.files?.[0] || null }))} />
+                      <input type="file" accept=".pdf,image/*" onChange={(e) => uploadDisbReceiptImmediate(d, e.target.files?.[0] || null)} />
                       {d.contract_url ? (
                         <a href={d.contract_url} target="_blank" rel="noreferrer">Contrato generado</a>
                       ) : (
