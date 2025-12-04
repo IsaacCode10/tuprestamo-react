@@ -208,7 +208,25 @@ const AdminOperations = () => {
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) setError(error.message);
-    setDisbursements(data || []);
+    const rows = data || [];
+    const withSigned = await Promise.all(rows.map(async (d) => {
+      let comprobante_signed_url = null;
+      let contract_signed_url = null;
+      if (d.comprobante_url) {
+        try {
+          const { data: signed } = await supabase.storage.from('comprobantes-pagos').createSignedUrl(d.comprobante_url, 60 * 60);
+          comprobante_signed_url = signed?.signedUrl || null;
+        } catch (_) {}
+      }
+      if (d.contract_url) {
+        try {
+          const { data: signed } = await supabase.storage.from('contratos').createSignedUrl(d.contract_url, 60 * 60);
+          contract_signed_url = signed?.signedUrl || null;
+        } catch (_) {}
+      }
+      return { ...d, comprobante_signed_url, contract_signed_url };
+    }));
+    setDisbursements(withSigned);
     setLoading(false);
   };
 
@@ -691,10 +709,10 @@ const AdminOperations = () => {
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {d.comprobante_url ? <a href={d.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante</a> : <span className="muted">Sin comprobante</span>}
+                      {d.comprobante_url ? <a href={d.comprobante_signed_url || d.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante</a> : <span className="muted">Sin comprobante</span>}
                       <input type="file" accept=".pdf,image/*" onChange={(e) => uploadDisbReceiptImmediate(d, e.target.files?.[0] || null)} />
                       {d.contract_url ? (
-                        <a href={d.contract_url} target="_blank" rel="noreferrer">Contrato generado</a>
+                        <a href={d.contract_signed_url || d.contract_url} target="_blank" rel="noreferrer">Contrato generado</a>
                       ) : (
                         <span className="muted">El contrato se generará automáticamente al registrar</span>
                       )}
