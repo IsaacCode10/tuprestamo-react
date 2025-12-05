@@ -146,10 +146,19 @@ serve(async (req) => {
     const nuevoPlazo = plazo_meses || solicitud.plazo_meses || 24;
     const montoBase = montoCalculadoDesdeNeto || monto_bruto_aprobado || solicitud.monto_solicitado || 0;
     const monto = Number.isFinite(montoBase) ? montoBase : 0;
+    const monthlyRate = (pricing?.tasa_prestatario || 0) / 100 / 12;
+    const cuotaPromedio =
+      netoVerificado && nuevoPlazo > 0
+        ? (monthlyRate > 0
+            ? netoVerificado * monthlyRate / (1 - Math.pow(1 + monthlyRate, -nuevoPlazo))
+            : netoVerificado / nuevoPlazo)
+        : null;
     const updateOportunidad: Record<string, unknown> = {
       estado: "borrador", // se quedará borrador hasta aceptación del prestatario
       monto,
       plazo_meses: nuevoPlazo,
+      saldo_deudor_verificado: netoVerificado ?? monto,
+      cuota_promedio: cuotaPromedio,
     };
     if (pricing) {
       updateOportunidad.perfil_riesgo = perfilKey;

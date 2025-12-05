@@ -261,7 +261,13 @@ begin
     -- Crear desembolso pendiente si no existe
     if not exists (select 1 from desembolsos where opportunity_id = v_intent.opportunity_id) then
       insert into desembolsos (opportunity_id, monto_bruto, monto_neto, estado, created_at)
-      values (v_intent.opportunity_id, v_op.monto, v_op.saldo_deudor_verificado, 'pendiente', now());
+      values (
+        v_intent.opportunity_id,
+        v_op.monto,
+        coalesce(v_op.saldo_deudor_verificado, v_op.monto),
+        'pendiente',
+        now()
+      );
     end if;
   end if;
 
@@ -317,11 +323,18 @@ begin
     where opportunity_id = p_opportunity_id
     group by opportunity_id
   )
+  , disb as (
+    select monto_neto
+    from desembolsos
+    where opportunity_id = p_opportunity_id
+    order by created_at desc
+    limit 1
+  )
   select jsonb_build_object(
     'opportunity', jsonb_build_object(
       'id', o.id,
       'monto_bruto', o.monto,
-      'monto_neto', o.saldo_deudor_verificado,
+      'monto_neto', coalesce(o.saldo_deudor_verificado, d.monto_neto, o.monto),
       'plazo_meses', o.plazo_meses,
       'tasa_interes_prestatario', o.tasa_interes_prestatario,
       'perfil_riesgo', o.perfil_riesgo,

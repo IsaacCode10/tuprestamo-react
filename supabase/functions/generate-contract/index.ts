@@ -124,7 +124,7 @@ async function buildPdf(payload: ContractPayload): Promise<Uint8Array> {
     `Monto bruto aprobado: Bs ${formatMoney(opp.monto_bruto)}`,
     `Monto neto a pagar al banco acreedor: Bs ${formatMoney(opp.monto_neto)}`,
     `Plazo: ${opp.plazo_meses || 'n/d'} meses • Tasa prestatario: ${opp.tasa_interes_prestatario || 0}% • Perfil: ${opp.perfil_riesgo || 'n/d'}`,
-    `Cuota estimada (referencial): Bs ${formatMoney(opp.cuota_promedio)}`,
+    `Cuota mensual: Bs ${formatMoney(opp.cuota_promedio)}`,
   ])
 
   drawBlock('2) Fondeo por inversionistas', [
