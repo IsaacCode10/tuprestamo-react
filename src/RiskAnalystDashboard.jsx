@@ -450,7 +450,7 @@ const RiskAnalystDashboard = () => {
 
           const { data: oppData, error: oppErr } = await supabase
             .from('oportunidades')
-            .select('solicitud_id, perfil_riesgo, plazo_meses, monto, estado')
+            .select('solicitud_id, perfil_riesgo, plazo_meses, monto, estado, saldo_deudor_verificado')
             .in('solicitud_id', solicitudIds);
           if (oppErr) throw oppErr;
           oportunidadesMap = (oppData || []).reduce((acc, row) => {
@@ -723,14 +723,14 @@ const RiskAnalystDashboard = () => {
                                 )}
                               </ul>
                             </div>
-                            <div className="history-summary">
-                              <div className="label">Condiciones finales</div>
-                              <p>
-                                Monto: {item.oportunidad?.monto || 'N/D'} · Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m · Estado opp: {item.oportunidad?.estado || 'N/D'}
-                              </p>
-                              <p>
-                                Score INFOCRED: {item.perfil?.metricas_evaluacion?.infocred_score || 'N/D'} ({item.perfil?.metricas_evaluacion?.infocred_risk_level || 'N/D'})
-                              </p>
+                              <div className="history-summary">
+                                <div className="label">Condiciones finales</div>
+                                <p>
+                                Monto bruto: {item.oportunidad?.monto || 'N/D'} · Neto banco: {item.oportunidad?.saldo_deudor_verificado || 'N/D'} · Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m · Estado opp: {item.oportunidad?.estado || 'N/D'}
+                                </p>
+                                <p>
+                                  Score INFOCRED: {item.perfil?.metricas_evaluacion?.infocred_score || 'N/D'} ({item.perfil?.metricas_evaluacion?.infocred_risk_level || 'N/D'})
+                                </p>
                               {item.solicitud?.tasa_interes && (
                                 <p>Tasa: {item.solicitud.tasa_interes}%</p>
                               )}
