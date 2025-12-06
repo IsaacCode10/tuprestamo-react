@@ -244,7 +244,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   );
 };
 
-const BorrowerPublishedView = ({ solicitud, oportunidad }) => {
+const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const neto = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
   const plazo = Number(oportunidad?.plazo_meses || solicitud?.plazo_meses || 24);
   const tasa = Number(oportunidad?.tasa_interes_prestatario || solicitud?.tasa_interes_tc || 0);
@@ -767,6 +767,8 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) 
           </div>
         ))}
       </div>
+
+      <AmortizationSchedule userId={userId} />
     </div>
   );
 };
@@ -1405,7 +1407,7 @@ const BorrowerDashboard = () => {
   }
   if (solicitud?.estado === 'prestatario_acepto') {
     const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
-    return <BorrowerPublishedView solicitud={solicitud} oportunidad={opp} />;
+    return <BorrowerPublishedView solicitud={solicitud} oportunidad={opp} userId={user?.id} />;
   }
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;
