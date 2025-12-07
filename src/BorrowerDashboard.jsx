@@ -1450,11 +1450,9 @@ const BorrowerDashboard = () => {
   if (loading) return <div className="borrower-dashboard">Cargando tu panel...</div>;
   if (error) return <div className="borrower-dashboard" style={{ color: 'red' }}>Error: {error}</div>;
   
-  if (solicitud?.estado === 'desembolsado' || solicitud?.estado === 'aprobado') {
-    return <ApprovedLoanDashboard loan={mockLoanData} user={user} onLogout={handleLogout} />;
-  }
+  const estadoSolicitud = solicitud?.estado;
 
-  if (solicitud?.estado === 'aprobado_para_oferta') {
+  if (estadoSolicitud === 'aprobado_para_oferta') {
     const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
     return (
       <BorrowerOfferView
@@ -1466,9 +1464,15 @@ const BorrowerDashboard = () => {
       />
     );
   }
-  if (solicitud?.estado === 'prestatario_acepto') {
+
+  if (['prestatario_acepto', 'fondeada', 'desembolsado', 'activo', 'en_curso', 'pagado'].includes(estadoSolicitud)) {
     const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
     return <BorrowerPublishedView solicitud={solicitud} oportunidad={opp} userId={user?.id} />;
+  }
+
+  if (estadoSolicitud === 'aprobado') {
+    const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
+    return <BorrowerOfferView solicitud={solicitud} oportunidad={opp} onAccept={() => handleProposalDecision('Aceptar')} onReject={() => handleProposalDecision('Rechazar')} loading={proposalLoading} />;
   }
 
   if (!solicitud) return <div className="borrower-dashboard">No tienes solicitudes activas.</div>;
