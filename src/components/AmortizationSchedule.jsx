@@ -1,11 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/supabaseClient';
+import { calcTPBreakdown } from '@/utils/loan.js';
 
-const AmortizationSchedule = ({ userId }) => {
+const AmortizationSchedule = ({ userId, fallbackOpportunity = null, fallbackSolicitud = null }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [opportunityId, setOpportunityId] = useState(null);
   const [rows, setRows] = useState([]);
+
+  const simulatedRows = useMemo(() => {
+    const opp = fallbackOpportunity || {};
+    const sol = fallbackSolicitud || {};
+    const neto = Number(opp.saldo_deudor_verificado || sol.saldo_deuda_tc || sol.monto_solicitado || 0);
+    const plazo = Number(opp.plazo_meses || sol.plazo_meses || 0);
+    const tasa = Number(opp.tasa_interes_prestatario || sol.tasa_interes_tc || 0);
+    const originacionPct = Number(opp.comision_originacion_porcentaje || 0);
+    if (!neto || neto <= 0 || !plazo || plazo <= 0 || !tasa) return [];
+
+    const breakdown = calcTPBreakdown(neto, tasa, plazo, originacionPct);
+    const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
+    const monthlyRate = tasa / 100 / 12;
+    const paymentBase = breakdown.monthlyPaymentAmort || 0;
+    const paymentTotal = paymentBase + adminSeguroFlat;
+    let balance = breakdown.bruto || neto;
+    const sim = [];
+    for (let i = 1; i <= plazo; i++) {
+      const interest = balance * monthlyRate;
+      const principal = paymentBase - interest;
+      balance = Math.max(0, balance - principal);
+      sim.push({
+        installment_no: i,
+        due_date: null,
+        payment: paymentTotal,
+        principal,
+        interest,
+        balance,
+        status: 'Simulado',
+      });
+    }
+    return sim;
+  }, [fallbackOpportunity, fallbackSolicitud]);
 
   useEffect(() => {
     let isMounted = true;
@@ -57,8 +91,9 @@ const AmortizationSchedule = ({ userId }) => {
 
   if (loading) return <div className="card" style={{ marginTop: 16 }}><h3>Amortización</h3><p>Cargando…</p></div>;
   if (error) return <div className="card" style={{ marginTop: 16 }}><h3>Amortización</h3><p style={{ color: '#a94442' }}>{error}</p></div>;
-  if (!opportunityId) return <div className="card" style={{ marginTop: 16 }}><h3>Amortización</h3><p>No se encontró una oportunidad activa para tu cuenta.</p></div>;
-  if (!rows || rows.length === 0) return <div className="card" style={{ marginTop: 16 }}><h3>Amortización</h3><p>Tu cronograma estará disponible tras el desembolso.</p></div>;
+  if (!opportunityId && (!simulatedRows || simulatedRows.length === 0)) return <div className="card" style={{ marginTop: 16 }}><h3>Amortización</h3><p>No se encontró una oportunidad activa para tu cuenta.</p></div>;
+  const displayRows = (rows && rows.length > 0) ? rows : simulatedRows;
+  if (!displayRows || displayRows.length === 0) return <div className="card" style={{ marginTop: 16 }}><h3>Amortización</h3><p>Tu cronograma estará disponible tras el desembolso.</p></div>;
 
   return (
     <div className="card" style={{ marginTop: 16, overflowX: 'auto' }}>
@@ -76,15 +111,15 @@ const AmortizationSchedule = ({ userId }) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {displayRows.map((r) => (
             <tr key={r.installment_no}>
               <td style={{ padding: 8 }}>{r.installment_no}</td>
-              <td style={{ padding: 8 }}>{new Date(r.due_date).toLocaleDateString('es-BO')}</td>
+              <td style={{ padding: 8 }}>{r.due_date ? new Date(r.due_date).toLocaleDateString('es-BO') : '—'}</td>
               <td style={{ padding: 8, textAlign: 'right' }}>{Number(r.payment).toLocaleString('es-BO', { minimumFractionDigits: 2 })}</td>
               <td style={{ padding: 8, textAlign: 'right' }}>{Number(r.principal).toLocaleString('es-BO', { minimumFractionDigits: 2 })}</td>
               <td style={{ padding: 8, textAlign: 'right' }}>{Number(r.interest).toLocaleString('es-BO', { minimumFractionDigits: 2 })}</td>
               <td style={{ padding: 8, textAlign: 'right' }}>{Number(r.balance).toLocaleString('es-BO', { minimumFractionDigits: 2 })}</td>
-              <td style={{ padding: 8 }}>{r.status}</td>
+              <td style={{ padding: 8 }}>{r.status || 'Pendiente'}</td>
             </tr>
           ))}
         </tbody>
@@ -94,4 +129,3 @@ const AmortizationSchedule = ({ userId }) => {
 };
 
 export default AmortizationSchedule;
-
