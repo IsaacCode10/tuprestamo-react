@@ -262,6 +262,33 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [contractLink, setContractLink] = useState(null);
   const [loadingDisb, setLoadingDisb] = useState(false);
   const [disbError, setDisbError] = useState('');
+  const disbEstado = (disbursement?.estado || '').toLowerCase();
+  const oppEstado = (oportunidad?.estado || '').toLowerCase();
+
+  const currentStepperState = (() => {
+    if (disbEstado === 'pagado' || oppEstado === 'activo') return 'desembolsado';
+    if (disbursement || oppEstado === 'fondeada') return 'fondeada';
+    return 'prestatario_acepto';
+  })();
+
+  const headerCopy = (() => {
+    if (disbEstado === 'pagado' || oppEstado === 'activo') {
+      return {
+        title: 'Tu préstamo fue desembolsado',
+        subtitle: 'Pagamos tu tarjeta directamente en tu banco. Aquí tienes tu contrato y la tabla de amortización siempre disponible.'
+      };
+    }
+    if (disbursement || oppEstado === 'fondeada') {
+      return {
+        title: 'Tu oportunidad se fondeó al 100%',
+        subtitle: 'Estamos ejecutando el pago dirigido a tu banco. Te avisaremos cuando esté confirmado y podrás descargar tu contrato aquí.'
+      };
+    }
+    return {
+      title: 'Tu oportunidad está publicada',
+      subtitle: 'Estamos fondeando tu crédito con nuestra comunidad de inversionistas. Cuando esté financiado, pagaremos tu tarjeta directamente en tu banco y te avisaremos por correo.'
+    };
+  })();
 
   useEffect(() => {
     const fetchDisbursement = async () => {
@@ -311,10 +338,16 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     <div className="borrower-dashboard borrower-offer-view">
       <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Propuesta publicada' }]} />
       <div className="dashboard-header">
-        <h2>Tu oportunidad está publicada</h2>
-        <p>Estamos fondeando tu crédito con nuestra comunidad de inversionistas. Cuando esté financiado, pagaremos tu tarjeta directamente en tu banco y te avisaremos por correo.</p>
+        <h2>{headerCopy.title}</h2>
+        <p>{headerCopy.subtitle}</p>
       </div>
-      <ProgressStepper currentStep="aprobado" allDocumentsUploaded />
+      <ProgressStepper
+        currentStep={currentStepperState}
+        allDocumentsUploaded
+        hasDisbursement={!!disbursement}
+        disbursementState={disbursement?.estado}
+        opportunityState={oportunidad?.estado}
+      />
 
       <div className="card">
         <h2>Resumen de tu Solicitud</h2>
@@ -658,10 +691,29 @@ const parseNumberValue = (value) => {
 };
 
 // --- PROGRESS STEPPER CON LÓGICA DE UI MEJORADA ---
-const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
-  const steps = ['Solicitud Recibida', 'Verificación Inicial', 'Sube tus Documentos', 'Revisión Final', 'Préstamo Aprobado', 'Propuesta Publicada'];
+const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = false, disbursementState, opportunityState }) => {
+  const steps = [
+    'Solicitud Recibida',
+    'Verificación Inicial',
+    'Sube tus Documentos',
+    'Revisión Final',
+    'Préstamo Aprobado',
+    'Propuesta Publicada',
+    '100% Fondeada',
+    'Pago dirigido al banco'
+  ];
   const getStepStatus = (stepIndex) => {
-    const stepMap = { 'pre-aprobado': 2, 'documentos-en-revision': 3, 'aprobado': 4, 'prestatario_acepto': 5 };
+    const stepMap = {
+      'pre-aprobado': 2,
+      'documentos-en-revision': 3,
+      'aprobado': 4,
+      'prestatario_acepto': 5,
+      'fondeada': 6,
+      'pago_dirigido': 7,
+      'desembolsado': 7,
+      'pagado': 7,
+      'activo': 7
+    };
     let currentStepIndex = stepMap[currentStep] ?? 0;
 
     if (currentStepIndex === 0 && currentStep !== 'pendiente') {
@@ -670,6 +722,15 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded }) => {
 
     if (allDocumentsUploaded && currentStepIndex < 3) {
       currentStepIndex = 3;
+    }
+
+    const oppState = (opportunityState || '').toLowerCase();
+    const disbState = (disbursementState || '').toLowerCase();
+    if (oppState === 'fondeada' || hasDisbursement) {
+      currentStepIndex = Math.max(currentStepIndex, 6);
+    }
+    if (['pagado', 'desembolsado', 'activo'].includes(oppState) || disbState === 'pagado') {
+      currentStepIndex = Math.max(currentStepIndex, 7);
     }
 
     if (stepIndex < currentStepIndex) return 'completed';
