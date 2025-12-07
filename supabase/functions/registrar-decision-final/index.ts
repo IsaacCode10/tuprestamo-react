@@ -124,10 +124,12 @@ serve(async (req) => {
     const pricing = PRICING[perfilKey as keyof typeof PRICING];
     const comisionPct = pricing?.comision_originacion ?? 0;
     const netoVerificado = Number(saldo_deudor_verificado) > 0 ? Number(saldo_deudor_verificado) : null;
-    const montoCalculadoDesdeNeto =
-      netoVerificado && comisionPct >= 0 && comisionPct < 100
-        ? netoVerificado / (1 - comisionPct / 100)
-        : null;
+    const brutoCalculado = (() => {
+      if (!netoVerificado) return null;
+      if (netoVerificado <= 10000) return netoVerificado + 450; // mínimo aplicado
+      if (comisionPct >= 0 && comisionPct < 100) return netoVerificado / (1 - comisionPct / 100);
+      return null;
+    })();
 
     if (decision === "Rechazado") {
       await Promise.all([
@@ -144,15 +146,17 @@ serve(async (req) => {
 
     // Aprobado
     const nuevoPlazo = plazo_meses || solicitud.plazo_meses || 24;
-    const montoBase = montoCalculadoDesdeNeto || monto_bruto_aprobado || solicitud.monto_solicitado || 0;
+    const montoBase = brutoCalculado || monto_bruto_aprobado || solicitud.monto_solicitado || 0;
     const monto = Number.isFinite(montoBase) ? montoBase : 0;
     const monthlyRate = (pricing?.tasa_prestatario || 0) / 100 / 12;
-    const cuotaPromedio =
+    const adminSeguroFlat = netoVerificado ? Math.max(netoVerificado * 0.0015, 10) : 0; // 0.15% mensual, mínimo 10 Bs
+    const cuotaBase =
       netoVerificado && nuevoPlazo > 0
         ? (monthlyRate > 0
-            ? netoVerificado * monthlyRate / (1 - Math.pow(1 + monthlyRate, -nuevoPlazo))
-            : netoVerificado / nuevoPlazo)
+            ? monto * monthlyRate / (1 - Math.pow(1 + monthlyRate, -nuevoPlazo))
+            : monto / nuevoPlazo)
         : null;
+    const cuotaPromedio = cuotaBase != null ? cuotaBase + adminSeguroFlat : null;
     const updateOportunidad: Record<string, unknown> = {
       estado: "borrador", // se quedará borrador hasta aceptación del prestatario
       monto,
