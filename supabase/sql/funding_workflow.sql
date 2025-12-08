@@ -389,3 +389,63 @@ begin
   return (select * from oportunidades where id = p_opportunity_id);
 end;
 $$;
+
+-- Registrar pago dirigido: marca desembolso pagado y avanza estados de oportunidad/solicitud
+create or replace function public.registrar_pago_dirigido(
+  p_opportunity_id bigint,
+  p_comprobante_url text default null,
+  p_contract_url text default null
+)
+returns desembolsos
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_disb desembolsos%rowtype;
+  v_solicitud_id bigint;
+begin
+  -- Traer o crear desembolso
+  select * into v_disb
+  from desembolsos
+  where opportunity_id = p_opportunity_id
+  order by created_at desc
+  limit 1
+  for update;
+
+  if not found then
+    insert into desembolsos (
+      opportunity_id, monto_bruto, monto_neto, estado, comprobante_url, contract_url, paid_at, created_at
+    )
+    select
+      o.id,
+      o.monto,
+      coalesce(o.saldo_deudor_verificado, o.monto),
+      'pagado',
+      p_comprobante_url,
+      p_contract_url,
+      now(),
+      now()
+    from oportunidades o
+    where o.id = p_opportunity_id
+    returning * into v_disb;
+  else
+    update desembolsos
+    set estado = 'pagado',
+        paid_at = coalesce(v_disb.paid_at, now()),
+        comprobante_url = coalesce(p_comprobante_url, v_disb.comprobante_url),
+        contract_url = coalesce(p_contract_url, v_disb.contract_url)
+    where id = v_disb.id
+    returning * into v_disb;
+  end if;
+
+  -- Avanza estado de oportunidad y solicitud
+  select solicitud_id into v_solicitud_id from oportunidades where id = p_opportunity_id;
+  update oportunidades set estado = 'activo' where id = p_opportunity_id;
+  if v_solicitud_id is not null then
+    update solicitudes set estado = 'desembolsado' where id = v_solicitud_id;
+  end if;
+
+  return v_disb;
+end;
+$$;
