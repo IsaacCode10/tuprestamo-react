@@ -411,6 +411,15 @@ as $$
 declare
   v_disb desembolsos%rowtype;
   v_solicitud_id bigint;
+  v_monto numeric;
+  v_plazo integer;
+  v_tasa numeric;
+  v_rate numeric;
+  v_payment numeric;
+  v_balance numeric;
+  v_interest numeric;
+  v_principal numeric;
+  v_start_date timestamptz;
 begin
   -- Traer o crear desembolso
   select * into v_disb
@@ -451,6 +460,52 @@ begin
   update oportunidades set estado = 'activo' where id = p_opportunity_id;
   if v_solicitud_id is not null then
     update solicitudes set estado = 'desembolsado' where id = v_solicitud_id;
+  end if;
+
+  -- Generar cronograma solo si no existe
+  if not exists (select 1 from amortizaciones where opportunity_id = p_opportunity_id) then
+    select
+      o.monto,
+      o.plazo_meses,
+      o.tasa_interes_prestatario,
+      coalesce(v_disb.paid_at, now())
+    into
+      v_monto,
+      v_plazo,
+      v_tasa,
+      v_start_date
+    from oportunidades o
+    where o.id = p_opportunity_id;
+
+    v_monto := coalesce(v_monto, v_disb.monto_bruto, v_disb.monto_neto, 0);
+    v_plazo := coalesce(v_plazo, 24);
+    v_tasa := coalesce(v_tasa, 0);
+    if v_monto > 0 and v_plazo > 0 then
+      v_rate := v_tasa / 100 / 12;
+      if v_rate > 0 then
+        v_payment := v_monto * v_rate / (1 - power(1 + v_rate, -v_plazo));
+      else
+        v_payment := v_monto / v_plazo;
+      end if;
+      v_balance := v_monto;
+      for i in 1..v_plazo loop
+        v_interest := v_balance * v_rate;
+        v_principal := v_payment - v_interest;
+        if v_principal < 0 then v_principal := 0; end if;
+        v_balance := greatest(v_balance - v_principal, 0);
+        insert into amortizaciones (opportunity_id, installment_no, due_date, principal, interest, payment, balance, status)
+        values (
+          p_opportunity_id,
+          i,
+          v_start_date + (i || ' month')::interval,
+          v_principal,
+          v_interest,
+          v_payment,
+          v_balance,
+          'pendiente'
+        );
+      end loop;
+    end if;
   end if;
 
   return v_disb;
