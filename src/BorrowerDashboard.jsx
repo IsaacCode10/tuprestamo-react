@@ -266,6 +266,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [loadingIntents, setLoadingIntents] = useState(false);
   const [intentsError, setIntentsError] = useState('');
   const [payMode, setPayMode] = useState('qr');
+  const [scheduleRows, setScheduleRows] = useState([]);
+  const [loadingSchedule, setLoadingSchedule] = useState(false);
+  const [scheduleError, setScheduleError] = useState('');
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
 
@@ -372,6 +375,29 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     fetchBorrowerIntents();
   }, [oportunidad?.id, userId]);
 
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      if (!oportunidad?.id) return;
+      setLoadingSchedule(true);
+      setScheduleError('');
+      try {
+        const { data, error } = await supabase
+          .from('amortizaciones')
+          .select('installment_no, due_date, principal, interest, payment, balance, status')
+          .eq('opportunity_id', oportunidad.id)
+          .order('installment_no', { ascending: true });
+        if (error) throw error;
+        setScheduleRows(data || []);
+      } catch (err) {
+        console.error('Error cargando cronograma:', err);
+        setScheduleError('No pudimos cargar el cronograma. Intenta más tarde.');
+      } finally {
+        setLoadingSchedule(false);
+      }
+    };
+    fetchSchedule();
+  }, [oportunidad?.id]);
+
   const summaryItems = [
     { id: 'tasa', title: 'Tasa Propuesta (anual)', value: `${tasa ? tasa.toFixed(1) : '0'}%` },
     { id: 'plazo', title: 'Plazo', value: `${Number(plazo || 0).toLocaleString('es-BO')} meses` },
@@ -390,41 +416,27 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     }
   };
 
-  const buildSchedule = () => {
-    const items = [];
-    const monthlyRate = tasa / 100 / 12;
-    const payment = breakdown.monthlyPaymentAmort || 0;
-    const serviceFee = adminSeguroFlat;
-    let balance = montoBruto;
-    const baseDate = disbursement?.paid_at ? new Date(disbursement.paid_at) : new Date();
-    for (let i = 1; i <= plazo; i++) {
-      const interest = balance * monthlyRate;
-      const principal = payment - interest;
-      balance = Math.max(0, balance - principal);
-      const dueDate = new Date(baseDate);
-      dueDate.setMonth(dueDate.getMonth() + i);
-      const intent = borrowerIntents[i - 1] || borrowerIntents.find((b) => b?.due_date && formatDate(b.due_date) === formatDate(dueDate));
+  const normalizeSchedule = () => {
+    if (!Array.isArray(scheduleRows)) return [];
+    return scheduleRows.map((row, idx) => {
+      const intentByDate = borrowerIntents.find((b) => b?.due_date && formatDate(b.due_date) === formatDate(row.due_date));
+      const intentByOrder = borrowerIntents[idx];
+      const intent = intentByDate || intentByOrder || null;
       const intentStatus = (intent?.status || '').toLowerCase();
-      const isPaid = intentStatus === 'paid' || intentStatus === 'pagado';
-      items.push({
-        n: i,
-        dueDate,
-        cuota: payment + serviceFee,
-        capital: principal,
-        interes: interest,
-        adminSeguro: serviceFee,
-        saldo: balance,
+      const rowStatus = (row?.status || '').toLowerCase();
+      const isPaid = ['paid', 'pagado'].includes(intentStatus) || rowStatus === 'pagado';
+      return {
+        ...row,
         intent,
-        status: isPaid ? 'pagado' : intent ? intent.status || 'pendiente' : 'pendiente',
-      });
-    }
-    return items;
+        uiStatus: isPaid ? 'pagado' : (row.status || intent?.status || 'pendiente'),
+      };
+    });
   };
 
-  const schedule = buildSchedule();
-  const nextPending = schedule.find((row) => (row.status || '').toLowerCase() !== 'pagado');
-  const nextIntentAmount = nextPending?.intent?.expected_amount || nextPending?.cuota || 0;
-  const nextIntentDate = nextPending?.intent?.due_date || nextPending?.dueDate;
+  const schedule = normalizeSchedule();
+  const nextPending = schedule.find((row) => (row.uiStatus || '').toLowerCase() !== 'pagado');
+  const nextIntentAmount = nextPending?.intent?.expected_amount || nextPending?.payment || 0;
+  const nextIntentDate = nextPending?.intent?.due_date || nextPending?.due_date;
 
   return (
     <div className="borrower-dashboard borrower-offer-view">
@@ -583,9 +595,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         <div className="card">
           <h2>Cronograma de pagos</h2>
           <p className="muted">Fechas, montos y estado de cada cuota.</p>
-          {loadingIntents && <p className="muted">Cargando cronograma...</p>}
-          {intentsError && <p style={{ color: 'red' }}>{intentsError}</p>}
-          {!loadingIntents && !intentsError && (
+          {(loadingSchedule || loadingIntents) && <p className="muted">Cargando cronograma...</p>}
+          {(scheduleError || intentsError) && <p style={{ color: 'red' }}>{scheduleError || intentsError}</p>}
+          {!loadingSchedule && !loadingIntents && !scheduleError && !intentsError && (
             <div style={{ overflowX: 'auto' }}>
               <table className="amort-table">
                 <thead>
@@ -595,7 +607,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                     <th>Cuota</th>
                     <th>Capital</th>
                     <th>Interés</th>
-                    <th>Admin/Seguro</th>
                     <th>Saldo</th>
                     <th>Estado</th>
                     <th>Comprobante</th>
@@ -603,15 +614,14 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 </thead>
                 <tbody>
                   {schedule.map(row => (
-                    <tr key={row.n}>
-                      <td>{row.n}</td>
-                      <td>{formatDate(row.dueDate)}</td>
-                      <td>{formatMoney(row.cuota)}</td>
-                      <td>{formatMoney(row.capital)}</td>
-                      <td>{formatMoney(row.interes)}</td>
-                      <td>{formatMoney(row.adminSeguro)}</td>
-                      <td>{formatMoney(row.saldo)}</td>
-                      <td>{(row.status || 'pendiente').toUpperCase()}</td>
+                    <tr key={row.installment_no}>
+                      <td>{row.installment_no}</td>
+                      <td>{formatDate(row.due_date)}</td>
+                      <td>{formatMoney(row.payment)}</td>
+                      <td>{formatMoney(row.principal)}</td>
+                      <td>{formatMoney(row.interest)}</td>
+                      <td>{formatMoney(row.balance)}</td>
+                      <td>{(row.uiStatus || 'pendiente').toUpperCase()}</td>
                       <td>
                         {row.intent?.receipt_signed_url
                           ? <a className="btn btn--sm" href={row.intent.receipt_signed_url} target="_blank" rel="noreferrer">Ver comprobante</a>
