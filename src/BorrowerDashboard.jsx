@@ -262,6 +262,10 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [contractLink, setContractLink] = useState(null);
   const [loadingDisb, setLoadingDisb] = useState(false);
   const [disbError, setDisbError] = useState('');
+  const [borrowerIntents, setBorrowerIntents] = useState([]);
+  const [loadingIntents, setLoadingIntents] = useState(false);
+  const [intentsError, setIntentsError] = useState('');
+  const [payMode, setPayMode] = useState('qr');
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
 
@@ -331,6 +335,43 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     fetchDisbursement();
   }, [oportunidad?.id]);
 
+  useEffect(() => {
+    const fetchBorrowerIntents = async () => {
+      if (!oportunidad?.id || !userId) return;
+      setLoadingIntents(true);
+      setIntentsError('');
+      try {
+        const { data, error } = await supabase
+          .from('borrower_payment_intents')
+          .select('id, expected_amount, status, due_date, paid_at, paid_amount, receipt_url, metadata')
+          .eq('opportunity_id', oportunidad.id)
+          .eq('borrower_id', userId)
+          .order('due_date', { ascending: true });
+        if (error) throw error;
+        const withSigned = await Promise.all((data || []).map(async (row) => {
+          let signedReceipt = null;
+          if (row.receipt_url) {
+            try {
+              const { data: signed, error: signErr } = await supabase
+                .storage
+                .from('comprobantes-pagos')
+                .createSignedUrl(row.receipt_url, 60 * 60);
+              if (!signErr) signedReceipt = signed?.signedUrl || null;
+            } catch (_) {}
+          }
+          return { ...row, receipt_signed_url: signedReceipt };
+        }));
+        setBorrowerIntents(withSigned);
+      } catch (err) {
+        console.error('Error cargando cuotas prestatario:', err);
+        setIntentsError('No pudimos cargar tus cuotas. Intenta más tarde.');
+      } finally {
+        setLoadingIntents(false);
+      }
+    };
+    fetchBorrowerIntents();
+  }, [oportunidad?.id, userId]);
+
   const summaryItems = [
     { id: 'tasa', title: 'Tasa Propuesta (anual)', value: `${tasa ? tasa.toFixed(1) : '0'}%` },
     { id: 'plazo', title: 'Plazo', value: `${Number(plazo || 0).toLocaleString('es-BO')} meses` },
@@ -339,6 +380,51 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     { id: 'neto', title: 'Monto a pagar a tu banco (neto)', value: formatMoney(neto), tooltip: 'Saldo de tu tarjeta que liquidaremos directo en tu banco acreedor.' },
     { id: 'admin', title: 'Costo Admin + Seguro mensual', value: formatMoney(adminSeguro), tooltip: 'Cargo prorrateado en la cuota. Calculado con 0,15% sobre saldo (mínimo 10 Bs) y distribuido en el plazo.' },
   ];
+
+  const formatDate = (value) => {
+    if (!value) return 'N/D';
+    try {
+      return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (_) {
+      return String(value);
+    }
+  };
+
+  const buildSchedule = () => {
+    const items = [];
+    const monthlyRate = tasa / 100 / 12;
+    const payment = breakdown.monthlyPaymentAmort || 0;
+    const serviceFee = adminSeguroFlat;
+    let balance = montoBruto;
+    const baseDate = disbursement?.paid_at ? new Date(disbursement.paid_at) : new Date();
+    for (let i = 1; i <= plazo; i++) {
+      const interest = balance * monthlyRate;
+      const principal = payment - interest;
+      balance = Math.max(0, balance - principal);
+      const dueDate = new Date(baseDate);
+      dueDate.setMonth(dueDate.getMonth() + i);
+      const intent = borrowerIntents[i - 1] || borrowerIntents.find((b) => b?.due_date && formatDate(b.due_date) === formatDate(dueDate));
+      const intentStatus = (intent?.status || '').toLowerCase();
+      const isPaid = intentStatus === 'paid' || intentStatus === 'pagado';
+      items.push({
+        n: i,
+        dueDate,
+        cuota: payment + serviceFee,
+        capital: principal,
+        interes: interest,
+        adminSeguro: serviceFee,
+        saldo: balance,
+        intent,
+        status: isPaid ? 'pagado' : intent ? intent.status || 'pendiente' : 'pendiente',
+      });
+    }
+    return items;
+  };
+
+  const schedule = buildSchedule();
+  const nextPending = schedule.find((row) => (row.status || '').toLowerCase() !== 'pagado');
+  const nextIntentAmount = nextPending?.intent?.expected_amount || nextPending?.cuota || 0;
+  const nextIntentDate = nextPending?.intent?.due_date || nextPending?.dueDate;
 
   return (
     <div className="borrower-dashboard borrower-offer-view">
@@ -406,6 +492,64 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         </table>
       </div>
 
+      {(oppEstado === 'activo' || disbEstado === 'pagado' || disbursement) && (
+        <div className="card" style={{ display: 'grid', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <h2>Tu próxima cuota</h2>
+            <p className="muted">Paga con QR o transferencia. Usa el monto exacto y la referencia de tu nombre/CI.</p>
+          </div>
+          {loadingIntents && <p className="muted">Cargando tus cuotas...</p>}
+          {intentsError && <p style={{ color: 'red' }}>{intentsError}</p>}
+          {!loadingIntents && !intentsError && (
+            <>
+              <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 14, color: '#385b64' }}>Fecha de vencimiento</div>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>{nextIntentDate ? formatDate(nextIntentDate) : 'Se generará pronto'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, color: '#385b64' }}>Monto de la cuota</div>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>{formatMoney(nextIntentAmount)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, color: '#385b64' }}>Estado</div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: '#0a7a4b' }}>{nextPending ? 'Pendiente' : 'Al día'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <button className={['btn', payMode === 'qr' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('qr')}>Pagar con QR</button>
+                  <button className={['btn', payMode === 'transfer' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('transfer')}>Transferencia</button>
+                </div>
+              </div>
+
+              {payMode === 'qr' && (
+                <div style={{ padding: 12, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                  <p style={{ margin: 0, color: '#0f5a62', fontWeight: 600 }}>Escanea este QR para pagar tu cuota</p>
+                  <div style={{ cursor: 'zoom-in', borderRadius: 12, padding: 6, transition: 'transform 0.2s', display: 'inline-block', background: '#fff' }}>
+                    <img
+                      src="/qr-pago.png"
+                      alt="QR de pago Tu Préstamo"
+                      style={{ width: 200, height: 200, objectFit: 'contain', display: 'block' }}
+                    />
+                  </div>
+                  <small style={{ color: '#55747b' }}>Monto exacto: {formatMoney(nextIntentAmount)}</small>
+                </div>
+              )}
+
+              {payMode === 'transfer' && (
+                <div style={{ padding: 12, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'grid', gap: 6 }}>
+                  <p style={{ margin: 0, color: '#0f5a62', fontWeight: 600 }}>Datos de transferencia</p>
+                  <div style={{ color: '#0d1a26' }}>Banco: Ganadero · Cuenta Corriente</div>
+                  <div style={{ color: '#0d1a26' }}>N° de cuenta: 000-0000000</div>
+                  <div style={{ color: '#0d1a26' }}>Beneficiario: Tu Préstamo Bolivia SRL</div>
+                  <div style={{ color: '#0d1a26' }}>Moneda: Bolivianos</div>
+                  <small style={{ color: '#55747b' }}>Monto exacto: {formatMoney(nextIntentAmount)}</small>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {(oportunidad?.estado === 'fondeada' || oportunidad?.estado === 'activo' || disbursement) && (
         <div className="card">
           <h2>Pago dirigido y contrato</h2>
@@ -431,6 +575,53 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
             </div>
           ) : (
             <p className="muted">Aún no registramos el desembolso. Te avisaremos cuando esté listo.</p>
+          )}
+        </div>
+      )}
+
+      {(oppEstado === 'activo' || disbEstado === 'pagado' || disbursement) && (
+        <div className="card">
+          <h2>Cronograma de pagos</h2>
+          <p className="muted">Fechas, montos y estado de cada cuota.</p>
+          {loadingIntents && <p className="muted">Cargando cronograma...</p>}
+          {intentsError && <p style={{ color: 'red' }}>{intentsError}</p>}
+          {!loadingIntents && !intentsError && (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="amort-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Vence</th>
+                    <th>Cuota</th>
+                    <th>Capital</th>
+                    <th>Interés</th>
+                    <th>Admin/Seguro</th>
+                    <th>Saldo</th>
+                    <th>Estado</th>
+                    <th>Comprobante</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule.map(row => (
+                    <tr key={row.n}>
+                      <td>{row.n}</td>
+                      <td>{formatDate(row.dueDate)}</td>
+                      <td>{formatMoney(row.cuota)}</td>
+                      <td>{formatMoney(row.capital)}</td>
+                      <td>{formatMoney(row.interes)}</td>
+                      <td>{formatMoney(row.adminSeguro)}</td>
+                      <td>{formatMoney(row.saldo)}</td>
+                      <td>{(row.status || 'pendiente').toUpperCase()}</td>
+                      <td>
+                        {row.intent?.receipt_signed_url
+                          ? <a className="btn btn--sm" href={row.intent.receipt_signed_url} target="_blank" rel="noreferrer">Ver comprobante</a>
+                          : <span className="muted">-</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
