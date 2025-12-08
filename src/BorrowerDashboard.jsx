@@ -275,7 +275,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     if (disbEstado === 'pagado' || oppEstado === 'activo') {
       return {
         title: 'Tu préstamo fue desembolsado',
-        subtitle: 'Pagamos tu tarjeta directamente en tu banco. Aquí tienes tu contrato y la tabla de amortización siempre disponible.'
+        subtitle: 'Pagamos tu tarjeta directamente en tu banco. Tu contrato está al final de la página, al igual que el cronograma de pagos.'
       };
     }
     if (disbursement || oppEstado === 'fondeada') {
@@ -288,6 +288,12 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       title: 'Tu oportunidad está publicada',
       subtitle: 'Estamos fondeando tu crédito con nuestra comunidad de inversionistas. Cuando esté financiado, pagaremos tu tarjeta directamente en tu banco y te avisaremos por correo.'
     };
+  })();
+
+  const breadcrumbLabel = (() => {
+    if (disbEstado === 'pagado' || oppEstado === 'activo') return 'Préstamo desembolsado';
+    if (disbursement || oppEstado === 'fondeada') return '100% fondeada';
+    return 'Propuesta publicada';
   })();
 
   useEffect(() => {
@@ -336,7 +342,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
 
   return (
     <div className="borrower-dashboard borrower-offer-view">
-      <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Propuesta publicada' }]} />
+      <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: breadcrumbLabel }]} />
       <div className="dashboard-header">
         <h2>{headerCopy.title}</h2>
         <p>{headerCopy.subtitle}</p>
@@ -700,7 +706,7 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = 
     'Préstamo Aprobado',
     'Propuesta Publicada',
     '100% Fondeada',
-    'Pago dirigido al banco'
+    'Préstamo desembolsado'
   ];
   const getStepStatus = (stepIndex) => {
     const stepMap = {
