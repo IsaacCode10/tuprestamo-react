@@ -39,11 +39,7 @@ returns date
 language sql
 immutable
 as $$
-  select case
-    when date_part('day', coalesce(p_reference, now())) <= 5
-      then (date_trunc('month', coalesce(p_reference, now())) + interval '4 days')::date
-    else ((date_trunc('month', coalesce(p_reference, now())) + interval '1 month') + interval '4 days')::date
-  end;
+  select ((date_trunc('month', coalesce(p_reference, now())) + interval '1 month') + interval '4 days')::date;
 $$;
 
 -- 3) Función: generar amortización (método francés) manteniendo cuota fija
