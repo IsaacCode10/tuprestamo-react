@@ -34,6 +34,18 @@ create table if not exists public.amortizaciones (
 create index if not exists idx_amort_by_opportunity on public.amortizaciones(opportunity_id);
 create unique index if not exists ux_amort_unique_installment on public.amortizaciones(opportunity_id, installment_no);
 
+create or replace function public.next_monthly_payment_day5(p_reference timestamptz)
+returns date
+language sql
+immutable
+as $$
+  select case
+    when date_part('day', coalesce(p_reference, now())) <= 5
+      then (date_trunc('month', coalesce(p_reference, now())) + interval '4 days')::date
+    else ((date_trunc('month', coalesce(p_reference, now())) + interval '1 month') + interval '4 days')::date
+  end;
+$$;
+
 -- 3) Función: generar amortización (método francés) manteniendo cuota fija
 create or replace function public.generate_amortizacion(
   p_opportunity_id uuid,
@@ -50,7 +62,7 @@ declare
   v_balance numeric := v_P;
   v_interest numeric;
   v_principal_part numeric;
-  v_due date := p_first_due;
+  v_due date := public.next_monthly_payment_day5(coalesce(p_first_due, now()));
   i int;
 begin
   if v_N <= 0 or v_P <= 0 then
@@ -128,4 +140,3 @@ $$;
 --       and o.user_id = auth.uid() -- ajusta a tu columna real del prestatario
 --     )
 --   );
-

@@ -78,6 +78,18 @@ begin
 end;
 $$;
 
+create or replace function public.next_monthly_payment_day5(p_reference timestamptz)
+returns date
+language sql
+immutable
+as $$
+  select case
+    when date_part('day', coalesce(p_reference, now())) <= 5
+      then (date_trunc('month', coalesce(p_reference, now())) + interval '4 days')::date
+    else ((date_trunc('month', coalesce(p_reference, now())) + interval '1 month') + interval '4 days')::date
+  end;
+$$;
+
 -- Listado público de oportunidades (incluye fondeadas para vitrina)
 create or replace function public.get_opportunities_publicadas()
 returns table (
@@ -414,6 +426,7 @@ declare
   v_interest numeric;
   v_principal numeric;
   v_start_date timestamptz;
+  v_due date;
 begin
   -- Traer o crear desembolso
   select * into v_disb
@@ -482,6 +495,7 @@ begin
         v_payment := v_monto / v_plazo;
       end if;
       v_balance := v_monto;
+      v_due := public.next_monthly_payment_day5(v_start_date);
       for i in 1..v_plazo loop
         v_interest := v_balance * v_rate;
         v_principal := v_payment - v_interest;
@@ -491,13 +505,14 @@ begin
         values (
           p_opportunity_id,
           i,
-          v_start_date + (i || ' month')::interval,
+          v_due,
           v_principal,
           v_interest,
           v_payment,
           v_balance,
           'pendiente'
         );
+        v_due := (v_due + interval '1 month')::date;
       end loop;
     end if;
   end if;
