@@ -58,7 +58,9 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   const montoBruto = breakdown.bruto || Number(oportunidad?.monto || 0);
   const originacionMonto = breakdown.originacion || 0;
   const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
-  const cuotaTotal = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
+  const cuotaPromedio = oportunidad?.cuota_promedio ? Number(oportunidad.cuota_promedio) : null;
+  const cuotaCalc = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
+  const cuotaTotal = cuotaPromedio ?? cuotaCalc;
   const adminSeguro = adminSeguroFlat;
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
@@ -253,7 +255,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const montoBruto = breakdown.bruto || Number(oportunidad?.monto || 0);
   const originacionMonto = breakdown.originacion || 0;
   const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
-  const cuotaTotal = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
+  const cuotaPromedio = oportunidad?.cuota_promedio ? Number(oportunidad.cuota_promedio) : null;
+  const computedCuota = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
+  const cuotaTotal = cuotaPromedio ?? computedCuota;
   const adminSeguro = adminSeguroFlat;
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
@@ -435,7 +439,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
 
   const schedule = normalizeSchedule();
   const nextPending = schedule.find((row) => (row.uiStatus || '').toLowerCase() !== 'pagado');
-  const nextIntentAmount = nextPending?.intent?.expected_amount || nextPending?.payment || 0;
+  const nextIntentAmount = cuotaTotal || nextPending?.intent?.expected_amount || nextPending?.payment || 0;
   const nextIntentDate = nextPending?.intent?.due_date || nextPending?.due_date;
 
   return (
@@ -617,7 +621,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                     <tr key={row.installment_no}>
                       <td>{row.installment_no}</td>
                       <td>{formatDate(row.due_date)}</td>
-                      <td>{formatMoney(row.payment)}</td>
+                      <td>{formatMoney(cuotaTotal || row.payment)}</td>
                       <td>{formatMoney(row.principal)}</td>
                       <td>{formatMoney(row.interest)}</td>
                       <td>{formatMoney(row.balance)}</td>
