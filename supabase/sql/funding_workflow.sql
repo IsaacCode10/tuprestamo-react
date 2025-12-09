@@ -316,7 +316,7 @@ begin
     group by opportunity_id
   )
   , disb as (
-    select monto_neto
+    select opportunity_id, monto_neto
     from desembolsos
     where opportunity_id = p_opportunity_id
     order by created_at desc
@@ -351,6 +351,7 @@ begin
   from oportunidades o
   left join solicitudes s on s.id = o.solicitud_id
   left join invs i on i.opportunity_id = o.id
+  left join disb d on d.opportunity_id = o.id
   where o.id = p_opportunity_id;
 
   return coalesce(v_payload, '{}'::jsonb);
