@@ -56,6 +56,7 @@ const AdminOperations = () => {
   }, [payouts]);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
+  const getPayoutRow = (id) => payouts.find((p) => p.id === id);
 
   const exportPendingCsv = () => {
     const rows = payouts
@@ -387,6 +388,7 @@ const AdminOperations = () => {
 
   const updatePayoutStatus = async (id, status) => {
     try {
+      const row = getPayoutRow(id);
       if (status === 'paid') {
         const file = receiptFiles[id];
         let receiptPath = null;
@@ -399,6 +401,21 @@ const AdminOperations = () => {
         });
         if (rpcErr) throw rpcErr;
         setReceiptFiles((prev) => ({ ...prev, [id]: null }));
+        // Notificación al inversionista: payout acreditado
+        if (row?.investor_id) {
+          try {
+            const notif = {
+              user_id: row.investor_id,
+              title: 'Pago acreditado',
+              body: `Transferimos tu cobro de ${formatMoney(row.amount || 0)} (Op ${row.opportunity_id || '-'}) a tu cuenta registrada.`,
+              link_url: '/mis-inversiones',
+              type: 'investor_payout_paid',
+            };
+            await supabase.from('notifications').insert([notif]);
+          } catch (notifErr) {
+            console.warn('No se pudo notificar payout pagado', notifErr);
+          }
+        }
       } else {
         const payload = { status };
         if (status === 'expired') payload.paid_at = null;
