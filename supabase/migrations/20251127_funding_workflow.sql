@@ -631,6 +631,25 @@ begin
     returning * into v_disb;
   end if;
 
+  -- Registrar comisión de originación (bruto - neto) en movimientos
+  begin
+    insert into movimientos (opportunity_id, investor_id, tipo, amount, currency, nota, status, created_at, settled_at)
+    values (
+      p_opportunity_id,
+      null,
+      'comision_originacion',
+      greatest(coalesce(v_disb.monto_bruto, 0) - coalesce(v_disb.monto_neto, 0), 0),
+      'BOB',
+      'Comisión de originación (desembolso)',
+      'posted',
+      coalesce(v_disb.paid_at, now()),
+      coalesce(v_disb.paid_at, now())
+    );
+  exception when others then
+    -- No bloquear desembolso si falla el asiento
+    null;
+  end;
+
   -- Avanza estado de oportunidad y solicitud
   select solicitud_id into v_solicitud_id from oportunidades where id = p_opportunity_id;
   update oportunidades set estado = 'activo' where id = p_opportunity_id;
