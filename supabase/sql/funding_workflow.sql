@@ -175,6 +175,133 @@ as $$
   order by a.installment_no;
 $$;
 
+-- Ledger básico de movimientos (cobros prestatario, comisiones, payouts inversionista)
+create table if not exists public.movimientos (
+  id uuid primary key default gen_random_uuid(),
+  opportunity_id bigint not null,
+  investor_id uuid null,
+  tipo text not null, -- cobro_prestatario | payout_inversionista | comision_plataforma
+  amount numeric not null,
+  currency text not null default 'BOB',
+  ref_borrower_intent_id uuid null,
+  ref_payout_id uuid null,
+  nota text null,
+  status text not null default 'pending', -- pending | posted | paid
+  created_at timestamptz not null default now(),
+  settled_at timestamptz null
+);
+create index if not exists idx_movimientos_opp on public.movimientos(opportunity_id);
+create index if not exists idx_movimientos_investor on public.movimientos(investor_id);
+create index if not exists idx_movimientos_ref_payout on public.movimientos(ref_payout_id);
+create index if not exists idx_movimientos_tipo on public.movimientos(tipo);
+
+-- Procesar pago de prestatario: marca intent pagado, genera payouts y movimientos
+create or replace function public.process_borrower_payment(p_intent_id uuid, p_receipt_url text default null)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row borrower_payment_intents%rowtype;
+  v_total_invested numeric;
+  v_now timestamptz := now();
+  v_share numeric;
+  v_commission numeric;
+  v_net numeric;
+  v_payout_id uuid;
+begin
+  select * into v_row from borrower_payment_intents where id = p_intent_id for update;
+  if not found then
+    raise exception 'Pago no encontrado';
+  end if;
+
+  update borrower_payment_intents
+    set status = 'paid',
+        paid_at = coalesce(v_row.paid_at, v_now),
+        paid_amount = coalesce(v_row.paid_amount, v_row.expected_amount),
+        receipt_url = coalesce(p_receipt_url, receipt_url)
+  where id = p_intent_id;
+
+  insert into notifications (user_id, type, title, body, link_url, created_at, priority)
+  values (v_row.borrower_id, 'loan_paid', 'Pago recibido', 'Registramos tu pago de cuota. Gracias por mantenerte al día.', null, v_now, 'normal');
+
+  select coalesce(sum(amount) filter (where status = 'pagado'), 0)
+  into v_total_invested
+  from inversiones
+  where opportunity_id = v_row.opportunity_id;
+
+  if v_total_invested <= 0 then
+    raise exception 'No hay inversiones pagadas para distribuir';
+  end if;
+
+  -- Asiento de cobro al prestatario (posted)
+  insert into movimientos (opportunity_id, investor_id, tipo, amount, currency, ref_borrower_intent_id, nota, status, created_at, settled_at)
+  values (v_row.opportunity_id, null, 'cobro_prestatario', v_row.expected_amount, 'BOB', v_row.id, concat('Cuota prestatario ', v_row.id), 'posted', v_now, v_now);
+
+  for v_share, v_commission, v_net, v_payout_id in
+    select
+      (v_row.expected_amount * (i.amount / v_total_invested)) as share,
+      (v_row.expected_amount * (i.amount / v_total_invested)) * 0.01 as commission,
+      (v_row.expected_amount * (i.amount / v_total_invested)) * 0.99 as net_amount,
+      null::uuid
+    from inversiones i
+    where i.opportunity_id = v_row.opportunity_id
+      and i.status = 'pagado'
+  loop
+    insert into payouts_inversionistas(opportunity_id, investor_id, amount, status, notes, created_at)
+    values (
+      v_row.opportunity_id,
+      (select investor_id from inversiones where opportunity_id = v_row.opportunity_id and status = 'pagado' limit 1 offset 0), -- placeholder, replaced below
+      v_net,
+      'pending',
+      concat('Pago prestatario intent ', p_intent_id),
+      v_now
+    )
+    returning id into v_payout_id;
+
+    -- Comision plataforma (posted)
+    insert into movimientos (opportunity_id, investor_id, tipo, amount, currency, ref_borrower_intent_id, nota, status, created_at, settled_at)
+    values (v_row.opportunity_id, null, 'comision_plataforma', v_commission, 'BOB', v_row.id, concat('Comisión 1% cuota ', v_row.id), 'posted', v_now, v_now);
+
+    -- Payout inversionista (pending)
+    insert into movimientos (opportunity_id, investor_id, tipo, amount, currency, ref_borrower_intent_id, ref_payout_id, nota, status, created_at)
+    values (v_row.opportunity_id, (select investor_id from inversiones where opportunity_id = v_row.opportunity_id and status = 'pagado' limit 1 offset 0), 'payout_inversionista', v_net, 'BOB', v_row.id, v_payout_id, concat('Payout de cuota ', v_row.id), 'pending', v_now);
+  end loop;
+end;
+$$;
+
+-- Marcar payout pagado y actualizar movimientos
+create or replace function public.mark_payout_paid(p_payout_id uuid, p_receipt_url text default null)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row payouts_inversionistas%rowtype;
+  v_now timestamptz := now();
+begin
+  select * into v_row from payouts_inversionistas where id = p_payout_id for update;
+  if not found then
+    raise exception 'Payout no encontrado';
+  end if;
+
+  update payouts_inversionistas
+    set status = 'paid',
+        paid_at = coalesce(v_row.paid_at, v_now),
+        receipt_url = coalesce(p_receipt_url, receipt_url)
+  where id = p_payout_id;
+
+  insert into notifications (user_id, type, title, body, link_url, created_at, priority)
+  values (v_row.investor_id, 'payout_paid', 'Pago a tu cuenta', concat('Transferimos ', v_row.amount, ' a tu cuenta registrada.'), null, v_now, 'normal');
+
+  update movimientos
+    set status = 'paid', settled_at = v_now
+  where ref_payout_id = p_payout_id;
+end;
+$$;
+
 
 create or replace function public.create_investment_intent(p_opportunity_id bigint, p_amount numeric)
 returns payment_intents
