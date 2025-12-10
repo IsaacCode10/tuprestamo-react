@@ -185,6 +185,14 @@ const AdminDashboard = () => {
     totalCount: 0,
     totalAmount: 0,
   });
+  const [ledgerMonth, setLedgerMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [ledgerRows, setLedgerRows] = useState([]);
+  const [ledgerTotals, setLedgerTotals] = useState({ cobros: 0, payouts: 0, comisiones: 0, margen: 0 });
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerError, setLedgerError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
@@ -334,6 +342,81 @@ const AdminDashboard = () => {
     return ['todos', ...Array.from(states)];
   }, [requests]);
 
+  const fetchLedger = async () => {
+    if (!ledgerMonth) return;
+    setLedgerLoading(true);
+    setLedgerError(null);
+    try {
+      const [year, month] = ledgerMonth.split('-').map(Number);
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 1);
+      const { data, error } = await supabase
+        .from('movimientos')
+        .select('opportunity_id, tipo, amount, created_at')
+        .gte('created_at', start.toISOString())
+        .lt('created_at', end.toISOString());
+      if (error) throw error;
+      const rows = (data || []).reduce((acc, m) => {
+        const key = m.opportunity_id || 's/n';
+        if (!acc[key]) {
+          acc[key] = { opportunity_id: key, cobros: 0, payouts: 0, comisiones: 0 };
+        }
+        const tipo = (m.tipo || '').toLowerCase();
+        if (tipo === 'cobro_prestatario') acc[key].cobros += Number(m.amount || 0);
+        if (tipo === 'payout_inversionista') acc[key].payouts += Number(m.amount || 0);
+        if (tipo === 'comision_plataforma') acc[key].comisiones += Number(m.amount || 0);
+        return acc;
+      }, {});
+      const list = Object.values(rows).map((r) => ({
+        ...r,
+        margen: r.comisiones, // EBITDA aprox = comisión
+        flujo_bruto: r.cobros - r.payouts,
+      }));
+      const totals = list.reduce((acc, r) => {
+        acc.cobros += r.cobros;
+        acc.payouts += r.payouts;
+        acc.comisiones += r.comisiones;
+        acc.margen += r.margen;
+        return acc;
+      }, { cobros: 0, payouts: 0, comisiones: 0, margen: 0 });
+      setLedgerRows(list);
+      setLedgerTotals(totals);
+    } catch (err) {
+      console.error('Error loading ledger', err);
+      setLedgerError('No pudimos cargar el resumen contable.');
+    } finally {
+      setLedgerLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLedger();
+  }, [ledgerMonth]);
+
+  const exportLedgerCsv = () => {
+    const headers = ['opportunity_id', 'cobros_prestatario', 'payouts_inversionistas', 'comisiones_tp', 'margen_aprox', 'flujo_bruto'];
+    const csv = [headers.join(',')]
+      .concat(ledgerRows.map(r => headers.map(h => {
+        const map = {
+          opportunity_id: r.opportunity_id,
+          cobros_prestatario: r.cobros,
+          payouts_inversionistas: r.payouts,
+          comisiones_tp: r.comisiones,
+          margen_aprox: r.margen,
+          flujo_bruto: r.flujo_bruto,
+        };
+        return map[h];
+      }).join(',')))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ledger_${ledgerMonth}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const filterTooltips = {
     todos: 'Ver todas las solicitudes activas',
     pendiente: 'Pendientes de iniciar evaluación documental',
@@ -375,13 +458,73 @@ const AdminDashboard = () => {
                 value={fundingStats.monthCount}
                 subtitle={`${formatCurrency(fundingStats.monthAmount)} este mes`}
               />
-              <KpiCard
-                title="Fondeadas (total)"
-                value={fundingStats.totalCount}
-                subtitle={formatCurrency(fundingStats.totalAmount)}
+          <KpiCard
+            title="Fondeadas (total)"
+            value={fundingStats.totalCount}
+            subtitle={formatCurrency(fundingStats.totalAmount)}
+          />
+        </div>
+        <RiskDistributionChart stats={stats} />
+
+        <div className="card" style={{ marginTop: 20 }}>
+          <h3>Ingresos y egresos (EBITDA aprox.)</h3>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              Mes:
+              <input
+                type="month"
+                value={ledgerMonth}
+                onChange={(e) => setLedgerMonth(e.target.value)}
+                style={{ padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
               />
-            </div>
-          <RiskDistributionChart stats={stats} />
+            </label>
+            <button className="btn" onClick={exportLedgerCsv} disabled={ledgerRows.length === 0}>Exportar CSV</button>
+            <div className="muted">EBITDA aprox = comisión TP (1%) sin OPEX; usa movimientos contables.</div>
+          </div>
+          {ledgerLoading && <p className="muted">Cargando resumen contable...</p>}
+          {ledgerError && <p style={{ color: 'red' }}>{ledgerError}</p>}
+          {!ledgerLoading && !ledgerError && (
+            <>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
+                <KpiCard title="Cobros prestatario" value={formatCurrency(ledgerTotals.cobros)} />
+                <KpiCard title="Payouts inversionistas" value={formatCurrency(ledgerTotals.payouts)} type="secondary" />
+                <KpiCard title="Comisión TP (1%)" value={formatCurrency(ledgerTotals.comisiones)} />
+                <KpiCard title="EBITDA aprox." value={formatCurrency(ledgerTotals.margen)} type="success" subtitle="Solo comisión; sin gastos OPEX" />
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cobros prestatario</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Payouts inversionistas</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comisión TP</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Flujo bruto (cobro - payout)</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>EBITDA aprox.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ledgerRows.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>Sin movimientos en este mes.</td>
+                      </tr>
+                    )}
+                    {ledgerRows.map((row) => (
+                      <tr key={row.opportunity_id}>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>ID {row.opportunity_id}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.cobros)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.payouts)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.comisiones)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.flujo_bruto)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.margen)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
         </>
       )}
 
