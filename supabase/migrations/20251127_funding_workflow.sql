@@ -264,6 +264,21 @@ begin
 
     insert into movimientos (opportunity_id, investor_id, tipo, amount, currency, ref_borrower_intent_id, ref_payout_id, nota, status, created_at)
     values (v_row.opportunity_id, v_inv.investor_id, 'payout_inversionista', v_net, 'BOB', v_row.id, v_payout_id, concat('Payout de cuota ', v_row.id), 'pending', v_now);
+
+    begin
+      insert into notifications (user_id, type, title, body, link_url, created_at, priority)
+      values (
+        v_inv.investor_id,
+        'payout_pending',
+        'Pago en camino',
+        concat('Registramos tu cobro pendiente por ', v_net, ' (Op ', v_row.opportunity_id, '). Te avisaremos al acreditar.'),
+        '/mis-inversiones',
+        v_now,
+        'normal'
+      );
+    exception when others then
+      null;
+    end;
   end loop;
 end;
 $$;

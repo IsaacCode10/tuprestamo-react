@@ -359,26 +359,28 @@ const AdminDashboard = () => {
       const rows = (data || []).reduce((acc, m) => {
         const key = m.opportunity_id || 's/n';
         if (!acc[key]) {
-          acc[key] = { opportunity_id: key, cobros: 0, payouts: 0, comisiones: 0 };
+          acc[key] = { opportunity_id: key, cobros: 0, payouts: 0, comisiones: 0, originacion: 0 };
         }
         const tipo = (m.tipo || '').toLowerCase();
         if (tipo === 'cobro_prestatario') acc[key].cobros += Number(m.amount || 0);
         if (tipo === 'payout_inversionista') acc[key].payouts += Number(m.amount || 0);
         if (tipo === 'comision_plataforma') acc[key].comisiones += Number(m.amount || 0);
+        if (tipo === 'comision_originacion') acc[key].originacion += Number(m.amount || 0);
         return acc;
       }, {});
       const list = Object.values(rows).map((r) => ({
         ...r,
-        margen: r.comisiones, // EBITDA aprox = comisión
+        margen: r.comisiones + r.originacion, // EBITDA aprox = comisión plataforma + originación
         flujo_bruto: r.cobros - r.payouts,
       }));
       const totals = list.reduce((acc, r) => {
         acc.cobros += r.cobros;
         acc.payouts += r.payouts;
         acc.comisiones += r.comisiones;
+        acc.originacion += r.originacion;
         acc.margen += r.margen;
         return acc;
-      }, { cobros: 0, payouts: 0, comisiones: 0, margen: 0 });
+      }, { cobros: 0, payouts: 0, comisiones: 0, originacion: 0, margen: 0 });
       setLedgerRows(list);
       setLedgerTotals(totals);
     } catch (err) {
@@ -489,7 +491,8 @@ const AdminDashboard = () => {
                 <KpiCard title="Cobros prestatario" value={formatCurrency(ledgerTotals.cobros)} />
                 <KpiCard title="Payouts inversionistas" value={formatCurrency(ledgerTotals.payouts)} type="secondary" />
                 <KpiCard title="Comisión TP (1%)" value={formatCurrency(ledgerTotals.comisiones)} />
-                <KpiCard title="EBITDA aprox." value={formatCurrency(ledgerTotals.margen)} type="success" subtitle="Solo comisión; sin gastos OPEX" />
+                <KpiCard title="Originación" value={formatCurrency(ledgerTotals.originacion)} />
+                <KpiCard title="EBITDA aprox." value={formatCurrency(ledgerTotals.margen)} type="success" subtitle="Comisión+originación; sin gastos OPEX" />
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -499,6 +502,7 @@ const AdminDashboard = () => {
                       <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cobros prestatario</th>
                       <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Payouts inversionistas</th>
                       <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comisión TP</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Originación</th>
                       <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Flujo bruto (cobro - payout)</th>
                       <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>EBITDA aprox.</th>
                     </tr>
@@ -515,6 +519,7 @@ const AdminDashboard = () => {
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.cobros)}</td>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.payouts)}</td>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.comisiones)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.originacion)}</td>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.flujo_bruto)}</td>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.margen)}</td>
                       </tr>

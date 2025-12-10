@@ -210,6 +210,7 @@ declare
   v_commission numeric;
   v_net numeric;
   v_payout_id uuid;
+  v_inv inversiones%rowtype;
 begin
   select * into v_row from borrower_payment_intents where id = p_intent_id for update;
   if not found then
@@ -239,25 +240,18 @@ begin
   insert into movimientos (opportunity_id, investor_id, tipo, amount, currency, ref_borrower_intent_id, nota, status, created_at, settled_at)
   values (v_row.opportunity_id, null, 'cobro_prestatario', v_row.expected_amount, 'BOB', v_row.id, concat('Cuota prestatario ', v_row.id), 'posted', v_now, v_now);
 
-  for v_share, v_commission, v_net, v_payout_id in
-    select
-      (v_row.expected_amount * (i.amount / v_total_invested)) as share,
-      (v_row.expected_amount * (i.amount / v_total_invested)) * 0.01 as commission,
-      (v_row.expected_amount * (i.amount / v_total_invested)) * 0.99 as net_amount,
-      null::uuid
-    from inversiones i
-    where i.opportunity_id = v_row.opportunity_id
-      and i.status = 'pagado'
+  for v_inv in
+    select investor_id, amount
+    from inversiones
+    where opportunity_id = v_row.opportunity_id
+      and status = 'pagado'
   loop
+    v_share := v_row.expected_amount * (v_inv.amount / v_total_invested);
+    v_commission := v_share * 0.01;
+    v_net := v_share - v_commission;
+
     insert into payouts_inversionistas(opportunity_id, investor_id, amount, status, notes, created_at)
-    values (
-      v_row.opportunity_id,
-      (select investor_id from inversiones where opportunity_id = v_row.opportunity_id and status = 'pagado' limit 1 offset 0), -- placeholder, replaced below
-      v_net,
-      'pending',
-      concat('Pago prestatario intent ', p_intent_id),
-      v_now
-    )
+    values (v_row.opportunity_id, v_inv.investor_id, v_net, 'pending', concat('Pago prestatario intent ', p_intent_id), v_now)
     returning id into v_payout_id;
 
     -- Comision plataforma (posted)
@@ -266,7 +260,23 @@ begin
 
     -- Payout inversionista (pending)
     insert into movimientos (opportunity_id, investor_id, tipo, amount, currency, ref_borrower_intent_id, ref_payout_id, nota, status, created_at)
-    values (v_row.opportunity_id, (select investor_id from inversiones where opportunity_id = v_row.opportunity_id and status = 'pagado' limit 1 offset 0), 'payout_inversionista', v_net, 'BOB', v_row.id, v_payout_id, concat('Payout de cuota ', v_row.id), 'pending', v_now);
+    values (v_row.opportunity_id, v_inv.investor_id, 'payout_inversionista', v_net, 'BOB', v_row.id, v_payout_id, concat('Payout de cuota ', v_row.id), 'pending', v_now);
+
+    -- Notificación de payout pendiente
+    begin
+      insert into notifications (user_id, type, title, body, link_url, created_at, priority)
+      values (
+        v_inv.investor_id,
+        'payout_pending',
+        'Pago en camino',
+        concat('Registramos tu cobro pendiente por ', v_net, ' (Op ', v_row.opportunity_id, '). Te avisaremos al acreditar.'),
+        '/mis-inversiones',
+        v_now,
+        'normal'
+      );
+    exception when others then
+      null;
+    end;
   end loop;
 end;
 $$;
