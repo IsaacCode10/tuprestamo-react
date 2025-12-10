@@ -29,6 +29,7 @@ import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
 import Profile from './Profile.jsx';
 import NotAvailable from './NotAvailable.jsx'; // <-- IMPORTAMOS LA NUEVA PÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂGINA
 import AdminOperations from '@/AdminOperations.jsx';
+import BorrowerLayout from '@/layouts/BorrowerLayout.jsx';
 
 // Componente "Guardia" especÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­fico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
@@ -269,22 +270,16 @@ function App() {
               </AdminRoute>
             }
           />
-          <Route 
-            path="/borrower-dashboard"
+          <Route
             element={
               <BorrowerRoute profile={profile} loading={loading}>
-                <BorrowerDashboard />
+                <BorrowerLayout />
               </BorrowerRoute>
             }
-          />
-           <Route 
-            path="/perfil"
-            element={
-              <BorrowerRoute profile={profile} loading={loading}>
-                <Profile />
-              </BorrowerRoute>
-            }
-          />
+          >
+            <Route path="/borrower-dashboard" element={<BorrowerDashboard />} />
+            <Route path="/perfil" element={<Profile />} />
+          </Route>
           <Route path="/activar-cuenta-prestatario" element={<BorrowerActivateAccount />} />
         </Routes>
       </main>
@@ -294,4 +289,3 @@ function App() {
 }
 
 export default App;
-

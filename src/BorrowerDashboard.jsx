@@ -44,6 +44,15 @@ const mockLoanData = {};
 const mockNotifications = [];
 const DASHBOARD_CACHE_KEY = 'borrowerDashboardCache';
 const DASHBOARD_SCROLL_KEY = 'borrowerDashboardScroll';
+const getCachedDashboard = () => {
+  try {
+    const raw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) || {};
+  } catch (_) {
+    return {};
+  }
+};
 
 const isDev = process.env.NODE_ENV === 'development';
 const diagLog = (...args) => {
@@ -1618,12 +1627,13 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
 
 // --- COMPONENTE PRINCIPAL DEL DASHBOARD ---
 const BorrowerDashboard = () => {
+  const cached = useMemo(() => getCachedDashboard(), []);
   const [user, setUser] = useState(null);
-  const [solicitud, setSolicitud] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [solicitud, setSolicitud] = useState(cached.solicitud || null);
+  const [loading, setLoading] = useState(!cached.solicitud);
   const [error, setError] = useState(null);
-  const [documents, setDocuments] = useState([]);
-  const [analyzedDocTypes, setAnalyzedDocTypes] = useState([]);
+  const [documents, setDocuments] = useState(cached.documents || []);
+  const [analyzedDocTypes, setAnalyzedDocTypes] = useState(cached.analyzedDocTypes || []);
   const [proposalLoading, setProposalLoading] = useState(false);
   const navigate = useNavigate();
   const hasHydratedFromCache = useRef(false);
@@ -1712,16 +1722,6 @@ const BorrowerDashboard = () => {
   useEffect(() => {
     if (hasHydratedFromCache.current) return;
     hasHydratedFromCache.current = true;
-    try {
-      const cachedRaw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
-      if (cachedRaw) {
-        const parsed = JSON.parse(cachedRaw);
-        if (parsed?.solicitud) setSolicitud(parsed.solicitud);
-        if (parsed?.documents) setDocuments(parsed.documents);
-        if (parsed?.analyzedDocTypes) setAnalyzedDocTypes(parsed.analyzedDocTypes);
-        setLoading(false);
-      }
-    } catch (_) {}
     fetchData({ silent: true });
   }, [fetchData]);
 
@@ -1845,7 +1845,7 @@ const BorrowerDashboard = () => {
     }
   };
 
-  if (loading) return <div className="borrower-dashboard">Cargando tu panel...</div>;
+  if (loading && !solicitud) return <div className="borrower-dashboard">Cargando tu panel...</div>;
   if (error) return <div className="borrower-dashboard" style={{ color: 'red' }}>Error: {error}</div>;
   
   const estadoSolicitud = solicitud?.estado;
