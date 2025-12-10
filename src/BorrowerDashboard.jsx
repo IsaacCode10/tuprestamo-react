@@ -273,6 +273,10 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [scheduleRows, setScheduleRows] = useState([]);
   const [loadingSchedule, setLoadingSchedule] = useState(false);
   const [scheduleError, setScheduleError] = useState('');
+  const receiptInputRefs = useRef({});
+  const [uploadingReceiptId, setUploadingReceiptId] = useState(null);
+  const [receiptUploadMessage, setReceiptUploadMessage] = useState('');
+  const [receiptUploadError, setReceiptUploadError] = useState('');
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
 
@@ -342,42 +346,43 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     fetchDisbursement();
   }, [oportunidad?.id]);
 
-  useEffect(() => {
-    const fetchBorrowerIntents = async () => {
-      if (!oportunidad?.id || !userId) return;
-      setLoadingIntents(true);
-      setIntentsError('');
-      try {
-        const { data, error } = await supabase
-          .from('borrower_payment_intents')
-          .select('id, expected_amount, status, due_date, paid_at, paid_amount, receipt_url, metadata')
-          .eq('opportunity_id', oportunidad.id)
-          .eq('borrower_id', userId)
-          .order('due_date', { ascending: true });
-        if (error) throw error;
-        const withSigned = await Promise.all((data || []).map(async (row) => {
-          let signedReceipt = null;
-          if (row.receipt_url) {
-            try {
-              const { data: signed, error: signErr } = await supabase
-                .storage
-                .from('comprobantes-pagos')
-                .createSignedUrl(row.receipt_url, 60 * 60);
-              if (!signErr) signedReceipt = signed?.signedUrl || null;
-            } catch (_) {}
-          }
-          return { ...row, receipt_signed_url: signedReceipt };
-        }));
-        setBorrowerIntents(withSigned);
-      } catch (err) {
-        console.error('Error cargando cuotas prestatario:', err);
-        setIntentsError('No pudimos cargar tus cuotas. Intenta más tarde.');
-      } finally {
-        setLoadingIntents(false);
-      }
-    };
-    fetchBorrowerIntents();
+  const loadBorrowerIntents = useCallback(async () => {
+    if (!oportunidad?.id || !userId) return;
+    setLoadingIntents(true);
+    setIntentsError('');
+    try {
+      const { data, error } = await supabase
+        .from('borrower_payment_intents')
+        .select('id, expected_amount, status, due_date, paid_at, paid_amount, receipt_url, metadata')
+        .eq('opportunity_id', oportunidad.id)
+        .eq('borrower_id', userId)
+        .order('due_date', { ascending: true });
+      if (error) throw error;
+      const withSigned = await Promise.all((data || []).map(async (row) => {
+        let signedReceipt = null;
+        if (row.receipt_url) {
+          try {
+            const { data: signed, error: signErr } = await supabase
+              .storage
+              .from('comprobantes-pagos')
+              .createSignedUrl(row.receipt_url, 60 * 60);
+            if (!signErr) signedReceipt = signed?.signedUrl || null;
+          } catch (_) {}
+        }
+        return { ...row, receipt_signed_url: signedReceipt };
+      }));
+      setBorrowerIntents(withSigned);
+    } catch (err) {
+      console.error('Error cargando cuotas prestatario:', err);
+      setIntentsError('No pudimos cargar tus cuotas. Intenta más tarde.');
+    } finally {
+      setLoadingIntents(false);
+    }
   }, [oportunidad?.id, userId]);
+
+  useEffect(() => {
+    loadBorrowerIntents();
+  }, [loadBorrowerIntents]);
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -420,6 +425,38 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     }
   };
 
+  const uploadBorrowerReceipt = async (file) => {
+    if (!file) return null;
+    const path = `borrower/${Date.now()}_${file.name}`;
+    const { error, data } = await supabase.storage.from('comprobantes-pagos').upload(path, file, { upsert: true });
+    if (error) throw error;
+    return data?.path || path;
+  };
+
+  const handleBorrowerReceiptChange = async (event, intent) => {
+    const file = event?.target?.files?.[0];
+    if (!file || !intent?.id) return;
+    setReceiptUploadMessage('');
+    setReceiptUploadError('');
+    setUploadingReceiptId(intent.id);
+    try {
+      const uploadedPath = await uploadBorrowerReceipt(file);
+      const { error } = await supabase
+        .from('borrower_payment_intents')
+        .update({ receipt_url: uploadedPath })
+        .eq('id', intent.id);
+      if (error) throw error;
+      setReceiptUploadMessage(`Comprobante enviado para la cuota con vencimiento ${formatDate(intent.due_date)}.`);
+      await loadBorrowerIntents();
+    } catch (err) {
+      console.error('Error subiendo comprobante prestatario:', err);
+      setReceiptUploadError(err?.message || 'No pudimos subir el comprobante. Intenta nuevamente.');
+    } finally {
+      setUploadingReceiptId(null);
+      if (event?.target) event.target.value = '';
+    }
+  };
+
   const normalizeSchedule = () => {
     if (!Array.isArray(scheduleRows)) return [];
     return scheduleRows.map((row, idx) => {
@@ -439,8 +476,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
 
   const schedule = normalizeSchedule();
   const nextPending = schedule.find((row) => (row.uiStatus || '').toLowerCase() !== 'pagado');
-  const nextIntentAmount = cuotaTotal || nextPending?.intent?.expected_amount || nextPending?.payment || 0;
-  const nextIntentDate = nextPending?.intent?.due_date || nextPending?.due_date;
+  const nextIntent = nextPending?.intent || null;
+  const nextIntentAmount = cuotaTotal || nextIntent?.expected_amount || nextPending?.payment || 0;
+  const nextIntentDate = nextIntent?.due_date || nextPending?.due_date;
 
   return (
     <div className="borrower-dashboard borrower-offer-view">
@@ -520,22 +558,75 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
             <>
               <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 14, color: '#385b64' }}>Fecha de vencimiento</div>
-                  <div style={{ fontWeight: 700, fontSize: 18 }}>{nextIntentDate ? formatDate(nextIntentDate) : 'Se generará pronto'}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, color: '#385b64' }}>Monto de la cuota</div>
+              <div style={{ fontSize: 14, color: '#385b64' }}>Fecha de vencimiento</div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>{nextIntentDate ? formatDate(nextIntentDate) : 'Se generará pronto'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: '#385b64' }}>Monto de la cuota</div>
                   <div style={{ fontWeight: 700, fontSize: 18 }}>{formatMoney(nextIntentAmount)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 14, color: '#385b64' }}>Estado</div>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: '#0a7a4b' }}>{nextPending ? 'Pendiente' : 'Al día'}</div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#0a7a4b' }}>{nextPending ? 'Pendiente' : 'Al día'}</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <button className={['btn', payMode === 'qr' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('qr')}>Pagar con QR</button>
+              <button className={['btn', payMode === 'transfer' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('transfer')}>Transferencia</button>
+            </div>
+          </div>
+
+          <div style={{ padding: 12, borderRadius: 10, background: '#f7fbfc', border: '1px solid #a8ede6', display: 'grid', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 14, color: '#385b64' }}>Comprobante</div>
+                <div style={{ fontWeight: 600, color: '#0f5a62' }}>
+                  {nextIntent?.receipt_signed_url
+                    ? 'Recibido'
+                    : nextIntent?.receipt_url
+                      ? 'En revisión'
+                      : nextPending
+                        ? 'Pendiente de envío'
+                        : 'No corresponde'}
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  <button className={['btn', payMode === 'qr' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('qr')}>Pagar con QR</button>
-                  <button className={['btn', payMode === 'transfer' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('transfer')}>Transferencia</button>
-                </div>
+                {nextIntent?.receipt_url && !nextIntent.receipt_signed_url && (
+                  <small style={{ color: '#55747b' }}>Validaremos tu comprobante en breve.</small>
+                )}
               </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {nextIntent?.receipt_signed_url ? (
+                  <a className="btn btn--primary" href={nextIntent.receipt_signed_url} target="_blank" rel="noreferrer">Ver comprobante</a>
+                ) : nextIntent ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn--primary"
+                      onClick={() => receiptInputRefs.current[nextIntent.id]?.click()}
+                      disabled={uploadingReceiptId === nextIntent.id}
+                    >
+                      {uploadingReceiptId === nextIntent.id ? 'Subiendo...' : 'Subir comprobante'}
+                    </button>
+                    <input
+                      ref={(el) => {
+                        if (el) {
+                          receiptInputRefs.current[nextIntent.id] = el;
+                        } else {
+                          delete receiptInputRefs.current[nextIntent.id];
+                        }
+                      }}
+                      type="file"
+                      accept="application/pdf,image/*"
+                      style={{ display: 'none' }}
+                      onChange={(event) => handleBorrowerReceiptChange(event, nextIntent)}
+                    />
+                  </>
+                ) : (
+                  <small className="muted">Pronto podrás subir el comprobante.</small>
+                )}
+              </div>
+            </div>
+            {receiptUploadMessage && <p style={{ color: '#0a7a4b', margin: '0 0 4px 0' }}>{receiptUploadMessage}</p>}
+            {receiptUploadError && <p style={{ color: '#b00020', margin: '0 0 4px 0' }}>{receiptUploadError}</p>}
+          </div>
 
               {payMode === 'qr' && (
                 <div style={{ padding: 12, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
@@ -627,9 +718,13 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                       <td>{formatMoney(row.balance)}</td>
                       <td>{(row.uiStatus || 'pendiente').toUpperCase()}</td>
                       <td>
-                        {row.intent?.receipt_signed_url
-                          ? <a className="btn btn--sm" href={row.intent.receipt_signed_url} target="_blank" rel="noreferrer">Ver comprobante</a>
-                          : <span className="muted">-</span>}
+                        {row.intent?.receipt_signed_url ? (
+                          <a className="btn btn--sm" href={row.intent.receipt_signed_url} target="_blank" rel="noreferrer">Ver comprobante</a>
+                        ) : row.intent?.receipt_url ? (
+                          <small className="muted">En revisión</small>
+                        ) : (
+                          <small className="muted">Pendiente</small>
+                        )}
                       </td>
                     </tr>
                   ))}
