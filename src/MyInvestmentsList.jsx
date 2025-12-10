@@ -13,7 +13,7 @@ const MyInvestmentsList = () => {
   const [payouts, setPayouts] = useState([]);
   const [oppsById, setOppsById] = useState({});
   const [intentsMap, setIntentsMap] = useState({ byId: {}, byOpportunity: {} });
-  const [schedules, setSchedules] = useState({});
+  const [investorSchedules, setInvestorSchedules] = useState({});
 
   useEffect(() => {
     trackEvent('Viewed Portfolio');
@@ -61,23 +61,19 @@ const MyInvestmentsList = () => {
           (opps || []).filter(Boolean).forEach(o => { map[o.id] = o; });
           setOppsById(map);
 
-          // Cargar próximas cuotas del prestatario (primeras 3) para cada oportunidad
+          // Cargar próximas cuotas prorrateadas para el inversionista (primeras 3)
           const schedulesMap = {};
           await Promise.all(oppIds.map(async (oid) => {
             try {
               const { data, error } = await supabase
-                .from('amortizaciones')
-                .select('installment_no, due_date, payment')
-                .eq('opportunity_id', oid)
-                .order('installment_no', { ascending: true })
-                .limit(3);
+                .rpc('get_investor_installments', { p_opportunity_id: oid, p_investor_id: user.id });
               if (error) return;
-              schedulesMap[oid] = data || [];
+              schedulesMap[oid] = (data || []).slice(0, 3);
             } catch (_) {
               // noop
             }
           }));
-          setSchedules(schedulesMap);
+          setInvestorSchedules(schedulesMap);
         } else {
           setOppsById({});
         }
@@ -271,13 +267,13 @@ const MyInvestmentsList = () => {
       </div>
 
       {hasRows && (
-        <div style={{ marginTop: 24 }}>
-          <h3>Próximas cuotas de tus prestatarios</h3>
-          <p style={{ color: '#55747b', marginTop: 4 }}>Vista rápida de las próximas fechas de pago (día 5 de cada mes).</p>
+      <div style={{ marginTop: 24 }}>
+          <h3>Próximas cuotas (tu parte)</h3>
+          <p style={{ color: '#55747b', marginTop: 4 }}>Cálculo prorrateado según tu inversión. Neto estima 1% de comisión.</p>
           <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
             {rows.map((r) => {
               const o = oppsById[r.opportunity_id] || {};
-              const upcoming = schedules[r.opportunity_id] || [];
+              const upcoming = investorSchedules[r.opportunity_id] || [];
               const isFondeada = o?.saldo_pendiente != null ? o.saldo_pendiente <= 0 : false;
               if (!isFondeada || upcoming.length === 0) return null;
               return (
@@ -294,7 +290,10 @@ const MyInvestmentsList = () => {
                       <div key={cuota.installment_no} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #e1eeee' }}>
                         <span>Cuota {cuota.installment_no}</span>
                         <span style={{ fontWeight: 700 }}>{formatDate(cuota.due_date)}</span>
-                        <span style={{ color: '#0f5a62' }}>Bs. {Number(cuota.payment || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ color: '#0f5a62', fontWeight: 700 }}>Bs. {Number(cuota.payment_investor_bruto || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <small style={{ color: '#55747b' }}>Neto est.: Bs. {Number(cuota.payment_investor_neto || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+                        </div>
                       </div>
                     ))}
                   </div>

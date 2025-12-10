@@ -112,6 +112,11 @@ language sql
 security definer
 set search_path = public
 as $$
+  with funded as (
+    select opportunity_id, coalesce(sum(case when status = 'pagado' then amount else 0 end), 0) as total_funded
+    from inversiones
+    group by opportunity_id
+  )
   select
     o.id,
     o.created_at,
@@ -121,15 +126,61 @@ as $$
     o.comision_servicio_inversionista_porcentaje,
     o.perfil_riesgo,
     o.estado,
-    coalesce(sum(case when i.status = 'pagado' then i.amount else 0 end), 0) as total_funded,
-    greatest(o.monto - coalesce(sum(case when i.status = 'pagado' then i.amount else 0 end), 0), 0) as saldo_pendiente
+    coalesce(f.total_funded, 0) as total_funded,
+    greatest(o.monto - coalesce(f.total_funded, 0), 0) as saldo_pendiente
   from oportunidades o
-  left join inversiones i on i.opportunity_id = o.id
   join solicitudes s on s.id = o.solicitud_id
-  where o.estado in ('disponible', 'fondeada')
-    and s.estado = 'prestatario_acepto'
-  group by o.id, o.created_at, o.monto, o.plazo_meses, o.tasa_rendimiento_inversionista, o.comision_servicio_inversionista_porcentaje, o.perfil_riesgo, o.estado
+  left join funded f on f.opportunity_id = o.id
+  where s.estado in ('prestatario_acepto', 'desembolsado')
+    and (
+      o.estado in ('disponible', 'fondeada')
+      or (o.estado = 'activo' and coalesce(f.total_funded, 0) >= o.monto)
+    )
   order by o.created_at desc;
+$$;
+
+-- Cuotas prorrateadas por inversionista (fuente única: amortizaciones + inversiones pagadas)
+create or replace function public.get_investor_installments(p_opportunity_id bigint, p_investor_id uuid)
+returns table (
+  installment_no integer,
+  due_date date,
+  payment_borrower numeric,
+  payment_investor_bruto numeric,
+  payment_investor_neto numeric,
+  weight numeric
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with inv as (
+    select amount
+    from inversiones
+    where opportunity_id = p_opportunity_id
+      and investor_id = p_investor_id
+      and status = 'pagado'
+    limit 1
+  ),
+  opp as (
+    select monto
+    from oportunidades
+    where id = p_opportunity_id
+    limit 1
+  )
+  select
+    a.installment_no,
+    a.due_date,
+    a.payment as payment_borrower,
+    a.payment * (inv.amount / nullif(opp.monto, 0)) as payment_investor_bruto,
+    a.payment * (inv.amount / nullif(opp.monto, 0)) * 0.99 as payment_investor_neto,
+    (inv.amount / nullif(opp.monto, 0)) as weight
+  from amortizaciones a
+  cross join inv
+  cross join opp
+  where inv.amount is not null
+    and opp.monto is not null
+  order by a.installment_no;
 $$;
 
 
