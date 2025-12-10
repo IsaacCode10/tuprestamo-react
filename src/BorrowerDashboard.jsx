@@ -42,6 +42,8 @@ const inProgressFaqs = [
 // --- MOCK DATA (SIN CAMBIOS) ---
 const mockLoanData = {};
 const mockNotifications = [];
+const DASHBOARD_CACHE_KEY = 'borrowerDashboardCache';
+const DASHBOARD_SCROLL_KEY = 'borrowerDashboardScroll';
 
 const isDev = process.env.NODE_ENV === 'development';
 const diagLog = (...args) => {
@@ -1580,6 +1582,7 @@ const BorrowerDashboard = () => {
   const [analyzedDocTypes, setAnalyzedDocTypes] = useState([]);
   const [proposalLoading, setProposalLoading] = useState(false);
   const navigate = useNavigate();
+  const hasHydratedFromCache = useRef(false);
 
   const fetchData = useCallback(async (opts = {}) => {
     const silent = opts && opts.silent === true;
@@ -1622,14 +1625,23 @@ const BorrowerDashboard = () => {
       if (docsError) throw docsError;
       setDocuments(docsData || []);
       // Analizados por IA
+      let analyzedTypes = [];
       try {
         const { data: analyzedData } = await supabase
           .from('analisis_documentos')
           .select('document_type')
           .eq('solicitud_id', solData.id);
-        setAnalyzedDocTypes((analyzedData || []).map(d => d.document_type));
+        analyzedTypes = (analyzedData || []).map(d => d.document_type);
+        setAnalyzedDocTypes(analyzedTypes);
       } catch (_) {}
 
+      try {
+        sessionStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+          solicitud: solicitudConOpps,
+          documents: docsData || [],
+          analyzedDocTypes: analyzedTypes,
+        }));
+      } catch (_) {}
     } catch (err) {
       console.error('Error cargando datos:', err);
       setError('Hubo un problema al cargar tu información: ' + err.message);
@@ -1652,6 +1664,42 @@ const BorrowerDashboard = () => {
   };
 
   const refreshData = useCallback(() => fetchData({ silent: true }), [fetchData]);
+
+  useEffect(() => {
+    if (hasHydratedFromCache.current) return;
+    hasHydratedFromCache.current = true;
+    try {
+      const cachedRaw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+      if (cachedRaw) {
+        const parsed = JSON.parse(cachedRaw);
+        if (parsed?.solicitud) setSolicitud(parsed.solicitud);
+        if (parsed?.documents) setDocuments(parsed.documents);
+        if (parsed?.analyzedDocTypes) setAnalyzedDocTypes(parsed.analyzedDocTypes);
+        setLoading(false);
+      }
+    } catch (_) {}
+    fetchData({ silent: true });
+  }, [fetchData]);
+
+  useEffect(() => {
+    const storedScroll = sessionStorage.getItem(DASHBOARD_SCROLL_KEY);
+    if (storedScroll) {
+      const y = Number(storedScroll);
+      if (!Number.isNaN(y)) {
+        window.requestAnimationFrame(() => window.scrollTo(0, y));
+      }
+    }
+    const persistScroll = () => {
+      try {
+        sessionStorage.setItem(DASHBOARD_SCROLL_KEY, String(window.scrollY || 0));
+      } catch (_) {}
+    };
+    window.addEventListener('scroll', persistScroll, { passive: true });
+    return () => {
+      persistScroll();
+      window.removeEventListener('scroll', persistScroll);
+    };
+  }, []);
 
   useEffect(() => { 
     trackEvent('Viewed Borrower Dashboard');
