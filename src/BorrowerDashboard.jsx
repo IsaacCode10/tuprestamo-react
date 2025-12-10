@@ -43,7 +43,6 @@ const inProgressFaqs = [
 const mockLoanData = {};
 const mockNotifications = [];
 const DASHBOARD_CACHE_KEY = 'borrowerDashboardCache';
-const DASHBOARD_SCROLL_KEY = 'borrowerDashboardScroll';
 const getCachedDashboard = () => {
   try {
     const raw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
@@ -1725,25 +1724,7 @@ const BorrowerDashboard = () => {
     fetchData({ silent: true });
   }, [fetchData]);
 
-  useEffect(() => {
-    const storedScroll = sessionStorage.getItem(DASHBOARD_SCROLL_KEY);
-    if (storedScroll) {
-      const y = Number(storedScroll);
-      if (!Number.isNaN(y)) {
-        window.requestAnimationFrame(() => window.scrollTo(0, y));
-      }
-    }
-    const persistScroll = () => {
-      try {
-        sessionStorage.setItem(DASHBOARD_SCROLL_KEY, String(window.scrollY || 0));
-      } catch (_) {}
-    };
-    window.addEventListener('scroll', persistScroll, { passive: true });
-    return () => {
-      persistScroll();
-      window.removeEventListener('scroll', persistScroll);
-    };
-  }, []);
+  // El scroll se conserva desde el layout persistente; aquí no forzamos movimientos.
 
   useEffect(() => { 
     trackEvent('Viewed Borrower Dashboard');
