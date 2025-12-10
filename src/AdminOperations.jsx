@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from './supabaseClient';
 
 const TabButton = ({ active, onClick, children }) => (
@@ -43,6 +43,17 @@ const AdminOperations = () => {
       return {};
     }
   });
+
+  const pendingPayoutTotals = useMemo(() => {
+    const byOpp = {};
+    payouts
+      .filter((p) => (p.status || '').toLowerCase() === 'pending')
+      .forEach((p) => {
+        if (!byOpp[p.opportunity_id]) byOpp[p.opportunity_id] = 0;
+        byOpp[p.opportunity_id] += Number(p.amount || 0);
+      });
+    return byOpp;
+  }, [payouts]);
 
   const sendNotificationsForPaidIntent = async (intentRow, fundedInfoRaw) => {
     if (!intentRow) return;
@@ -638,6 +649,18 @@ const AdminOperations = () => {
 
       {tab === 'payouts' && (
         <div style={{ overflowX: 'auto' }}>
+          <div style={{ marginBottom: 10, padding: 10, border: '1px solid #d9f0f0', borderRadius: 10, background: '#f7fbfc' }}>
+            <strong>Payouts pendientes por oportunidad</strong>
+            {Object.keys(pendingPayoutTotals).length === 0 ? (
+              <div className="muted">No hay payouts en espera de transferencia.</div>
+            ) : (
+              <ul style={{ margin: '6px 0 0 16px', color: '#0f5a62' }}>
+                {Object.entries(pendingPayoutTotals).map(([oppId, total]) => (
+                  <li key={oppId}>ID {oppId}: {formatMoney(total)} (neto a invertiristas)</li>
+                ))}
+              </ul>
+            )}
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
