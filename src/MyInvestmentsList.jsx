@@ -13,6 +13,7 @@ const MyInvestmentsList = () => {
   const [payouts, setPayouts] = useState([]);
   const [oppsById, setOppsById] = useState({});
   const [intentsMap, setIntentsMap] = useState({ byId: {}, byOpportunity: {} });
+  const [schedules, setSchedules] = useState({});
 
   useEffect(() => {
     trackEvent('Viewed Portfolio');
@@ -59,6 +60,24 @@ const MyInvestmentsList = () => {
           const map = {};
           (opps || []).filter(Boolean).forEach(o => { map[o.id] = o; });
           setOppsById(map);
+
+          // Cargar próximas cuotas del prestatario (primeras 3) para cada oportunidad
+          const schedulesMap = {};
+          await Promise.all(oppIds.map(async (oid) => {
+            try {
+              const { data, error } = await supabase
+                .from('amortizaciones')
+                .select('installment_no, due_date, payment')
+                .eq('opportunity_id', oid)
+                .order('installment_no', { ascending: true })
+                .limit(3);
+              if (error) return;
+              schedulesMap[oid] = data || [];
+            } catch (_) {
+              // noop
+            }
+          }));
+          setSchedules(schedulesMap);
         } else {
           setOppsById({});
         }
@@ -108,6 +127,15 @@ const MyInvestmentsList = () => {
       return isPendingPayment && intent?.receipt_url;
     });
   }, [rows, intentsMap]);
+
+  const formatDate = (value) => {
+    if (!value) return 'N/D';
+    try {
+      return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (_) {
+      return String(value);
+    }
+  };
 
   const formatStatus = (r, o, intent) => {
     const isFondeada = o?.saldo_pendiente != null ? o.saldo_pendiente <= 0 : false;
@@ -192,6 +220,12 @@ const MyInvestmentsList = () => {
 
       {hasRows && (
         <>
+          <div style={{ marginTop: 16, padding: 12, border: '1px solid #d9f0f0', borderRadius: 10, background: '#f7fbfc' }}>
+            <strong>Estado de tus préstamos financiados</strong>
+            <p style={{ margin: '6px 0 0 0', color: '#0f5a62' }}>
+              Los prestatarios pagan el <strong>día 5 de cada mes</strong>. Te avisaremos cuando se acredite cada cobro.
+            </p>
+          </div>
           <h3 style={{ marginTop: 24 }}>Cobros recibidos / próximos pagos</h3>
           {payouts.length === 0 ? (
             <p style={{ color: '#555' }}>{hasReviewNotice ? 'Recibimos tu comprobante. Te avisaremos cuando se acredite.' : 'Aún no registramos cobros de esta oportunidad. Te avisaremos cuando se acredite.'}</p>
@@ -235,6 +269,42 @@ const MyInvestmentsList = () => {
       <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Seguir Invirtiendo</button>
       </div>
+
+      {hasRows && (
+        <div style={{ marginTop: 24 }}>
+          <h3>Próximas cuotas de tus prestatarios</h3>
+          <p style={{ color: '#55747b', marginTop: 4 }}>Vista rápida de las próximas fechas de pago (día 5 de cada mes).</p>
+          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+            {rows.map((r) => {
+              const o = oppsById[r.opportunity_id] || {};
+              const upcoming = schedules[r.opportunity_id] || [];
+              const isFondeada = o?.saldo_pendiente != null ? o.saldo_pendiente <= 0 : false;
+              if (!isFondeada || upcoming.length === 0) return null;
+              return (
+                <div key={`sched-${r.opportunity_id}`} style={{ border: '1px solid #e6f4f3', borderRadius: 10, padding: 12, background: '#f7fbfc' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>ID {r.opportunity_id}</div>
+                      {o.monto && <div style={{ color: '#0f5a62' }}>Meta: Bs. {Number(o.monto).toLocaleString('es-BO')}</div>}
+                    </div>
+                    <div style={{ background: '#d4f4ef', color: '#0f5a62', borderRadius: 999, padding: '4px 10px', fontWeight: 700 }}>Fondeada</div>
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    {upcoming.map((cuota) => (
+                      <div key={cuota.installment_no} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #e1eeee' }}>
+                        <span>Cuota {cuota.installment_no}</span>
+                        <span style={{ fontWeight: 700 }}>{formatDate(cuota.due_date)}</span>
+                        <span style={{ color: '#0f5a62' }}>Bs. {Number(cuota.payment || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <small style={{ color: '#55747b' }}>Pago dirigido ejecutado; cobros se acreditan tras conciliación.</small>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
