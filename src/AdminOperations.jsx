@@ -51,9 +51,39 @@ const AdminOperations = () => {
       .forEach((p) => {
         if (!byOpp[p.opportunity_id]) byOpp[p.opportunity_id] = 0;
         byOpp[p.opportunity_id] += Number(p.amount || 0);
-      });
+    });
     return byOpp;
   }, [payouts]);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
+
+  const exportPendingCsv = () => {
+    const rows = payouts
+      .filter((p) => (p.status || '').toLowerCase() === 'pending')
+      .map((p) => {
+        const bank = bankMap[p.investor_id] || {};
+        return {
+          payout_id: p.id,
+          opportunity_id: p.opportunity_id,
+          investor_id: p.investor_id,
+          monto_bruto: Number(p.amount || 0),
+          monto_neto: Number(p.amount || 0) * 0.99,
+          nombre_banco: bank.nombre_banco || '',
+          numero_cuenta: bank.numero_cuenta || '',
+        };
+      });
+    const headers = ['payout_id', 'opportunity_id', 'investor_id', 'monto_bruto', 'monto_neto', 'nombre_banco', 'numero_cuenta'];
+    const csv = [headers.join(',')]
+      .concat(rows.map(r => headers.map(h => r[h]).join(',')))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'payouts_pendientes.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const sendNotificationsForPaidIntent = async (intentRow, fundedInfoRaw) => {
     if (!intentRow) return;
@@ -207,6 +237,28 @@ const AdminOperations = () => {
       .limit(100);
     if (error) setError(error.message);
     setPayouts(data || []);
+    // cargar perfiles
+    const investorIds = Array.from(new Set((data || []).map(p => p.investor_id).filter(Boolean)));
+    if (investorIds.length > 0) {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, nombre_completo, email')
+        .in('id', investorIds);
+      if (profs) {
+        const map = {};
+        profs.forEach(p => { map[p.id] = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim(); });
+        setInvestorMap(map);
+      }
+      const { data: banks } = await supabase
+        .from('cuentas_bancarias_inversionistas')
+        .select('user_id, nombre_banco, numero_cuenta')
+        .in('user_id', investorIds);
+      if (banks) {
+        const map = {};
+        banks.forEach(b => { map[b.user_id] = b; });
+        setBankMap(map);
+      }
+    }
     setLoading(false);
   };
 
@@ -651,12 +703,22 @@ const AdminOperations = () => {
         <div style={{ overflowX: 'auto' }}>
           <div style={{ marginBottom: 10, padding: 10, border: '1px solid #d9f0f0', borderRadius: 10, background: '#f7fbfc' }}>
             <strong>Payouts pendientes por oportunidad</strong>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <input type="checkbox" checked={showPendingOnly} onChange={(e) => setShowPendingOnly(e.target.checked)} />
+                Ver solo pendientes
+              </label>
+              <div style={{ background: '#d4f4ef', color: '#0f5a62', padding: '4px 10px', borderRadius: 999, fontWeight: 700 }}>
+                Total pendientes: {formatMoney(pendingPayoutTotal)}
+              </div>
+              <button className="btn" onClick={exportPendingCsv}>Exportar CSV</button>
+            </div>
             {Object.keys(pendingPayoutTotals).length === 0 ? (
-              <div className="muted">No hay payouts en espera de transferencia.</div>
+              <div className="muted" style={{ marginTop: 4 }}>No hay payouts en espera de transferencia.</div>
             ) : (
               <ul style={{ margin: '6px 0 0 16px', color: '#0f5a62' }}>
                 {Object.entries(pendingPayoutTotals).map(([oppId, total]) => (
-                  <li key={oppId}>ID {oppId}: {formatMoney(total)} (neto a invertiristas)</li>
+                  <li key={oppId}>ID {oppId}: {formatMoney(total)} (neto a inversionistas)</li>
                 ))}
               </ul>
             )}
@@ -667,20 +729,42 @@ const AdminOperations = () => {
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto (bruto/neto)</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {payouts.map((p) => (
+              {payouts
+                .filter((p) => !showPendingOnly || (p.status || '').toLowerCase() === 'pending')
+                .map((p) => (
                 <tr key={p.id}>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.opportunity_id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.investor_id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(p.amount)}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    {investorMap[p.investor_id] || p.investor_id}
+                    {bankMap[p.investor_id] && (
+                      <div className="muted" style={{ marginTop: 2 }}>
+                        {bankMap[p.investor_id].nombre_banco || 'Banco n/d'} · CTA {bankMap[p.investor_id].numero_cuenta || 'n/d'}
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    <div>{formatMoney(p.amount)}</div>
+                    <small className="muted">Neto (1%): {formatMoney(Number(p.amount || 0) * 0.99)}</small>
+                  </td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    <span style={{
+                      padding: '2px 8px',
+                      borderRadius: 8,
+                      background: (p.status || '').toLowerCase() === 'paid' ? '#d7f2e3' : '#ffe9cc',
+                      color: (p.status || '').toLowerCase() === 'paid' ? '#0a7a4b' : '#a85f0a',
+                      fontWeight: 700,
+                    }}>
+                      {p.status}
+                    </span>
+                  </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     {p.receipt_url ? (
                       <a href={p.receipt_url} target="_blank" rel="noreferrer">Ver comprobante</a>
@@ -694,7 +778,7 @@ const AdminOperations = () => {
                   </td>
                 </tr>
               ))}
-              {payouts.length === 0 && (
+              {payouts.filter((p) => !showPendingOnly || (p.status || '').toLowerCase() === 'pending').length === 0 && (
                 <tr>
                   <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts</td>
                 </tr>
