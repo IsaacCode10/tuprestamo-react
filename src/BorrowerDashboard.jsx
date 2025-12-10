@@ -272,6 +272,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [loadingIntents, setLoadingIntents] = useState(false);
   const [intentsError, setIntentsError] = useState('');
   const [payMode, setPayMode] = useState('qr');
+  const [showBorrowerQrModal, setShowBorrowerQrModal] = useState(false);
   const [scheduleRows, setScheduleRows] = useState([]);
   const [loadingSchedule, setLoadingSchedule] = useState(false);
   const [scheduleError, setScheduleError] = useState('');
@@ -633,7 +634,13 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
               {payMode === 'qr' && (
                 <div style={{ padding: 12, border: '1px dashed #a8ede6', borderRadius: 10, background: '#f7fbfc', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
                   <p style={{ margin: 0, color: '#0f5a62', fontWeight: 600 }}>Escanea este QR para pagar tu cuota</p>
-                  <div style={{ cursor: 'zoom-in', borderRadius: 12, padding: 6, transition: 'transform 0.2s', display: 'inline-block', background: '#fff' }}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setShowBorrowerQrModal(true)}
+                    onKeyPress={(e) => { if (e.key === 'Enter') setShowBorrowerQrModal(true); }}
+                    style={{ cursor: 'zoom-in', borderRadius: 12, padding: 6, transition: 'transform 0.2s', display: 'inline-block', background: '#fff' }}
+                  >
                     <img
                       src="/qr-pago.png"
                       alt="QR de pago Tu Préstamo"
@@ -736,6 +743,43 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
           )}
         </div>
       )}
+      {showBorrowerQrModal && <QrLightbox src="/qr-pago.png" onClose={() => setShowBorrowerQrModal(false)} />}
+    </div>
+  );
+};
+
+const QrLightbox = ({ src, onClose }) => {
+  if (!src) return null;
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: '#fff',
+          padding: 16,
+          borderRadius: 12,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img src={src} alt="QR ampliado" style={{ maxWidth: '100%', maxHeight: '80vh', display: 'block', margin: '0 auto' }} />
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <button className="btn" type="button" onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
     </div>
   );
 };
