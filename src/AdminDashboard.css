@@ -267,3 +267,44 @@
   color: #6c757d;
   margin-bottom: 4px;
 }
+
+.fuente-section {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #dde4e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.fuente-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.fuente-table th,
+.fuente-table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.fuente-status-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #ffc107;
+  color: #0f1c2c;
+}
+
+.fuente-status-chip.ok {
+  background: #28a745;
+  color: #fff;
+}
+
+.fuente-status-chip.alert {
+  background: #dc3545;
+  color: #fff;
+}

@@ -167,15 +167,26 @@ as $$
     from oportunidades
     where id = p_opportunity_id
     limit 1
+  ),
+  bpi as (
+    select expected_amount, row_number() over(order by due_date) as rn
+    from borrower_payment_intents
+    where opportunity_id = p_opportunity_id
+  ),
+  amort as (
+    select installment_no, due_date::date as due_date, payment, row_number() over(order by installment_no) as rn
+    from amortizaciones
+    where opportunity_id = p_opportunity_id
   )
   select
     a.installment_no,
     a.due_date,
-    a.payment as payment_borrower,
-    a.payment * (inv.amount / nullif(opp.monto, 0)) as payment_investor_bruto,
-    a.payment * (inv.amount / nullif(opp.monto, 0)) * 0.99 as payment_investor_neto,
+    coalesce(b.expected_amount, a.payment) as payment_borrower,
+    coalesce(b.expected_amount, a.payment) * (inv.amount / nullif(opp.monto, 0)) as payment_investor_bruto,
+    coalesce(b.expected_amount, a.payment) * (inv.amount / nullif(opp.monto, 0)) * 0.99 as payment_investor_neto,
     (inv.amount / nullif(opp.monto, 0)) as weight
-  from amortizaciones a
+  from amort a
+  left join bpi b on b.rn = a.rn
   cross join inv
   cross join opp
   where inv.amount is not null
@@ -197,10 +208,55 @@ create table if not exists public.movimientos (
   created_at timestamptz not null default now(),
   settled_at timestamptz null
 );
+alter table public.movimientos add column if not exists ref_payout_id uuid;
+alter table public.movimientos add column if not exists settled_at timestamptz;
+alter table public.movimientos add column if not exists ref_borrower_intent_id uuid;
+alter table public.movimientos add column if not exists status text default 'pending';
+alter table public.movimientos add column if not exists currency text default 'BOB';
 create index if not exists idx_movimientos_opp on public.movimientos(opportunity_id);
 create index if not exists idx_movimientos_investor on public.movimientos(investor_id);
 create index if not exists idx_movimientos_ref_payout on public.movimientos(ref_payout_id);
 create index if not exists idx_movimientos_tipo on public.movimientos(tipo);
+
+-- Fuente Única: checks que garantizan una sola fuente de verdad
+create or replace view public.fuente_unica_checks as
+select
+  o.id as opportunity_id,
+  b.id as borrower_payment_intent_id,
+  b.due_date,
+  b.status as borrower_status,
+  b.expected_amount as borrower_amount,
+  coalesce(m.cobro, 0) as cobro_prestatario,
+  coalesce(m.payouts, 0) as payouts_inversionistas,
+  coalesce(m.comision, 0) as comision_plataforma,
+  coalesce(m.pending_movimientos, 0) as movimientos_pendientes,
+  coalesce(p.pending_payouts, 0) as payouts_pending,
+  coalesce(m.cobro, 0) - coalesce(m.payouts, 0) - coalesce(m.comision, 0) as diferencia,
+  case
+    when abs(coalesce(m.cobro, 0) - coalesce(m.payouts, 0) - coalesce(m.comision, 0)) < 0.01
+      and coalesce(m.pending_movimientos, 0) = coalesce(p.pending_payouts, 0)
+    then 'ok'
+    else 'revisar'
+  end as status,
+  abs(coalesce(m.cobro, 0) - coalesce(m.payouts, 0) - coalesce(m.comision, 0)) as divergence_amount
+from borrower_payment_intents b
+join oportunidades o on o.id = b.opportunity_id
+left join (
+  select
+    opportunity_id,
+    ref_borrower_intent_id,
+    sum(case when lower(tipo) = 'cobro_prestatario' then amount else 0 end) as cobro,
+    sum(case when lower(tipo) = 'payout_inversionista' then amount else 0 end) as payouts,
+    sum(case when lower(tipo) = 'comision_plataforma' then amount else 0 end) as comision,
+    sum(case when lower(tipo) = 'payout_inversionista' and lower(status) = 'pending' then 1 else 0 end) as pending_movimientos
+  from movimientos
+  group by opportunity_id, ref_borrower_intent_id
+) m on m.opportunity_id = b.opportunity_id and m.ref_borrower_intent_id = b.id
+left join (
+  select opportunity_id, count(*) filter (where lower(status) = 'pending') as pending_payouts
+  from payouts_inversionistas
+  group by opportunity_id
+) p on p.opportunity_id = b.opportunity_id;
 
 create or replace function public.process_borrower_payment(p_intent_id uuid, p_receipt_url text default null)
 returns void

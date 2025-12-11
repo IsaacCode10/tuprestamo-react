@@ -18,6 +18,13 @@ const formatCurrency = (value) => {
   return Number.isFinite(number) ? currencyFormatter.format(number) : 'Bs 0.00';
 };
 
+const formatDate = (value) => {
+  if (!value) return '--';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '--';
+  return date.toLocaleDateString();
+};
+
 const PendingInvestments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -193,6 +200,9 @@ const AdminDashboard = () => {
   const [ledgerTotals, setLedgerTotals] = useState({ cobros: 0, payouts: 0, comisiones: 0, margen: 0 });
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [ledgerError, setLedgerError] = useState(null);
+  const [fuenteChecks, setFuenteChecks] = useState([]);
+  const [fuenteLoading, setFuenteLoading] = useState(false);
+  const [fuenteError, setFuenteError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
@@ -391,9 +401,46 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchFuenteChecks = async () => {
+    setFuenteLoading(true);
+    setFuenteError(null);
+    try {
+      const { data, error } = await supabase
+        .from('fuente_unica_checks')
+        .select(`
+          opportunity_id,
+          borrower_payment_intent_id,
+          due_date,
+          borrower_status,
+          borrower_amount,
+          cobro_prestatario,
+          payouts_inversionistas,
+          comision_plataforma,
+          movimientos_pendientes,
+          payouts_pending,
+          diferencia,
+          divergence_amount,
+          status
+        `)
+        .order('due_date', { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      setFuenteChecks(data || []);
+    } catch (err) {
+      console.error('Error loading Fuente Única checks', err);
+      setFuenteError('No pudimos cargar las validaciones de Fuente Única.');
+    } finally {
+      setFuenteLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchLedger();
   }, [ledgerMonth]);
+
+  useEffect(() => {
+    fetchFuenteChecks();
+  }, []);
 
   const exportLedgerCsv = () => {
     const headers = ['opportunity_id', 'cobros_prestatario', 'payouts_inversionistas', 'comisiones_tp', 'margen_aprox', 'flujo_bruto'];
@@ -528,6 +575,59 @@ const AdminDashboard = () => {
                 </table>
               </div>
             </>
+          )}
+        </div>
+        <div className="card fuente-section">
+          <h3>Fuente Única</h3>
+          <p className="muted">
+            Validamos que la cuota del prestatario (BPI) coincida con los payouts de inversionistas y que los movimientos pendientes estén alineados.
+          </p>
+          {fuenteLoading && <p className="muted">Cargando validaciones...</p>}
+          {fuenteError && <p style={{ color: 'red' }}>{fuenteError}</p>}
+          {!fuenteLoading && !fuenteError && (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="fuente-table">
+                <thead>
+                  <tr>
+                    <th>Oportunidad</th>
+                    <th>Vencimiento</th>
+                    <th>Cuota BPI</th>
+                    <th>Payouts</th>
+                    <th>Comisión</th>
+                    <th>Gap</th>
+                    <th>Pendientes</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fuenteChecks.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>
+                        Sin alertas; todo está alineado.
+                      </td>
+                    </tr>
+                  )}
+                  {fuenteChecks.map((row) => (
+                    <tr key={row.borrower_payment_intent_id || `${row.opportunity_id}-${row.due_date}`}>
+                      <td>ID {row.opportunity_id}</td>
+                      <td>{formatDate(row.due_date)}</td>
+                      <td>{formatCurrency(row.borrower_amount)}</td>
+                      <td>{formatCurrency(row.payouts_inversionistas)}</td>
+                      <td>{formatCurrency(row.comision_plataforma)}</td>
+                      <td>{formatCurrency(row.diferencia)}</td>
+                      <td>
+                        {row.movimientos_pendientes ?? 0} / {row.payouts_pending ?? 0}
+                      </td>
+                      <td>
+                        <span className={`fuente-status-chip ${row.status === 'ok' ? 'ok' : 'alert'}`}>
+                          {row.status === 'ok' ? 'OK' : 'Revisar'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
         </>
