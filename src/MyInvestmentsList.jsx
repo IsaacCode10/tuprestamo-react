@@ -14,6 +14,7 @@ const MyInvestmentsList = () => {
   const [oppsById, setOppsById] = useState({});
   const [intentsMap, setIntentsMap] = useState({ byId: {}, byOpportunity: {} });
   const [investorSchedules, setInvestorSchedules] = useState({});
+  const [payoutSignedMap, setPayoutSignedMap] = useState({});
 
   useEffect(() => {
     trackEvent('Viewed Portfolio');
@@ -104,6 +105,19 @@ const MyInvestmentsList = () => {
           .order('created_at', { ascending: false });
         if (payoutErr) throw payoutErr;
         setPayouts(payoutRows || []);
+        // Firmar comprobantes de payouts (bucket privado)
+        const signedMap = {};
+        await Promise.all((payoutRows || []).map(async (p) => {
+          if (!p?.receipt_url) return;
+          try {
+            const { data: signed, error: signErr } = await supabase
+              .storage
+              .from('comprobantes-pagos')
+              .createSignedUrl(p.receipt_url, 60 * 60);
+            if (!signErr && signed?.signedUrl) signedMap[p.id] = signed.signedUrl;
+          } catch (_) {}
+        }));
+        setPayoutSignedMap(signedMap);
 
       } catch (e) {
         console.error('Error loading portfolio:', e);
@@ -242,6 +256,7 @@ const MyInvestmentsList = () => {
                     const o = oppsById[p.opportunity_id] || {};
                     const fecha = p.paid_at || p.created_at;
                     const montoCobrado = p.paid_amount ?? p.expected_amount ?? p.amount ?? 0;
+                    const signedReceipt = payoutSignedMap[p.id] || null;
                     return (
                       <tr key={p.id}>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>
@@ -250,7 +265,7 @@ const MyInvestmentsList = () => {
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.status === 'paid' ? 'Pagado' : p.status === 'pending' ? 'Pendiente' : p.status || 'n/d'}</td>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button className="btn btn--primary" onClick={() => navigate('/oportunidades', { state: { prefillAmount: Number(montoCobrado) || undefined } })}>Reinvertir</button>
-                          {p.receipt_url && <a className="btn" href={p.receipt_url} target="_blank" rel="noreferrer">Ver comprobante</a>}
+                          {signedReceipt && <a className="btn" href={signedReceipt} target="_blank" rel="noreferrer">Ver comprobante</a>}
                         </td>
                       </tr>
                     );

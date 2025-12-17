@@ -27,6 +27,7 @@ const AdminOperations = () => {
   const [payouts, setPayouts] = useState([]);
   const [disbursements, setDisbursements] = useState([]);
   const [investorMap, setInvestorMap] = useState({});
+  const [bankMap, setBankMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [receiptFiles, setReceiptFiles] = useState({});
@@ -63,12 +64,14 @@ const AdminOperations = () => {
       .filter((p) => (p.status || '').toLowerCase() === 'pending')
       .map((p) => {
         const bank = bankMap[p.investor_id] || {};
+        const montoNeto = Number(p.amount || 0);
+        const montoBruto = montoNeto / 0.99;
         return {
           payout_id: p.id,
           opportunity_id: p.opportunity_id,
           investor_id: p.investor_id,
-          monto_bruto: Number(p.amount || 0),
-          monto_neto: Number(p.amount || 0) * 0.99,
+          monto_bruto: montoBruto,
+          monto_neto: montoNeto,
           nombre_banco: bank.nombre_banco || '',
           numero_cuenta: bank.numero_cuenta || '',
         };
@@ -220,11 +223,25 @@ const AdminOperations = () => {
     setError('');
     const { data, error } = await supabase
       .from('borrower_payment_intents')
-      .select('id, opportunity_id, borrower_id, expected_amount, status, due_date, paid_at, paid_amount, created_at')
+      .select('id, opportunity_id, borrower_id, expected_amount, status, due_date, paid_at, paid_amount, created_at, updated_at, receipt_url')
       .order('due_date', { ascending: true })
       .limit(100);
     if (error) setError(error.message);
-    setBorrowerIntents(data || []);
+    const rows = data || [];
+    const withSigned = await Promise.all(rows.map(async (r) => {
+      let receipt_signed_url = null;
+      if (r.receipt_url) {
+        try {
+          const { data: signed, error: signErr } = await supabase
+            .storage
+            .from('comprobantes-pagos')
+            .createSignedUrl(r.receipt_url, 60 * 60);
+          if (!signErr && signed?.signedUrl) receipt_signed_url = signed.signedUrl;
+        } catch (_) {}
+      }
+      return { ...r, receipt_signed_url };
+    }));
+    setBorrowerIntents(withSigned);
     setLoading(false);
   };
 
@@ -237,9 +254,23 @@ const AdminOperations = () => {
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) setError(error.message);
-    setPayouts(data || []);
+    const rows = data || [];
+    const withSigned = await Promise.all(rows.map(async (r) => {
+      let receipt_signed_url = null;
+      if (r.receipt_url) {
+        try {
+          const { data: signed, error: signErr } = await supabase
+            .storage
+            .from('comprobantes-pagos')
+            .createSignedUrl(r.receipt_url, 60 * 60);
+          if (!signErr && signed?.signedUrl) receipt_signed_url = signed.signedUrl;
+        } catch (_) {}
+      }
+      return { ...r, receipt_signed_url };
+    }));
+    setPayouts(withSigned);
     // cargar perfiles
-    const investorIds = Array.from(new Set((data || []).map(p => p.investor_id).filter(Boolean)));
+    const investorIds = Array.from(new Set(rows.map(p => p.investor_id).filter(Boolean)));
     if (investorIds.length > 0) {
       const { data: profs } = await supabase
         .from('profiles')
@@ -693,9 +724,11 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.due_date ? new Date(i.due_date).toLocaleDateString('es-BO') : '—'}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {i.receipt_url ? (
-                      <a href={i.receipt_url} target="_blank" rel="noreferrer">Ver comprobante</a>
-                    ) : '—'}
+                    {i.receipt_signed_url ? (
+                      <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                    ) : (
+                      <span style={{ color: '#888' }}>Sin comprobante</span>
+                    )}
                     <div style={{ marginTop: 6 }}>
                       <input type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
                     </div>
@@ -768,8 +801,8 @@ const AdminOperations = () => {
                     )}
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    <div>{formatMoney(p.amount)}</div>
-                    <small className="muted">Neto (1%): {formatMoney(Number(p.amount || 0) * 0.99)}</small>
+                    <div>Neto a pagar: {formatMoney(p.amount)}</div>
+                    <small className="muted">Bruto estimado: {formatMoney(Number(p.amount || 0) / 0.99)}</small>
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <span style={{
@@ -783,9 +816,11 @@ const AdminOperations = () => {
                     </span>
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {p.receipt_url ? (
-                      <a href={p.receipt_url} target="_blank" rel="noreferrer">Ver comprobante</a>
-                    ) : '—'}
+                    {p.receipt_signed_url ? (
+                      <a className="btn" href={p.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                    ) : (
+                      <span style={{ color: '#888' }}>Sin comprobante</span>
+                    )}
                     <div style={{ marginTop: 6 }}>
                       <input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
                     </div>
