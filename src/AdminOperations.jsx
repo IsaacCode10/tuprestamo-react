@@ -643,7 +643,7 @@ const AdminOperations = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cuota #</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
@@ -718,7 +718,7 @@ const AdminOperations = () => {
               {borrowerIntents.map((i, index) => (
                 <tr key={i.id}>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    #{index + 1}
+                    Cuota #{index + 1}
                     <div className="muted">ID {i.id}</div>
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
@@ -728,13 +728,19 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     {i.receipt_signed_url ? (
-                      <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                      <>
+                        <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                        <div className="muted" style={{ marginTop: 4 }}>Subido por el prestatario</div>
+                      </>
                     ) : (
-                      <span style={{ color: '#888' }}>Sin comprobante</span>
+                      <>
+                        <span style={{ color: '#888' }}>Sin comprobante</span>
+                        <div style={{ marginTop: 6 }}>
+                          <input type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
+                          <div className="muted" style={{ marginTop: 4 }}>Solo si Ops lo recibe por otro canal</div>
+                        </div>
+                      </>
                     )}
-                    <div style={{ marginTop: 6 }}>
-                      <input type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
-                    </div>
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button className="btn btn--primary" onClick={() => updateBorrowerIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
