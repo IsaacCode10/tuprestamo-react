@@ -571,7 +571,7 @@ const AdminOperations = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cuota</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
                 <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
@@ -715,9 +715,12 @@ const AdminOperations = () => {
               </tr>
             </thead>
             <tbody>
-              {borrowerIntents.map((i) => (
+              {borrowerIntents.map((i, index) => (
                 <tr key={i.id}>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.id}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    #{index + 1}
+                    <div className="muted">ID {i.id}</div>
+                  </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.borrower_id}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
