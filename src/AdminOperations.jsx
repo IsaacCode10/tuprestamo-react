@@ -44,6 +44,12 @@ const AdminOperations = () => {
       return {};
     }
   });
+  const [borrowerStatusFilter, setBorrowerStatusFilter] = useState('pending');
+  const [borrowerSearch, setBorrowerSearch] = useState('');
+  const [expandedBorrower, setExpandedBorrower] = useState({});
+  const [payoutStatusFilter, setPayoutStatusFilter] = useState('pending');
+  const [payoutSearch, setPayoutSearch] = useState('');
+  const [expandedPayouts, setExpandedPayouts] = useState({});
 
   const pendingPayoutTotals = useMemo(() => {
     const byOpp = {};
@@ -58,6 +64,78 @@ const AdminOperations = () => {
   const [showPendingOnly, setShowPendingOnly] = useState(false);
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
+  const borrowerGroups = useMemo(() => {
+    const search = borrowerSearch.trim().toLowerCase();
+    const map = {};
+    borrowerIntents.forEach((i) => {
+      const statusLower = (i.status || '').toLowerCase();
+      if (borrowerStatusFilter !== 'all' && statusLower !== borrowerStatusFilter) return;
+      const oppIdStr = String(i.opportunity_id || '').toLowerCase();
+      const borrowerIdStr = String(i.borrower_id || '').toLowerCase();
+      const matchesSearch = !search || oppIdStr.includes(search) || borrowerIdStr.includes(search);
+      if (!matchesSearch) return;
+      if (!map[i.opportunity_id]) {
+        map[i.opportunity_id] = {
+          opportunity_id: i.opportunity_id,
+          borrower_id: i.borrower_id,
+          intents: [],
+          totalCount: 0,
+          pendingCount: 0,
+          pendingAmount: 0,
+          nextDue: null,
+          nextAmount: 0,
+        };
+      }
+      const group = map[i.opportunity_id];
+      group.intents.push(i);
+      group.totalCount += 1;
+      const isPending = statusLower === 'pending';
+      if (isPending) {
+        group.pendingCount += 1;
+        group.pendingAmount += Number(i.expected_amount || 0);
+        const dueTs = i.due_date ? new Date(i.due_date).getTime() : null;
+        if (dueTs !== null && (group.nextDue === null || dueTs < group.nextDue)) {
+          group.nextDue = dueTs;
+          group.nextAmount = Number(i.expected_amount || 0);
+        }
+      }
+    });
+    return Object.values(map)
+      .map((g) => ({ ...g, intents: [...g.intents].sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0)) }))
+      .sort((a, b) => Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0));
+  }, [borrowerIntents, borrowerStatusFilter, borrowerSearch]);
+  const payoutGroups = useMemo(() => {
+    const search = payoutSearch.trim().toLowerCase();
+    const map = {};
+    payouts.forEach((p) => {
+      const statusLower = (p.status || '').toLowerCase();
+      if (showPendingOnly && statusLower !== 'pending') return;
+      if (payoutStatusFilter !== 'all' && statusLower !== payoutStatusFilter) return;
+      const oppIdStr = String(p.opportunity_id || '').toLowerCase();
+      const investorStr = String(investorMap[p.investor_id] || p.investor_id || '').toLowerCase();
+      const matchesSearch = !search || oppIdStr.includes(search) || investorStr.includes(search);
+      if (!matchesSearch) return;
+      if (!map[p.opportunity_id]) {
+        map[p.opportunity_id] = {
+          opportunity_id: p.opportunity_id,
+          payouts: [],
+          totalCount: 0,
+          pendingCount: 0,
+          pendingAmount: 0,
+        };
+      }
+      const group = map[p.opportunity_id];
+      group.payouts.push(p);
+      group.totalCount += 1;
+      if (statusLower === 'pending') {
+        group.pendingCount += 1;
+        group.pendingAmount += Number(p.amount || 0);
+      }
+    });
+    return Object.values(map)
+      .map((g) => ({ ...g, payouts: [...g.payouts].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) }))
+      .sort((a, b) => Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0));
+  }, [payouts, payoutStatusFilter, payoutSearch, investorMap, showPendingOnly]);
 
   const exportPendingCsv = () => {
     const rows = payouts
@@ -545,6 +623,23 @@ const AdminOperations = () => {
     return updatedTs > lastSeen;
   };
 
+  const toggleBorrowerGroup = (opportunityId) => {
+    setExpandedBorrower((prev) => ({ ...prev, [opportunityId]: !prev[opportunityId] }));
+  };
+
+  const togglePayoutGroup = (opportunityId) => {
+    setExpandedPayouts((prev) => ({ ...prev, [opportunityId]: !prev[opportunityId] }));
+  };
+
+  const formatDateShort = (value) => {
+    if (!value) return '—';
+    try {
+      return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (_) {
+      return String(value);
+    }
+  };
+
   return (
     <div className="admin-ops" style={{ maxWidth: 1200, margin: '0 auto', padding: 16 }}>
       <h2>Operaciones</h2>
@@ -701,60 +796,108 @@ const AdminOperations = () => {
 
       {tab === 'borrower' && (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Prestatario</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Vence</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {borrowerIntents.map((i, index) => (
-                <tr key={i.id}>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    Cuota #{index + 1}
-                    <div className="muted">ID {i.id}</div>
-                  </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.borrower_id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.due_date ? new Date(i.due_date).toLocaleDateString('es-BO') : '—'}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {i.receipt_signed_url ? (
-                      <>
-                        <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
-                        <div className="muted" style={{ marginTop: 4 }}>Subido por el prestatario</div>
-                      </>
-                    ) : (
-                      <>
-                        <span style={{ color: '#888' }}>Sin comprobante</span>
-                        <div style={{ marginTop: 6 }}>
-                          <input type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
-                          <div className="muted" style={{ marginTop: 4 }}>Solo si Ops lo recibe por otro canal</div>
-                        </div>
-                      </>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+              <span className="muted">Estado</span>
+              <select value={borrowerStatusFilter} onChange={(e) => setBorrowerStatusFilter(e.target.value)}>
+                <option value="pending">Pendientes</option>
+                <option value="paid">Pagadas</option>
+                <option value="expired">Expiradas</option>
+                <option value="all">Todos</option>
+              </select>
+            </label>
+            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+              <span className="muted">Buscar (op o prestatario)</span>
+              <input
+                type="text"
+                value={borrowerSearch}
+                onChange={(e) => setBorrowerSearch(e.target.value)}
+                placeholder="61, correo o UUID prestatario"
+                style={{ minWidth: 220 }}
+              />
+            </label>
+          </div>
+          {borrowerGroups.length === 0 && (
+            <div style={{ padding: 12, textAlign: 'center', color: '#55747b', border: '1px dashed #d9e5e8', borderRadius: 10 }}>
+              No hay cuotas que coincidan con el filtro.
+            </div>
+          )}
+          {borrowerGroups.map((g) => {
+            const expanded = !!expandedBorrower[g.opportunity_id];
+            return (
+              <div key={g.opportunity_id} style={{ border: '1px solid #e5f0f2', borderRadius: 10, marginBottom: 12, background: '#fbfdfe' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, gap: 10 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ fontWeight: 700, color: '#0f5a62' }}>Oportunidad {g.opportunity_id}</div>
+                    <div className="muted">Prestatario: {g.borrower_id || 'n/d'}</div>
+                    <div className="muted">
+                      Pendientes: {g.pendingCount}/{g.totalCount} · Monto pendiente: {formatMoney(g.pendingAmount)}
+                    </div>
+                    {g.nextDue && (
+                      <div className="muted">Próxima vence: {formatDateShort(g.nextDue)} · Cuota: {formatMoney(g.nextAmount)}</div>
                     )}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button className="btn btn--primary" onClick={() => updateBorrowerIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
-                    <button className="btn" onClick={() => updateBorrowerIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
-                  </td>
-                </tr>
-              ))}
-              {borrowerIntents.length === 0 && (
-                <tr>
-                  <td colSpan={8} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay cuotas registradas</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                  <button className="btn" onClick={() => toggleBorrowerGroup(g.opportunity_id)}>
+                    {expanded ? 'Ocultar cuotas' : 'Ver cuotas'}
+                  </button>
+                </div>
+                {expanded && (
+                  <div style={{ padding: 10, borderTop: '1px solid #e5f0f2' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cuota #</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Vence</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {g.intents.map((i, idx) => (
+                          <tr key={i.id}>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              Cuota #{idx + 1}
+                              <div className="muted">ID {i.id}</div>
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatDateShort(i.due_date)}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              {i.receipt_signed_url ? (
+                                <>
+                                  <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                                  <div className="muted" style={{ marginTop: 4 }}>Subido por el prestatario</div>
+                                </>
+                              ) : (
+                                <>
+                                  <span style={{ color: '#888' }}>Sin comprobante</span>
+                                  <div style={{ marginTop: 6 }}>
+                                    <input type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
+                                    <div className="muted" style={{ marginTop: 4 }}>Solo si Ops lo recibe por otro canal</div>
+                                  </div>
+                                </>
+                              )}
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              <button className="btn btn--primary" onClick={() => updateBorrowerIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
+                              <button className="btn" onClick={() => updateBorrowerIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
+                            </td>
+                          </tr>
+                        ))}
+                        {g.intents.length === 0 && (
+                          <tr>
+                            <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay cuotas en este filtro</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -765,7 +908,7 @@ const AdminOperations = () => {
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                 <input type="checkbox" checked={showPendingOnly} onChange={(e) => setShowPendingOnly(e.target.checked)} />
-                Ver solo pendientes
+                Ver solo pendientes (lista rápida)
               </label>
               <div style={{ background: '#d4f4ef', color: '#0f5a62', padding: '4px 10px', borderRadius: 999, fontWeight: 700 }}>
                 Total pendientes: {formatMoney(pendingPayoutTotal)}
@@ -782,70 +925,114 @@ const AdminOperations = () => {
               </ul>
             )}
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto (bruto/neto)</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payouts
-                .filter((p) => !showPendingOnly || (p.status || '').toLowerCase() === 'pending')
-                .map((p) => (
-                <tr key={p.id}>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.opportunity_id}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {investorMap[p.investor_id] || p.investor_id}
-                    {bankMap[p.investor_id] && (
-                      <div className="muted" style={{ marginTop: 2 }}>
-                        {bankMap[p.investor_id].nombre_banco || 'Banco n/d'} · CTA {bankMap[p.investor_id].numero_cuenta || 'n/d'}
-                      </div>
-                    )}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    <div>Neto a pagar: {formatMoney(p.amount)}</div>
-                    <small className="muted">Bruto estimado: {formatMoney(Number(p.amount || 0) / 0.99)}</small>
-                  </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    <span style={{
-                      padding: '2px 8px',
-                      borderRadius: 8,
-                      background: (p.status || '').toLowerCase() === 'paid' ? '#d7f2e3' : '#ffe9cc',
-                      color: (p.status || '').toLowerCase() === 'paid' ? '#0a7a4b' : '#a85f0a',
-                      fontWeight: 700,
-                    }}>
-                      {p.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {p.receipt_signed_url ? (
-                      <a className="btn" href={p.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
-                    ) : (
-                      <span style={{ color: '#888' }}>Sin comprobante</span>
-                    )}
-                    <div style={{ marginTop: 6 }}>
-                      <input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+              <span className="muted">Estado</span>
+              <select value={payoutStatusFilter} onChange={(e) => setPayoutStatusFilter(e.target.value)}>
+                <option value="pending">Pendientes</option>
+                <option value="paid">Pagados</option>
+                <option value="expired">Expirados</option>
+                <option value="all">Todos</option>
+              </select>
+            </label>
+            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+              <span className="muted">Buscar (op o inversionista)</span>
+              <input
+                type="text"
+                value={payoutSearch}
+                onChange={(e) => setPayoutSearch(e.target.value)}
+                placeholder="61, correo o UUID inversionista"
+                style={{ minWidth: 220 }}
+              />
+            </label>
+          </div>
+          {payoutGroups.length === 0 && (
+            <div style={{ padding: 12, textAlign: 'center', color: '#55747b', border: '1px dashed #d9e5e8', borderRadius: 10 }}>
+              No hay payouts que coincidan con el filtro.
+            </div>
+          )}
+          {payoutGroups.map((g) => {
+            const expanded = !!expandedPayouts[g.opportunity_id];
+            return (
+              <div key={g.opportunity_id} style={{ border: '1px solid #e5f0f2', borderRadius: 10, marginBottom: 12, background: '#fbfdfe' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, gap: 10 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ fontWeight: 700, color: '#0f5a62' }}>Oportunidad {g.opportunity_id}</div>
+                    <div className="muted">
+                      Pendientes: {g.pendingCount}/{g.totalCount} · Neto pendiente: {formatMoney(g.pendingAmount)}
                     </div>
-                  </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')} disabled={p.status === 'paid'}>Marcar pagado</button>
-                  </td>
-                </tr>
-              ))}
-              {payouts.filter((p) => !showPendingOnly || (p.status || '').toLowerCase() === 'pending').length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                  <button className="btn" onClick={() => togglePayoutGroup(g.opportunity_id)}>
+                    {expanded ? 'Ocultar payouts' : 'Ver payouts'}
+                  </button>
+                </div>
+                {expanded && (
+                  <div style={{ padding: 10, borderTop: '1px solid #e5f0f2' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto (bruto/neto)</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
+                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {g.payouts.map((p) => (
+                          <tr key={p.id}>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              {investorMap[p.investor_id] || p.investor_id}
+                              {bankMap[p.investor_id] && (
+                                <div className="muted" style={{ marginTop: 2 }}>
+                                  {bankMap[p.investor_id].nombre_banco || 'Banco n/d'} · CTA {bankMap[p.investor_id].numero_cuenta || 'n/d'}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              <div>Neto a pagar: {formatMoney(p.amount)}</div>
+                              <small className="muted">Bruto estimado: {formatMoney(Number(p.amount || 0) / 0.99)}</small>
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              <span style={{
+                                padding: '2px 8px',
+                                borderRadius: 8,
+                                background: (p.status || '').toLowerCase() === 'paid' ? '#d7f2e3' : '#ffe9cc',
+                                color: (p.status || '').toLowerCase() === 'paid' ? '#0a7a4b' : '#a85f0a',
+                                fontWeight: 700,
+                              }}>
+                                {p.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              {p.receipt_signed_url ? (
+                                <a className="btn" href={p.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                              ) : (
+                                <span style={{ color: '#888' }}>Sin comprobante</span>
+                              )}
+                              <div style={{ marginTop: 6 }}>
+                                <input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
+                              </div>
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')} disabled={p.status === 'paid'}>Marcar pagado</button>
+                            </td>
+                          </tr>
+                        ))}
+                        {g.payouts.length === 0 && (
+                          <tr>
+                            <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts en este filtro</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
