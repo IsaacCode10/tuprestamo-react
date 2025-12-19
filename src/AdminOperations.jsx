@@ -972,8 +972,14 @@ const AdminOperations = () => {
                               )}
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <button className="btn btn--primary" onClick={() => updateBorrowerIntentStatus(i.id, 'paid')} disabled={i.status === 'paid'}>Marcar pagado</button>
-                              <button className="btn" onClick={() => updateBorrowerIntentStatus(i.id, 'expired')} disabled={i.status === 'expired'}>Expirar</button>
+                              {['pending'].includes((i.status || '').toString().toLowerCase()) ? (
+                                <>
+                                  <button className="btn btn--primary" onClick={() => updateBorrowerIntentStatus(i.id, 'paid')}>Marcar pagado</button>
+                                  <button className="btn" onClick={() => updateBorrowerIntentStatus(i.id, 'expired')}>Expirar</button>
+                                </>
+                              ) : (
+                                <span className="muted">Sin acciones (ya procesada)</span>
+                              )}
                             </td>
                           </tr>
                         ))}
