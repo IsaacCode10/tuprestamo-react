@@ -500,7 +500,9 @@ const AdminOperations = () => {
 
   const updateBorrowerIntentStatus = async (id, status) => {
     try {
+      setInfoMessage('');
       if (status === 'paid') {
+        const intentRow = borrowerIntents.find((b) => b.id === id);
         const file = borrowerReceiptFiles[id];
         let receiptPath = null;
         if (file) {
@@ -512,6 +514,14 @@ const AdminOperations = () => {
         });
         if (rpcErr) throw rpcErr;
         setBorrowerReceiptFiles((prev) => ({ ...prev, [id]: null }));
+        // Feedback visual para Ops
+        try {
+          const idx = intentRow ? borrowerIntents.filter((b) => b.opportunity_id === intentRow.opportunity_id).findIndex((b) => b.id === id) : -1;
+          const cuotaLabel = idx >= 0 ? `Cuota #${idx + 1}` : `ID ${id}`;
+          const oppLabel = intentRow?.opportunity_id ? `Op ${intentRow.opportunity_id}` : '';
+          setInfoMessage(`${cuotaLabel} ${oppLabel} marcada como pagada.`);
+          setTimeout(() => setInfoMessage(''), 4000);
+        } catch (_) {}
       } else {
         const payload = { status };
         if (status === 'expired') payload.paid_at = null;
@@ -737,7 +747,7 @@ const AdminOperations = () => {
 
       {loading && <p>Cargando...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {infoMessage && <p style={{ color: '#0f5a62', fontWeight: 600 }}>{infoMessage}</p>}
+      {infoMessage && <div className="ops-toast">{infoMessage}</div>}
 
       {tab === 'intents' && (
         <div style={{ overflowX: 'auto' }}>

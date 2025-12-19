@@ -394,6 +394,15 @@ header.header {
 .ops-file-input-hidden {
   display: none;
 }
+.ops-toast {
+  background: #d7f2e3;
+  border: 1px solid #b8e6cb;
+  color: #0a7a4b;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin: 8px 0;
+}
 
 
 
