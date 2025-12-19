@@ -20,8 +20,18 @@ const logOps = (...args) => {
   } catch (_) {}
 };
 
+const OPS_TAB_KEY = 'ops_last_tab';
+const OPS_SCROLL_KEY = 'ops_scroll_y';
+
 const AdminOperations = () => {
-  const [tab, setTab] = useState('intents');
+  const [tab, setTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem(OPS_TAB_KEY);
+      return saved || 'intents';
+    } catch (_) {
+      return 'intents';
+    }
+  });
   const [intents, setIntents] = useState([]);
   const [borrowerIntents, setBorrowerIntents] = useState([]);
   const [payouts, setPayouts] = useState([]);
@@ -613,8 +623,33 @@ const AdminOperations = () => {
   useEffect(() => {
     refreshAll();
     const interval = setInterval(() => { refreshAll(); }, 300000); // auto refresh cada 5min
-    return () => clearInterval(interval);
+    // restaurar scroll de la última visita
+    try {
+      const savedY = Number(sessionStorage.getItem(OPS_SCROLL_KEY) || 0);
+      if (!Number.isNaN(savedY) && savedY > 0) {
+        setTimeout(() => { window.scrollTo(0, savedY); }, 50);
+      }
+    } catch (_) {}
+    const onScroll = () => {
+      try {
+        sessionStorage.setItem(OPS_SCROLL_KEY, String(window.scrollY || 0));
+      } catch (_) {}
+    };
+    window.addEventListener('scroll', onScroll);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('scroll', onScroll);
+      try {
+        sessionStorage.setItem(OPS_SCROLL_KEY, String(window.scrollY || 0));
+      } catch (_) {}
+    };
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(OPS_TAB_KEY, tab);
+    } catch (_) {}
+  }, [tab]);
 
   const isNewReceipt = (intent) => {
     if (!intent?.receipt_signed_url || !intent?.updated_at) return false;
