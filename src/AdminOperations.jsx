@@ -694,7 +694,7 @@ const AdminOperations = () => {
         <TabButton active={tab === 'review'} onClick={() => setTab('review')}>Por conciliar</TabButton>
         <TabButton active={tab === 'disbursements'} onClick={() => setTab('disbursements')}>Desembolso dirigido</TabButton>
         <TabButton active={tab === 'borrower'} onClick={() => setTab('borrower')}>Pagos de prestatarios</TabButton>
-        <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Payouts a inversionistas</TabButton>
+        <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Pagos a inversionistas</TabButton>
         <button className="btn btn--secondary" onClick={refreshAll} disabled={loading}>Refrescar</button>
         {lastRefreshed && (
           <span style={{ color: '#55747b', fontSize: '0.9rem' }}>
@@ -953,7 +953,7 @@ const AdminOperations = () => {
       {tab === 'payouts' && (
         <div style={{ overflowX: 'auto' }}>
           <div style={{ marginBottom: 10, padding: 10, border: '1px solid #d9f0f0', borderRadius: 10, background: '#f7fbfc' }}>
-            <strong>Payouts pendientes por oportunidad</strong>
+            <strong>Pagos pendientes a inversionistas por oportunidad</strong>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
               <label className="ops-checkbox">
                 <input type="checkbox" checked={showPendingOnly} onChange={(e) => setShowPendingOnly(e.target.checked)} />
