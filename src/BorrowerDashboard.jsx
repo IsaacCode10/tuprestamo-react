@@ -490,6 +490,8 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const nextIntent = nextPending?.intent || null;
   const nextIntentAmount = cuotaTotal || nextIntent?.expected_amount || nextPending?.payment || 0;
   const nextIntentDate = nextIntent?.due_date || nextPending?.due_date;
+  const totalCuotas = schedule.length;
+  const currentCuotaNumber = nextPending ? (schedule.findIndex((row) => row === nextPending) + 1) : totalCuotas;
 
   return (
     <div className="borrower-dashboard borrower-offer-view">
@@ -571,6 +573,10 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 <div>
               <div style={{ fontSize: 14, color: '#385b64' }}>Fecha de vencimiento</div>
               <div style={{ fontWeight: 700, fontSize: 18 }}>{nextIntentDate ? formatDate(nextIntentDate) : 'Se generará pronto'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: '#385b64' }}>Número de cuota</div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>{totalCuotas ? `Cuota #${currentCuotaNumber}/${totalCuotas}` : 'N/D'}</div>
             </div>
             <div>
               <div style={{ fontSize: 14, color: '#385b64' }}>Monto de la cuota</div>
