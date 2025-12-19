@@ -909,7 +909,7 @@ const AdminOperations = () => {
                                 <>
                                   <span style={{ color: '#888' }}>Sin comprobante</span>
                                   <div style={{ marginTop: 6 }}>
-                                    <input type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
+                                    <input className="ops-file-input" type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
                                     <div className="muted" style={{ marginTop: 4 }}>Solo si Ops lo recibe por otro canal</div>
                                   </div>
                                 </>
@@ -941,7 +941,7 @@ const AdminOperations = () => {
           <div style={{ marginBottom: 10, padding: 10, border: '1px solid #d9f0f0', borderRadius: 10, background: '#f7fbfc' }}>
             <strong>Payouts pendientes por oportunidad</strong>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <label className="ops-checkbox">
                 <input type="checkbox" checked={showPendingOnly} onChange={(e) => setShowPendingOnly(e.target.checked)} />
                 Ver solo pendientes (lista rápida)
               </label>
@@ -1048,7 +1048,7 @@ const AdminOperations = () => {
                                 <span style={{ color: '#888' }}>Sin comprobante</span>
                               )}
                               <div style={{ marginTop: 6 }}>
-                                <input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
+                                <input className="ops-file-input" type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
                               </div>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -1100,7 +1100,7 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {d.comprobante_url ? <a href={d.comprobante_signed_url || d.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante</a> : <span className="muted">Sin comprobante</span>}
-                      <input type="file" accept=".pdf,image/*" onChange={(e) => uploadDisbReceiptImmediate(d, e.target.files?.[0] || null)} />
+                      <input className="ops-file-input" type="file" accept=".pdf,image/*" onChange={(e) => uploadDisbReceiptImmediate(d, e.target.files?.[0] || null)} />
                       {d.contract_url ? (
                         <a href={d.contract_signed_url || d.contract_url} target="_blank" rel="noreferrer">Contrato generado</a>
                       ) : (

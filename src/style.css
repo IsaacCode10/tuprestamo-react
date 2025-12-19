@@ -360,6 +360,33 @@ header.header {
 .ops-filter-input {
   font-weight: 500;
 }
+.ops-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+.ops-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #26c2b2;
+}
+.ops-file-input {
+  padding: 8px 10px;
+  border: 1px dashed #cde3e6;
+  border-radius: 8px;
+  background: #f7fbfc;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+}
+.ops-file-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(38, 194, 178, 0.2);
+  border-color: #26c2b2;
+}
 
 
 
