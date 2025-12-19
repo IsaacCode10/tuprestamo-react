@@ -37,6 +37,7 @@ const AdminOperations = () => {
   const [payouts, setPayouts] = useState([]);
   const [disbursements, setDisbursements] = useState([]);
   const [investorMap, setInvestorMap] = useState({});
+  const [borrowerMap, setBorrowerMap] = useState({});
   const [bankMap, setBankMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -330,6 +331,24 @@ const AdminOperations = () => {
       return { ...r, receipt_signed_url };
     }));
     setBorrowerIntents(withSigned);
+    // Map de prestatarios para mostrar nombre/email legible
+    const borrowerIds = Array.from(new Set((data || []).map((r) => r.borrower_id).filter(Boolean)));
+    if (borrowerIds.length > 0) {
+      try {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, nombre_completo, email')
+          .in('id', borrowerIds);
+        if (profs) {
+          const map = {};
+          profs.forEach((p) => {
+            const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
+            map[p.id] = label || shortId(p.id);
+          });
+          setBorrowerMap(map);
+        }
+      } catch (_) {}
+    }
     setLoading(false);
   };
 
@@ -686,6 +705,19 @@ const AdminOperations = () => {
     }
   };
 
+  const shortId = (id) => {
+    if (!id) return 'n/d';
+    const str = String(id);
+    if (str.length <= 8) return str;
+    return `${str.slice(0, 4)}…${str.slice(-4)}`;
+  };
+
+  const userLabel = (id, map) => {
+    if (!id) return 'n/d';
+    if (map && map[id]) return map[id];
+    return shortId(id);
+  };
+
   return (
     <div className="admin-ops" style={{ maxWidth: 1200, margin: '0 auto', padding: 16 }}>
       <h2>Operaciones</h2>
@@ -732,7 +764,7 @@ const AdminOperations = () => {
                   <tr key={i.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{investorMap[i.investor_id] || i.investor_id}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{userLabel(i.investor_id, investorMap)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
@@ -806,7 +838,7 @@ const AdminOperations = () => {
                   <tr key={i.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{investorMap[i.investor_id] || i.investor_id}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{userLabel(i.investor_id, investorMap)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
@@ -875,7 +907,7 @@ const AdminOperations = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, gap: 10 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <div style={{ fontWeight: 700, color: '#0f5a62' }}>Oportunidad {g.opportunity_id}</div>
-                    <div className="muted">Prestatario: {g.borrower_id || 'n/d'}</div>
+                    <div className="muted">Prestatario: {userLabel(g.borrower_id, borrowerMap)}</div>
                     <div className="muted">
                       Pendientes: {g.pendingCount}/{g.totalCount} · Monto pendiente: {formatMoney(g.pendingAmount)}
                     </div>
@@ -1033,7 +1065,7 @@ const AdminOperations = () => {
                           <tr key={p.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                              {investorMap[p.investor_id] || p.investor_id}
+                              {userLabel(p.investor_id, investorMap)}
                               {bankMap[p.investor_id] && (
                                 <div className="muted" style={{ marginTop: 2 }}>
                                   {bankMap[p.investor_id].nombre_banco || 'Banco n/d'} · CTA {bankMap[p.investor_id].numero_cuenta || 'n/d'}
