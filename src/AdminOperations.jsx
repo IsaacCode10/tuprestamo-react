@@ -77,6 +77,13 @@ const AdminOperations = () => {
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
   const borrowerGroups = useMemo(() => {
     const search = borrowerSearch.trim().toLowerCase();
+    // Mapa de orden real por cuota (sin depender del filtro)
+    const orderMap = {};
+    borrowerIntents
+      .slice()
+      .sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0))
+      .forEach((intent, idx) => { orderMap[intent.id] = idx + 1; });
+
     const map = {};
     borrowerIntents.forEach((i) => {
       const statusLower = (i.status || '').toLowerCase();
@@ -98,7 +105,7 @@ const AdminOperations = () => {
         };
       }
       const group = map[i.opportunity_id];
-      group.intents.push(i);
+      group.intents.push({ ...i, orderNumber: orderMap[i.id] || (group.intents.length + 1) });
       group.totalCount += 1;
       const isPending = statusLower === 'pending';
       if (isPending) {
@@ -946,7 +953,7 @@ const AdminOperations = () => {
                         {g.intents.map((i, idx) => (
                           <tr key={i.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                              Cuota #{idx + 1}
+                              Cuota #{i.orderNumber || (idx + 1)}
                               <div className="muted">ID {i.id}</div>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatDateShort(i.due_date)}</td>
