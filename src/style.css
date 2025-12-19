@@ -373,19 +373,26 @@ header.header {
   height: 16px;
   accent-color: #26c2b2;
 }
-.ops-file-input {
-  padding: 8px 10px;
-  border: 1px dashed #cde3e6;
-  border-radius: 8px;
-  background: #f7fbfc;
+.ops-file-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: var(--white);
+  border: 2px solid var(--primary-color);
   color: var(--primary-color);
+  padding: 8px 14px;
+  border-radius: 8px;
   font-weight: 600;
   font-family: 'Inter', sans-serif;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
-.ops-file-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(38, 194, 178, 0.2);
-  border-color: #26c2b2;
+.ops-file-upload-label:hover {
+  background: var(--primary-color);
+  color: var(--white);
+}
+.ops-file-input-hidden {
+  display: none;
 }
 
 

@@ -909,7 +909,10 @@ const AdminOperations = () => {
                                 <>
                                   <span style={{ color: '#888' }}>Sin comprobante</span>
                                   <div style={{ marginTop: 6 }}>
-                                    <input className="ops-file-input" type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
+                                    <label className="ops-file-upload-label">
+                                      <input className="ops-file-input-hidden" type="file" accept=".pdf,image/*" onChange={(e) => setBorrowerReceiptFiles(prev => ({ ...prev, [i.id]: e.target.files?.[0] || null }))} />
+                                      Subir comprobante
+                                    </label>
                                     <div className="muted" style={{ marginTop: 4 }}>Solo si Ops lo recibe por otro canal</div>
                                   </div>
                                 </>
@@ -1048,7 +1051,10 @@ const AdminOperations = () => {
                                 <span style={{ color: '#888' }}>Sin comprobante</span>
                               )}
                               <div style={{ marginTop: 6 }}>
-                                <input className="ops-file-input" type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
+                                <label className="ops-file-upload-label">
+                                  <input className="ops-file-input-hidden" type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))} />
+                                  Subir comprobante
+                                </label>
                               </div>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -1100,7 +1106,10 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {d.comprobante_url ? <a href={d.comprobante_signed_url || d.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante</a> : <span className="muted">Sin comprobante</span>}
-                      <input className="ops-file-input" type="file" accept=".pdf,image/*" onChange={(e) => uploadDisbReceiptImmediate(d, e.target.files?.[0] || null)} />
+                      <label className="ops-file-upload-label">
+                        <input className="ops-file-input-hidden" type="file" accept=".pdf,image/*" onChange={(e) => uploadDisbReceiptImmediate(d, e.target.files?.[0] || null)} />
+                        Subir comprobante
+                      </label>
                       {d.contract_url ? (
                         <a href={d.contract_signed_url || d.contract_url} target="_blank" rel="noreferrer">Contrato generado</a>
                       ) : (
