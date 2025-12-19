@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile.js';
 import { trackEvent } from '@/analytics.js';
@@ -10,26 +10,26 @@ import Footer from '@/components/Footer.jsx';
 import LandingPage from '@/components/LandingPage.jsx';
 import CalculatorPage from '@/CalculatorPage.jsx'; // <-- NUEVA PÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂGINA
 import Auth from '@/Auth.jsx';
-import AdminDashboard from '@/AdminDashboard.jsx';
-import InvestorDashboard from '@/InvestorDashboard.jsx';
-import MyInvestmentsList from '@/MyInvestmentsList.jsx';
-import InvestorVerification from './InvestorVerification.jsx';
-import InvestorManagementDashboard from '@/InvestorManagementDashboard.jsx';
-import Opportunities from '@/Opportunities.jsx';
-import OpportunityDetail from '@/OpportunityDetail.jsx';
-import ConfirmAndSetPassword from '@/ConfirmAndSetPassword.jsx';
-import InvestorFAQ from '@/InvestorFAQ.jsx';
-import InvestorCalculator from '@/InvestorCalculator.jsx';
-import LegalTerms from '@/LegalTerms.jsx';
-import PrivacyPolicy from '@/PrivacyPolicy.jsx';
-import InvestorProfile from '@/InvestorProfile.jsx';
-import BorrowerDashboard from '@/BorrowerDashboard.jsx';
-import BorrowerActivateAccount from '@/BorrowerActivateAccount.jsx';
-import RiskAnalystDashboard from '@/RiskAnalystDashboard.jsx';
-import Profile from './Profile.jsx';
-import NotAvailable from './NotAvailable.jsx'; // <-- IMPORTAMOS LA NUEVA PÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂGINA
-import AdminOperations from '@/AdminOperations.jsx';
-import BorrowerLayout from '@/layouts/BorrowerLayout.jsx';
+const AdminDashboard = lazy(() => import('@/AdminDashboard.jsx'));
+const InvestorDashboard = lazy(() => import('@/InvestorDashboard.jsx'));
+const MyInvestmentsList = lazy(() => import('@/MyInvestmentsList.jsx'));
+const InvestorVerification = lazy(() => import('./InvestorVerification.jsx'));
+const InvestorManagementDashboard = lazy(() => import('@/InvestorManagementDashboard.jsx'));
+const Opportunities = lazy(() => import('@/Opportunities.jsx'));
+const OpportunityDetail = lazy(() => import('@/OpportunityDetail.jsx'));
+const ConfirmAndSetPassword = lazy(() => import('@/ConfirmAndSetPassword.jsx'));
+const InvestorFAQ = lazy(() => import('@/InvestorFAQ.jsx'));
+const InvestorCalculator = lazy(() => import('@/InvestorCalculator.jsx'));
+const LegalTerms = lazy(() => import('@/LegalTerms.jsx'));
+const PrivacyPolicy = lazy(() => import('@/PrivacyPolicy.jsx'));
+const InvestorProfile = lazy(() => import('@/InvestorProfile.jsx'));
+const BorrowerDashboard = lazy(() => import('@/BorrowerDashboard.jsx'));
+const BorrowerActivateAccount = lazy(() => import('@/BorrowerActivateAccount.jsx'));
+const RiskAnalystDashboard = lazy(() => import('@/RiskAnalystDashboard.jsx'));
+const Profile = lazy(() => import('./Profile.jsx'));
+const NotAvailable = lazy(() => import('./NotAvailable.jsx')); // <-- IMPORTAMOS LA NUEVA PÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂGINA
+const AdminOperations = lazy(() => import('@/AdminOperations.jsx'));
+const BorrowerLayout = lazy(() => import('@/layouts/BorrowerLayout.jsx'));
 
 // Componente "Guardia" especÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­fico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
@@ -186,7 +186,8 @@ function App() {
     <div className="App">
       {!isHeaderHidden && <Header />}
       <main>
-        <Routes>
+        <Suspense fallback={<div>Cargando...</div>}>
+          <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/calculadora" element={<CalculatorPage />} />
           <Route path="/no-disponible" element={<NotAvailable />} /> {/* <-- AÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ADIMOS LA RUTA */}
@@ -281,7 +282,8 @@ function App() {
             <Route path="/perfil" element={<Profile />} />
           </Route>
           <Route path="/activar-cuenta-prestatario" element={<BorrowerActivateAccount />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </main>
       <Footer isDashboard={isDashboardFooterMinimal} />
     </div>
