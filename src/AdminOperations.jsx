@@ -1067,7 +1067,7 @@ const AdminOperations = () => {
                     </div>
                   </div>
                   <button className="btn" onClick={() => togglePayoutGroup(g.opportunity_id)}>
-                    {expanded ? 'Ocultar payouts' : 'Ver payouts'}
+                    {expanded ? 'Ocultar pagos' : 'Ver pagos'}
                   </button>
                 </div>
                 {expanded && (
