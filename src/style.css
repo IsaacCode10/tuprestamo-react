@@ -327,6 +327,40 @@ header.header {
   color: var(--white);
 }
 
+.ops-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.ops-filter-control {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+.ops-filter-control select,
+.ops-filter-control input {
+  padding: 8px 10px;
+  border: 1px solid #cde3e6;
+  border-radius: 8px;
+  background: #f7fbfc;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  min-width: 220px;
+}
+.ops-filter-control select:focus,
+.ops-filter-control input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(38, 194, 178, 0.2);
+  border-color: #26c2b2;
+}
+.ops-filter-input {
+  font-weight: 500;
+}
+
 
 
 /* ========================

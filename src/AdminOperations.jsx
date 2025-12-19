@@ -831,8 +831,8 @@ const AdminOperations = () => {
 
       {tab === 'borrower' && (
         <div style={{ overflowX: 'auto' }}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+          <div className="ops-filters">
+            <label className="ops-filter-control">
               <span className="muted">Estado</span>
               <select value={borrowerStatusFilter} onChange={(e) => setBorrowerStatusFilter(e.target.value)}>
                 <option value="pending">Pendientes</option>
@@ -841,14 +841,14 @@ const AdminOperations = () => {
                 <option value="all">Todos</option>
               </select>
             </label>
-            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+            <label className="ops-filter-control">
               <span className="muted">Buscar (op o prestatario)</span>
               <input
                 type="text"
                 value={borrowerSearch}
                 onChange={(e) => setBorrowerSearch(e.target.value)}
                 placeholder="61, correo o UUID prestatario"
-                style={{ minWidth: 220 }}
+                className="ops-filter-input"
               />
             </label>
           </div>
@@ -960,8 +960,8 @@ const AdminOperations = () => {
               </ul>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+          <div className="ops-filters" style={{ marginBottom: 12 }}>
+            <label className="ops-filter-control">
               <span className="muted">Estado</span>
               <select value={payoutStatusFilter} onChange={(e) => setPayoutStatusFilter(e.target.value)}>
                 <option value="pending">Pendientes</option>
@@ -970,14 +970,14 @@ const AdminOperations = () => {
                 <option value="all">Todos</option>
               </select>
             </label>
-            <label style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+            <label className="ops-filter-control">
               <span className="muted">Buscar (op o inversionista)</span>
               <input
                 type="text"
                 value={payoutSearch}
                 onChange={(e) => setPayoutSearch(e.target.value)}
                 placeholder="61, correo o UUID inversionista"
-                style={{ minWidth: 220 }}
+                className="ops-filter-input"
               />
             </label>
           </div>
