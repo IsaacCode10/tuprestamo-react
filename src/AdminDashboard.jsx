@@ -25,6 +25,13 @@ const formatDate = (value) => {
   return date.toLocaleDateString();
 };
 
+const GRACE_DAYS = 3;
+
+const formatPercent = (value) => {
+  const num = Number(value || 0);
+  return `${num.toFixed(1)}%`;
+};
+
 const PendingInvestments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -203,6 +210,10 @@ const AdminDashboard = () => {
   const [fuenteChecks, setFuenteChecks] = useState([]);
   const [fuenteLoading, setFuenteLoading] = useState(false);
   const [fuenteError, setFuenteError] = useState(null);
+  const [moraLoading, setMoraLoading] = useState(false);
+  const [moraError, setMoraError] = useState(null);
+  const [moraGlobal, setMoraGlobal] = useState({ cuotasVencidas: 0, cuotasTotales: 0, montoVencido: 0, montoTotal: 0, buckets: { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 } });
+  const [moraPorOpp, setMoraPorOpp] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
@@ -214,6 +225,48 @@ const AdminDashboard = () => {
     const lower = state.toLowerCase().trim();
     if (lower === 'documentos-en-revision') return 'pre-aprobado';
     return lower;
+  };
+
+  const computeMora = (rows) => {
+    const today = new Date();
+    const graceMs = GRACE_DAYS * 24 * 60 * 60 * 1000;
+    const global = { cuotasVencidas: 0, cuotasTotales: 0, montoVencido: 0, montoTotal: 0, buckets: { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 } };
+    const byOpp = {};
+    rows.forEach((r) => {
+      const status = (r.status || '').toLowerCase();
+      const amount = Number(r.expected_amount || 0);
+      global.cuotasTotales += 1;
+      global.montoTotal += amount;
+      if (!r.due_date || status === 'paid') return;
+      const due = new Date(r.due_date).getTime();
+      const overdueMs = today.getTime() - due - graceMs;
+      if (overdueMs <= 0) return;
+      const daysOverdue = Math.floor(overdueMs / (24 * 60 * 60 * 1000));
+      global.cuotasVencidas += 1;
+      global.montoVencido += amount;
+      let bucket = '0-30';
+      if (daysOverdue > 90) bucket = '90+';
+      else if (daysOverdue > 60) bucket = '61-90';
+      else if (daysOverdue > 30) bucket = '31-60';
+      global.buckets[bucket] += amount;
+      const key = r.opportunity_id || 's/n';
+      if (!byOpp[key]) {
+        byOpp[key] = { opportunity_id: key, cuotasTotales: 0, cuotasVencidas: 0, montoTotal: 0, montoVencido: 0, daysOverdueSum: 0 };
+      }
+      byOpp[key].cuotasTotales += 1;
+      byOpp[key].cuotasVencidas += 1;
+      byOpp[key].montoTotal += amount;
+      byOpp[key].montoVencido += amount;
+      byOpp[key].daysOverdueSum += daysOverdue;
+    });
+    const moraList = Object.values(byOpp).map((o) => ({
+      ...o,
+      tasaCuotas: o.cuotasTotales ? (o.cuotasVencidas / o.cuotasTotales) * 100 : 0,
+      tasaMonto: o.montoTotal ? (o.montoVencido / o.montoTotal) * 100 : 0,
+      diasPromedio: o.cuotasVencidas ? o.daysOverdueSum / o.cuotasVencidas : 0,
+    })).sort((a, b) => b.montoVencido - a.montoVencido);
+    setMoraGlobal(global);
+    setMoraPorOpp(moraList);
   };
 
   const fetchDashboardData = async () => {
@@ -434,12 +487,30 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchMora = async () => {
+    setMoraLoading(true);
+    setMoraError(null);
+    try {
+      const { data, error } = await supabase
+        .from('borrower_payment_intents')
+        .select('id, opportunity_id, expected_amount, status, due_date');
+      if (error) throw error;
+      computeMora(data || []);
+    } catch (err) {
+      console.error('Error cargando mora', err);
+      setMoraError('No pudimos cargar la mora.');
+    } finally {
+      setMoraLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchLedger();
   }, [ledgerMonth]);
 
   useEffect(() => {
     fetchFuenteChecks();
+    fetchMora();
   }, []);
 
   const exportLedgerCsv = () => {
@@ -497,11 +568,11 @@ const AdminDashboard = () => {
       
       {loading ? <p>Cargando métricas...</p> : (
         <>
-            <div className="kpi-dashboard">
-              <KpiCard title="Solicitudes Hoy" value={stats.solicitudesHoy} />
-              <KpiCard title="Monto Pre-Aprobado Hoy" value={formatCurrency(stats.montoPreAprobadoHoy)} />
-              <KpiCard title="Total Pre-Aprobadas" value={stats.totalPreAprobados} type="total-approved" />
-              <KpiCard title="Total Rechazadas" value={stats.totalRechazados} type="total-rejected" />
+        <div className="kpi-dashboard">
+          <KpiCard title="Solicitudes Hoy" value={stats.solicitudesHoy} />
+          <KpiCard title="Monto Pre-Aprobado Hoy" value={formatCurrency(stats.montoPreAprobadoHoy)} />
+          <KpiCard title="Total Pre-Aprobadas" value={stats.totalPreAprobados} type="total-approved" />
+          <KpiCard title="Total Rechazadas" value={stats.totalRechazados} type="total-rejected" />
               <KpiCard
                 title="Fondeadas (mes)"
                 value={fundingStats.monthCount}
@@ -630,8 +701,65 @@ const AdminDashboard = () => {
             </div>
           )}
         </div>
-        </>
-      )}
+        <div className="card" style={{ marginTop: 20 }}>
+          <h3>Mora (cuotas vencidas)</h3>
+          {moraLoading ? <p>Cargando mora...</p> : moraError ? <p style={{ color: 'red' }}>{moraError}</p> : (
+            <>
+              <div className="kpi-dashboard" style={{ marginBottom: 10 }}>
+                <KpiCard
+                  title="Mora por monto"
+                  value={formatPercent(moraGlobal.montoTotal ? (moraGlobal.montoVencido / moraGlobal.montoTotal) * 100 : 0)}
+                  subtitle={`${formatCurrency(moraGlobal.montoVencido)} vencido de ${formatCurrency(moraGlobal.montoTotal)}`}
+                  type="secondary"
+                />
+                <KpiCard
+                  title="Mora por cuotas"
+                  value={formatPercent(moraGlobal.cuotasTotales ? (moraGlobal.cuotasVencidas / moraGlobal.cuotasTotales) * 100 : 0)}
+                  subtitle={`${moraGlobal.cuotasVencidas} vencidas de ${moraGlobal.cuotasTotales}`}
+                />
+                <KpiCard
+                  title="Buckets (monto vencido)"
+                  value=""
+                  subtitle={`0-30: ${formatCurrency(moraGlobal.buckets?.['0-30'] || 0)} · 31-60: ${formatCurrency(moraGlobal.buckets?.['31-60'] || 0)} · 61-90: ${formatCurrency(moraGlobal.buckets?.['61-90'] || 0)} · 90+: ${formatCurrency(moraGlobal.buckets?.['90+'] || 0)}`}
+                  type="total-rejected"
+                />
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cuotas vencidas / totales</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto vencido / total</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>% Mora (cuotas)</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>% Mora (monto)</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Días atraso prom.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {moraPorOpp.map((row) => (
+                      <tr key={row.opportunity_id}>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>Op {row.opportunity_id}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{row.cuotasVencidas} / {row.cuotasTotales}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.montoVencido)} / {formatCurrency(row.montoTotal)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatPercent(row.tasaCuotas)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatPercent(row.tasaMonto)}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{row.diasPromedio.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                    {moraPorOpp.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>Sin cuotas vencidas</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </>
+    )}
 
       <hr />
 
