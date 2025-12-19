@@ -675,6 +675,17 @@ const AdminOperations = () => {
     }
   };
 
+  const formatStatusLabel = (status) => {
+    const s = (status || '').toString().trim().toLowerCase();
+    switch (s) {
+      case 'pending': return 'Pendiente';
+      case 'paid': return 'Pagado';
+      case 'expired': return 'Expirado';
+      case 'unmatched': return 'Por conciliar';
+      default: return status || '—';
+    }
+  };
+
   return (
     <div className="admin-ops" style={{ maxWidth: 1200, margin: '0 auto', padding: 16 }}>
       <h2>Operaciones</h2>
@@ -723,7 +734,7 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{investorMap[i.investor_id] || i.investor_id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     {i.receipt_signed_url ? (
@@ -797,7 +808,7 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{investorMap[i.investor_id] || i.investor_id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '—'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                       {i.receipt_signed_url ? (
@@ -898,7 +909,7 @@ const AdminOperations = () => {
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatDateShort(i.due_date)}</td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.status}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                               {i.receipt_signed_url ? (
                                 <>
@@ -1041,7 +1052,7 @@ const AdminOperations = () => {
                                 color: (p.status || '').toLowerCase() === 'paid' ? '#0a7a4b' : '#a85f0a',
                                 fontWeight: 700,
                               }}>
-                                {p.status}
+                                {formatStatusLabel(p.status)}
                               </span>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
