@@ -24,4 +24,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    // Evita warnings por chunks grandes; los splits ya están con lazy load
+    chunkSizeWarningLimit: 1000,
+  },
 })
