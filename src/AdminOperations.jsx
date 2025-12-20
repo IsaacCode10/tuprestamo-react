@@ -140,6 +140,8 @@ const AdminOperations = () => {
           totalCount: 0,
           pendingCount: 0,
           pendingAmount: 0,
+          bank: null,
+          account: null,
         };
       }
       const group = map[p.opportunity_id];
@@ -149,11 +151,20 @@ const AdminOperations = () => {
         group.pendingCount += 1;
         group.pendingAmount += Number(p.amount || 0);
       }
+      const bankInfo = bankMap[p.investor_id];
+      if (bankInfo) {
+        const bankLabel = bankInfo.nombre_banco || null;
+        const accountLabel = bankInfo.numero_cuenta || null;
+        if (!group.bank && bankLabel) group.bank = bankLabel;
+        if (!group.account && accountLabel) group.account = accountLabel;
+        if (group.bank && bankLabel && group.bank !== bankLabel) group.bank = null;
+        if (group.account && accountLabel && group.account !== accountLabel) group.account = null;
+      }
     });
     return Object.values(map)
       .map((g) => ({ ...g, payouts: [...g.payouts].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) }))
       .sort((a, b) => Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0));
-  }, [payouts, payoutStatusFilter, payoutSearch, investorMap, showPendingOnly]);
+  }, [payouts, payoutStatusFilter, payoutSearch, investorMap, showPendingOnly, bankMap]);
 
   const exportPendingCsv = () => {
     const rows = payouts
@@ -1028,11 +1039,11 @@ const AdminOperations = () => {
                 ))}
               </ul>
             )}
-          </div>
-          <div className="ops-filters" style={{ marginBottom: 12 }}>
-            <label className="ops-filter-control">
-              <span className="muted">Estado</span>
-              <select value={payoutStatusFilter} onChange={(e) => setPayoutStatusFilter(e.target.value)}>
+        </div>
+        <div className="ops-filters" style={{ marginBottom: 12 }}>
+          <label className="ops-filter-control">
+            <span className="muted">Estado</span>
+            <select value={payoutStatusFilter} onChange={(e) => setPayoutStatusFilter(e.target.value)}>
                 <option value="pending">Pendientes</option>
                 <option value="paid">Pagados</option>
                 <option value="expired">Expirados</option>
@@ -1050,33 +1061,49 @@ const AdminOperations = () => {
               />
             </label>
           </div>
-          {payoutGroups.length === 0 && (
-            <div style={{ padding: 12, textAlign: 'center', color: '#55747b', border: '1px dashed #d9e5e8', borderRadius: 10 }}>
-              No hay payouts que coincidan con el filtro.
-            </div>
-          )}
-          {payoutGroups.map((g) => {
-            const expanded = !!expandedPayouts[g.opportunity_id];
-            return (
-              <div key={g.opportunity_id} style={{ border: '1px solid #e5f0f2', borderRadius: 10, marginBottom: 12, background: '#fbfdfe' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, gap: 10 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ fontWeight: 700, color: '#0f5a62' }}>Oportunidad {g.opportunity_id}</div>
-                    <div className="muted">
-                      Pendientes: {g.pendingCount}/{g.totalCount} · Neto pendiente: {formatMoney(g.pendingAmount)}
-                    </div>
-                  </div>
-                  <button className="btn" onClick={() => togglePayoutGroup(g.opportunity_id)}>
-                    {expanded ? 'Ocultar pagos' : 'Ver pagos'}
-                  </button>
+      {payoutGroups.length === 0 && (
+        <div style={{ padding: 12, textAlign: 'center', color: '#55747b', border: '1px dashed #d9e5e8', borderRadius: 10 }}>
+          No hay payouts que coincidan con el filtro.
+        </div>
+      )}
+      {payoutGroups.map((g) => {
+        const expanded = !!expandedPayouts[g.opportunity_id];
+        const bankLabel = g.bank && g.account ? `${g.bank} · CTA ${g.account}` : null;
+        return (
+          <div key={g.opportunity_id} style={{ border: '1px solid #e5f0f2', borderRadius: 10, marginBottom: 12, background: '#fbfdfe' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ fontWeight: 700, color: '#0f5a62' }}>Oportunidad {g.opportunity_id}</div>
+                <div className="muted">
+                  Pendientes: {g.pendingCount}/{g.totalCount} · Neto pendiente: {formatMoney(g.pendingAmount)}
                 </div>
-                {expanded && (
-                  <div style={{ padding: 10, borderTop: '1px solid #e5f0f2' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
-                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
+                {g.pendingCount > 0 && (
+                  <div className="muted" style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ background: '#ffe9cc', color: '#a85f0a', padding: '4px 10px', borderRadius: 999, fontWeight: 700 }}>
+                      Debes transferir {formatMoney(g.pendingAmount)} ({g.pendingCount} pago{g.pendingCount > 1 ? 's' : ''})
+                    </span>
+                    {bankLabel && (
+                      <span style={{ background: '#d4f4ef', color: '#0f5a62', padding: '4px 10px', borderRadius: 999 }}>
+                        Banco: {bankLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button className="btn" onClick={() => togglePayoutGroup(g.opportunity_id)}>
+                {expanded ? 'Ocultar pagos' : 'Ver pagos'}
+              </button>
+            </div>
+            {expanded && (
+              <div style={{ padding: 10, borderTop: '1px solid #e5f0f2' }}>
+                <div style={{ padding: '10px 12px', marginBottom: 10, borderRadius: 8, background: '#fff7ec', color: '#8a4b06' }}>
+                  Haz la transferencia y luego marca Pagado. {bankLabel ? `Banco/CTA: ${bankLabel}` : 'Revisa banco/CTA en cada fila antes de pagar.'}
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
                           <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto (bruto/neto)</th>
                           <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
                           <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
