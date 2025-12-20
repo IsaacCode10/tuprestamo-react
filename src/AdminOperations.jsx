@@ -166,24 +166,59 @@ const AdminOperations = () => {
       .sort((a, b) => Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0));
   }, [payouts, payoutStatusFilter, payoutSearch, investorMap, showPendingOnly, bankMap]);
 
-  const exportPendingCsv = () => {
-    const rows = payouts
-      .filter((p) => (p.status || '').toLowerCase() === 'pending')
-      .map((p) => {
-        const bank = bankMap[p.investor_id] || {};
-        const montoNeto = Number(p.amount || 0);
-        const montoBruto = montoNeto / 0.99;
-        return {
-          payout_id: p.id,
-          opportunity_id: p.opportunity_id,
-          investor_id: p.investor_id,
-          investor_nombre: investorMap[p.investor_id] || p.investor_id,
-          monto_bruto: montoBruto.toFixed(2),
-          monto_neto: montoNeto.toFixed(2),
-          nombre_banco: bank.nombre_banco || '',
-          numero_cuenta: bank.numero_cuenta || '',
-        };
-      });
+  const exportPendingCsv = async () => {
+    const pending = payouts.filter((p) => (p.status || '').toLowerCase() === 'pending');
+    const investorIds = Array.from(new Set(pending.map((p) => p.investor_id).filter(Boolean)));
+
+    let investorLabelMap = { ...investorMap };
+    let bankMapLocal = { ...bankMap };
+
+    // Cargar datos faltantes de perfiles si no están en el mapa
+    const missingInvestors = investorIds.filter((id) => !investorLabelMap[id]);
+    if (missingInvestors.length > 0) {
+      try {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, nombre_completo, email')
+          .in('id', missingInvestors);
+        if (profs) {
+          profs.forEach((p) => {
+            const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
+            investorLabelMap[p.id] = label || p.id;
+          });
+        }
+      } catch (_) {}
+    }
+
+    // Cargar datos faltantes de bancos si no están en el mapa
+    const missingBanks = investorIds.filter((id) => !bankMapLocal[id]);
+    if (missingBanks.length > 0) {
+      try {
+        const { data: banks } = await supabase
+          .from('cuentas_bancarias_inversionistas')
+          .select('user_id, nombre_banco, numero_cuenta')
+          .in('user_id', missingBanks);
+        if (banks) {
+          banks.forEach((b) => { bankMapLocal[b.user_id] = b; });
+        }
+      } catch (_) {}
+    }
+
+    const rows = pending.map((p) => {
+      const bank = bankMapLocal[p.investor_id] || {};
+      const montoNeto = Number(p.amount || 0);
+      const montoBruto = montoNeto / 0.99;
+      return {
+        payout_id: p.id,
+        opportunity_id: p.opportunity_id,
+        investor_id: p.investor_id,
+        investor_nombre: investorLabelMap[p.investor_id] || p.investor_id,
+        monto_bruto: montoBruto.toFixed(2),
+        monto_neto: montoNeto.toFixed(2),
+        nombre_banco: bank.nombre_banco || '',
+        numero_cuenta: bank.numero_cuenta || '',
+      };
+    });
     const headers = ['payout_id', 'opportunity_id', 'investor_id', 'investor_nombre', 'monto_bruto', 'monto_neto', 'nombre_banco', 'numero_cuenta'];
     const csv = [headers.join(',')]
       .concat(rows.map(r => headers.map(h => r[h]).join(',')))
