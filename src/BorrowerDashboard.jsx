@@ -569,28 +569,28 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
           {intentsError && <p style={{ color: 'red' }}>{intentsError}</p>}
           {!loadingIntents && !intentsError && (
             <>
-              <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'center' }}>
-                <div>
-              <div style={{ fontSize: 14, color: '#385b64' }}>Fecha de vencimiento</div>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{nextIntentDate ? formatDate(nextIntentDate) : 'Se generará pronto'}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: '#385b64' }}>Número de cuota</div>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{totalCuotas ? `Cuota #${currentCuotaNumber}/${totalCuotas}` : 'N/D'}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: '#385b64' }}>Monto de la cuota</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center', alignItems: 'flex-start', textAlign: 'center' }}>
+                <div style={{ minWidth: 180 }}>
+                  <div style={{ fontSize: 14, color: '#385b64' }}>Fecha de vencimiento</div>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>{nextIntentDate ? formatDate(nextIntentDate) : 'Se generará pronto'}</div>
+                </div>
+                <div style={{ minWidth: 180 }}>
+                  <div style={{ fontSize: 14, color: '#385b64' }}>Número de cuota</div>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>{totalCuotas ? `Cuota #${currentCuotaNumber}/${totalCuotas}` : 'N/D'}</div>
+                </div>
+                <div style={{ minWidth: 180 }}>
+                  <div style={{ fontSize: 14, color: '#385b64' }}>Monto de la cuota</div>
                   <div style={{ fontWeight: 700, fontSize: 18 }}>{formatMoney(nextIntentAmount)}</div>
                 </div>
-                <div>
+                <div style={{ minWidth: 180 }}>
                   <div style={{ fontSize: 14, color: '#385b64' }}>Estado</div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: '#0a7a4b' }}>{nextPending ? 'Pendiente' : 'Al día'}</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <button className={['btn', payMode === 'qr' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('qr')}>Pagar con QR</button>
-              <button className={['btn', payMode === 'transfer' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('transfer')}>Transferencia</button>
-            </div>
-          </div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: '#0a7a4b' }}>{nextPending ? 'Pendiente' : 'Al día'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', minWidth: 180 }}>
+                  <button className={['btn', payMode === 'qr' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('qr')}>Pagar con QR</button>
+                  <button className={['btn', payMode === 'transfer' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('transfer')}>Transferencia</button>
+                </div>
+              </div>
 
           <div style={{ padding: 12, borderRadius: 10, background: '#f7fbfc', border: '1px solid #a8ede6', display: 'grid', gap: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
