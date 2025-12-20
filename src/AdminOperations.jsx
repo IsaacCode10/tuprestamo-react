@@ -177,13 +177,14 @@ const AdminOperations = () => {
           payout_id: p.id,
           opportunity_id: p.opportunity_id,
           investor_id: p.investor_id,
-          monto_bruto: montoBruto,
-          monto_neto: montoNeto,
+          investor_nombre: investorMap[p.investor_id] || p.investor_id,
+          monto_bruto: montoBruto.toFixed(2),
+          monto_neto: montoNeto.toFixed(2),
           nombre_banco: bank.nombre_banco || '',
           numero_cuenta: bank.numero_cuenta || '',
         };
       });
-    const headers = ['payout_id', 'opportunity_id', 'investor_id', 'monto_bruto', 'monto_neto', 'nombre_banco', 'numero_cuenta'];
+    const headers = ['payout_id', 'opportunity_id', 'investor_id', 'investor_nombre', 'monto_bruto', 'monto_neto', 'nombre_banco', 'numero_cuenta'];
     const csv = [headers.join(',')]
       .concat(rows.map(r => headers.map(h => r[h]).join(',')))
       .join('\n');
