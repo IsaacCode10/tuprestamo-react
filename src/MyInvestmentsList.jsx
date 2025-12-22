@@ -130,6 +130,8 @@ const MyInvestmentsList = () => {
   }, []);
 
   const hasRows = useMemo(() => (rows || []).length > 0, [rows]);
+  const paidPayouts = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'paid'), [payouts]);
+  const pendingPayouts = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending'), [payouts]);
   const hasReviewNotice = useMemo(() => {
     return (rows || []).some((r) => {
       const intent = intentsMap.byOpportunity[r.opportunity_id];
@@ -237,8 +239,14 @@ const MyInvestmentsList = () => {
             </p>
           </div>
           <h3 style={{ marginTop: 24 }}>Cobros recibidos / próximos pagos</h3>
-          {payouts.length === 0 ? (
-            <p style={{ color: '#555' }}>{hasReviewNotice ? 'Recibimos tu comprobante. Te avisaremos cuando se acredite.' : 'Aún no registramos cobros de esta oportunidad. Te avisaremos cuando se acredite.'}</p>
+          {paidPayouts.length === 0 ? (
+            <p style={{ color: '#555' }}>
+              {pendingPayouts.length > 0
+                ? 'Tienes pagos pendientes de transferencia. Te avisaremos cuando se acrediten.'
+                : hasReviewNotice
+                  ? 'Recibimos tu comprobante. Te avisaremos cuando se acredite.'
+                  : 'Aún no registramos cobros acreditados. Te avisaremos cuando se acrediten.'}
+            </p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -252,17 +260,17 @@ const MyInvestmentsList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {payouts.map(p => {
+                  {paidPayouts.map(p => {
                     const o = oppsById[p.opportunity_id] || {};
                     const fecha = p.paid_at || p.created_at;
-                    const montoCobrado = p.paid_amount ?? p.expected_amount ?? p.amount ?? 0;
+                    const montoCobrado = p.paid_amount ?? p.amount ?? p.expected_amount ?? 0;
                     const signedReceipt = payoutSignedMap[p.id] || null;
                     return (
                       <tr key={p.id}>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>ID {p.opportunity_id || '-'}{o.monto ? ` · Bs. ${Number(o.monto).toLocaleString('es-BO')}` : ''}</td>
                         <td style={{ padding: 8, textAlign: 'right', borderBottom: '1px solid #f3f3f3' }}>Bs. {Number(montoCobrado).toLocaleString('es-BO')}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.status === 'paid' ? 'Pagado' : p.status === 'pending' ? 'Pendiente' : p.status || 'n/d'}</td>
+                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>Pagado</td>
                         <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button className="btn btn--primary" onClick={() => navigate('/oportunidades', { state: { prefillAmount: Number(montoCobrado) || undefined } })}>Reinvertir</button>
                           {signedReceipt && <a className="btn" href={signedReceipt} target="_blank" rel="noreferrer">Ver comprobante</a>}
@@ -274,6 +282,39 @@ const MyInvestmentsList = () => {
               </table>
             </div>
           )}
+          {pendingPayouts.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <h4 style={{ margin: '8px 0' }}>Pagos pendientes de transferencia</h4>
+              <p className="muted">Estos pagos están en proceso. Los verás como “Pagado” cuando Operaciones los marque.</p>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Fecha</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
+                      <th style={{ textAlign: 'right', padding: 8, borderBottom: '1px solid #eee' }}>Monto neto (Bs.)</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingPayouts.map((p) => {
+                      const o = oppsById[p.opportunity_id] || {};
+                      const fecha = p.created_at;
+                      const montoNeto = p.amount ?? p.expected_amount ?? 0;
+                      return (
+                        <tr key={`pending-${p.id}`}>
+                          <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>ID {p.opportunity_id || '-'}{o.monto ? ` · Bs. ${Number(o.monto).toLocaleString('es-BO')}` : ''}</td>
+                          <td style={{ padding: 8, textAlign: 'right', borderBottom: '1px solid #f3f3f3' }}>Bs. {Number(montoNeto).toLocaleString('es-BO')}</td>
+                          <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>Pendiente</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -283,12 +324,20 @@ const MyInvestmentsList = () => {
 
       {hasRows && (
       <div style={{ marginTop: 24 }}>
-          <h3>Próximas cuotas (tu parte)</h3>
-          <p style={{ color: '#55747b', marginTop: 4 }}>Cálculo prorrateado según tu inversión. Neto estima 1% de comisión.</p>
+          <h3>Próximos pagos (tu parte)</h3>
+          <p style={{ color: '#55747b', marginTop: 4 }}>Mostramos el neto real de los pagos generados. Si aún no se generó, verás el estimado prorrateado.</p>
           <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
             {rows.map((r) => {
               const o = oppsById[r.opportunity_id] || {};
-              const upcoming = investorSchedules[r.opportunity_id] || [];
+              const payoutsPend = pendingPayouts.filter((p) => p.opportunity_id === r.opportunity_id);
+              const upcoming = payoutsPend.length > 0
+                ? payoutsPend.map((p, idx) => ({
+                    installment_no: idx + 1,
+                    due_date: p.created_at || p.paid_at,
+                    payment_investor_bruto: p.amount ? Number(p.amount) / 0.99 : Number(p.expected_amount || 0),
+                    payment_investor_neto: p.amount ?? p.expected_amount ?? 0,
+                  }))
+                : (investorSchedules[r.opportunity_id] || []);
               const isFondeada = o?.saldo_pendiente != null ? o.saldo_pendiente <= 0 : false;
               if (!isFondeada || upcoming.length === 0) return null;
               return (
@@ -307,7 +356,7 @@ const MyInvestmentsList = () => {
                         <span style={{ fontWeight: 700 }}>{formatDate(cuota.due_date)}</span>
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ color: '#0f5a62', fontWeight: 700 }}>Bs. {Number(cuota.payment_investor_bruto || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                          <small style={{ color: '#55747b' }}>Neto est.: Bs. {Number(cuota.payment_investor_neto || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
+                          <small style={{ color: '#55747b' }}>Neto: Bs. {Number(cuota.payment_investor_neto || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
                         </div>
                       </div>
                     ))}
