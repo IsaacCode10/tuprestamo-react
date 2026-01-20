@@ -12,6 +12,12 @@ const TabButton = ({ active, onClick, children }) => (
 );
 
 const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const maskAccount = (value) => {
+  if (!value) return 'CTA n/d';
+  const raw = String(value).trim();
+  if (raw.length <= 4) return `CTA ${raw}`;
+  return `CTA ****${raw.slice(-4)}`;
+};
 
 const logOps = (...args) => {
   try {
@@ -22,6 +28,13 @@ const logOps = (...args) => {
 
 const OPS_TAB_KEY = 'ops_last_tab';
 const OPS_SCROLL_KEY = 'ops_scroll_y';
+const OPS_BORROWER_FILTER_KEY = 'ops_borrower_filter';
+const OPS_BORROWER_SEARCH_KEY = 'ops_borrower_search';
+const OPS_BORROWER_EXPANDED_KEY = 'ops_borrower_expanded';
+const OPS_PAYOUT_FILTER_KEY = 'ops_payout_filter';
+const OPS_PAYOUT_SEARCH_KEY = 'ops_payout_search';
+const OPS_PAYOUT_PENDING_ONLY_KEY = 'ops_payout_pending_only';
+const OPS_PAYOUT_EXPANDED_KEY = 'ops_payout_expanded';
 
 const AdminOperations = () => {
   const [tab, setTab] = useState(() => {
@@ -55,12 +68,50 @@ const AdminOperations = () => {
       return {};
     }
   });
-  const [borrowerStatusFilter, setBorrowerStatusFilter] = useState('pending');
-  const [borrowerSearch, setBorrowerSearch] = useState('');
-  const [expandedBorrower, setExpandedBorrower] = useState({});
-  const [payoutStatusFilter, setPayoutStatusFilter] = useState('pending');
-  const [payoutSearch, setPayoutSearch] = useState('');
-  const [expandedPayouts, setExpandedPayouts] = useState({});
+  const [borrowerStatusFilter, setBorrowerStatusFilter] = useState(() => {
+    try {
+      return sessionStorage.getItem(OPS_BORROWER_FILTER_KEY) || 'pending';
+    } catch (_) {
+      return 'pending';
+    }
+  });
+  const [borrowerSearch, setBorrowerSearch] = useState(() => {
+    try {
+      return sessionStorage.getItem(OPS_BORROWER_SEARCH_KEY) || '';
+    } catch (_) {
+      return '';
+    }
+  });
+  const [expandedBorrower, setExpandedBorrower] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(OPS_BORROWER_EXPANDED_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      return {};
+    }
+  });
+  const [payoutStatusFilter, setPayoutStatusFilter] = useState(() => {
+    try {
+      return sessionStorage.getItem(OPS_PAYOUT_FILTER_KEY) || 'pending';
+    } catch (_) {
+      return 'pending';
+    }
+  });
+  const [payoutSearch, setPayoutSearch] = useState(() => {
+    try {
+      return sessionStorage.getItem(OPS_PAYOUT_SEARCH_KEY) || '';
+    } catch (_) {
+      return '';
+    }
+  });
+  const [expandedPayouts, setExpandedPayouts] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(OPS_PAYOUT_EXPANDED_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      return {};
+    }
+  });
 
   const pendingPayoutTotals = useMemo(() => {
     const byOpp = {};
@@ -72,7 +123,14 @@ const AdminOperations = () => {
     });
     return byOpp;
   }, [payouts]);
-  const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const [showPendingOnly, setShowPendingOnly] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(OPS_PAYOUT_PENDING_ONLY_KEY);
+      return raw ? JSON.parse(raw) : false;
+    } catch (_) {
+      return false;
+    }
+  });
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
   const borrowerGroups = useMemo(() => {
@@ -734,6 +792,48 @@ const AdminOperations = () => {
     } catch (_) {}
   }, [tab]);
 
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_BORROWER_FILTER_KEY, borrowerStatusFilter);
+    } catch (_) {}
+  }, [borrowerStatusFilter]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_BORROWER_SEARCH_KEY, borrowerSearch);
+    } catch (_) {}
+  }, [borrowerSearch]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_BORROWER_EXPANDED_KEY, JSON.stringify(expandedBorrower || {}));
+    } catch (_) {}
+  }, [expandedBorrower]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_PAYOUT_FILTER_KEY, payoutStatusFilter);
+    } catch (_) {}
+  }, [payoutStatusFilter]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_PAYOUT_SEARCH_KEY, payoutSearch);
+    } catch (_) {}
+  }, [payoutSearch]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_PAYOUT_PENDING_ONLY_KEY, JSON.stringify(Boolean(showPendingOnly)));
+    } catch (_) {}
+  }, [showPendingOnly]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_PAYOUT_EXPANDED_KEY, JSON.stringify(expandedPayouts || {}));
+    } catch (_) {}
+  }, [expandedPayouts]);
+
   const isNewReceipt = (intent) => {
     if (!intent?.receipt_signed_url || !intent?.updated_at) return false;
     const lastSeen = seenReceipts[intent.id] || 0;
@@ -1104,7 +1204,7 @@ const AdminOperations = () => {
       )}
       {payoutGroups.map((g) => {
         const expanded = !!expandedPayouts[g.opportunity_id];
-        const bankLabel = g.bank && g.account ? `${g.bank} · CTA ${g.account}` : null;
+        const bankLabel = g.bank && g.account ? `${g.bank} · ${maskAccount(g.account)}` : null;
         return (
           <div key={g.opportunity_id} style={{ border: '1px solid #e5f0f2', borderRadius: 10, marginBottom: 12, background: '#fbfdfe' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, gap: 10 }}>
@@ -1141,26 +1241,25 @@ const AdminOperations = () => {
                       <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>ID</th>
                       <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
                           <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto (bruto/neto)</th>
-                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
-                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
-                          <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {g.payouts.map((p) => (
-                          <tr key={p.id}>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Banco/CTA</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Recibo</th>
+                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.payouts.map((p) => (
+                      <tr key={p.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                               {userLabel(p.investor_id, investorMap)}
-                              {bankMap[p.investor_id] && (
-                                <div className="muted" style={{ marginTop: 2 }}>
-                                  {bankMap[p.investor_id].nombre_banco || 'Banco n/d'} · CTA {bankMap[p.investor_id].numero_cuenta || 'n/d'}
-                                </div>
-                              )}
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                               <div>Neto a pagar: {formatMoney(p.amount)}</div>
                               <small className="muted">Bruto estimado: {formatMoney(Number(p.amount || 0) / 0.99)}</small>
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              {bankMap[p.investor_id]?.nombre_banco || 'Banco n/d'} · {maskAccount(bankMap[p.investor_id]?.numero_cuenta)}
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                               <span style={{
@@ -1193,7 +1292,7 @@ const AdminOperations = () => {
                         ))}
                         {g.payouts.length === 0 && (
                           <tr>
-                            <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts en este filtro</td>
+                            <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts en este filtro</td>
                           </tr>
                         )}
                       </tbody>
