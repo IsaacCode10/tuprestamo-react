@@ -361,13 +361,32 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     if (!oportunidad?.id || !userId) return;
     setLoadingIntents(true);
     setIntentsError('');
+    setScheduleError('');
     try {
       const { data, error } = await supabase
-        .from('borrower_payment_intents')
-        .select('id, expected_amount, status, due_date, paid_at, paid_amount, receipt_url, metadata')
+        .from('borrower_schedule_view')
+        .select(`
+          amortizacion_id,
+          opportunity_id,
+          installment_no,
+          due_date,
+          principal,
+          interest,
+          payment,
+          balance,
+          amortizacion_status,
+          borrower_payment_intent_id,
+          borrower_id,
+          expected_amount,
+          borrower_status,
+          paid_at,
+          paid_amount,
+          receipt_url,
+          intent_updated_at
+        `)
         .eq('opportunity_id', oportunidad.id)
         .eq('borrower_id', userId)
-        .order('due_date', { ascending: true });
+        .order('installment_no', { ascending: true });
       if (error) throw error;
       const withSigned = await Promise.all((data || []).map(async (row) => {
         let signedReceipt = null;
@@ -382,10 +401,27 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         }
         return { ...row, receipt_signed_url: signedReceipt };
       }));
-      setBorrowerIntents(withSigned);
+      setScheduleRows(withSigned.map((row) => ({
+        ...row,
+        status: row.amortizacion_status,
+      })));
+      const intents = withSigned
+        .filter((row) => row.borrower_payment_intent_id)
+        .map((row) => ({
+          id: row.borrower_payment_intent_id,
+          due_date: row.due_date,
+          expected_amount: row.expected_amount,
+          status: row.borrower_status,
+          paid_at: row.paid_at,
+          paid_amount: row.paid_amount,
+          receipt_url: row.receipt_url,
+          receipt_signed_url: row.receipt_signed_url,
+        }));
+      setBorrowerIntents(intents);
     } catch (err) {
       console.error('Error cargando cuotas prestatario:', err);
       setIntentsError('No pudimos cargar tus cuotas. Intenta más tarde.');
+      setScheduleError('No pudimos cargar el cronograma. Intenta más tarde.');
     } finally {
       setLoadingIntents(false);
     }
@@ -396,27 +432,15 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   }, [loadBorrowerIntents]);
 
   useEffect(() => {
+    if (!oportunidad?.id) return;
+    setLoadingSchedule(true);
+    setScheduleError('');
     const fetchSchedule = async () => {
-      if (!oportunidad?.id) return;
-      setLoadingSchedule(true);
-      setScheduleError('');
-      try {
-        const { data, error } = await supabase
-          .from('amortizaciones')
-          .select('installment_no, due_date, principal, interest, payment, balance, status')
-          .eq('opportunity_id', oportunidad.id)
-          .order('installment_no', { ascending: true });
-        if (error) throw error;
-        setScheduleRows(data || []);
-      } catch (err) {
-        console.error('Error cargando cronograma:', err);
-        setScheduleError('No pudimos cargar el cronograma. Intenta más tarde.');
-      } finally {
-        setLoadingSchedule(false);
-      }
+      await loadBorrowerIntents();
+      setLoadingSchedule(false);
     };
     fetchSchedule();
-  }, [oportunidad?.id]);
+  }, [oportunidad?.id, loadBorrowerIntents]);
 
   const summaryItems = [
     { id: 'tasa', title: 'Tasa Propuesta (anual)', value: `${tasa ? tasa.toFixed(1) : '0'}%` },
@@ -433,6 +457,23 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch (_) {
       return String(value);
+    }
+  };
+  const dateKey = (value) => {
+    if (!value) return '';
+    if (typeof value === 'string') {
+      const match = value.match(/^\d{4}-\d{2}-\d{2}/);
+      if (match) return match[0];
+    }
+    try {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '';
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    } catch (_) {
+      return '';
     }
   };
 
@@ -471,7 +512,8 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const normalizeSchedule = () => {
     if (!Array.isArray(scheduleRows)) return [];
     return scheduleRows.map((row, idx) => {
-      const intentByDate = borrowerIntents.find((b) => b?.due_date && formatDate(b.due_date) === formatDate(row.due_date));
+      const rowKey = dateKey(row.due_date);
+      const intentByDate = borrowerIntents.find((b) => dateKey(b?.due_date) === rowKey);
       const intentByOrder = borrowerIntents[idx];
       const intent = intentByDate || intentByOrder || null;
       const intentStatus = (intent?.status || '').toLowerCase();
