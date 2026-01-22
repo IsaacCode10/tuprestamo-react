@@ -725,7 +725,11 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       {(oportunidad?.estado === 'fondeada' || oportunidad?.estado === 'activo' || disbursement) && (
         <div className="card">
           <h2>Pago dirigido y contrato</h2>
-          <p className="muted">Te avisaremos por correo cuando paguemos tu tarjeta. Aquí verás el comprobante y tu contrato PDF.</p>
+          <p className="muted">
+            {disbursement?.paid_at || disbursement?.estado === 'pagado'
+              ? 'Ya realizamos el pago de tu tarjeta. Aqui puedes ver el comprobante y tu contrato.'
+              : 'Te avisaremos por correo cuando paguemos tu tarjeta. Aqui veras el comprobante y tu contrato PDF.'}
+          </p>
           {loadingDisb && <p className="muted">Cargando información de desembolso...</p>}
           {disbError && <p style={{ color: 'red' }}>{disbError}</p>}
           {disbursement ? (
