@@ -25,8 +25,6 @@ const formatDate = (value) => {
   return date.toLocaleDateString();
 };
 
-const GRACE_DAYS = 3;
-
 const formatPercent = (value) => {
   const num = Number(value || 0);
   return `${num.toFixed(1)}%`;
@@ -228,20 +226,16 @@ const AdminDashboard = () => {
   };
 
   const computeMora = (rows) => {
-    const today = new Date();
-    const graceMs = GRACE_DAYS * 24 * 60 * 60 * 1000;
     const global = { cuotasVencidas: 0, cuotasTotales: 0, montoVencido: 0, montoTotal: 0, buckets: { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 } };
     const byOpp = {};
     rows.forEach((r) => {
       const status = (r.status || '').toLowerCase();
       const amount = Number(r.expected_amount || 0);
+      const daysOverdue = Number(r.days_past_due || 0);
       global.cuotasTotales += 1;
       global.montoTotal += amount;
-      if (!r.due_date || status === 'paid') return;
-      const due = new Date(r.due_date).getTime();
-      const overdueMs = today.getTime() - due - graceMs;
-      if (overdueMs <= 0) return;
-      const daysOverdue = Math.floor(overdueMs / (24 * 60 * 60 * 1000));
+      if (status === 'paid') return;
+      if (daysOverdue <= 0) return;
       global.cuotasVencidas += 1;
       global.montoVencido += amount;
       let bucket = '0-30';
@@ -492,8 +486,8 @@ const AdminDashboard = () => {
     setMoraError(null);
     try {
       const { data, error } = await supabase
-        .from('borrower_payment_intents')
-        .select('id, opportunity_id, expected_amount, status, due_date');
+        .from('borrower_mora_view')
+        .select('id, opportunity_id, expected_amount, status, due_date, days_past_due');
       if (error) throw error;
       computeMora(data || []);
     } catch (err) {
