@@ -324,7 +324,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
 
   useEffect(() => {
     const fetchDisbursement = async () => {
-      if (!oportunidad?.id) return;
+      if (!oportunidad?.id || !userId) return;
       setLoadingDisb(true);
       setDisbError('');
       try {
@@ -355,7 +355,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       }
     };
     fetchDisbursement();
-  }, [oportunidad?.id]);
+  }, [oportunidad?.id, userId]);
 
   const loadBorrowerIntents = useCallback(async () => {
     if (!oportunidad?.id || !userId) return;
