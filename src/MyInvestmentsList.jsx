@@ -15,6 +15,7 @@ const MyInvestmentsList = () => {
   const [intentsMap, setIntentsMap] = useState({ byId: {}, byOpportunity: {} });
   const [investorSchedules, setInvestorSchedules] = useState({});
   const [payoutSignedMap, setPayoutSignedMap] = useState({});
+  const [activeTab, setActiveTab] = useState('inversiones');
 
   useEffect(() => {
     trackEvent('Viewed Portfolio');
@@ -24,7 +25,7 @@ const MyInvestmentsList = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          setError('Debes iniciar sesión para ver tu portafolio.');
+          setError('Debes iniciar sesion para ver tu portafolio.');
           setLoading(false);
           return;
         }
@@ -62,7 +63,6 @@ const MyInvestmentsList = () => {
           (opps || []).filter(Boolean).forEach(o => { map[o.id] = o; });
           setOppsById(map);
 
-          // Cargar próximas cuotas prorrateadas para el inversionista (primeras 3)
           const schedulesMap = {};
           await Promise.all(oppIds.map(async (oid) => {
             try {
@@ -79,7 +79,6 @@ const MyInvestmentsList = () => {
           setOppsById({});
         }
 
-        // Intents del inversionista (para saber si ya subió comprobante)
         const { data: intentRows, error: intentErr } = await supabase
           .from('payment_intents')
           .select('id, opportunity_id, status, receipt_url, created_at')
@@ -90,22 +89,19 @@ const MyInvestmentsList = () => {
         const byOpportunity = {};
         (intentRows || []).forEach((row) => {
           byId[row.id] = row;
-          // Guarda el más reciente por oportunidad
           if (!byOpportunity[row.opportunity_id]) {
             byOpportunity[row.opportunity_id] = row;
           }
         });
         setIntentsMap({ byId, byOpportunity });
 
-        // Payouts recibidos / pendientes
         const { data: payoutRows, error: payoutErr } = await supabase
-          .from('payouts_inversionistas')
+          .from('investor_payouts_view')
           .select('*')
           .eq('investor_id', user.id)
           .order('created_at', { ascending: false });
         if (payoutErr) throw payoutErr;
         setPayouts(payoutRows || []);
-        // Firmar comprobantes de payouts (bucket privado)
         const signedMap = {};
         await Promise.all((payoutRows || []).map(async (p) => {
           if (!p?.receipt_url) return;
@@ -118,7 +114,6 @@ const MyInvestmentsList = () => {
           } catch (_) {}
         }));
         setPayoutSignedMap(signedMap);
-
       } catch (e) {
         console.error('Error loading portfolio:', e);
         setError('No pudimos cargar tu portafolio. Intenta de nuevo.');
@@ -132,13 +127,32 @@ const MyInvestmentsList = () => {
   const hasRows = useMemo(() => (rows || []).length > 0, [rows]);
   const paidPayouts = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'paid'), [payouts]);
   const pendingPayouts = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending'), [payouts]);
-  const hasReviewNotice = useMemo(() => {
-    return (rows || []).some((r) => {
-      const intent = intentsMap.byOpportunity[r.opportunity_id];
-      const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
-      return isPendingPayment && intent?.receipt_url;
-    });
-  }, [rows, intentsMap]);
+  const totalInvested = useMemo(() => rows.reduce((acc, r) => acc + Number(r.amount || 0), 0), [rows]);
+  const totalPaid = useMemo(() => paidPayouts.reduce((acc, p) => {
+    const monto = p.paid_amount ?? p.amount ?? p.expected_amount ?? 0;
+    return acc + Number(monto || 0);
+  }, 0), [paidPayouts]);
+  const nextPendingPayout = useMemo(() => {
+    if (!pendingPayouts.length) return null;
+    return [...pendingPayouts].sort((a, b) => {
+      const aDate = new Date(a.created_at || a.paid_at || 0).getTime();
+      const bDate = new Date(b.created_at || b.paid_at || 0).getTime();
+      return aDate - bDate;
+    })[0];
+  }, [pendingPayouts]);
+  const nextEstimatedPayment = useMemo(() => {
+    if (nextPendingPayout) return nextPendingPayout;
+    const firstSchedule = Object.values(investorSchedules)
+      .flat()
+      .filter(Boolean)
+      .sort((a, b) => new Date(a.due_date || 0).getTime() - new Date(b.due_date || 0).getTime())[0];
+    if (!firstSchedule) return null;
+    return {
+      due_date: firstSchedule.due_date,
+      expected_amount: firstSchedule.payment_investor_neto ?? firstSchedule.payment_investor_bruto ?? 0,
+      opportunity_id: firstSchedule.opportunity_id,
+    };
+  }, [investorSchedules, nextPendingPayout]);
 
   const formatDate = (value) => {
     if (!value) return 'N/D';
@@ -155,8 +169,8 @@ const MyInvestmentsList = () => {
     const hasReceipt = !!intent?.receipt_url;
     const intentPending = (intent?.status || '').toLowerCase() === 'pending';
     if (isFondeada) return 'Fondeada';
-    if (isPendingPayment && hasReceipt && intentPending) return 'Pago en revisión';
-    if (isPendingPayment) return 'Pendiente de pago';
+    if (isPendingPayment && hasReceipt && intentPending) return 'Pago en revision';
+    if (isPendingPayment) return 'Pendiente';
     if ((r.status || '').toLowerCase() === 'pagado') return 'Pagado';
     return r.status || 'intencion';
   };
@@ -165,115 +179,111 @@ const MyInvestmentsList = () => {
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
-    <div className="portfolio-container" style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
+    <div className="portfolio-container investor-portfolio" style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
       <InvestorBackBar fallbackTo="/investor-dashboard" label="Volver al Panel" />
       <InvestorBreadcrumbs items={[
         { label: 'Inicio', to: '/investor-dashboard' },
         { label: 'Portafolio', to: '/mis-inversiones' },
         { label: 'Mis Inversiones' },
       ]} />
-      <h2>Mis Inversiones</h2>
+
+      <div className="investor-portfolio__header">
+        <div>
+          <h2>Mis Inversiones</h2>
+          <p className="muted">Resumen simple de tus inversiones y pagos.</p>
+        </div>
+        <div className="investor-portfolio__actions">
+          <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Invertir</button>
+        </div>
+      </div>
+
+      <div className="investor-kpis">
+        <div className="investor-kpi">
+          <span>Total invertido</span>
+          <strong>Bs. {Number(totalInvested).toLocaleString('es-BO')}</strong>
+        </div>
+        <div className="investor-kpi">
+          <span>Cobros acreditados</span>
+          <strong>Bs. {Number(totalPaid).toLocaleString('es-BO')}</strong>
+        </div>
+        <div className="investor-kpi">
+          <span>Proximo pago</span>
+          <strong>
+            {nextEstimatedPayment
+              ? `${formatDate(nextEstimatedPayment.due_date)} · Bs. ${Number(nextEstimatedPayment.expected_amount || 0).toLocaleString('es-BO')}`
+              : 'Sin proximos pagos'}
+          </strong>
+        </div>
+      </div>
+
+      <div className="investor-tabs" role="tablist" aria-label="Secciones de portafolio">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'inversiones'}
+          className={`investor-tab ${activeTab === 'inversiones' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('inversiones')}
+        >
+          Inversiones
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'pagos'}
+          className={`investor-tab ${activeTab === 'pagos' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('pagos')}
+        >
+          Pagos
+        </button>
+      </div>
+
       {!hasRows ? (
         <div>
-          <p>No has registrado inversiones todavía.</p>
+          <p>No has registrado inversiones todavia.</p>
           <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Ver Oportunidades</button>
         </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Fecha</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                <th style={{ textAlign: 'right', padding: 8, borderBottom: '1px solid #eee' }}>Monto (Bs.)</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Tasa Bruta</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Plazo</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Riesgo</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(r => {
-                const o = oppsById[r.opportunity_id] || {};
-                const intent = intentsMap.byOpportunity[r.opportunity_id];
-                const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
-                const remaining = o.saldo_pendiente != null ? o.saldo_pendiente : null;
-                const isFondeada = remaining !== null ? remaining <= 0 : false;
-                const showReview = isPendingPayment && intent?.receipt_url && (intent?.status || '').toLowerCase() === 'pending';
-                const canPayNow = isPendingPayment && !isFondeada && !showReview;
-                return (
-                  <tr key={r.id}>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{new Date(r.created_at).toLocaleDateString('es-BO')}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>ID {r.opportunity_id || '-'}{o.monto ? ` · Bs. ${Number(o.monto).toLocaleString('es-BO')}` : ''}</td>
-                    <td style={{ padding: 8, textAlign: 'right', borderBottom: '1px solid #f3f3f3' }}>Bs. {Number(r.amount).toLocaleString('es-BO')}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.tasa_rendimiento_inversionista != null ? `${Number(o.tasa_rendimiento_inversionista).toFixed(2)}%` : 'n/d'}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.plazo_meses != null ? `${o.plazo_meses} meses` : 'n/d'}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{o.perfil_riesgo || 'n/d'}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatus(r, o, intent)}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                      {canPayNow ? (
-                        <button className="btn btn--primary" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
-                          Pagar ahora
-                        </button>
-                      ) : showReview ? (
-                        <span style={{ color: '#d9534f', fontWeight: 600 }}>Estamos validando tu pago</span>
-                      ) : (
-                        <span style={{ color: '#777' }}>-</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {hasRows && (
         <>
-          <div style={{ marginTop: 16, padding: 12, border: '1px solid #d9f0f0', borderRadius: 10, background: '#f7fbfc' }}>
-            <strong>Estado de tus préstamos financiados</strong>
-            <p style={{ margin: '6px 0 0 0', color: '#0f5a62' }}>
-              Los prestatarios pagan el <strong>día 5 de cada mes</strong>. Te avisaremos cuando se acredite cada cobro.
-            </p>
-          </div>
-          <h3 style={{ marginTop: 24 }}>Cobros recibidos / próximos pagos</h3>
-          {paidPayouts.length === 0 ? (
-            <p style={{ color: '#555' }}>
-              {pendingPayouts.length > 0
-                ? 'Tienes pagos pendientes de transferencia. Te avisaremos cuando se acrediten.'
-                : hasReviewNotice
-                  ? 'Recibimos tu comprobante. Te avisaremos cuando se acredite.'
-                  : 'Aún no registramos cobros acreditados. Te avisaremos cuando se acrediten.'}
-            </p>
-          ) : (
+          {activeTab === 'inversiones' && (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table className="minimal-table">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Fecha</th>
-                    <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                    <th style={{ textAlign: 'right', padding: 8, borderBottom: '1px solid #eee' }}>Monto cobrado (Bs.)</th>
-                    <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
-                    <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+                    <th>Oportunidad</th>
+                    <th className="text-right">Monto (Bs.)</th>
+                    <th>Estado</th>
+                    <th className="text-right">Accion</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paidPayouts.map(p => {
-                    const o = oppsById[p.opportunity_id] || {};
-                    const fecha = p.paid_at || p.created_at;
-                    const montoCobrado = p.paid_amount ?? p.amount ?? p.expected_amount ?? 0;
-                    const signedReceipt = payoutSignedMap[p.id] || null;
+                  {rows.map(r => {
+                    const o = oppsById[r.opportunity_id] || {};
+                    const intent = intentsMap.byOpportunity[r.opportunity_id];
+                    const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
+                    const remaining = o.saldo_pendiente != null ? o.saldo_pendiente : null;
+                    const isFondeada = remaining !== null ? remaining <= 0 : false;
+                    const showReview = isPendingPayment && intent?.receipt_url && (intent?.status || '').toLowerCase() === 'pending';
+                    const canPayNow = isPendingPayment && !isFondeada && !showReview;
                     return (
-                      <tr key={p.id}>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>ID {p.opportunity_id || '-'}{o.monto ? ` · Bs. ${Number(o.monto).toLocaleString('es-BO')}` : ''}</td>
-                        <td style={{ padding: 8, textAlign: 'right', borderBottom: '1px solid #f3f3f3' }}>Bs. {Number(montoCobrado).toLocaleString('es-BO')}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>Pagado</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <button className="btn btn--primary" onClick={() => navigate('/oportunidades', { state: { prefillAmount: Number(montoCobrado) || undefined } })}>Reinvertir</button>
-                          {signedReceipt && <a className="btn" href={signedReceipt} target="_blank" rel="noreferrer">Ver comprobante</a>}
+                      <tr key={r.id}>
+                        <td>
+                          <div className="table-main">ID {r.opportunity_id || '-'}</div>
+                          <div className="table-subtle">Bs. {Number(o.monto || 0).toLocaleString('es-BO')}</div>
+                        </td>
+                        <td className="text-right">Bs. {Number(r.amount).toLocaleString('es-BO')}</td>
+                        <td>{formatStatus(r, o, intent)}</td>
+                        <td className="text-right">
+                          {canPayNow ? (
+                            <button className="btn btn--primary btn--sm" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
+                              Pagar
+                            </button>
+                          ) : showReview ? (
+                            <span className="status-pill status-pill--warning">En revision</span>
+                          ) : (
+                            <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
+                              Ver
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -282,91 +292,56 @@ const MyInvestmentsList = () => {
               </table>
             </div>
           )}
-          {pendingPayouts.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <h4 style={{ margin: '8px 0' }}>Pagos pendientes de transferencia</h4>
-              <p className="muted">Estos pagos están en proceso. Los verás como “Pagado” cuando Operaciones los marque.</p>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Fecha</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                      <th style={{ textAlign: 'right', padding: 8, borderBottom: '1px solid #eee' }}>Monto neto (Bs.)</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingPayouts.map((p) => {
-                      const o = oppsById[p.opportunity_id] || {};
-                      const fecha = p.created_at;
-                      const montoNeto = p.amount ?? p.expected_amount ?? 0;
-                      return (
-                        <tr key={`pending-${p.id}`}>
-                          <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>ID {p.opportunity_id || '-'}{o.monto ? ` · Bs. ${Number(o.monto).toLocaleString('es-BO')}` : ''}</td>
-                          <td style={{ padding: 8, textAlign: 'right', borderBottom: '1px solid #f3f3f3' }}>Bs. {Number(montoNeto).toLocaleString('es-BO')}</td>
-                          <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>Pendiente</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+
+          {activeTab === 'pagos' && (
+            <>
+              {payouts.length === 0 ? (
+                <p className="muted">Aun no hay pagos registrados.</p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="minimal-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Oportunidad</th>
+                        <th className="text-right">Monto (Bs.)</th>
+                        <th>Estado</th>
+                        <th className="text-right">Accion</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payouts.map((p) => {
+                        const oppMonto = p.opportunity_monto ?? 0;
+                        const fecha = p.paid_at || p.created_at;
+                        const montoCobrado = p.paid_amount ?? p.amount ?? p.expected_amount ?? 0;
+                        const signedReceipt = payoutSignedMap[p.id] || null;
+                        const status = (p.status || '').toLowerCase();
+                        return (
+                          <tr key={p.id}>
+                            <td>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>
+                            <td>
+                              <div className="table-main">ID {p.opportunity_id || '-'}</div>
+                              <div className="table-subtle">Bs. {Number(oppMonto || 0).toLocaleString('es-BO')}</div>
+                            </td>
+                            <td className="text-right">Bs. {Number(montoCobrado).toLocaleString('es-BO')}</td>
+                            <td>{status === 'paid' ? 'Pagado' : 'Pendiente'}</td>
+                            <td className="text-right">
+                              {status === 'paid' && signedReceipt ? (
+                                <a className="btn btn--secondary btn--sm" href={signedReceipt} target="_blank" rel="noreferrer">Comprobante</a>
+                              ) : (
+                                <span className="muted">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </>
-      )}
-
-      <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button className="btn btn--primary" onClick={() => navigate('/oportunidades')}>Seguir Invirtiendo</button>
-      </div>
-
-      {hasRows && (
-      <div style={{ marginTop: 24 }}>
-          <h3>Próximos pagos (tu parte)</h3>
-          <p style={{ color: '#55747b', marginTop: 4 }}>Mostramos el neto real de los pagos generados. Si aún no se generó, verás el estimado prorrateado.</p>
-          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-            {rows.map((r) => {
-              const o = oppsById[r.opportunity_id] || {};
-              const payoutsPend = pendingPayouts.filter((p) => p.opportunity_id === r.opportunity_id);
-              const upcoming = payoutsPend.length > 0
-                ? payoutsPend.map((p, idx) => ({
-                    installment_no: idx + 1,
-                    due_date: p.created_at || p.paid_at,
-                    payment_investor_bruto: p.amount ? Number(p.amount) / 0.99 : Number(p.expected_amount || 0),
-                    payment_investor_neto: p.amount ?? p.expected_amount ?? 0,
-                  }))
-                : (investorSchedules[r.opportunity_id] || []);
-              const isFondeada = o?.saldo_pendiente != null ? o.saldo_pendiente <= 0 : false;
-              if (!isFondeada || upcoming.length === 0) return null;
-              return (
-                <div key={`sched-${r.opportunity_id}`} style={{ border: '1px solid #e6f4f3', borderRadius: 10, padding: 12, background: '#f7fbfc' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>ID {r.opportunity_id}</div>
-                      {o.monto && <div style={{ color: '#0f5a62' }}>Meta: Bs. {Number(o.monto).toLocaleString('es-BO')}</div>}
-                    </div>
-                    <div style={{ background: '#d4f4ef', color: '#0f5a62', borderRadius: 999, padding: '4px 10px', fontWeight: 700 }}>Fondeada</div>
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    {upcoming.map((cuota) => (
-                      <div key={cuota.installment_no} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #e1eeee' }}>
-                        <span>Cuota {cuota.installment_no}</span>
-                        <span style={{ fontWeight: 700 }}>{formatDate(cuota.due_date)}</span>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ color: '#0f5a62', fontWeight: 700 }}>Bs. {Number(cuota.payment_investor_bruto || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                          <small style={{ color: '#55747b' }}>Neto: Bs. {Number(cuota.payment_investor_neto || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <small style={{ color: '#55747b' }}>Pago dirigido ejecutado; cobros se acreditan tras conciliación.</small>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       )}
     </div>
   );

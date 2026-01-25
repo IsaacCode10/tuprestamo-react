@@ -326,6 +326,153 @@ header.header {
   background: var(--primary-color);
   color: var(--white);
 }
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+.muted {
+  color: #55747b;
+}
+.text-right {
+  text-align: right;
+}
+
+/* ========================
+   INVERSIONISTA: PORTAFOLIO SIMPLE
+   ======================== */
+.investor-portfolio__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 8px 0 16px;
+}
+.investor-portfolio__header h2 {
+  font-family: var(--font-head);
+  margin-bottom: 4px;
+}
+.investor-portfolio__actions {
+  display: flex;
+  gap: 8px;
+}
+.investor-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.investor-kpi {
+  background: #fbfdfe;
+  border: 1px solid #e5f0f2;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.investor-kpi span {
+  color: #55747b;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.investor-kpi strong {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  color: var(--primary-color);
+}
+.investor-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: var(--light-alt-bg);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.investor-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color .2s, color .2s, box-shadow .2s;
+}
+.investor-tab:hover {
+  color: var(--accent-color);
+}
+.investor-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(38,194,178,.25);
+}
+.investor-tab.is-active {
+  background: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.08);
+}
+.minimal-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fbfdfe;
+  border: 1px solid #e5f0f2;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.minimal-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-family: var(--font-head);
+  font-size: 0.85rem;
+  color: var(--primary-color);
+  background: #f7fbfc;
+  border-bottom: 1px solid #e5f0f2;
+}
+.minimal-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eef4f5;
+  color: var(--primary-color);
+}
+.minimal-table tr:last-child td {
+  border-bottom: none;
+}
+.table-main {
+  font-weight: 700;
+}
+.table-subtle {
+  color: #55747b;
+  font-size: 0.85rem;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+.status-pill--warning {
+  background: #fff9e6;
+  color: #8a6d3b;
+  border: 1px solid #ffe08a;
+}
+
+@media (max-width: 768px) {
+  .investor-portfolio__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .investor-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
 
 .ops-filters {
   display: flex;
