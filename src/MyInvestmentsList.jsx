@@ -140,22 +140,43 @@ const MyInvestmentsList = () => {
       return aDate - bDate;
     })[0];
   }, [pendingPayouts]);
+  const schedulesByOpp = useMemo(() => {
+    const map = {};
+    Object.entries(investorSchedules || {}).forEach(([oppId, list]) => {
+      const items = (list || []).filter((item) => item?.due_date);
+      items.sort((a, b) => (a.installment_no || 0) - (b.installment_no || 0));
+      map[Number(oppId)] = items;
+    });
+    return map;
+  }, [investorSchedules]);
+
+  const paidCountByOpp = useMemo(() => {
+    const map = {};
+    paidPayouts.forEach((p) => {
+      const oppId = Number(p.opportunity_id);
+      if (!oppId) return;
+      map[oppId] = (map[oppId] || 0) + 1;
+    });
+    return map;
+  }, [paidPayouts]);
+
   const nextSchedule = useMemo(() => {
-    const items = Object.values(investorSchedules)
-      .flat()
-      .filter((item) => item?.due_date);
+    const items = Object.values(schedulesByOpp).flat().filter(Boolean);
     if (!items.length) return null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const sorted = [...items].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
     const upcoming = sorted.find((item) => new Date(item.due_date).getTime() >= today.getTime());
     const target = upcoming || sorted[sorted.length - 1];
+    const oppItems = schedulesByOpp[Number(target.opportunity_id)] || [];
     return {
       due_date: target.due_date,
       expected_amount: target.payment_investor_neto ?? target.payment_investor_bruto ?? 0,
       opportunity_id: target.opportunity_id,
+      installment_no: target.installment_no,
+      total_installments: oppItems.length || null,
     };
-  }, [investorSchedules]);
+  }, [schedulesByOpp]);
   const nextPaymentDisplay = useMemo(() => {
     const paid = paidPayouts
       .filter((p) => p?.paid_at)
@@ -167,22 +188,33 @@ const MyInvestmentsList = () => {
         expected_amount: paid.paid_amount ?? paid.amount ?? paid.expected_amount ?? 0,
       };
     }
+    if (nextPendingPayout) {
+      const oppId = Number(nextPendingPayout.opportunity_id);
+      const oppItems = schedulesByOpp[oppId] || [];
+      const paidCount = paidCountByOpp[oppId] || 0;
+      const targetNo = Math.min(paidCount + 1, oppItems.length || paidCount + 1);
+      const scheduleItem = oppItems.find((item) => item.installment_no === targetNo) || oppItems[0];
+      return {
+        label: 'Pendiente',
+        due_date: scheduleItem?.due_date || nextPendingPayout.created_at,
+        expected_amount: scheduleItem?.payment_investor_neto ?? nextPendingPayout.amount ?? nextPendingPayout.expected_amount ?? 0,
+        installment_no: scheduleItem?.installment_no || targetNo,
+        total_installments: oppItems.length || null,
+      };
+    }
     if (nextSchedule) {
       return { label: 'Programado', ...nextSchedule };
     }
-    if (nextPendingPayout) {
-      return {
-        label: 'Pendiente',
-        due_date: nextPendingPayout.created_at,
-        expected_amount: nextPendingPayout.amount ?? nextPendingPayout.expected_amount ?? 0,
-      };
-    }
     return null;
-  }, [nextPendingPayout, nextSchedule, paidPayouts]);
+  }, [nextPendingPayout, nextSchedule, paidPayouts, schedulesByOpp, paidCountByOpp]);
 
   const formatDate = (value) => {
     if (!value) return 'N/D';
     try {
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [y, m, d] = value.split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
       return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch (_) {
       return String(value);
@@ -236,7 +268,16 @@ const MyInvestmentsList = () => {
           <span>Proximo pago</span>
           <strong>
             {nextPaymentDisplay
-              ? `${formatDate(nextPaymentDisplay.due_date)} · Bs. ${Number(nextPaymentDisplay.expected_amount || 0).toLocaleString('es-BO')} (${nextPaymentDisplay.label})`
+              ? (() => {
+                const parts = [
+                  `${formatDate(nextPaymentDisplay.due_date)} · Bs. ${Number(nextPaymentDisplay.expected_amount || 0).toLocaleString('es-BO')}`,
+                  `(${nextPaymentDisplay.label})`,
+                ];
+                if (nextPaymentDisplay.installment_no) {
+                  parts.push(`Cuota ${nextPaymentDisplay.installment_no}${nextPaymentDisplay.total_installments ? ` de ${nextPaymentDisplay.total_installments}` : ''}`);
+                }
+                return parts.join(' · ');
+              })()
               : 'Sin cronograma'}
           </strong>
         </div>
