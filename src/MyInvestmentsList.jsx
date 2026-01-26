@@ -69,7 +69,7 @@ const MyInvestmentsList = () => {
               const { data, error } = await supabase
                 .rpc('get_investor_installments', { p_opportunity_id: oid, p_investor_id: user.id });
               if (error) return;
-              schedulesMap[oid] = (data || []).slice(0, 3);
+              schedulesMap[oid] = data || [];
             } catch (_) {
               // noop
             }
@@ -197,7 +197,7 @@ const MyInvestmentsList = () => {
       return {
         label: 'Pendiente',
         due_date: scheduleItem?.due_date || nextPendingPayout.created_at,
-        expected_amount: scheduleItem?.payment_investor_neto ?? nextPendingPayout.amount ?? nextPendingPayout.expected_amount ?? 0,
+        expected_amount: nextPendingPayout.amount ?? nextPendingPayout.expected_amount ?? scheduleItem?.payment_investor_neto ?? scheduleItem?.payment_investor_bruto ?? 0,
         installment_no: scheduleItem?.installment_no || targetNo,
         total_installments: oppItems.length || null,
       };

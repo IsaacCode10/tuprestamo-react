@@ -59,3 +59,23 @@
 - Admin: validar Fuente Única para cuota 1 (status OK/Revisar) y Mora en cero.
 - Frontend: deploy a Vercel con los cambios de AdminDashboard y BorrowerDashboard.
 - Backend: asegurar que la creación de `borrower_payment_intents` siempre guarde `due_date` (y/o `installment_no`) para evitar joins vacíos en SSOT.
+## Actualización 2026-01-25
+
+**Lo hecho hoy:**
+- Panel inversionista: UI simplificada con tabs Inversiones/Pagos, 3 KPIs y tabla minimalista alineada al Brand Kit.
+- SSOT inversionista: creada vista `investor_payouts_view` y el panel ahora consulta esa vista.
+- Producción: vista `investor_payouts_view` creada manualmente en Supabase para desbloquear el panel.
+- Migraciones: renombrada `20260122_update_fuente_unica_checks.sql` a `20260123_update_fuente_unica_checks.sql`; `20251127_funding_workflow.sql` restaurada a versión canónica remota y la versión modificada quedó en `20260125_funding_workflow_followups.sql`.
+- Config Supabase: `major_version` actualizado a 17 en `supabase/config.toml`.
+
+**Pendiente para lanzamiento:**
+- Operaciones: marcar `Pagado` payouts de op 61 (GANADERO / 1310978715) con comprobante si aplica.
+- Inversionista: validar notificaciones payout `pending`/`paid` y reflejo en “Mis Inversiones”.
+- Admin: validar Fuente Única (status OK/Revisar) y Mora en cero.
+- Migraciones: alinear historial (resolver desajuste de `20251127`) y aplicar `20260123` + `20260125` con `supabase db push`.
+- Frontend: `npm run build` + `npx vercel --prod` desde entorno compatible.
+
+**Nota SSOT (inversionista):**
+- Pagos reales SOLO desde `investor_payouts_view` (nunca usar cronograma para montos reales).
+- Cronograma (`get_investor_installments`) SOLO para “programado” cuando no hay payout real.
+- No truncar cronograma al calcular “Cuota X de N”.
