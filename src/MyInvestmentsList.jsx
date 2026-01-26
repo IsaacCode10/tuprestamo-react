@@ -209,16 +209,6 @@ const MyInvestmentsList = () => {
     };
   }, [schedulesByOpp]);
   const nextPaymentDisplay = useMemo(() => {
-    const paid = paidPayouts
-      .filter((p) => p?.paid_at)
-      .sort((a, b) => new Date(a.paid_at).getTime() - new Date(b.paid_at).getTime())[0];
-    if (paid) {
-      return {
-        label: 'Confirmado',
-        due_date: paid.paid_at,
-        expected_amount: paid.paid_amount ?? paid.amount ?? paid.expected_amount ?? 0,
-      };
-    }
     if (nextPendingPayout) {
       const oppId = Number(nextPendingPayout.opportunity_id);
       const oppItems = schedulesByOpp[oppId] || [];
@@ -235,6 +225,16 @@ const MyInvestmentsList = () => {
     }
     if (nextSchedule) {
       return { label: 'Programado', ...nextSchedule };
+    }
+    const paid = paidPayouts
+      .filter((p) => p?.paid_at)
+      .sort((a, b) => new Date(a.paid_at).getTime() - new Date(b.paid_at).getTime())[0];
+    if (paid) {
+      return {
+        label: 'Confirmado',
+        due_date: paid.paid_at,
+        expected_amount: paid.paid_amount ?? paid.amount ?? paid.expected_amount ?? 0,
+      };
     }
     return null;
   }, [nextPendingPayout, nextSchedule, paidPayouts, schedulesByOpp, paidCountByOpp]);
@@ -412,7 +412,8 @@ const MyInvestmentsList = () => {
                       {payouts.map((p) => {
                         const oppMonto = p.opportunity_monto ?? 0;
                         const scheduleInfo = payoutScheduleMap[p.id] || {};
-                        const fecha = scheduleInfo.due_date || p.paid_at || p.created_at;
+                        const isPaid = (p.status || '').toLowerCase() === 'paid';
+                        const fecha = isPaid ? p.paid_at : (scheduleInfo.due_date || p.created_at);
                         const cuotaLabel = scheduleInfo.installment_no
                           ? `Cuota ${scheduleInfo.installment_no}${scheduleInfo.total_installments ? `/${scheduleInfo.total_installments}` : ''}`
                           : '-';
