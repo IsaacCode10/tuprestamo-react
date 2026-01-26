@@ -421,7 +421,7 @@ const MyInvestmentsList = () => {
                         const status = (p.status || '').toLowerCase();
                         return (
                           <tr key={p.id}>
-                            <td>{fecha ? new Date(fecha).toLocaleDateString('es-BO') : '-'}</td>
+                            <td>{fecha ? formatDate(fecha) : '-'}</td>
                             <td>
                               <div className="table-main">ID {p.opportunity_id || '-'}</div>
                               <div className="table-subtle">Bs. {Number(oppMonto || 0).toLocaleString('es-BO')}</div>
