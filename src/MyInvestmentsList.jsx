@@ -150,6 +150,37 @@ const MyInvestmentsList = () => {
     return map;
   }, [investorSchedules]);
 
+  const payoutScheduleMap = useMemo(() => {
+    const map = {};
+    const payoutsByOpp = {};
+    (payouts || []).forEach((p) => {
+      const oppId = Number(p.opportunity_id);
+      if (!oppId) return;
+      if (!payoutsByOpp[oppId]) payoutsByOpp[oppId] = [];
+      payoutsByOpp[oppId].push(p);
+    });
+    Object.entries(payoutsByOpp).forEach(([oppIdStr, list]) => {
+      const oppId = Number(oppIdStr);
+      const schedule = schedulesByOpp[oppId] || [];
+      const ordered = [...list].sort((a, b) => {
+        const aDate = new Date(a.paid_at || a.created_at || 0).getTime();
+        const bDate = new Date(b.paid_at || b.created_at || 0).getTime();
+        return aDate - bDate;
+      });
+      ordered.forEach((p, idx) => {
+        const item = schedule[idx] || null;
+        if (p?.id) {
+          map[p.id] = {
+            installment_no: item?.installment_no || null,
+            total_installments: schedule.length || null,
+            due_date: item?.due_date || null,
+          };
+        }
+      });
+    });
+    return map;
+  }, [payouts, schedulesByOpp]);
+
   const paidCountByOpp = useMemo(() => {
     const map = {};
     paidPayouts.forEach((p) => {
@@ -319,7 +350,7 @@ const MyInvestmentsList = () => {
                     <th>Oportunidad</th>
                     <th className="text-right">Monto (Bs.)</th>
                     <th>Estado</th>
-                    <th className="text-right">Accion</th>
+                    <th className="text-right">Detalle</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -371,15 +402,20 @@ const MyInvestmentsList = () => {
                       <tr>
                         <th>Fecha</th>
                         <th>Oportunidad</th>
+                        <th>Cuota</th>
                         <th className="text-right">Monto (Bs.)</th>
                         <th>Estado</th>
-                        <th className="text-right">Accion</th>
+                        <th className="text-right">Comprobante</th>
                       </tr>
                     </thead>
                     <tbody>
                       {payouts.map((p) => {
                         const oppMonto = p.opportunity_monto ?? 0;
-                        const fecha = p.paid_at || p.created_at;
+                        const scheduleInfo = payoutScheduleMap[p.id] || {};
+                        const fecha = scheduleInfo.due_date || p.paid_at || p.created_at;
+                        const cuotaLabel = scheduleInfo.installment_no
+                          ? `Cuota ${scheduleInfo.installment_no}${scheduleInfo.total_installments ? `/${scheduleInfo.total_installments}` : ''}`
+                          : '-';
                         const montoCobrado = p.paid_amount ?? p.amount ?? p.expected_amount ?? 0;
                         const signedReceipt = payoutSignedMap[p.id] || null;
                         const status = (p.status || '').toLowerCase();
@@ -390,6 +426,7 @@ const MyInvestmentsList = () => {
                               <div className="table-main">ID {p.opportunity_id || '-'}</div>
                               <div className="table-subtle">Bs. {Number(oppMonto || 0).toLocaleString('es-BO')}</div>
                             </td>
+                            <td>{cuotaLabel}</td>
                             <td className="text-right">Bs. {Number(montoCobrado).toLocaleString('es-BO')}</td>
                             <td>{status === 'paid' ? 'Pagado' : 'Pendiente'}</td>
                             <td className="text-right">
