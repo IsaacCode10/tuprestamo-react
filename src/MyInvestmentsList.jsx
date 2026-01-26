@@ -140,19 +140,35 @@ const MyInvestmentsList = () => {
       return aDate - bDate;
     })[0];
   }, [pendingPayouts]);
-  const nextEstimatedPayment = useMemo(() => {
-    if (nextPendingPayout) return nextPendingPayout;
-    const firstSchedule = Object.values(investorSchedules)
+  const nextSchedule = useMemo(() => {
+    const items = Object.values(investorSchedules)
       .flat()
-      .filter(Boolean)
-      .sort((a, b) => new Date(a.due_date || 0).getTime() - new Date(b.due_date || 0).getTime())[0];
-    if (!firstSchedule) return null;
+      .filter((item) => item?.due_date);
+    if (!items.length) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sorted = [...items].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+    const upcoming = sorted.find((item) => new Date(item.due_date).getTime() >= today.getTime());
+    const target = upcoming || sorted[sorted.length - 1];
     return {
-      due_date: firstSchedule.due_date,
-      expected_amount: firstSchedule.payment_investor_neto ?? firstSchedule.payment_investor_bruto ?? 0,
-      opportunity_id: firstSchedule.opportunity_id,
+      due_date: target.due_date,
+      expected_amount: target.payment_investor_neto ?? target.payment_investor_bruto ?? 0,
+      opportunity_id: target.opportunity_id,
     };
-  }, [investorSchedules, nextPendingPayout]);
+  }, [investorSchedules]);
+  const nextPaymentDisplay = useMemo(() => {
+    if (nextPendingPayout) {
+      return {
+        label: 'Confirmado',
+        due_date: nextPendingPayout.paid_at || nextPendingPayout.created_at,
+        expected_amount: nextPendingPayout.amount ?? nextPendingPayout.expected_amount ?? 0,
+      };
+    }
+    if (nextSchedule) {
+      return { label: 'Programado', ...nextSchedule };
+    }
+    return null;
+  }, [nextPendingPayout, nextSchedule]);
 
   const formatDate = (value) => {
     if (!value) return 'N/D';
@@ -209,9 +225,9 @@ const MyInvestmentsList = () => {
         <div className="investor-kpi">
           <span>Proximo pago</span>
           <strong>
-            {nextEstimatedPayment
-              ? `${formatDate(nextEstimatedPayment.due_date)} · Bs. ${Number(nextEstimatedPayment.expected_amount || 0).toLocaleString('es-BO')}`
-              : 'Sin proximos pagos'}
+            {nextPaymentDisplay
+              ? `${formatDate(nextPaymentDisplay.due_date)} · Bs. ${Number(nextPaymentDisplay.expected_amount || 0).toLocaleString('es-BO')} (${nextPaymentDisplay.label})`
+              : 'Sin cronograma'}
           </strong>
         </div>
       </div>
