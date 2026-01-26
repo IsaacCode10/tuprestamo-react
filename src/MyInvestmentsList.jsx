@@ -157,18 +157,28 @@ const MyInvestmentsList = () => {
     };
   }, [investorSchedules]);
   const nextPaymentDisplay = useMemo(() => {
-    if (nextPendingPayout) {
+    const paid = paidPayouts
+      .filter((p) => p?.paid_at)
+      .sort((a, b) => new Date(a.paid_at).getTime() - new Date(b.paid_at).getTime())[0];
+    if (paid) {
       return {
         label: 'Confirmado',
-        due_date: nextPendingPayout.paid_at || nextPendingPayout.created_at,
-        expected_amount: nextPendingPayout.amount ?? nextPendingPayout.expected_amount ?? 0,
+        due_date: paid.paid_at,
+        expected_amount: paid.paid_amount ?? paid.amount ?? paid.expected_amount ?? 0,
       };
     }
     if (nextSchedule) {
       return { label: 'Programado', ...nextSchedule };
     }
+    if (nextPendingPayout) {
+      return {
+        label: 'Pendiente',
+        due_date: nextPendingPayout.created_at,
+        expected_amount: nextPendingPayout.amount ?? nextPendingPayout.expected_amount ?? 0,
+      };
+    }
     return null;
-  }, [nextPendingPayout, nextSchedule]);
+  }, [nextPendingPayout, nextSchedule, paidPayouts]);
 
   const formatDate = (value) => {
     if (!value) return 'N/D';
