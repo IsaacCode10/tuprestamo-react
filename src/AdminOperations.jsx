@@ -297,6 +297,13 @@ const AdminOperations = () => {
     const expectedAmount = intentRow.expected_amount || 0;
     const notificationsPayload = [];
     const fundedInfo = Array.isArray(fundedInfoRaw) ? fundedInfoRaw[0] : fundedInfoRaw;
+    const pushNotification = async (payload) => {
+      try {
+        await supabase.functions.invoke('create-notification', { body: payload });
+      } catch (err) {
+        console.warn('No se pudo crear notificación', err);
+      }
+    };
 
     // Notificación al inversionista: pago verificado
     if (investorId) {
@@ -358,7 +365,11 @@ const AdminOperations = () => {
       }
     }
 
-    if (notificationsPayload.length > 0) await supabase.from('notifications').insert(notificationsPayload);
+    if (notificationsPayload.length > 0) {
+      for (const payload of notificationsPayload) {
+        await pushNotification(payload);
+      }
+    }
   };
 
   const markReceiptSeen = (intentId, updatedAt) => {
@@ -671,7 +682,7 @@ const AdminOperations = () => {
               link_url: '/mis-inversiones',
               type: 'investor_payout_paid',
             };
-            await supabase.from('notifications').insert([notif]);
+            await supabase.functions.invoke('create-notification', { body: notif });
           } catch (notifErr) {
             console.warn('No se pudo notificar payout pagado', notifErr);
           }
