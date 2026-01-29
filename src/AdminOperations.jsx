@@ -672,21 +672,7 @@ const AdminOperations = () => {
         });
         if (rpcErr) throw rpcErr;
         setReceiptFiles((prev) => ({ ...prev, [id]: null }));
-        // Notificación al inversionista: payout acreditado
-        if (row?.investor_id) {
-          try {
-            const notif = {
-              user_id: row.investor_id,
-              title: 'Pago acreditado',
-              body: `Transferimos tu cobro de ${formatMoney(row.amount || 0)} (Op ${row.opportunity_id || '-'}) a tu cuenta registrada.`,
-              link_url: '/mis-inversiones',
-              type: 'investor_payout_paid',
-            };
-            await supabase.functions.invoke('create-notification', { body: notif });
-          } catch (notifErr) {
-            console.warn('No se pudo notificar payout pagado', notifErr);
-          }
-        }
+        // Notificación se emite en backend (RPC). Evitar duplicados en frontend.
       } else {
         const payload = { status };
         if (status === 'expired') payload.paid_at = null;
