@@ -1245,7 +1245,10 @@ const AdminOperations = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {g.payouts.map((p) => (
+                    {g.payouts.map((p) => {
+                      const statusLower = (p.status || '').toString().toLowerCase();
+                      const isPaid = statusLower === 'paid';
+                      return (
                       <tr key={p.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
@@ -1283,10 +1286,11 @@ const AdminOperations = () => {
                               </div>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')} disabled={p.status === 'paid'}>Marcar pagado</button>
+                              <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')} disabled={isPaid}>Marcar pagado</button>
                             </td>
                           </tr>
-                        ))}
+                        );
+                      })}
                         {g.payouts.length === 0 && (
                           <tr>
                             <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay payouts en este filtro</td>
