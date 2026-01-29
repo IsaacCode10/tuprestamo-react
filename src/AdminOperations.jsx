@@ -1246,8 +1246,8 @@ const AdminOperations = () => {
                   </thead>
                   <tbody>
                     {g.payouts.map((p) => {
-                      const statusLower = (p.status || '').toString().toLowerCase();
-                      const isPaid = statusLower === 'paid';
+                      const statusLower = (p.status || '').toString().trim().toLowerCase();
+                      const isPending = statusLower === 'pending';
                       return (
                       <tr key={p.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
@@ -1286,7 +1286,11 @@ const AdminOperations = () => {
                               </div>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')} disabled={isPaid}>Marcar pagado</button>
+                              {isPending ? (
+                                <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')}>Marcar pagado</button>
+                              ) : (
+                                <span className="muted">Sin acciones (ya pagado)</span>
+                              )}
                             </td>
                           </tr>
                         );
