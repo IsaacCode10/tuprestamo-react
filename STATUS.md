@@ -27,6 +27,18 @@
 
 **Estado:** Comprobante adjuntado y visible como “Ver Comprobante”.
 
+## Actualización 2026-02-04 (Alinear “Próximo pago” inversionista)
+
+**Problema:** En panel inversionista, “Cobros acreditados” (payout real) no coincidía con “Próximo pago (Programado)”.  
+Ejemplo op 61: payout real 518,71 vs programado 453,6477 (cronograma).
+
+**Causa raíz:** `get_investor_installments` genera proyección con un monto desfasado respecto al cobro real del prestatario (BPI). El payout real sí estaba correcto.
+
+**Solución aplicada (frontend):**
+- “Próximo pago (Programado)” ahora usa el **monto real del último payout pagado** por oportunidad si existe; si no, usa el cronograma como fallback.
+
+**Archivo:** `src/MyInvestmentsList.jsx`
+
 ## Actualización 2026-02-03
 
 **Lo hecho hoy:**
