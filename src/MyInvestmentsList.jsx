@@ -69,7 +69,7 @@ const MyInvestmentsList = () => {
               const { data, error } = await supabase
                 .rpc('get_investor_installments', { p_opportunity_id: oid, p_investor_id: user.id });
               if (error) return;
-              schedulesMap[oid] = data || [];
+              schedulesMap[oid] = (data || []).map((item) => ({ ...item, opportunity_id: oid }));
             } catch (_) {
               // noop
             }
@@ -190,6 +190,17 @@ const MyInvestmentsList = () => {
     });
     return map;
   }, [paidPayouts]);
+  const lastPaidAmountByOpp = useMemo(() => {
+    const map = {};
+    const ordered = [...paidPayouts].sort((a, b) => new Date(a.paid_at || a.created_at || 0).getTime() - new Date(b.paid_at || b.created_at || 0).getTime());
+    ordered.forEach((p) => {
+      const oppId = Number(p.opportunity_id);
+      if (!oppId) return;
+      const amount = p.paid_amount ?? p.amount ?? p.expected_amount ?? 0;
+      if (Number(amount || 0) > 0) map[oppId] = Number(amount || 0);
+    });
+    return map;
+  }, [paidPayouts]);
 
   const nextSchedule = useMemo(() => {
     const items = Object.values(schedulesByOpp).flat().filter(Boolean);
@@ -200,14 +211,16 @@ const MyInvestmentsList = () => {
     const upcoming = sorted.find((item) => new Date(item.due_date).getTime() >= today.getTime());
     const target = upcoming || sorted[sorted.length - 1];
     const oppItems = schedulesByOpp[Number(target.opportunity_id)] || [];
+    const oppId = Number(target.opportunity_id || 0);
+    const paidAmount = oppId ? lastPaidAmountByOpp[oppId] : null;
     return {
       due_date: target.due_date,
-      expected_amount: target.payment_investor_neto ?? target.payment_investor_bruto ?? 0,
-      opportunity_id: target.opportunity_id,
+      expected_amount: paidAmount ?? target.payment_investor_neto ?? target.payment_investor_bruto ?? 0,
+      opportunity_id: oppId || target.opportunity_id,
       installment_no: target.installment_no,
       total_installments: oppItems.length || null,
     };
-  }, [schedulesByOpp]);
+  }, [schedulesByOpp, lastPaidAmountByOpp]);
   const nextPaymentDisplay = useMemo(() => {
     if (nextPendingPayout) {
       const oppId = Number(nextPendingPayout.opportunity_id);
