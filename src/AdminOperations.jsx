@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabaseClient';
 
 const TabButton = ({ active, onClick, children }) => (
@@ -111,6 +111,7 @@ const AdminOperations = () => {
       return {};
     }
   });
+  const payoutReceiptInputRefs = useRef({});
 
   const handlePayoutReceiptChange = async (payoutId, file) => {
     if (!file) return;
@@ -131,6 +132,10 @@ const AdminOperations = () => {
     } catch (e) {
       setError((e).message || `Error al guardar el comprobante para el pago #${payoutId}.`);
     }
+  };
+  const triggerPayoutReceiptUpload = (payoutId) => {
+    const input = payoutReceiptInputRefs.current[payoutId];
+    if (input) input.click();
   };
 
   const pendingPayoutTotals = useMemo(() => {
@@ -1301,15 +1306,27 @@ const AdminOperations = () => {
                               ) : (
                                 <span className="muted">Sin comprobante</span>
                               )}
-                              <label className="ops-file-upload-label">
-                                <input
-                                  className="ops-file-input-hidden"
-                                  type="file"
-                                  accept=".pdf,image/*"
-                                  onChange={(e) => handlePayoutReceiptChange(p.id, e.target.files?.[0])}
-                                />
+                              <input
+                                ref={(el) => {
+                                  if (el) payoutReceiptInputRefs.current[p.id] = el;
+                                  else delete payoutReceiptInputRefs.current[p.id];
+                                }}
+                                className="ops-file-input-hidden"
+                                type="file"
+                                accept=".pdf,image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0] || null;
+                                  e.target.value = '';
+                                  handlePayoutReceiptChange(p.id, file);
+                                }}
+                              />
+                              <button
+                                type="button"
+                                className="ops-file-upload-label"
+                                onClick={() => triggerPayoutReceiptUpload(p.id)}
+                              >
                                 {p.receipt_signed_url ? 'Cambiar' : 'Adjuntar'}
-                              </label>
+                              </button>
                             </div>
                           </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
