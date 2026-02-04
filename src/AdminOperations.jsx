@@ -111,11 +111,16 @@ const AdminOperations = () => {
       return {};
     }
   });
-  const payoutReceiptInputRefs = useRef({});
+  const payoutReceiptPickerRef = useRef(null);
+  const payoutReceiptTargetRef = useRef(null);
 
   const handlePayoutReceiptChange = async (payoutId, file) => {
-    if (!file) return;
+    if (!file) {
+      logOps('Payout receipt: no file selected', { payoutId });
+      return;
+    }
     try {
+      logOps('Payout receipt: file selected', { payoutId, name: file.name, size: file.size, type: file.type });
       setInfoMessage(`Subiendo comprobante para el pago #${payoutId}...`);
       const receiptPath = await uploadReceipt(file, 'payouts');
       const { error } = await supabase
@@ -130,12 +135,23 @@ const AdminOperations = () => {
         loadPayouts();
       }, 100);
     } catch (e) {
+      console.error('Payout receipt upload failed', e);
       setError((e).message || `Error al guardar el comprobante para el pago #${payoutId}.`);
     }
   };
   const triggerPayoutReceiptUpload = (payoutId) => {
-    const input = payoutReceiptInputRefs.current[payoutId];
-    if (input) input.click();
+    payoutReceiptTargetRef.current = payoutId;
+    const input = payoutReceiptPickerRef.current;
+    if (!input) {
+      logOps('Payout receipt: picker ref missing', { payoutId });
+      return;
+    }
+    logOps('Payout receipt: opening file picker', { payoutId });
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+    } else {
+      input.click();
+    }
   };
 
   const pendingPayoutTotals = useMemo(() => {
@@ -926,6 +942,24 @@ const AdminOperations = () => {
       {loading && <p>Cargando...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {infoMessage && <div className="ops-toast">{infoMessage}</div>}
+      <input
+        ref={payoutReceiptPickerRef}
+        className="ops-file-input-hidden"
+        type="file"
+        accept=".pdf,image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0] || null;
+          e.target.value = '';
+          const payoutId = payoutReceiptTargetRef.current;
+          if (!payoutId) {
+            logOps('Payout receipt: missing target id');
+            setError('No se pudo identificar el payout para adjuntar el comprobante.');
+            return;
+          }
+          logOps('Payout receipt: file selected (global picker)', { payoutId, name: file?.name, size: file?.size });
+          handlePayoutReceiptChange(payoutId, file);
+        }}
+      />
 
       {tab === 'intents' && (
         <div style={{ overflowX: 'auto' }}>
@@ -1306,24 +1340,14 @@ const AdminOperations = () => {
                               ) : (
                                 <span className="muted">Sin comprobante</span>
                               )}
-                              <input
-                                ref={(el) => {
-                                  if (el) payoutReceiptInputRefs.current[p.id] = el;
-                                  else delete payoutReceiptInputRefs.current[p.id];
-                                }}
-                                className="ops-file-input-hidden"
-                                type="file"
-                                accept=".pdf,image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] || null;
-                                  e.target.value = '';
-                                  handlePayoutReceiptChange(p.id, file);
-                                }}
-                              />
                               <button
                                 type="button"
                                 className="ops-file-upload-label"
-                                onClick={() => triggerPayoutReceiptUpload(p.id)}
+                                onClick={() => {
+                                  setInfoMessage('');
+                                  setError('');
+                                  triggerPayoutReceiptUpload(p.id);
+                                }}
                               >
                                 {p.receipt_signed_url ? 'Cambiar' : 'Adjuntar'}
                               </button>
