@@ -54,7 +54,6 @@ const AdminOperations = () => {
   const [bankMap, setBankMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [receiptFiles, setReceiptFiles] = useState({});
   const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
   const [disbReceiptFiles, setDisbReceiptFiles] = useState({});
   const [disbContractFiles, setDisbContractFiles] = useState({});
@@ -112,6 +111,27 @@ const AdminOperations = () => {
       return {};
     }
   });
+
+  const handlePayoutReceiptChange = async (payoutId, file) => {
+    if (!file) return;
+    try {
+      setInfoMessage(`Subiendo comprobante para el pago #${payoutId}...`);
+      const receiptPath = await uploadReceipt(file, 'payouts');
+      const { error } = await supabase
+        .from('payouts_inversionistas')
+        .update({ receipt_url: receiptPath, updated_at: new Date() })
+        .eq('id', payoutId);
+
+      if (error) throw error;
+
+      setInfoMessage('Comprobante guardado con éxito.');
+      setTimeout(() => {
+        loadPayouts();
+      }, 100);
+    } catch (e) {
+      setError((e).message || `Error al guardar el comprobante para el pago #${payoutId}.`);
+    }
+  };
 
   const pendingPayoutTotals = useMemo(() => {
     const byOpp = {};
@@ -685,28 +705,7 @@ const AdminOperations = () => {
     }
   };
 
-  const uploadAndSavePayoutReceipt = async (payoutId) => {
-    try {
-      const file = receiptFiles[payoutId];
-      if (!file) {
-        setInfoMessage('Primero selecciona un archivo de comprobante.');
-        return;
-      }
-      setInfoMessage('Subiendo y guardando comprobante...');
-      const receiptPath = await uploadReceipt(file, 'payouts');
-      const { error } = await supabase
-        .from('payouts_inversionistas')
-        .update({ receipt_url: receiptPath })
-        .eq('id', payoutId);
 
-      if (error) throw error;
-      setReceiptFiles((prev) => ({ ...prev, [payoutId]: null }));
-      setInfoMessage('Comprobante guardado con éxito.');
-      loadPayouts(); // Recargar para mostrar el link "Ver"
-    } catch (e) {
-      setError((e).message || 'Error al guardar el comprobante.');
-    }
-  };
 
   const registerDirectedPayment = async (disbRow) => {
     try {
@@ -1296,37 +1295,23 @@ const AdminOperations = () => {
                               </span>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               {p.receipt_signed_url ? (
-                                <a className="btn" href={p.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
+                                <a className="btn" href={p.receipt_signed_url} target="_blank" rel="noreferrer">Ver Comprobante</a>
                               ) : (
-                                <span style={{ color: '#888' }}>Sin comprobante</span>
+                                <span className="muted">Sin comprobante</span>
                               )}
-                              <div style={{ marginTop: 6, display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <label className="ops-file-upload-label">
-                                  <input
-                                    className="ops-file-input-hidden"
-                                    type="file"
-                                    accept=".pdf,image/*"
-                                    onChange={(e) => setReceiptFiles(prev => ({ ...prev, [p.id]: e.target.files?.[0] || null }))}
-                                  />
-                                  {receiptFiles[p.id] ? 'Cambiar' : 'Subir'}
-                                </label>
-                                {receiptFiles[p.id] && (
-                                  <>
-                                    <span className="muted" style={{ fontSize: '0.8rem', maxWidth: 100, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={receiptFiles[p.id].name}>
-                                      {receiptFiles[p.id].name}
-                                    </span>
-                                    <button
-                                      className="btn btn--secondary"
-                                      style={{ padding: '4px 8px', fontSize: '0.8rem' }}
-                                      onClick={() => uploadAndSavePayoutReceipt(p.id)}
-                                    >
-                                      Guardar
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
+                              <label className="ops-file-upload-label">
+                                <input
+                                  className="ops-file-input-hidden"
+                                  type="file"
+                                  accept=".pdf,image/*"
+                                  onChange={(e) => handlePayoutReceiptChange(p.id, e.target.files?.[0])}
+                                />
+                                {p.receipt_signed_url ? 'Cambiar' : 'Adjuntar'}
+                              </label>
+                            </div>
+                          </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                               {isPending ? (
                                 <button className="btn btn--primary" onClick={() => updatePayoutStatus(p.id, 'paid')}>Marcar pagado</button>
