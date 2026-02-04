@@ -1,3 +1,41 @@
+## Actualización 2026-02-04
+
+**Objetivo:** Solucionar el bug en "Operaciones -> Pagos a inversionistas" que impedía adjuntar un comprobante a un `payout` que ya estaba en estado "Pagado".
+
+**Cambios Realizados:**
+1.  **Refactorización del Componente (`src/AdminOperations.jsx`):** Se reescribió la lógica para subir comprobantes. Se eliminó el flujo confuso de botones ("Subir", "Cambiar", "Guardar") y se reemplazó por una acción atómica: un único botón "Adjuntar" o "Cambiar" que sube y guarda el archivo inmediatamente al seleccionarlo.
+2.  **Corrección de Build (Commit enmendado):** El primer intento de despliegue falló por un error de sintaxis (`try/catch` incompleto) introducido en la refactorización. Se corrigió el error y se enmendó el commit anterior para mantener el historial limpio antes de volver a desplegar.
+
+**Error Actual:**
+- **Síntoma:** A pesar de que el despliegue fue exitoso, la funcionalidad sigue sin operar. Al hacer clic en "Adjuntar" y seleccionar un archivo, no ocurre nada. No se muestra ningún mensaje de "Subiendo...", de éxito, ni de error. El archivo no se guarda.
+- **Diagnóstico Preliminar:** El fallo ocurre de forma silenciosa en el frontend. La función `handlePayoutReceiptChange` que debería ejecutarse no se está activando o se interrumpe prematuramente sin poder reportar un error en la interfaz.
+
+**Pendiente para Mañana (o Siguiente Acción):**
+- **Depuración en el Navegador:** Se le ha solicitado a Isaac que realice la acción de nuevo con la **consola del desarrollador (F12)** abierta para capturar el mensaje de error exacto que probablemente se está registrando allí. Este error es indispensable para diagnosticar la causa raíz (ej. un problema de permisos RLS, un error de red, etc.) y aplicar la solución correcta.
+
+## Actualización 2026-02-04 (Fix definitivo comprobantes payouts)
+
+**Resultado:** Ya se puede adjuntar comprobante en Operaciones → Pagos a inversionistas (op 61).
+
+**Causa raíz:** RLS en Supabase:
+- `storage.objects` no permitía `INSERT` en bucket `comprobantes-pagos` para `admin/ops`.
+- `payouts_inversionistas` no permitía `UPDATE` para `admin/ops` (solo `service_role`).
+
+**Solución aplicada (Supabase):**
+- Nueva policy `ops_admin_upload_receipts` en `storage.objects` para `INSERT` en `comprobantes-pagos` para roles `admin/ops`.
+- Nueva policy `po_update_admin_ops` en `payouts_inversionistas` para permitir `UPDATE` de `admin/ops`.
+
+**Estado:** Comprobante adjuntado y visible como “Ver Comprobante”.
+
+## Actualización 2026-02-03
+
+**Lo hecho hoy:**
+- Se corrigió la vulnerabilidad de seguridad `SECURITY DEFINER` en las vistas de la base de datos, aplicando una nueva migración.
+- Se solucionó el bug en el panel de Operaciones que impedía subir un comprobante de pago a un inversionista si este ya había sido marcado como "pagado". Los cambios fueron desplegados a producción en Vercel.
+
+**Pendiente para mañana:**
+- **Validación por Isaac:** Probar en producción el flujo completo en el panel de Operaciones para la oportunidad 61. Confirmar que se puede seleccionar un archivo de comprobante y guardarlo exitosamente para un pago que ya figura como "pagado".
+
 ## Actualización 2026-01-16
 
 **Seguridad (Supabase):**
@@ -79,3 +117,24 @@
 - Pagos reales SOLO desde `investor_payouts_view` (nunca usar cronograma para montos reales).
 - Cronograma (`get_investor_installments`) SOLO para “programado” cuando no hay payout real.
 - No truncar cronograma al calcular “Cuota X de N”.
+
+## Actualización 2026-01-26
+
+**Revisión RLS/Storage antes de marcar payout como pagado (pendiente para mañana):**
+- RLS de `notifications` bloquea inserts de Ops hacia inversionistas: todas las policies permiten insertar solo si `user_id = auth.uid()`. Cuando Ops marca payout pagado, intenta insertar notificación para otro usuario y puede fallar.
+- Opciones a implementar: (1) Edge Function con `service_role` para insertar notificaciones, o (2) policy que permita a `admin/ops` insertar notificaciones para cualquier `user_id`. Pendiente confirmar rol exacto de Ops (`profiles.role`).
+- Faltan revisar policies de `storage.objects` para validar lectura de comprobantes por inversionista y carga por Ops. Query pendiente:
+  `select schemaname, tablename, policyname, roles, cmd, qual, with_check from pg_policies where schemaname = 'storage' and tablename = 'objects' order by policyname;`
+
+
+## Actualizaci??n 2026-01-29
+
+**Lo hecho hoy:**
+- Se elimin?? la notificaci??n duplicada en frontend al marcar payout pagado; ahora la notificaci??n queda solo desde el backend (RPC `mark_payout_paid`).
+- Se ajust?? la regla de acciones en Operaciones: el bot??n ???Marcar pagado??? solo aparece si el status del payout es `pending`; en otros estados muestra ???Sin acciones (ya pagado)???.
+- Se actualiz?? el modo de trabajo: siempre entregar bloque de comandos de deploy cuando se haga un cambio.
+- Se revisaron policies de `storage.objects` y buckets: lectura de comprobantes est?? permitida para inversionistas (policies `auth_read_receipts` e `investor_read_payout_receipts`).
+
+**Pendiente:**
+- Deploy frontend con los cambios de `AdminOperations` y confirmar en producci??n que el bot??n no aparece cuando el payout est?? pagado.
+- Validar si `receipt_url` se guarda en `payouts_inversionistas` al marcar pagado con comprobante y que el inversionista vea el enlace (refrescar panel).

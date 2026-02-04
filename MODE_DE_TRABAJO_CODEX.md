@@ -19,6 +19,13 @@
 - Ejecutar SQL directo desde Supabase CLI; puedo preparar scripts/vistas/funciones según se necesite.
 - Consultas a tablas relevantes (p. ej. documentos, análisis, payments) se hacen bajo RLS y con el rol adecuado.
 
+## Framework de diagnóstico (obligatorio antes de tocar código)
+1) Reproducir el bug y abrir consola (F12) + Network.
+2) Consultar RLS y buckets en Supabase (policies de tablas y `storage.objects`).
+3) Verificar si el usuario/rol tiene permisos reales (profiles.role y app_metadata.role).
+4) Revisar errores en Network (403/401/500) y logs de Supabase si aplica.
+5) Solo si todo lo anterior está OK, recién cambiar código.
+
 ## Monitoreo y QA
 - Revisar logs de deploy y consistencia del `.env`.
 - Probar en producción/staging y confirmar cambios en UI con tu aprobación.
