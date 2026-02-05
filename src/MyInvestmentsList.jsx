@@ -236,13 +236,21 @@ const MyInvestmentsList = () => {
     const target = upcoming || sorted[sorted.length - 1];
     if (!target) return null;
     const label = target.source === 'pending_payout' ? 'Pendiente' : (target.source === 'programado' ? 'Programado' : 'Sin datos');
+    const oppId = Number(target.opportunity_id);
+    const oppItems = schedulesByOpp[oppId] || [];
+    const matchDate = toLocalDate(target.due_date)?.getTime() || null;
+    const scheduleItem = matchDate
+      ? oppItems.find((item) => toLocalDate(item.due_date)?.getTime() === matchDate)
+      : null;
     return {
       label,
       due_date: target.due_date,
       expected_amount: target.expected_amount ?? 0,
       opportunity_id: target.opportunity_id,
+      installment_no: scheduleItem?.installment_no || null,
+      total_installments: oppItems.length || null,
     };
-  }, [nextPayments]);
+  }, [nextPayments, schedulesByOpp]);
 
   const nextSchedule = useMemo(() => {
     const items = Object.values(schedulesByOpp).flat().filter(Boolean);
