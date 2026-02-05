@@ -17,6 +17,16 @@ const MyInvestmentsList = () => {
   const [payoutSignedMap, setPayoutSignedMap] = useState({});
   const [activeTab, setActiveTab] = useState('inversiones');
 
+  const toLocalDate = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [y, m, d] = value.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    const dt = new Date(value);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  };
+
   useEffect(() => {
     trackEvent('Viewed Portfolio');
     const load = async () => {
@@ -207,8 +217,15 @@ const MyInvestmentsList = () => {
     if (!items.length) return null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const sorted = [...items].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
-    const upcoming = sorted.find((item) => new Date(item.due_date).getTime() >= today.getTime());
+    const sorted = [...items].sort((a, b) => {
+      const aDate = toLocalDate(a.due_date);
+      const bDate = toLocalDate(b.due_date);
+      return (aDate ? aDate.getTime() : 0) - (bDate ? bDate.getTime() : 0);
+    });
+    const upcoming = sorted.find((item) => {
+      const due = toLocalDate(item.due_date);
+      return due && due.getTime() >= today.getTime();
+    });
     const target = upcoming || sorted[sorted.length - 1];
     const oppItems = schedulesByOpp[Number(target.opportunity_id)] || [];
     const oppId = Number(target.opportunity_id || 0);
