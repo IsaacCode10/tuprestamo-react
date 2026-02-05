@@ -16,6 +16,7 @@ const MyInvestmentsList = () => {
   const [investorSchedules, setInvestorSchedules] = useState({});
   const [payoutSignedMap, setPayoutSignedMap] = useState({});
   const [activeTab, setActiveTab] = useState('inversiones');
+  const [nextPayments, setNextPayments] = useState([]);
 
   const toLocalDate = (value) => {
     if (!value) return null;
@@ -124,6 +125,13 @@ const MyInvestmentsList = () => {
           } catch (_) {}
         }));
         setPayoutSignedMap(signedMap);
+
+        const { data: nextRows, error: nextErr } = await supabase
+          .from('investor_next_payment_view')
+          .select('*')
+          .eq('investor_id', user.id);
+        if (nextErr) throw nextErr;
+        setNextPayments(nextRows || []);
       } catch (e) {
         console.error('Error loading portfolio:', e);
         setError('No pudimos cargar tu portafolio. Intenta de nuevo.');
@@ -212,6 +220,30 @@ const MyInvestmentsList = () => {
     return map;
   }, [paidPayouts]);
 
+  const nextPaymentFromView = useMemo(() => {
+    if (!nextPayments.length) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sorted = [...nextPayments].sort((a, b) => {
+      const aDate = toLocalDate(a.due_date);
+      const bDate = toLocalDate(b.due_date);
+      return (aDate ? aDate.getTime() : 0) - (bDate ? bDate.getTime() : 0);
+    });
+    const upcoming = sorted.find((row) => {
+      const due = toLocalDate(row.due_date);
+      return due && due.getTime() >= today.getTime();
+    });
+    const target = upcoming || sorted[sorted.length - 1];
+    if (!target) return null;
+    const label = target.source === 'pending_payout' ? 'Pendiente' : (target.source === 'programado' ? 'Programado' : 'Sin datos');
+    return {
+      label,
+      due_date: target.due_date,
+      expected_amount: target.expected_amount ?? 0,
+      opportunity_id: target.opportunity_id,
+    };
+  }, [nextPayments]);
+
   const nextSchedule = useMemo(() => {
     const items = Object.values(schedulesByOpp).flat().filter(Boolean);
     if (!items.length) return null;
@@ -239,6 +271,9 @@ const MyInvestmentsList = () => {
     };
   }, [schedulesByOpp, lastPaidAmountByOpp]);
   const nextPaymentDisplay = useMemo(() => {
+    if (nextPaymentFromView) {
+      return nextPaymentFromView;
+    }
     if (nextPendingPayout) {
       const oppId = Number(nextPendingPayout.opportunity_id);
       const oppItems = schedulesByOpp[oppId] || [];
@@ -267,7 +302,7 @@ const MyInvestmentsList = () => {
       };
     }
     return null;
-  }, [nextPendingPayout, nextSchedule, paidPayouts, schedulesByOpp, paidCountByOpp]);
+  }, [nextPaymentFromView, nextPendingPayout, nextSchedule, paidPayouts, schedulesByOpp, paidCountByOpp]);
 
   const formatDate = (value) => {
     if (!value) return 'N/D';
