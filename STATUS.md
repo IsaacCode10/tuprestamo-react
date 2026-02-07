@@ -39,6 +39,21 @@ Ejemplo op 61: payout real 518,71 vs programado 453,6477 (cronograma).
 
 **Archivo:** `src/MyInvestmentsList.jsx`
 
+## Actualización 2026-02-07
+
+**Migraciones / Supabase**
+- Migración creada y versionada: `20260207_ops_payout_receipts_policies.sql` (RLS para ops/admin en comprobantes y payouts).
+- `20260207` marcada como `applied` en historial remoto.
+- Persisten desajustes en historial por `20251127` (CLI v2.65.5 no alinea correctamente). Se posterga `db pull` hasta actualizar CLI o cerrar la brecha con repair controlado.
+
+**Contrato (PDF)**
+- Se mejoró el layout del contrato (word‑wrap, paginado) y se agregó soporte de logo vía `CONTRACT_LOGO_URL`.
+- Edge function `generate-contract` desplegada nuevamente.
+- Bucket `branding` creado (público) para el logo.
+
+**Notas**
+- Falta validar el nuevo PDF en una nueva oportunidad (evitamos regenerar contrato en op 61 para no alterar el flujo).
+
 ## Actualización 2026-02-03
 
 **Lo hecho hoy:**
