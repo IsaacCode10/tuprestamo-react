@@ -44,7 +44,7 @@ Ejemplo op 61: payout real 518,71 vs programado 453,6477 (cronograma).
 **Migraciones / Supabase**
 - Migración creada y versionada: `20260207_ops_payout_receipts_policies.sql` (RLS para ops/admin en comprobantes y payouts).
 - `20260207` marcada como `applied` en historial remoto.
-- Persisten desajustes en historial por `20251127` (CLI v2.65.5 no alinea correctamente). Se posterga `db pull` hasta actualizar CLI o cerrar la brecha con repair controlado.
+- Persisten desajustes en historial por `20251127` (CLI sigue mostrando remote/local duplicado aun con repair). No bloquea producción; se posterga `db pull` hasta que la CLI lo resuelva.
 
 **Contrato (PDF)**
 - Se mejoró el layout del contrato (word‑wrap, paginado) y se agregó soporte de logo vía `CONTRACT_LOGO_URL`.
