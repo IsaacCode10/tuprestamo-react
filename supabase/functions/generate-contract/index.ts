@@ -87,23 +87,63 @@ serve(async (req) => {
 
 async function buildPdf(payload: ContractPayload): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
-  const page = doc.addPage([612, 792]) // Carta
-  const { width, height } = page.getSize()
+  const PAGE_WIDTH = 612
+  const PAGE_HEIGHT = 792 // Carta
+  const MARGIN_X = 50
+  const MARGIN_TOP = 60
+  const MARGIN_BOTTOM = 50
+  const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
 
-  let y = height - 50
-  const lineHeight = 14
+  let page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+  let y = PAGE_HEIGHT - MARGIN_TOP
 
-  const drawText = (text: string, opts?: { bold?: boolean; size?: number; color?: ReturnType<typeof rgb> }) => {
+  const lineHeight = 14
+  const smallLineHeight = 12
+
+  const newPage = () => {
+    page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+    y = PAGE_HEIGHT - MARGIN_TOP
+  }
+
+  const ensureSpace = (needed: number) => {
+    if (y - needed < MARGIN_BOTTOM) newPage()
+  }
+
+  const wrapText = (text: string, usedFont: typeof font, size: number) => {
+    const words = text.split(' ')
+    const lines: string[] = []
+    let current = ''
+    words.forEach((word) => {
+      const next = current ? `${current} ${word}` : word
+      const width = usedFont.widthOfTextAtSize(next, size)
+      if (width <= CONTENT_WIDTH) {
+        current = next
+      } else {
+        if (current) lines.push(current)
+        current = word
+      }
+    })
+    if (current) lines.push(current)
+    return lines
+  }
+
+  const drawText = (text: string, opts?: { bold?: boolean; size?: number; color?: ReturnType<typeof rgb>; leading?: number }) => {
     const size = opts?.size || 12
+    const leading = opts?.leading || lineHeight
     const textColor = opts?.color || rgb(0.05, 0.1, 0.14)
     const usedFont = opts?.bold ? fontBold : font
-    page.drawText(text, { x: 50, y, size, font: usedFont, color: textColor })
-    y -= lineHeight
+    const lines = wrapText(text, usedFont, size)
+    lines.forEach((line) => {
+      ensureSpace(leading)
+      page.drawText(line, { x: MARGIN_X, y, size, font: usedFont, color: textColor })
+      y -= leading
+    })
   }
 
   const drawBlock = (title: string, lines: string[]) => {
+    ensureSpace(lineHeight * 2)
     drawText(title, { bold: true, size: 14, color: rgb(0, 0.28, 0.35) })
     lines.forEach((l) => drawText(l))
     y -= 6
@@ -114,8 +154,33 @@ async function buildPdf(payload: ContractPayload): Promise<Uint8Array> {
   const funding = payload.funding || {}
   const investors = Array.isArray(funding.inversionistas) ? funding.inversionistas : []
 
+  // Logo opcional desde URL (configurable)
+  const logoUrl = Deno.env.get('CONTRACT_LOGO_URL')
+  if (logoUrl) {
+    try {
+      const res = await fetch(logoUrl)
+      if (res.ok) {
+        const bytes = new Uint8Array(await res.arrayBuffer())
+        const contentType = res.headers.get('content-type') || ''
+        const image = contentType.includes('png') ? await doc.embedPng(bytes) : await doc.embedJpg(bytes)
+        const logoWidth = 120
+        const scale = logoWidth / image.width
+        const logoHeight = image.height * scale
+        page.drawImage(image, {
+          x: MARGIN_X,
+          y: PAGE_HEIGHT - MARGIN_TOP + 10 - logoHeight,
+          width: logoWidth,
+          height: logoHeight,
+        })
+        y -= logoHeight + 6
+      }
+    } catch (_) {
+      // Si falla el logo, continuar sin bloquear el contrato
+    }
+  }
+
   drawText('Contrato de préstamo y mandato de pago dirigido', { bold: true, size: 16, color: rgb(0, 0.35, 0.4) })
-  drawText(`Operación: ${opp.id ?? 'N/D'} • Fecha: ${new Date().toLocaleDateString('es-BO')}`, { size: 11 })
+  drawText(`Operación: ${opp.id ?? 'N/D'} • Fecha: ${new Date().toLocaleDateString('es-BO')}`, { size: 11, leading: smallLineHeight })
   y -= 8
 
   drawBlock('1) Partes y datos del préstamo', [
