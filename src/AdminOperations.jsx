@@ -57,6 +57,7 @@ const AdminOperations = () => {
   const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
   const [disbReceiptFiles, setDisbReceiptFiles] = useState({});
   const [disbContractFiles, setDisbContractFiles] = useState({});
+  const [disbNotaryFiles, setDisbNotaryFiles] = useState({});
   const [infoMessage, setInfoMessage] = useState('');
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [seenReceipts, setSeenReceipts] = useState(() => {
@@ -570,7 +571,7 @@ const AdminOperations = () => {
     setError('');
     const { data, error } = await supabase
       .from('desembolsos')
-      .select('id, opportunity_id, monto_bruto, monto_neto, estado, comprobante_url, contract_url, paid_at, created_at')
+      .select('id, opportunity_id, monto_bruto, monto_neto, estado, comprobante_url, contract_url, notariado_ok, notariado_url, paid_at, created_at')
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) setError(error.message);
@@ -578,10 +579,17 @@ const AdminOperations = () => {
     const withSigned = await Promise.all(rows.map(async (d) => {
       let comprobante_signed_url = null;
       let contract_signed_url = null;
+      let notariado_signed_url = null;
       if (d.comprobante_url) {
         try {
           const { data: signed } = await supabase.storage.from('comprobantes-pagos').createSignedUrl(d.comprobante_url, 60 * 60);
           comprobante_signed_url = signed?.signedUrl || null;
+        } catch (_) {}
+      }
+      if (d.notariado_url) {
+        try {
+          const { data: signed } = await supabase.storage.from('comprobantes-pagos').createSignedUrl(d.notariado_url, 60 * 60);
+          notariado_signed_url = signed?.signedUrl || null;
         } catch (_) {}
       }
       if (d.contract_url) {
@@ -590,7 +598,7 @@ const AdminOperations = () => {
           contract_signed_url = signed?.signedUrl || null;
         } catch (_) {}
       }
-      return { ...d, comprobante_signed_url, contract_signed_url };
+      return { ...d, comprobante_signed_url, contract_signed_url, notariado_signed_url };
     }));
     setDisbursements(withSigned);
     setLoading(false);
@@ -731,16 +739,32 @@ const AdminOperations = () => {
   const registerDirectedPayment = async (disbRow) => {
     try {
       if (!disbRow?.opportunity_id) return;
+      if (!disbRow?.notariado_ok) {
+        setError('No puedes registrar el pago dirigido sin contrato notariado.');
+        return;
+      }
       const receiptFile = disbReceiptFiles[disbRow.id];
       const contractFile = disbContractFiles[disbRow.id];
+      const notaryFile = disbNotaryFiles[disbRow.id];
       let receiptPath = disbRow.comprobante_url || null;
       let contractPath = disbRow.contract_url || null;
+      let notaryPath = disbRow.notariado_url || null;
 
       if (receiptFile) {
         receiptPath = await uploadReceipt(receiptFile, 'desembolsos');
       }
       if (contractFile) {
         contractPath = await uploadReceipt(contractFile, 'contratos');
+      }
+      if (notaryFile) {
+        notaryPath = await uploadReceipt(notaryFile, 'notariado');
+      }
+
+      if (notaryPath && !disbRow.notariado_ok) {
+        await supabase
+          .from('desembolsos')
+          .update({ notariado_ok: true, notariado_url: notaryPath })
+          .eq('id', disbRow.id);
       }
 
       const { error: rpcErr } = await supabase.rpc('registrar_pago_dirigido', {
@@ -776,6 +800,7 @@ const AdminOperations = () => {
 
       setDisbReceiptFiles((prev) => ({ ...prev, [disbRow.id]: null }));
       setDisbContractFiles((prev) => ({ ...prev, [disbRow.id]: null }));
+      setDisbNotaryFiles((prev) => ({ ...prev, [disbRow.id]: null }));
       setInfoMessage('Pago dirigido registrado, cronograma generado y contrato listo.');
       loadDisbursements();
       loadBorrowerIntents();
@@ -798,6 +823,23 @@ const AdminOperations = () => {
       loadDisbursements();
     } catch (e) {
       setError((e).message || 'No pudimos guardar el comprobante');
+    }
+  };
+
+  const uploadNotaryImmediate = async (disbRow, file) => {
+    if (!file || !disbRow?.id) return;
+    try {
+      setInfoMessage('Subiendo contrato notariado...');
+      const path = await uploadReceipt(file, 'notariado');
+      const { error } = await supabase
+        .from('desembolsos')
+        .update({ notariado_url: path, notariado_ok: true })
+        .eq('id', disbRow.id);
+      if (error) throw error;
+      setInfoMessage('Contrato notariado guardado.');
+      loadDisbursements();
+    } catch (e) {
+      setError((e).message || 'No pudimos guardar el contrato notariado');
     }
   };
 
@@ -1403,6 +1445,7 @@ const AdminOperations = () => {
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     {d.estado}
                     <div className="muted">{d.paid_at ? `Pagado: ${new Date(d.paid_at).toLocaleString('es-BO')}` : 'Pendiente'}</div>
+                    <div className="muted">Notariado: {d.notariado_ok ? 'OK' : 'Pendiente'}</div>
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1410,6 +1453,15 @@ const AdminOperations = () => {
                       <label className="ops-file-upload-label">
                         <input className="ops-file-input-hidden" type="file" accept=".pdf,image/*" onChange={(e) => uploadDisbReceiptImmediate(d, e.target.files?.[0] || null)} />
                         Subir comprobante
+                      </label>
+                      {d.notariado_url ? (
+                        <a href={d.notariado_signed_url || d.notariado_url} target="_blank" rel="noreferrer">Contrato notariado</a>
+                      ) : (
+                        <span className="muted">Contrato notariado pendiente</span>
+                      )}
+                      <label className="ops-file-upload-label">
+                        <input className="ops-file-input-hidden" type="file" accept=".pdf,image/*" onChange={(e) => uploadNotaryImmediate(d, e.target.files?.[0] || null)} />
+                        Subir contrato notariado
                       </label>
                       {d.contract_url ? (
                         <a href={d.contract_signed_url || d.contract_url} target="_blank" rel="noreferrer">Contrato generado</a>
@@ -1421,9 +1473,9 @@ const AdminOperations = () => {
                 <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   <button
                     className="btn btn--primary"
-                    disabled={d.estado === 'pagado'}
+                    disabled={d.estado === 'pagado' || !d.notariado_ok}
                     onClick={() => registerDirectedPayment(d)}
-                      title="Sube el comprobante del pago al banco (y opcionalmente el contrato) y luego pulsa aquí. Generaremos el contrato automático y notificaremos al prestatario e inversionistas."
+                      title="Requiere contrato notariado. Luego sube el comprobante del pago al banco y pulsa aquí. Generaremos el contrato automático y notificaremos al prestatario e inversionistas."
                     >
                       Registrar pago dirigido
                     </button>

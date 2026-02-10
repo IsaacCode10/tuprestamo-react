@@ -5,7 +5,7 @@ import HelpTooltip from './components/HelpTooltip';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
 const getRequiredDocsBySituation = (situacion) => {
-  const baseDocs = ['ci_anverso', 'ci_reverso', 'factura_servicio', 'extracto_tarjeta', 'selfie_ci'];
+  const baseDocs = ['ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'extracto_tarjeta', 'selfie_ci'];
   const map = {
     Dependiente: [...baseDocs, 'boleta_pago', 'certificado_gestora'],
     Independiente: [...baseDocs, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3', 'nit'],
@@ -26,7 +26,7 @@ const FALLBACK_PROFILE = {
   documentos_validados: [
     { tipo_documento: 'CI Anverso', estado: 'Verificado' },
     { tipo_documento: 'CI Reverso', estado: 'Verificado' },
-    { tipo_documento: 'Factura Servicio Básico', estado: 'Verificado' },
+    { tipo_documento: 'Boleta Aviso Electricidad', estado: 'Verificado' },
     { tipo_documento: 'Boleta Tarjeta Crédito', estado: 'Pendiente' },
     { tipo_documento: 'Foto Selfie con CI', estado: 'Rechazado' },
   ]
@@ -66,6 +66,7 @@ const RiskAnalystDashboard = () => {
   const [infocredRiskLevel, setInfocredRiskLevel] = useState('');
   const [savingInfocredMeta, setSavingInfocredMeta] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  const [savingVideoCall, setSavingVideoCall] = useState(false);
 
   const SCROLL_STORAGE_KEY = 'risk-analyst-scroll';
   const SELECTED_PROFILE_KEY = 'risk-analyst-selected-id';
@@ -87,6 +88,32 @@ const RiskAnalystDashboard = () => {
   const comisionOriginacion = useMemo(() => {
     return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo]) ?? DEFAULT_COMISION;
   }, [perfilRiesgo]);
+
+  const videoCallOk = !!perfilSeleccionado?.videollamada_ok;
+  const videoCallAt = perfilSeleccionado?.videollamada_at;
+
+  const updateVideoCallStatus = async (nextValue) => {
+    if (!perfilSeleccionado?.id) return;
+    setSavingVideoCall(true);
+    try {
+      const payload = {
+        videollamada_ok: nextValue,
+        videollamada_at: nextValue ? new Date().toISOString() : null,
+      };
+      const { error: updateErr } = await supabase
+        .from('solicitudes')
+        .update(payload)
+        .eq('id', perfilSeleccionado.id);
+      if (updateErr) throw updateErr;
+      setPerfilSeleccionado((prev) => prev ? { ...prev, ...payload } : prev);
+      setPerfiles((prev) => prev.map((p) => (p.id === perfilSeleccionado.id ? { ...p, ...payload } : p)));
+    } catch (err) {
+      console.error('No se pudo guardar videollamada:', err);
+      setError('No se pudo guardar el estado de la videollamada.');
+    } finally {
+      setSavingVideoCall(false);
+    }
+  };
 
   // Efecto para calcular el Gross-Up con la comisión según perfil
   useEffect(() => {
@@ -188,7 +215,17 @@ const RiskAnalystDashboard = () => {
       return acc;
     }, new Set());
     const requiredDocs = getRequiredDocsBySituation(perfil?.situacion_laboral);
-    return requiredDocs.every(docId => docsCovered.has(docId) || analyzedSet.has(docId));
+    return requiredDocs.every(docId => {
+      if (docId === 'boleta_aviso_electricidad') {
+        return (
+          docsCovered.has(docId) ||
+          analyzedSet.has(docId) ||
+          docsCovered.has('factura_servicio') ||
+          analyzedSet.has('factura_servicio')
+        );
+      }
+      return docsCovered.has(docId) || analyzedSet.has(docId);
+    });
   };
 
   const fetchDocumentos = useCallback(async (solicitudId) => {
@@ -569,6 +606,10 @@ const RiskAnalystDashboard = () => {
 
   const handleSaveInfocredMeta = async () => {
     if (!perfilSeleccionado?.id) return;
+    if (!videoCallOk) {
+      alert('Primero debes completar la videollamada.');
+      return;
+    }
     const scoreVal = Number(infocredScore);
     const riskVal = (infocredRiskLevel || '').toUpperCase();
     if (!scoreVal || scoreVal < 300 || scoreVal > 850) {
@@ -621,6 +662,9 @@ const RiskAnalystDashboard = () => {
     const scoreFallback = isProfileComplete(perfilSeleccionado) ? 90 : Math.round(completionRatio * 80);
     const docByType = documentos.reduce((acc, doc) => {
       if (doc?.tipo_documento) acc[doc.tipo_documento] = doc;
+      if (doc?.tipo_documento === 'factura_servicio' && !acc.boleta_aviso_electricidad) {
+        acc.boleta_aviso_electricidad = doc;
+      }
       return acc;
     }, {});
     const uploadedRequiredCount = requiredDocs.filter(docId => !!docByType[docId]).length;
@@ -909,19 +953,52 @@ const RiskAnalystDashboard = () => {
                 <div className="infocred-header">
                   <div>
                     <h2>Historial INFOCRED</h2>
-                    <p>Sube el PDF que recibes de INFOCRED tras validar la autorización firmada. Solo disponible cuando el expediente está completo.</p>
+                    <p>Sube el PDF que recibes de INFOCRED tras validar la autorización firmada. Requiere videollamada previa y expediente completo.</p>
                   </div>
                   <div className="infocred-actions">
                     <button
                       type="button"
                       className="btn-decision aprobar"
                       onClick={() => infocredInputRef.current?.click()}
-                      disabled={!isProfileComplete(perfilSeleccionado) || uploadingInfocred}
+                      disabled={!isProfileComplete(perfilSeleccionado) || uploadingInfocred || !videoCallOk}
                     >
                       {uploadingInfocred ? 'Subiendo...' : (infocredDoc ? 'Reemplazar PDF' : 'Subir PDF')}
                     </button>
                     {!isProfileComplete(perfilSeleccionado) && (
                       <span className="pill muted">Completa checklist para habilitar</span>
+                    )}
+                    {!videoCallOk && (
+                      <span className="pill muted">Videollamada pendiente</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="infocred-card" style={{ marginBottom: 12 }}>
+                  <div>
+                    <strong>Videollamada de verificación</strong>
+                    <p className="muted">Requisito previo a consultar INFOCRED. Debe realizarse antes de subir el PDF.</p>
+                    {videoCallOk && videoCallAt && (
+                      <div className="muted">Realizada: {new Date(videoCallAt).toLocaleString('es-BO')}</div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn-decision aprobar"
+                      onClick={() => updateVideoCallStatus(true)}
+                      disabled={savingVideoCall || videoCallOk}
+                    >
+                      {savingVideoCall ? 'Guardando...' : (videoCallOk ? 'Videollamada OK' : 'Marcar videollamada OK')}
+                    </button>
+                    {videoCallOk && (
+                      <button
+                        type="button"
+                        className="btn-decision rechazar"
+                        onClick={() => updateVideoCallStatus(false)}
+                        disabled={savingVideoCall}
+                      >
+                        Desmarcar
+                      </button>
                     )}
                   </div>
                 </div>
@@ -934,6 +1011,11 @@ const RiskAnalystDashboard = () => {
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      if (!videoCallOk) {
+                        setInfocredError('Primero debes completar la videollamada.');
+                        if (e.target) e.target.value = '';
+                        return;
+                      }
                       setInfocredError(null);
                       await handleInfocredUpload(file);
                     }

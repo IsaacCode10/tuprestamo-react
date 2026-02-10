@@ -923,7 +923,7 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
     const baseDocs = [
       { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
       { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
-      { id: 'factura_servicio', nombre: 'Factura Servicio Básico', definition: 'Para confirmar tu dirección de residencia actual. Puede ser una factura de luz, agua o gas.', tooltip: 'Adjunta la última factura de agua, electricidad o internet que muestre tu dirección actual.' },
+      { id: 'boleta_aviso_electricidad', nombre: 'Boleta de aviso de electricidad', definition: 'Para validar tu dirección y tu historial de pago del servicio eléctrico. Este aviso suele mostrar los últimos meses.', tooltip: 'Sube la boleta de aviso de cobranza de luz eléctrica (historial del último año).' },
       { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.', tooltip: 'La última boleta que te envía el banco; si no llega, solicita el documento a través de la banca en línea o en una agencia.' },
       { id: 'selfie_ci', nombre: 'Selfie con Cédula de Identidad', definition: 'Una medida de seguridad adicional para prevenir el fraude y asegurar que realmente eres tú quien solicita el préstamo. Sostén tu CI al lado de tu cara.' },
     ];
@@ -1617,8 +1617,9 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
       <div className="document-grid">
         {requiredDocs.map(doc => {
           // Considerar documento "subido" si existe registro, sin depender del estado específico
-          const isUploaded = uploadedDocuments.some(d => d.tipo_documento === doc.id);
-          const isAnalyzed = analyzedSet.has(doc.id);
+          const hasLegacyFactura = doc.id === 'boleta_aviso_electricidad' && uploadedDocuments.some(d => d.tipo_documento === 'factura_servicio');
+          const isUploaded = uploadedDocuments.some(d => d.tipo_documento === doc.id) || hasLegacyFactura;
+          const isAnalyzed = analyzedSet.has(doc.id) || (doc.id === 'boleta_aviso_electricidad' && analyzedSet.has('factura_servicio'));
           // El estado "analizando" se controla localmente solo para el doc en subida
           const isAuthFirmada = doc.id === 'autorizacion_infocred_firmada';
           return (
@@ -1649,7 +1650,10 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                 progress={uploadProgress[doc.id]}
                 error={errors[doc.id]}
                 manualFallback={manualFallback[doc.id]}
-                onManualRetry={() => handleRetryAnalysis(uploadedDocuments.find(d => d.tipo_documento === doc.id))}
+                onManualRetry={() => handleRetryAnalysis(
+                  uploadedDocuments.find(d => d.tipo_documento === doc.id) ||
+                  (doc.id === 'boleta_aviso_electricidad' ? uploadedDocuments.find(d => d.tipo_documento === 'factura_servicio') : null)
+                )}
                 onFileSelect={(file) => handleFileUpload(file, doc.id)}
                 disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !authPreprintUrl)}
                 isAnalyzed={isAnalyzed}

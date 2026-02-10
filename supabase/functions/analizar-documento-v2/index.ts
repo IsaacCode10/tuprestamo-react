@@ -280,6 +280,7 @@ function getPromptForDocument(documentType: string): string {
     ci_anverso: "Analiza la imagen del anverso de la cÃ©dula de identidad boliviana. Extrae la siguiente informaciÃ³n: nÃºmero de cÃ©dula, fecha de emisiÃ³n y fecha de expiraciÃ³n. Devuelve los datos estrictamente en formato JSON con las claves 'numero_cedula', 'fecha_emision', y 'fecha_expiracion'. Si un campo no es visible, su valor debe ser null.",
     ci_reverso: "Analiza la imagen del reverso de la cÃ©dula de identidad boliviana. Extrae el nombre completo, fecha de nacimiento, domicilio y profesiÃ³n u ocupaciÃ³n. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_completo', 'fecha_nacimiento', 'domicilio', y 'profesion'.",
     factura_servicio: "Analiza la factura de servicio. Extrae el nombre del titular del servicio y la direcciÃ³n. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_titular' y 'direccion'.",
+    boleta_aviso_electricidad: "Analiza la boleta de aviso de cobranza de electricidad. Extrae el nombre del titular y la direcciÃ³n de suministro. Devuelve los datos estrictamente en formato JSON con las claves 'nombre_titular' y 'direccion'.",
     extracto_tarjeta: "Analiza el extracto de tarjeta de crÃ©dito. Extrae los siguientes datos y devuÃ©lvelos en un Ãºnico objeto JSON: nombre del banco emisor ('banco'), como 'BNB', 'BCP', 'Mercantil Santa Cruz', e ignora las marcas de la tarjeta como 'VISA' o 'Mastercard', el cual a menudo se puede inferir del logo o de la direcciÃ³n web; nombre del titular ('nombre_titular'); lÃ­mite de crÃ©dito ('limite_credito'); deuda total a la fecha de cierre ('deuda_total'); pago mÃ­nimo requerido ('pago_minimo'); tasa de interÃ©s anual efectiva ('tasa_interes_anual'); saldo del perÃ­odo anterior ('saldo_anterior'); total de pagos realizados en el perÃ­odo ('pagos_realizados'); el monto de intereses por mora o punitorios ('intereses_punitorios'); y el valor numÃ©rico del cargo por 'mantenimiento_cuenta'. Todos los valores numÃ©ricos deben ser nÃºmeros sin sÃ­mbolos de moneda. Si un campo no es visible, su valor debe ser null.",
     selfie_ci: "Analiza la imagen de una selfie que contiene el anverso de una cÃ©dula de identidad. Extrae Ãºnicamente el nÃºmero de cÃ©dula visible. Adicionalmente, compara la cara de la persona en la selfie con la cara de la foto en la cÃ©dula y responde true o false si parecen ser la misma persona. Devuelve los datos estrictamente en formato JSON con las claves `numero_cedula_selfie` y `verificacion_facial`. Si el nÃºmero de cÃ©dula no es claramente legible, su valor debe ser null. No inventes ni infieras ningÃºn otro dato.",
     boleta_pago: "Analiza la boleta de pago. Extrae el salario lÃ­quido pagable ('salario_neto'), el nombre completo del empleador ('nombre_empleador'), el mes al que corresponde el pago ('mes_pago'), y, si estÃ¡n detallados, el total ganado ('total_ganado'), el total de descuentos de ley ('total_descuentos'), y el total de ingresos variables como bonos o comisiones ('ingresos_variables'). Todos los valores deben ser nÃºmeros sin sÃ­mbolos. Si un campo no es visible, su valor debe ser null.",
@@ -309,7 +310,7 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
   }
 
   const { situacion_laboral } = solicitudData
-  const commonDocs = ['ci_anverso', 'ci_reverso', 'factura_servicio', 'extracto_tarjeta', 'selfie_ci']
+  const commonDocs = ['ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'extracto_tarjeta', 'selfie_ci']
   const requiredDocs = {
     dependiente: [...commonDocs, 'boleta_pago', 'certificado_gestora'],
     independiente: [...commonDocs, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3', 'nit'],
@@ -327,7 +328,11 @@ async function checkAndTriggerSynthesis(supabaseAdmin: any, solicitud_id: string
   }
 
   const uploadedDocTypes = new Set(analyzedDocs.map(doc => doc.document_type))
-  const isComplete = requiredDocs.every(docType => uploadedDocTypes.has(docType))
+  const hasDomicilio = uploadedDocTypes.has('boleta_aviso_electricidad') || uploadedDocTypes.has('factura_servicio')
+  const isComplete = requiredDocs.every(docType => {
+    if (docType === 'boleta_aviso_electricidad') return hasDomicilio
+    return uploadedDocTypes.has(docType)
+  })
 
   console.log(`Completitud: ${isComplete}. Requeridos: ${requiredDocs.join(', ')}. Subidos: ${[...uploadedDocTypes].join(', ')}`)
 

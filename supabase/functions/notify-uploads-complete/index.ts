@@ -7,7 +7,7 @@ const getRequiredDocs = (situacionLaboral: string): string[] => {
   const baseDocs = [
     'ci_anverso',
     'ci_reverso',
-    'factura_servicio',
+    'boleta_aviso_electricidad',
     'extracto_tarjeta',
     'selfie_ci',
   ];
@@ -70,7 +70,12 @@ serve(async (req) => {
     if (docsError) throw docsError;
 
     const uploadedDocTypes = (uploadedDocs ?? []).map((doc: any) => doc.tipo_documento);
-    const allDocsUploaded = requiredDocs.every(docId => uploadedDocTypes.includes(docId));
+    const uploadedSet = new Set(uploadedDocTypes);
+    const hasDomicilio = uploadedSet.has('boleta_aviso_electricidad') || uploadedSet.has('factura_servicio');
+    const allDocsUploaded = requiredDocs.every(docId => {
+      if (docId === 'boleta_aviso_electricidad') return hasDomicilio;
+      return uploadedSet.has(docId);
+    });
 
     // 3. Si aún faltan documentos, terminar la ejecución silenciosamente.
     if (!allDocsUploaded) {
