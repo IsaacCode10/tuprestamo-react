@@ -54,6 +54,31 @@ Ejemplo op 61: payout real 518,71 vs programado 453,6477 (cronograma).
 **Notas**
 - Falta validar el nuevo PDF en una nueva oportunidad (evitamos regenerar contrato en op 61 para no alterar el flujo).
 
+## Actualización 2026-02-10
+
+**Reglas nuevas (Riesgo)**
+- Videollamada previa obligatoria antes de INFOCRED.
+- Contrato notariado obligatorio antes de pago dirigido.
+- Documento domicilio: reemplazo de `factura_servicio` por `boleta_aviso_electricidad` (con compatibilidad legacy).
+
+**Backend**
+- Migración creada: `20260210_video_notariado_fields.sql` (nuevas columnas en `solicitudes` y `desembolsos`).
+- SQL aplicado en Supabase para: `videollamada_ok`, `videollamada_at`, `notariado_ok`, `notariado_url`.
+- Edge functions desplegadas:
+  - `analizar-documento-v2` (nuevo tipo de documento y prompts Gemini).
+  - `notify-uploads-complete` (requeridos y compatibilidad legacy).
+
+**Frontend**
+- Analista: bloqueo INFOCRED hasta videollamada OK (RiskAnalystDashboard).
+- Operaciones: contrato notariado obligatorio antes de “Registrar pago dirigido” (AdminOperations).
+- Prestatario: nuevo documento “Boleta de aviso de electricidad” con fallback a legacy (BorrowerDashboard).
+
+**Pendiente para mañana**
+- Commit/push de cambios frontend + migración `20260210` (si no están en repo).
+- Deploy frontend (`npm run build` + `npx vercel --prod`).
+- Definir UX “Agendar firma” (WhatsApp pre‑llenado recomendado) en panel prestatario y copy.
+- Validar E2E completo en nueva oportunidad (incluye contrato con logo y no cortado).
+
 ## Actualización 2026-02-03
 
 **Lo hecho hoy:**
