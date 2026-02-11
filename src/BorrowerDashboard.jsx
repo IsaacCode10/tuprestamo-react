@@ -1025,6 +1025,13 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
         };
     }, [allDocumentsUploaded]);
 
+    const scrollToDocuments = () => {
+        const el = document.getElementById('documentos-section');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
     return (
         <>
             <div className="borrower-dashboard">
@@ -1036,7 +1043,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                 <UploadToast visible={showUploadToast} />
                 <FinalReviewNote visible={showFinalReviewNote} />
                 
-                    <StatusCard 
+                <StatusCard 
                         solicitud={solicitud} 
                         oportunidad={activeOpportunity} 
                         simulation={simulation}
@@ -1054,6 +1061,18 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                         simulation={simulation}
                         onSimulationChange={handleSimulationChange}
                     />
+                    <div className="card" style={{ display: 'grid', gap: 10 }}>
+                        <div>
+                            <h2>Siguiente paso: sube tu documentación</h2>
+                            <p className="muted">Para aprobar tu crédito necesitamos verificar tus documentos. Apenas estén completos, el equipo de riesgo revisa y te envía la propuesta final.</p>
+                        </div>
+                        <div>
+                            <button className="btn btn--primary" type="button" onClick={scrollToDocuments}>
+                                Subir documentación
+                            </button>
+                        </div>
+                    </div>
+                    <div id="documentos-section">
                     <DocumentManager 
                         solicitud={solicitud} 
                         user={user} 
@@ -1063,6 +1082,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                         analyzedDocTypes={analyzedDocTypes} 
                         onRefreshData={onRefreshData}
                     />
+                    </div>
                 </>
                 <FloatingFinan faqItems={inProgressFaqs} />
             </div>
