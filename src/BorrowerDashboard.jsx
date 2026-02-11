@@ -756,7 +756,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                   <a
                     className="btn btn--primary"
                     href={`https://wa.me/59178271936?text=${encodeURIComponent(
-                      `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${activeOpportunity?.id ? ` / Oportunidad ${activeOpportunity.id}` : ''}.`
+                      `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${(oportunidad?.id || disbursement?.opportunity_id) ? ` / Oportunidad ${oportunidad?.id || disbursement?.opportunity_id}` : ''}.`
                     )}`}
                     target="_blank"
                     rel="noreferrer"
