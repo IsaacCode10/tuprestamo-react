@@ -1044,6 +1044,8 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                         originacionMonto={originacionMonto}
                         minApplied={minApplied}
                         userId={user?.id}
+                        showAmortization={['desembolsado', 'activo', 'en_curso', 'pagado'].includes((solicitud?.estado || '').toLowerCase()) ||
+                          ['desembolsado', 'activo', 'en_curso', 'pagado'].includes((activeOpportunity?.estado || '').toLowerCase())}
                     />
 
                 <>
@@ -1192,7 +1194,7 @@ const UploadToast = ({ visible }) => (
   </div>
 );
 
-const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, userId }) => {
+const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, userId, showAmortization }) => {
   const monto = Number(simulation.montoDeuda) || 0;
   const tasaBancoAnual = Number(simulation.tasaActual) || 0;
   const plazo = Number(simulation.plazo) || 0;
@@ -1259,7 +1261,7 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, us
         ))}
       </div>
 
-      <AmortizationSchedule userId={userId} />
+      {showAmortization ? <AmortizationSchedule userId={userId} /> : null}
     </div>
   );
 };
