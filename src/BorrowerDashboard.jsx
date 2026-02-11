@@ -736,7 +736,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
             <div style={{ display: 'grid', gap: 8 }}>
               <div><strong>Estado:</strong> {disbursement.estado || 'pendiente'} {disbursement.paid_at ? `(pagado ${new Date(disbursement.paid_at).toLocaleString('es-BO')})` : ''}</div>
               <div><strong>Monto neto al banco:</strong> {formatMoney(disbursement.monto_neto || neto)}</div>
-              {!disbursement.notariado_ok && (
+              {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                 <div style={{ padding: 12, borderRadius: 8, background: '#fff7ec', border: '1px solid #ffd7b0', color: '#8a4b06' }}>
                   <strong>Contrato notariado pendiente.</strong> Para continuar con el pago al banco debes agendar la firma notariada.
                 </div>
@@ -752,7 +752,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 ) : (
                   <span className="muted">Contrato en proceso</span>
                 )}
-                {!disbursement.notariado_ok && (
+                {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                   <a
                     className="btn btn--primary"
                     href={`https://wa.me/59178271936?text=${encodeURIComponent(
