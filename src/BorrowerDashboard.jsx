@@ -1043,6 +1043,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                         pagoTotalMensualTP={pagoTotalMensualTP}
                         originacionMonto={originacionMonto}
                         minApplied={minApplied}
+                        userId={user?.id}
                     />
 
                 <>
@@ -1191,7 +1192,7 @@ const UploadToast = ({ visible }) => (
   </div>
 );
 
-const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP }) => {
+const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, userId }) => {
   const monto = Number(simulation.montoDeuda) || 0;
   const tasaBancoAnual = Number(simulation.tasaActual) || 0;
   const plazo = Number(simulation.plazo) || 0;
