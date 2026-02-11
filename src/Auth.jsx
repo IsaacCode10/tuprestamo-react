@@ -11,6 +11,8 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false); // Default to Login view
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [resetMessage, setResetMessage] = useState(null);
+  const [resetLoading, setResetLoading] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setResetMessage(null);
 
     try {
       if (isSignUp) {
@@ -70,6 +73,26 @@ const Auth = () => {
       // The login failure is already tracked where the error is thrown
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError('Ingresa tu email para recuperar la contraseña.');
+      return;
+    }
+    setResetLoading(true);
+    setError(null);
+    setResetMessage(null);
+    try {
+      const redirectTo = `${window.location.origin}/confirmar-y-crear-perfil`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (resetError) throw resetError;
+      setResetMessage('Te enviamos un correo para restablecer tu contraseña.');
+    } catch (resetError) {
+      setError(resetError.message);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -136,7 +159,17 @@ const Auth = () => {
               {loading ? 'Cargando...' : 'Iniciar Sesión'}
             </button>
           </form>
+          <button
+            type="button"
+            className="link-button"
+            onClick={handlePasswordReset}
+            disabled={resetLoading}
+            style={{ marginTop: 12 }}
+          >
+            {resetLoading ? 'Enviando...' : 'Olvide mi contrasena'}
+          </button>
           {error && <p className="error-message">{error}</p>}
+          {resetMessage && <p className="success-message">{resetMessage}</p>}
         </div>
 
         <div className="auth-cta-section">
