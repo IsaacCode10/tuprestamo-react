@@ -330,7 +330,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       try {
         const { data, error } = await supabase
           .from('desembolsos')
-          .select('id, estado, monto_bruto, monto_neto, comprobante_url, contract_url, paid_at, created_at')
+          .select('id, estado, monto_bruto, monto_neto, comprobante_url, contract_url, notariado_ok, paid_at, created_at')
           .eq('opportunity_id', oportunidad.id)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -736,6 +736,11 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
             <div style={{ display: 'grid', gap: 8 }}>
               <div><strong>Estado:</strong> {disbursement.estado || 'pendiente'} {disbursement.paid_at ? `(pagado ${new Date(disbursement.paid_at).toLocaleString('es-BO')})` : ''}</div>
               <div><strong>Monto neto al banco:</strong> {formatMoney(disbursement.monto_neto || neto)}</div>
+              {!disbursement.notariado_ok && (
+                <div style={{ padding: 12, borderRadius: 8, background: '#fff7ec', border: '1px solid #ffd7b0', color: '#8a4b06' }}>
+                  <strong>Contrato notariado pendiente.</strong> Para continuar con el pago al banco debes agendar la firma notariada.
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {disbursement.comprobante_url ? (
                   <a className="btn" href={disbursement.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante banco</a>
@@ -746,6 +751,18 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                   <a className="btn btn--primary" href={contractLink} target="_blank" rel="noreferrer">Descargar contrato PDF</a>
                 ) : (
                   <span className="muted">Contrato en proceso</span>
+                )}
+                {!disbursement.notariado_ok && (
+                  <a
+                    className="btn btn--primary"
+                    href={`https://wa.me/59178271936?text=${encodeURIComponent(
+                      `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${activeOpportunity?.id ? ` / Oportunidad ${activeOpportunity.id}` : ''}.`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Agendar firma
+                  </a>
                 )}
               </div>
             </div>
