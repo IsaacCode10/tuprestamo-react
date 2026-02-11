@@ -190,3 +190,17 @@ Ejemplo op 61: payout real 518,71 vs programado 453,6477 (cronograma).
 **Pendiente:**
 - Deploy frontend con los cambios de `AdminOperations` y confirmar en producci??n que el bot??n no aparece cuando el payout est?? pagado.
 - Validar si `receipt_url` se guarda en `payouts_inversionistas` al marcar pagado con comprobante y que el inversionista vea el enlace (refrescar panel).
+
+## Actualizacion 2026-02-11
+
+**Lo hecho hoy:**
+- Bug critical: `handle-new-solicitud` fallaba con "Database error creating new user".
+- Causa: trigger en `auth.users` llamaba `public.apply_role_from_allowlist()` que no existia.
+- Fix aplicado en Supabase: funcion no-op `public.apply_role_from_allowlist(uuid)`.
+- Resultado: correo de pre-aprobacion llega correctamente y la creacion de usuario funciona.
+- Se creo migracion: `supabase/migrations/20260211_apply_role_allowlist_noop.sql`.
+
+**Pendiente:**
+- Hacer `supabase db push --linked` para aplicar la migracion en remoto y dejarlo versionado.
+- Decidir si el trigger `apply_role_from_allowlist_trigger` se mantiene o se elimina cuando se implemente allowlist real.
+- Continuar flujo E2E con nueva oportunidad para validar videollamada, boleta electricidad y agendar firma.
