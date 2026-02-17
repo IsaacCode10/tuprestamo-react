@@ -124,12 +124,12 @@ serve(async (req) => {
         ctaLabel: 'Crear mi cuenta',
         ctaHref: `${appBase}/?open=investor-form#inversionistas`,
       })
-      const subject = `${greetingName} - tu proyeccion en Tu Prestamo - Monto ${fmt(amount)}, plazo ${term_months} meses`
+      const subject = `${greetingName} - tu proyeccion en Tu Préstamo - Monto ${fmt(amount)}, plazo ${term_months} meses`
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+          from: 'Tu Préstamo <contacto@tuprestamobo.com>',
           to: [email],
           subject,
           html,

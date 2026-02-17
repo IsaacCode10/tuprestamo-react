@@ -134,7 +134,7 @@ serve(async (req) => {
     const toList = investors.map(i => i.email as string)
 
     await resend.emails.send({
-      from: 'Tu Prestamo <notificaciones@tuprestamobo.com>',
+      from: 'Tu Préstamo <notificaciones@tuprestamobo.com>',
       to: toList,
       subject,
       html,

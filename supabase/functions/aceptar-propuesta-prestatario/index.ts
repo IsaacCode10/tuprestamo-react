@@ -81,7 +81,7 @@ serve(async (req) => {
       try {
         const appUrl = (Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com") + "/borrower-dashboard";
         await resend.emails.send({
-          from: "Tu Prestamo <contacto@tuprestamobo.com>",
+          from: "Tu Préstamo <contacto@tuprestamobo.com>",
           to: [solicitud.email],
           subject: "Publicamos tu oportunidad para fondeo",
           html: `

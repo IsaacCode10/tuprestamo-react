@@ -86,7 +86,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Tu Prestamo <notificaciones@tuprestamobo.com>',
+        from: 'Tu Préstamo <notificaciones@tuprestamobo.com>',
         to,
         cc: cc.length > 0 ? cc : undefined,
         subject,

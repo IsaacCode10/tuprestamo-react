@@ -74,7 +74,7 @@ serve(async (req) => {
 
     // 3) Enviar correo de invitación
     const { error: emailError } = await resend.emails.send({
-      from: 'Tu Prestamo <onboarding@tuprestamobo.com>',
+      from: 'Tu Préstamo <onboarding@tuprestamobo.com>',
       to: email,
       subject: '¡Bienvenido a Tu Préstamo! Activa tu cuenta de inversionista',
       html: `

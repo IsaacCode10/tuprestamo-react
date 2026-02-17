@@ -41,15 +41,15 @@ serve(async (req) => {
     const subject = "¡Gracias! Hemos recibido tus documentos";
     const htmlBody = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <img src="${LOGO_URL}" alt="Logo Tu Préstamo Bolivia" style="width: 150px; margin-bottom: 20px;">
+        <img src="${LOGO_URL}" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
         <h2 style="color: #333;">¡Hola ${displayName}!</h2>
-        <p>Hemos recibido y confirmado la carga de todos tus documentos en la plataforma de <strong>Tu Préstamo Bolivia</strong>.</p>
+        <p>Hemos recibido y confirmado la carga de todos tus documentos en la plataforma de <strong>Tu Préstamo</strong>.</p>
         <p>Nuestro equipo de analistas de riesgo comenzará la revisión final. Te notificaremos sobre la decisión de tu crédito en los próximos días.</p>
         <p>Puedes revisar el estado de tu solicitud en cualquier momento desde tu panel de control:</p>
         <p style="margin-top: 30px; margin-bottom: 30px;">
           <a href="${APP_DASHBOARD_URL}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;">IR A MI PANEL DE CONTROL</a>
         </p>
-        <p>Atentamente,<br>El equipo de Tu Préstamo Bolivia</p>
+        <p>Atentamente,<br>El equipo de Tu Préstamo</p>
       </div>
     `;
 
@@ -61,7 +61,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Tu Préstamo Bolivia <contacto@tuprestamobo.com>",
+        from: "Tu Préstamo <contacto@tuprestamobo.com>",
         to: [email],
         subject: subject,
         html: htmlBody,

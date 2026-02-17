@@ -58,7 +58,7 @@ serve(async (req) => {
     // Enviar email via Resend (si hay API key).
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (resendKey) {
-      const subject = `${displayName || email} Tu enlace de acceso a Tu Prestamo`
+      const subject = `${displayName || email} Tu enlace de acceso a Tu Préstamo`
       const html = `
         <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;">
           <p>Hola ${displayName || email},</p>
@@ -70,7 +70,7 @@ serve(async (req) => {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Tu Prestamo <acceso@tuprestamobo.com>',
+          from: 'Tu Préstamo <acceso@tuprestamobo.com>',
           to: [email],
           subject,
           html,

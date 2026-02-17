@@ -158,7 +158,7 @@ serve(async (req) => {
           const recoveryUrl = recData?.properties?.action_link || `${APP_BASE_URL}/auth`
           try {
             await resend.emails.send({
-              from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+              from: 'Tu Préstamo <contacto@tuprestamobo.com>',
               to: [email],
               subject: 'Ya tienes una cuenta en Tu Préstamo',
               html: `
@@ -189,7 +189,7 @@ serve(async (req) => {
       const inviteLink = linkData.properties.action_link;
 
       const resendResponse = await resend.emails.send({
-        from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+        from: 'Tu Préstamo <contacto@tuprestamobo.com>',
         to: [email],
         subject: `¡Bienvenido ${nombre_completo} a Tu Préstamo! Activa tu cuenta de inversionista`,
         html: `
@@ -230,7 +230,7 @@ serve(async (req) => {
       console.log(`Solicitud ${solicitud_id}: Actualización a 'rechazado' finalizada.`);
 
       await resend.emails.send({
-        from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+        from: 'Tu Préstamo <contacto@tuprestamobo.com>',
         to: [email],
         subject: 'Actualización sobre tu solicitud en Tu Préstamo',
         html: `
@@ -355,7 +355,7 @@ serve(async (req) => {
         : 'Estamos un paso más cerca de refinanciar tu deuda. El siguiente paso es activar tu cuenta para poder continuar con el proceso.';
 
       await resend.emails.send({
-        from: 'Tu Prestamo <contacto@tuprestamobo.com>',
+        from: 'Tu Préstamo <contacto@tuprestamobo.com>',
         to: [email],
         subject: '¡Tu solicitud ha sido pre-aprobada!',
         html: `

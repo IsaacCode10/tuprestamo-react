@@ -198,7 +198,7 @@ serve(async (req) => {
         const montoFmt = monto.toLocaleString("es-BO");
         const tasa = pricing ? pricing.tasa_prestatario : "N/D";
         await resend.emails.send({
-          from: "Tu Prestamo <contacto@tuprestamobo.com>",
+          from: "Tu Préstamo <contacto@tuprestamobo.com>",
           to: [solicitud.email],
           subject: titulo,
           html: `

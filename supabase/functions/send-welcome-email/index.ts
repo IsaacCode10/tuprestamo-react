@@ -28,10 +28,10 @@ const handler = async (_req: Request): Promise<Response> => {
     let htmlBody = "";
 
     if (tipo_solicitud === "inversionista") {
-      subject = "Gracias por tu interes en Tu Prestamo Bolivia";
+      subject = "Gracias por tu interes en Tu Préstamo";
       htmlBody = renderEmail({
         greetingName: nombre_completo,
-        title: 'Bienvenido(a) a Tu Prestamo',
+        title: 'Bienvenido(a) a Tu Préstamo',
         intro: 'Gracias por registrarte como inversionista. Estamos para ayudarte en cada paso.',
         ctaLabel: 'Ver oportunidades',
         ctaHref: OPORTUNIDADES_URL,
@@ -54,7 +54,7 @@ const handler = async (_req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Tu Prestamo Bolivia <contacto@tuprestamobo.com>",
+        from: "Tu Préstamo <contacto@tuprestamobo.com>",
         to: [email],
         subject: subject,
         html: htmlBody,
