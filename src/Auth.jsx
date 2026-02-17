@@ -88,7 +88,7 @@ const Auth = () => {
       const redirectTo = `${window.location.origin}/confirmar-y-crear-perfil`;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (resetError) throw resetError;
-      setResetMessage('Te enviamos un correo para restablecer tu contraseña.');
+      setResetMessage('Te enviamos un correo para restablecer tu contraseña. Revisa tu bandeja de Spam.');
     } catch (resetError) {
       setError(resetError.message);
     } finally {
