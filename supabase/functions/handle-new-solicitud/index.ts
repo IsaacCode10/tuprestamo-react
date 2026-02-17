@@ -297,6 +297,7 @@ serve(async (req) => {
     } else {
       console.log(`Solicitud ${solicitud_id}: Iniciando flujo de pre-aprobación.`);
       
+      let existingUser = false;
       const { data: user, error: userError } = await supabaseAdmin.auth.admin.createUser({
         email,
         user_metadata: { full_name: nombre_completo, role: 'prestatario' }
@@ -304,14 +305,23 @@ serve(async (req) => {
 
       if (userError) {
         if (userError.message.includes('User already registered')) {
-            console.error('Error de usuario ya registrado:', userError.message);
-            return new Response(JSON.stringify({ message: 'El usuario ya existe.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 });
+            console.warn('Usuario ya registrado, se usara cuenta existente:', userError.message);
+            existingUser = true;
         } else {
             throw userError;
         }
       }
 
-      const user_id = user.user.id;
+      let user_id = user?.user?.id || null;
+      if (!user_id && existingUser) {
+        const { data: existingData, error: existingError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+        if (existingError || !existingData?.user) {
+          console.error('No se pudo obtener el usuario existente:', existingError);
+          throw existingError || new Error('Usuario existente no encontrado');
+        }
+        user_id = existingData.user.id;
+      }
+
       console.log(`Solicitud ${solicitud_id}: user_id creado: ${user_id}`);
 
       const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com";
@@ -330,6 +340,11 @@ serve(async (req) => {
       const magicLink = linkData.properties.action_link;
       console.log(`Solicitud ${solicitud_id}: Magic Link generado.`);
 
+      const ctaLabel = existingUser ? 'Continuar mi solicitud' : 'Activar Mi Cuenta';
+      const introLine = existingUser
+        ? 'Detectamos que ya tienes una cuenta. Para continuar con tu solicitud, ingresa con el siguiente enlace:'
+        : 'Estamos un paso más cerca de refinanciar tu deuda. El siguiente paso es activar tu cuenta para poder continuar con el proceso.';
+
       await resend.emails.send({
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
@@ -338,12 +353,12 @@ serve(async (req) => {
           <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Logo Tu Préstamo" style="width: 150px; margin-bottom: 20px;">
             <h2 style="color: #333;">¡Felicidades, ${nombre_completo}! Tu solicitud ha sido pre-aprobada.</h2>
-            <p>Estamos un paso más cerca de refinanciar tu deuda. El siguiente paso es activar tu cuenta para poder continuar con el proceso.</p>
-            <p>Por favor, haz clic en el siguiente botón para confirmar tu correo y establecer tu contraseña:</p>
+            <p>${introLine}</p>
+            <p>Por favor, haz clic en el siguiente botón para continuar:</p>
             <table width="100%" border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td align="center" style="padding: 20px 0;">
-                  <a href="${magicLink}" target="_blank" style="background-color: #28a745; color: #ffffff; padding: 15px 30px; font-size: 18px; text-decoration: none; border-radius: 5px; display: inline-block;">Activar Mi Cuenta</a>
+                  <a href="${magicLink}" target="_blank" style="background-color: #28a745; color: #ffffff; padding: 15px 30px; font-size: 18px; text-decoration: none; border-radius: 5px; display: inline-block;">${ctaLabel}</a>
                 </td>
               </tr>
             </table>
