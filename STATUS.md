@@ -51,6 +51,8 @@
 - Se ajusto el correo de contacto en rechazo a `contacto@tuprestamobo.com`.
 - Se ajustaron colores de botones en Auth para alternancia visual (Iniciar Sesion + Refinanciar Tarjeta mismo color, Olvide mi contrasena + Quiero Invertir mismo color).
 - Se documento en `MODE_DE_TRABAJO_CODEX.md` que siempre debo entregar comandos de deploy al finalizar implementaciones (sin preguntar).
+- Se corrigio el flujo de reintentos: si el email ya existe, se reutiliza el usuario y se envia magic link, evitando error 500.
+- Se elimino trigger duplicado en `solicitudes` y se actualizo el trigger restante para invocar la Edge Function.
 
 **Pendiente:**
 - Deploy de cambios recientes (frontend + functions):
