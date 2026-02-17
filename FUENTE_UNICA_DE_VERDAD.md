@@ -87,6 +87,15 @@ Implementacion backend:
 - Vista `borrower_mora_view` calcula `days_past_due`, `is_overdue` y `paid_late`
   usando la regla anterior. El frontend debe consumir esa vista para mora.
 
+## 4.1) Regla oficial de Gross-Up (monto bruto vs neto)
+
+- **Saldo deudor verificado (neto)** proviene del extracto del cliente.
+- **Si el neto ≤ Bs 10.000:** aplicar **mínimo fijo de Bs 450**.
+  - **Bruto = neto + 450**.
+- **Si el neto > Bs 10.000:** aplicar **gross-up** por comisión según perfil (A 3%, B 4%, C 5%).
+  - **Bruto = neto / (1 - comisión)**.
+- Esta regla se usa en el cálculo de propuesta y en la aprobación final; no debe variar entre frontend y backend.
+
 ## 5) Loop de 3 capas (para que no falle)
 
 El objetivo es evitar que el join falle o que la vista muestre NULLs cuando el
