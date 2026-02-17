@@ -88,22 +88,26 @@
   margin-top: 0.5rem;
 }
 
-.auth-container button:first-of-type {
-  background-color: #007bff;
+.auth-container .auth-button,
+.auth-container .cta-button.primary {
+  background-color: #00445A;
   color: white;
 }
 
-.auth-container button:first-of-type:hover {
-  background-color: #0056b3;
+.auth-container .auth-button:hover,
+.auth-container .cta-button.primary:hover {
+  background-color: #003240;
 }
 
-.auth-container button:last-of-type {
-  background-color: #6c757d;
+.auth-container .link-button,
+.auth-container .cta-button.secondary {
+  background-color: #26C2B2;
   color: white;
 }
 
-.auth-container button:last-of-type:hover {
-  background-color: #5a6268;
+.auth-container .link-button:hover,
+.auth-container .cta-button.secondary:hover {
+  background-color: #1ea79a;
 }
 
 .auth-container button:disabled {
