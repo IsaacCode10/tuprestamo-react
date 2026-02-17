@@ -304,7 +304,8 @@ serve(async (req) => {
       });
 
       if (userError) {
-        if (userError.message.includes('User already registered')) {
+        const normalized = String(userError.message || '').toLowerCase();
+        if (normalized.includes('already registered') || normalized.includes('already been registered')) {
             console.warn('Usuario ya registrado, se usara cuenta existente:', userError.message);
             existingUser = true;
         } else {
