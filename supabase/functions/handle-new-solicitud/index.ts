@@ -315,12 +315,17 @@ serve(async (req) => {
 
       let user_id = user?.user?.id || null;
       if (!user_id && existingUser) {
-        const { data: existingData, error: existingError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
-        if (existingError || !existingData?.user) {
+        const { data: existingData, error: existingError } = await supabaseAdmin
+          .schema('auth')
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+        if (existingError || !existingData?.id) {
           console.error('No se pudo obtener el usuario existente:', existingError);
           throw existingError || new Error('Usuario existente no encontrado');
         }
-        user_id = existingData.user.id;
+        user_id = existingData.id;
       }
 
       console.log(`Solicitud ${solicitud_id}: user_id creado: ${user_id}`);
