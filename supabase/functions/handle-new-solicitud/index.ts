@@ -233,7 +233,64 @@ serve(async (req) => {
         from: 'Tu Prestamo <contacto@tuprestamobo.com>',
         to: [email],
         subject: 'Actualización sobre tu solicitud en Tu Préstamo',
-        html: `...`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Actualización sobre tu solicitud</title>
+</head>
+<body style="margin:0;padding:0;background:#F8F8F8;font-family: Arial, Helvetica, sans-serif;color:#222;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F8F8F8;padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background:#00445A;padding:18px 20px;">
+              <img src="https://tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Tu Préstamo" style="height:38px;display:block;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 20px 8px 20px;">
+              <h1 style="margin:0;font-size:22px;color:#00445A;font-weight:700;font-family: Montserrat, Arial, sans-serif;">${nombre_completo || 'Hola'},</h1>
+              <p style="margin:12px 0 0 0;font-size:15px;line-height:1.6;color:#222;">
+                Gracias por tu interés en Tu Préstamo. Por el momento, tu solicitud no cumple los criterios automáticos de pre‑aprobación
+                basados en ingresos mensuales y nivel de endeudamiento.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 20px 8px 20px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F8F8F8;border:1px solid #e9ecef;border-radius:10px;padding:14px;">
+                <tr>
+                  <td style="font-size:15px;line-height:1.6;color:#222;">
+                    Te invitamos a intentarlo nuevamente en los próximos meses cuando tu situación financiera haya mejorado.
+                    Nuestro objetivo es ofrecerte un crédito responsable y sostenible.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 20px 24px 20px;font-size:14px;line-height:1.6;color:#222;">
+              Si tienes dudas, escríbenos a
+              <a href="mailto:contacto@tuprestamobo.com" style="color:#00445A;text-decoration:none;">contacto@tuprestamobo.com</a>.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 20px 18px 20px;font-size:12px;line-height:1.5;color:#777;border-top:1px solid #e9ecef;">
+              <p style="margin:12px 0 4px 0;">Ref. de Solicitud: ${solicitud_id}</p>
+              <p style="margin:0;">Este es un correo automático. Por favor no respondas a esta dirección.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
       });
 
       return new Response(JSON.stringify({ message: 'Solicitud rechazada automáticamente.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
