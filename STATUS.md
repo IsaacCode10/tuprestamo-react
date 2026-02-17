@@ -53,6 +53,24 @@
 - Se documento en `MODE_DE_TRABAJO_CODEX.md` que siempre debo entregar comandos de deploy al finalizar implementaciones (sin preguntar).
 - Se corrigio el flujo de reintentos: si el email ya existe, se reutiliza el usuario y se envia magic link, evitando error 500.
 - Se elimino trigger duplicado en `solicitudes` y se actualizo el trigger restante para invocar la Edge Function.
+- Se unifico el remitente de correos a **Tu Préstamo** en funciones (branding consistente).
+- Se corrigio el flujo de documentos completos: ahora exige `autorizacion_infocred_firmada` antes de enviar el correo.
+- Se corrigio el gross-up en el panel de analista para respetar el minimo Bs 450 cuando neto ≤ 10.000.
+- Se endurecio backend: si existe `saldo_deudor_verificado`, se ignora el bruto manual y se recalcula con regla oficial.
+- Se documento en SSOT la regla de gross-up y la prioridad del backend.
+
+## Actualizacion 2026-02-17 (tarde)
+
+**Lo hecho hoy:**
+- Se desplegaron funciones con remitente unificado (Tu Préstamo) en emails.
+- Se desplego el fix de reintentos con usuario existente + magic link.
+- Se desplego el fix de documentos completos (requiere `autorizacion_infocred_firmada`).
+- Se identifico el origen del error de gross-up en el panel de analista (calculaba siempre por porcentaje).
+
+**Pendiente para mas tarde/manana:**
+- Deploy de frontend pendiente (Auth copy/colores + RiskAnalyst gross-up UI) si no se hizo aun.
+- Deploy de `registrar-decision-final` con recalculo forzado del bruto (si no se hizo aun).
+- Continuar E2E de la nueva oportunidad: analista -> decision final -> propuesta -> aceptacion -> pago dirigido -> contrato/cronograma.
 
 **Pendiente:**
 - Deploy de cambios recientes (frontend + functions):
