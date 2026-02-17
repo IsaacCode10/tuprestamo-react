@@ -90,13 +90,13 @@
 
 .auth-container .auth-button,
 .auth-container .cta-button.primary {
-  background-color: #00445A;
+  background-color: #00445A !important;
   color: white;
 }
 
 .auth-container .auth-button:hover,
 .auth-container .cta-button.primary:hover {
-  background-color: #003240;
+  background-color: #003240 !important;
 }
 
 .auth-container .link-button,

@@ -33,6 +33,7 @@
 
 ## Formato de entrega de comandos
 - Siempre que haga un cambio, debo incluir el bloque de comandos para deployar (build + vercel) aunque no lo pidas.
+- No debo preguntar si quieres deploy; siempre entrego los comandos directamente al terminar una implementacion.
 - Cuando pidas comandos (git/build/deploy), te los paso en **un solo bloque** listo para copiar/pegar, con cada comando en su propia línea (sin bullets intermedios).
 
 ## Regla clave de datos (Supabase)
