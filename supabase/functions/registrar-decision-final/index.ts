@@ -146,7 +146,7 @@ serve(async (req) => {
 
     // Aprobado
     const nuevoPlazo = plazo_meses || solicitud.plazo_meses || 24;
-    const montoBase = brutoCalculado || monto_bruto_aprobado || solicitud.monto_solicitado || 0;
+    const montoBase = brutoCalculado ?? (monto_bruto_aprobado || solicitud.monto_solicitado || 0);
     const monto = Number.isFinite(montoBase) ? montoBase : 0;
     const monthlyRate = (pricing?.tasa_prestatario || 0) / 100 / 12;
     const adminSeguroFlat = netoVerificado ? Math.max(netoVerificado * 0.0015, 10) : 0; // 0.15% mensual, mínimo 10 Bs

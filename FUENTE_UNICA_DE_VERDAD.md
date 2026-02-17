@@ -95,6 +95,7 @@ Implementacion backend:
 - **Si el neto > Bs 10.000:** aplicar **gross-up** por comisión según perfil (A 3%, B 4%, C 5%).
   - **Bruto = neto / (1 - comisión)**.
 - Esta regla se usa en el cálculo de propuesta y en la aprobación final; no debe variar entre frontend y backend.
+- **Backend manda:** si existe `saldo_deudor_verificado`, el backend **ignora** cualquier `monto_bruto_aprobado` manual y recalcula el bruto con la regla oficial.
 
 ## 5) Loop de 3 capas (para que no falle)
 
