@@ -40,3 +40,21 @@
 - Verificar que `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` correspondan al mismo proyecto Supabase.
 - Confirmar que las variables esten actualizadas en Production/Preview/Development y hacer **redeploy**.
 - Reintentar recuperacion de contrasena y revisar Network (request a `/auth/v1/recover` + header `apikey`) y logs de Supabase Auth.
+
+## Actualizacion 2026-02-17
+
+**Lo hecho hoy:**
+- Se corrigio el flujo de recuperacion de contrasena: `auth/v1/recover` ya envia correos (error 535 por SMTP resuelto con nueva API key en Resend usada como password SMTP en Supabase).
+- Se actualizo el template de email "Reset Password" en Supabase con estilo del Brand Kit.
+- Se agrego aviso en UI: "Revisa tu bandeja de Spam" al solicitar recuperacion de contrasena.
+- Se implemento template de rechazo en `handle-new-solicitud` (antes estaba vacio) con tono politico y coherente a Brand Kit.
+- Se ajusto el correo de contacto en rechazo a `contacto@tuprestamobo.com`.
+- Se ajustaron colores de botones en Auth para alternancia visual (Iniciar Sesion + Refinanciar Tarjeta mismo color, Olvide mi contrasena + Quiero Invertir mismo color).
+- Se documento en `MODE_DE_TRABAJO_CODEX.md` que siempre debo entregar comandos de deploy al finalizar implementaciones (sin preguntar).
+
+**Pendiente:**
+- Deploy de cambios recientes (frontend + functions):
+  - `src/Auth.jsx` (mensaje de spam),
+  - `src/Auth.css` (colores),
+  - `supabase/functions/handle-new-solicitud/index.ts` (template rechazo).
+- Continuar flujo E2E con nueva oportunidad (videollamada, boleta electricidad, agendar firma, notariado, pago dirigido, contrato/cronograma).
