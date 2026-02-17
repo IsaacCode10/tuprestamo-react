@@ -10,6 +10,7 @@ const getRequiredDocs = (situacionLaboral: string): string[] => {
     'boleta_aviso_electricidad',
     'extracto_tarjeta',
     'selfie_ci',
+    'autorizacion_infocred_firmada',
   ];
   const situacionDocs: { [key: string]: string[] } = {
     'Dependiente': ['boleta_pago', 'certificado_gestora'],
