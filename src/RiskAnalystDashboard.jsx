@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import './RiskAnalystDashboard.css';
 import HelpTooltip from './components/HelpTooltip';
@@ -28,7 +28,7 @@ const FALLBACK_PROFILE = {
     { tipo_documento: 'CI Anverso', estado: 'Verificado' },
     { tipo_documento: 'CI Reverso', estado: 'Verificado' },
     { tipo_documento: 'Boleta Aviso Electricidad', estado: 'Verificado' },
-    { tipo_documento: 'Boleta Tarjeta Crédito', estado: 'Pendiente' },
+    { tipo_documento: 'Boleta Tarjeta CrÃ©dito', estado: 'Pendiente' },
     { tipo_documento: 'Foto Selfie con CI', estado: 'Rechazado' },
   ]
 };
@@ -46,7 +46,7 @@ const RiskAnalystDashboard = () => {
   const [decisionType, setDecisionType] = useState(null); // 'Aprobado' or 'Rechazado'
   const [isSavingDecision, setIsSavingDecision] = useState(false);
 
-  // State para el cálculo de gross-up
+  // State para el cÃ¡lculo de gross-up
   const [saldoDeudorVerificado, setSaldoDeudorVerificado] = useState('');
   const [montoTotalPrestamo, setMontoTotalPrestamo] = useState(null);
   const [helpRequests, setHelpRequests] = useState([]);
@@ -81,6 +81,7 @@ const RiskAnalystDashboard = () => {
   const [historial, setHistorial] = useState([]);
   const [historialLoading, setHistorialLoading] = useState(false);
   const [historialError, setHistorialError] = useState(null);
+  const scrollSaveTimerRef = useRef(null);
 
   const perfilRiesgo = useMemo(() => {
     const raw = perfilSeleccionado?.perfil_riesgo || perfilSeleccionado?.perfil || perfilSeleccionado?.risk_profile;
@@ -93,11 +94,11 @@ const RiskAnalystDashboard = () => {
 
   const grossUpHelp = useMemo(() => {
     const saldo = Number(saldoDeudorVerificado);
-    if (!Number.isFinite(saldo) || saldo <= 0) return 'Ingresa el saldo verificado para ver el cálculo.';
+    if (!Number.isFinite(saldo) || saldo <= 0) return 'Ingresa el saldo verificado para ver el cÃ¡lculo.';
     if (saldo <= 10000) {
-      return 'Para netos ≤ Bs 10.000 aplica mínimo de Bs 450: bruto = neto + 450.';
+      return 'Para netos â‰¤ Bs 10.000 aplica mÃ­nimo de Bs 450: bruto = neto + 450.';
     }
-    return `Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilRiesgo || 'N/D'}).`;
+    return `Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisiÃ³n de originaciÃ³n para el perfil ${perfilRiesgo || 'N/D'}).`;
   }, [saldoDeudorVerificado, comisionOriginacion, perfilRiesgo]);
 
   const videoCallOk = !!perfilSeleccionado?.videollamada_ok;
@@ -126,7 +127,7 @@ const RiskAnalystDashboard = () => {
     }
   };
 
-  // Efecto para calcular el Gross-Up con la comisión según perfil
+  // Efecto para calcular el Gross-Up con la comisiÃ³n segÃºn perfil
   useEffect(() => {
     const saldo = parseFloat(saldoDeudorVerificado);
     if (saldo > 0 && comisionOriginacion > 0) {
@@ -149,11 +150,16 @@ const RiskAnalystDashboard = () => {
     return () => clearTimeout(timer);
   }, [saldoDeudorVerificado, perfilSeleccionado?.id]);
   const handleSelectPerfil = (perfil) => {
+    const currentScroll = window.scrollY || 0;
+    try {
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, String(currentScroll));
+    } catch (_) {}
+    setPendingScroll(currentScroll);
     setPerfilSeleccionado(perfil);
     if (perfil?.id) {
       sessionStorage.setItem(SELECTED_PROFILE_KEY, String(perfil.id));
     }
-    // Limpiar los campos de c�lculo al cambiar de perfil
+    // Limpiar los campos de cálculo al cambiar de perfil
     const netFromPerfil = perfil?.saldo_deuda_tc || perfil?.monto_solicitado || '';
     let stored = null;
     if (perfil?.id) {
@@ -172,13 +178,13 @@ const RiskAnalystDashboard = () => {
     setInfocredRiskLevel('');
   };
 
-  // Abre el modal para tomar la decisi�n
+  // Abre el modal para tomar la decisión
   const handleOpenDecisionModal = (decision) => {
     setDecisionType(decision);
     setIsModalOpen(true);
   };
 
-  // Se ejecuta al confirmar la decisión en el modal
+  // Se ejecuta al confirmar la decisiÃ³n en el modal
   const handleSubmitDecision = async (decisionData) => {
     setIsSavingDecision(true);
     try {
@@ -205,12 +211,12 @@ const RiskAnalystDashboard = () => {
       });
       if (error) throw error;
       setError(null);
-      alert(data?.message || 'Decisión registrada.');
+      alert(data?.message || 'DecisiÃ³n registrada.');
       // refrescar perfiles para reflejar estado
       fetchPerfiles();
     } catch (err) {
-      console.error('Error guardando decisión:', err);
-      alert('Hubo un inconveniente al guardar la decisión. Intenta nuevamente.');
+      console.error('Error guardando decisiÃ³n:', err);
+      alert('Hubo un inconveniente al guardar la decisiÃ³n. Intenta nuevamente.');
     } finally {
       setIsSavingDecision(false);
       setIsModalOpen(false);
@@ -262,7 +268,7 @@ const RiskAnalystDashboard = () => {
 
   const fetchDocumentos = useCallback(async (solicitudId) => {
     if (!solicitudId) return;
-    // Si hay cache, úsalo para evitar parpadeo
+    // Si hay cache, Ãºsalo para evitar parpadeo
     const cacheRaw = sessionStorage.getItem(DOC_CACHE_KEY);
     if (cacheRaw) {
       try {
@@ -309,7 +315,7 @@ const RiskAnalystDashboard = () => {
       const risk = perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level;
       setInfocredScore(score ?? '');
       setInfocredRiskLevel(risk ?? '');
-      // traer métricas frescas desde perfiles_de_riesgo por si no vienen en la lista
+      // traer mÃ©tricas frescas desde perfiles_de_riesgo por si no vienen en la lista
       (async () => {
         setMetricsLoading(true);
         try {
@@ -324,7 +330,7 @@ const RiskAnalystDashboard = () => {
             setInfocredRiskLevel(m.infocred_risk_level ?? '');
           }
         } catch (err) {
-          console.error('No se pudieron obtener métricas de perfil:', err);
+          console.error('No se pudieron obtener mÃ©tricas de perfil:', err);
         } finally {
           setMetricsLoading(false);
         }
@@ -425,7 +431,7 @@ const RiskAnalystDashboard = () => {
         }
       }
 
-      // 3) Traer métricas desde perfiles_de_riesgo
+      // 3) Traer mÃ©tricas desde perfiles_de_riesgo
       let perfilesMap = {};
       if (solicitudIds.length > 0) {
         const { data: perfilesData, error: perfilesError } = await supabase
@@ -434,7 +440,7 @@ const RiskAnalystDashboard = () => {
           .in('solicitud_id', solicitudIds);
 
         if (perfilesError) {
-          console.warn('No se pudo obtener métricas desde perfiles_de_riesgo:', perfilesError);
+          console.warn('No se pudo obtener mÃ©tricas desde perfiles_de_riesgo:', perfilesError);
         }
 
         if (Array.isArray(perfilesData)) {
@@ -563,23 +569,36 @@ const RiskAnalystDashboard = () => {
     }
   }, [viewMode, perfiles.length, fetchHistorial]);
 
-  // Restaurar scroll al volver al panel y persistir selección
-  useEffect(() => {
-    const saveScroll = () => {
-      sessionStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY || 0));
-    };
-    const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') saveScroll();
-    };
-    window.addEventListener('beforeunload', saveScroll);
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      window.removeEventListener('beforeunload', saveScroll);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
-
-  // Aplicar scroll pendiente cuando ya cargó la data
+  // Restaurar scroll al volver al panel y persistir selecciÃ³n
+useEffect(() => {
+  const handleScroll = () => {
+    if (scrollSaveTimerRef.current) {
+      clearTimeout(scrollSaveTimerRef.current);
+    }
+    scrollSaveTimerRef.current = setTimeout(() => {
+      try {
+        sessionStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY || 0));
+      } catch (_) {}
+    }, 250);
+  };
+  const saveScroll = () => {
+    sessionStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY || 0));
+  };
+  const handleVisibility = () => {
+    if (document.visibilityState === 'hidden') saveScroll();
+  };
+  window.addEventListener('beforeunload', saveScroll);
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  document.addEventListener('visibilitychange', handleVisibility);
+  return () => {
+    window.removeEventListener('beforeunload', saveScroll);
+    window.removeEventListener('scroll', handleScroll);
+    document.removeEventListener('visibilitychange', handleVisibility);
+    if (scrollSaveTimerRef.current) {
+      clearTimeout(scrollSaveTimerRef.current);
+    }
+  };
+}, []);// Aplicar scroll pendiente cuando ya cargÃ³ la data
   useEffect(() => {
     if (pendingScroll !== null && !loading) {
       setTimeout(() => {
@@ -705,7 +724,7 @@ const RiskAnalystDashboard = () => {
     const infocredScoreValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? infocredScore) || 'N/D';
     const infocredRiskValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? infocredRiskLevel) || 'N/D';
 
-    if (error && !isModalOpen) { // No mostrar error de fondo si el modal está abierto
+    if (error && !isModalOpen) { // No mostrar error de fondo si el modal estÃ¡ abierto
       return <div className="centered-message error">Error: {error}</div>;
     }
 
@@ -713,7 +732,7 @@ const RiskAnalystDashboard = () => {
       return (
         <div className="centered-message">
           <h2>No hay perfiles para revisar</h2>
-          <p>Cuando un nuevo prestatario complete su solicitud, aparecerá aquí.</p>
+          <p>Cuando un nuevo prestatario complete su solicitud, aparecerÃ¡ aquÃ­.</p>
         </div>
       );
     }
@@ -730,7 +749,7 @@ const RiskAnalystDashboard = () => {
                   className={`filter-pill ${viewMode === 'review' ? 'filter-pill--active' : ''}`}
                   onClick={() => setViewMode('review')}
                 >
-                  En revisión
+                  En revisiÃ³n
                 </button>
                 <button
                   type="button"
@@ -750,7 +769,7 @@ const RiskAnalystDashboard = () => {
                 {viewMode === 'complete' ? 'Todos los perfiles' : 'Solo completos'}
               </button>
             </div>
-            <HelpTooltip text="Estos son los perfiles de prestatarios que han completado la carga de documentos y están listos para un análisis de riesgo." />
+            <HelpTooltip text="Estos son los perfiles de prestatarios que han completado la carga de documentos y estÃ¡n listos para un anÃ¡lisis de riesgo." />
           </header>
           <div className="perfiles-list">
             {showHistory ? (
@@ -760,7 +779,7 @@ const RiskAnalystDashboard = () => {
                 <div className="centered-message error">{historialError}</div>
               ) : historial.length === 0 ? (
                 <div className="centered-message">
-                  <p>No hay decisiones registradas aún.</p>
+                  <p>No hay decisiones registradas aÃºn.</p>
                 </div>
               ) : (
                 historial.map(item => {
@@ -802,7 +821,7 @@ const RiskAnalystDashboard = () => {
                               <div className="history-summary">
                                 <div className="label">Condiciones finales</div>
                                 <p>
-                                Monto bruto: {item.oportunidad?.monto || 'N/D'} · Neto banco: {item.oportunidad?.saldo_deudor_verificado || 'N/D'} · Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m · Estado opp: {item.oportunidad?.estado || 'N/D'}
+                                Monto bruto: {item.oportunidad?.monto || 'N/D'} Â· Neto banco: {item.oportunidad?.saldo_deudor_verificado || 'N/D'} Â· Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m Â· Estado opp: {item.oportunidad?.estado || 'N/D'}
                                 </p>
                                 <p>
                                   Score INFOCRED: {item.perfil?.metricas_evaluacion?.infocred_score || 'N/D'} ({item.perfil?.metricas_evaluacion?.infocred_risk_level || 'N/D'})
@@ -833,7 +852,7 @@ const RiskAnalystDashboard = () => {
                     <div>
                       <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
                       <div className="muted">
-                        ID: {perfil.id} · DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')} · CI: {perfil.cedula_identidad || 'N/A'}
+                        ID: {perfil.id} Â· DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')} Â· CI: {perfil.cedula_identidad || 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -847,7 +866,7 @@ const RiskAnalystDashboard = () => {
               <span className="help-requests-count">{helpRequests.length} pendientes</span>
             </header>
             {helpRequests.length === 0 ? (
-              <p className="help-requests-empty">Sin solicitudes nuevas. Tus leads más calientes están listos.</p>
+              <p className="help-requests-empty">Sin solicitudes nuevas. Tus leads mÃ¡s calientes estÃ¡n listos.</p>
             ) : (
               <ul>
                 {helpRequests.map((request) => (
@@ -872,16 +891,16 @@ const RiskAnalystDashboard = () => {
               <>
               <header className="scorecard-header">
                 <h1>Scorecard Digital</h1>
-            <p>Análisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong> (ID {perfilSeleccionado.id || 'N/D'})</p>
+            <p>AnÃ¡lisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong> (ID {perfilSeleccionado.id || 'N/D'})</p>
           </header>
 
               <section className="resumen-expediente">
                 <div className="resumen-grid">
                   <div>
-                    <div className="muted">Situación laboral</div>
+                    <div className="muted">SituaciÃ³n laboral</div>
                     <strong>{perfilSeleccionado.situacion_laboral || 'N/D'}</strong>
                     {perfilSeleccionado.antiguedad_laboral && (
-                      <div className="muted">Antigüedad: {perfilSeleccionado.antiguedad_laboral} meses</div>
+                      <div className="muted">AntigÃ¼edad: {perfilSeleccionado.antiguedad_laboral} meses</div>
                     )}
                   </div>
                   <div>
@@ -898,7 +917,7 @@ const RiskAnalystDashboard = () => {
                   <div>
                     <div className="muted">InfoCred</div>
                     <strong>{infocredStatus}</strong>
-                    <div className="muted">{infocredDoc ? 'Lista para revisión' : 'Sube el reporte'}</div>
+                    <div className="muted">{infocredDoc ? 'Lista para revisiÃ³n' : 'Sube el reporte'}</div>
                   </div>
                 </div>
               </section>
@@ -912,7 +931,7 @@ const RiskAnalystDashboard = () => {
                 <div className="metrica">
                   <span className="metrica-titulo">Deuda Total Declarada</span>
                   <span className="metrica-valor">Bs. {(perfilSeleccionado.saldo_deuda_tc || 0).toLocaleString('es-BO')}</span>
-                  <div className="muted">Pago mín. estimado: Bs. {(interesMensual + amortizacion).toFixed(0)}</div>
+                  <div className="muted">Pago mÃ­n. estimado: Bs. {(interesMensual + amortizacion).toFixed(0)}</div>
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Debt-to-Income (DTI)</span>
@@ -920,30 +939,30 @@ const RiskAnalystDashboard = () => {
                     {perfilSeleccionado.dti || (dtiCalculado ? `${dtiCalculado.toFixed(1)}%` : 'N/A')}
                   </span>
                   <div className="muted">Ingreso usado: Bs. {derivedIncome.toLocaleString('es-BO')}</div>
-                  <HelpTooltip text="Porcentaje del ingreso mensual que se destina al pago de deudas. Un DTI más bajo es mejor." />
+                  <HelpTooltip text="Porcentaje del ingreso mensual que se destina al pago de deudas. Un DTI mÃ¡s bajo es mejor." />
                 </div>
                 <div className="metrica score-confianza">
                   <span className="metrica-titulo">Score de Confianza</span>
                   <span className="metrica-valor">{perfilSeleccionado.score_confianza || scoreFallback}%</span>
-                  <HelpTooltip text="Puntaje calculado basado en la completitud y consistencia de los datos y documentos. No es un score de crédito tradicional." />
+                  <HelpTooltip text="Puntaje calculado basado en la completitud y consistencia de los datos y documentos. No es un score de crÃ©dito tradicional." />
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Perfil de Riesgo</span>
                   <span className="metrica-valor">{perfilRiesgo || 'N/D'}</span>
-                  <div className="muted">Determina tasa y originación</div>
+                  <div className="muted">Determina tasa y originaciÃ³n</div>
                   <HelpTooltip
                     text={
                       perfilRiesgo
-                        ? `Perfil ${perfilRiesgo}: tasa prestatario ${TASA_INTERES_PRESTATARIO[perfilRiesgo] ?? 'N/D'}% anual; comisión de originación ${(comisionOriginacion * 100).toFixed(1)}%.`
-                        : 'Perfil aún no asignado. Se definirá tras el scorecard y validaciones.'
+                        ? `Perfil ${perfilRiesgo}: tasa prestatario ${TASA_INTERES_PRESTATARIO[perfilRiesgo] ?? 'N/D'}% anual; comisiÃ³n de originaciÃ³n ${(comisionOriginacion * 100).toFixed(1)}%.`
+                        : 'Perfil aÃºn no asignado. Se definirÃ¡ tras el scorecard y validaciones.'
                     }
                   />
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Score INFOCRED</span>
                   <span className="metrica-valor">{perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? 'N/D'}</span>
-                  <div className="muted">Nivel: {perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? 'N/D'} (buró)</div>
-                  <HelpTooltip text="Score INFOCRED (300–850): 850 = menor probabilidad de default, 300 = mayor riesgo. Nivel A–H es la clase de riesgo del buró; A es menor riesgo, H es mayor." />
+                  <div className="muted">Nivel: {perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? 'N/D'} (burÃ³)</div>
+                  <HelpTooltip text="Score INFOCRED (300â€“850): 850 = menor probabilidad de default, 300 = mayor riesgo. Nivel Aâ€“H es la clase de riesgo del burÃ³; A es menor riesgo, H es mayor." />
                 </div>
               </section>
 
@@ -985,7 +1004,7 @@ const RiskAnalystDashboard = () => {
                 <div className="infocred-header">
                   <div>
                     <h2>Historial INFOCRED</h2>
-                    <p>Sube el PDF que recibes de INFOCRED tras validar la autorización firmada. Requiere videollamada previa y expediente completo.</p>
+                    <p>Sube el PDF que recibes de INFOCRED tras validar la autorizaciÃ³n firmada. Requiere videollamada previa y expediente completo.</p>
                   </div>
                   <div className="infocred-actions">
                     <button
@@ -1007,7 +1026,7 @@ const RiskAnalystDashboard = () => {
 
                 <div className="infocred-card" style={{ marginBottom: 12 }}>
                   <div>
-                    <strong>Videollamada de verificación</strong>
+                    <strong>Videollamada de verificaciÃ³n</strong>
                     <p className="muted">Requisito previo a consultar INFOCRED. Debe realizarse antes de subir el PDF.</p>
                     {videoCallOk && videoCallAt && (
                       <div className="muted">Realizada: {new Date(videoCallAt).toLocaleString('es-BO')}</div>
@@ -1072,8 +1091,8 @@ const RiskAnalystDashboard = () => {
                     </div>
                   ) : (
                     <div className="infocred-empty">
-                      <p>Aún no se ha cargado el historial de INFOCRED.</p>
-                      <p className="muted">Sube el PDF una vez recibas el reporte del buró.</p>
+                      <p>AÃºn no se ha cargado el historial de INFOCRED.</p>
+                      <p className="muted">Sube el PDF una vez recibas el reporte del burÃ³.</p>
                     </div>
                   )}
                   {infocredError && <div className="error-text">Error: {infocredError}</div>}
@@ -1124,9 +1143,9 @@ const RiskAnalystDashboard = () => {
                 </div>
               </section>
 
-              {/* Nueva sección para verificación manual y cálculo */}
+              {/* Nueva secciÃ³n para verificaciÃ³n manual y cÃ¡lculo */}
               <section className="verificacion-manual">
-                <h2>Verificación y Cálculo Final</h2>
+                <h2>VerificaciÃ³n y CÃ¡lculo Final</h2>
                 <div className="metrica">
                   <label htmlFor="saldo-verificado" className="metrica-titulo">Saldo Deudor Verificado (del extracto)</label>
                   <input
@@ -1137,32 +1156,32 @@ const RiskAnalystDashboard = () => {
                     onChange={(e) => setSaldoDeudorVerificado(e.target.value)}
                     placeholder="Ej: 5500.50"
                   />
-                  <HelpTooltip text="Ingrese aquí el saldo deudor exacto que figura en el extracto de la tarjeta de crédito del cliente." />
+                  <HelpTooltip text="Ingrese aquÃ­ el saldo deudor exacto que figura en el extracto de la tarjeta de crÃ©dito del cliente." />
                 </div>
                 {montoTotalPrestamo && (
                   <div className="metrica-calculada">
-                    <span className="metrica-titulo">Monto Total del Préstamo (Gross-Up)</span>
+                    <span className="metrica-titulo">Monto Total del PrÃ©stamo (Gross-Up)</span>
                     <span className="metrica-valor-calculado">Bs. {montoTotalPrestamo}</span>
                     <HelpTooltip text={grossUpHelp} />
                   </div>
                 )}
               </section>
 
-              {/* La vieja zona de decisión se reemplaza por estos botones que abren el modal */}
+              {/* La vieja zona de decisiÃ³n se reemplaza por estos botones que abren el modal */}
               <section className="zona-decision">
-                <h2>Zona de Decisión</h2>
+                <h2>Zona de DecisiÃ³n</h2>
                 <div className="decision-buttons">
                   <button 
                     className="btn-decision aprobar" 
                     onClick={() => handleOpenDecisionModal('Aprobado')}
                   >
-                    Aprobar Préstamo
+                    Aprobar PrÃ©stamo
                   </button>
                   <button 
                     className="btn-decision rechazar"
                     onClick={() => handleOpenDecisionModal('Rechazado')}
                   >
-                    Rechazar Préstamo
+                    Rechazar PrÃ©stamo
                   </button>
                 </div>
               </section>
@@ -1182,7 +1201,7 @@ const RiskAnalystDashboard = () => {
     <div className="risk-analyst-dashboard">
       {renderContent()}
       
-      {/* El Modal se renderiza aquí */}
+      {/* El Modal se renderiza aquÃ­ */}
       <DecisionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -1195,6 +1214,14 @@ const RiskAnalystDashboard = () => {
 };
 
 export default RiskAnalystDashboard;
+
+
+
+
+
+
+
+
 
 
 
