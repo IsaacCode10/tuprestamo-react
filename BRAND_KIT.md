@@ -85,10 +85,8 @@ Esto nos ayuda a mantener una estÃ©tica coherente en la publicidad, redes soci
 
 - Identidad remitente
   - Nombre: Tu Préstamo
-  - Direcciones según tipo:
-    - Acceso/seguridad: acceso@tuprestamobo.com (reply-to soporte@tuprestamobo.com)
-    - Notificaciones del sistema: notificaciones@tuprestamobo.com
-    - Bienvenida/marketing transaccional: contacto@tuprestamobo.com
+  - Dirección única (por ahora): contacto@tuprestamobo.com
+  - Reply-to: contacto@tuprestamobo.com
   - Autenticación: SPF/DKIM/DMARC configurados para tuprestamobo.com
 
 - Asuntos (concisos, personalizados)
