@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import './RiskAnalystDashboard.css';
 import HelpTooltip from './components/HelpTooltip';
+import { calcOriginacionYBruto } from './utils/loan';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
 const getRequiredDocsBySituation = (situacion) => {
@@ -70,6 +71,7 @@ const RiskAnalystDashboard = () => {
 
   const SCROLL_STORAGE_KEY = 'risk-analyst-scroll';
   const SELECTED_PROFILE_KEY = 'risk-analyst-selected-id';
+  const SALDO_VERIFICADO_KEY = (id) => `saldo_verificado_${id}`;
   const [pendingScroll, setPendingScroll] = useState(() => {
     const saved = sessionStorage.getItem(SCROLL_STORAGE_KEY);
     const y = saved ? Number(saved) : null;
@@ -88,6 +90,15 @@ const RiskAnalystDashboard = () => {
   const comisionOriginacion = useMemo(() => {
     return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo]) ?? DEFAULT_COMISION;
   }, [perfilRiesgo]);
+
+  const grossUpHelp = useMemo(() => {
+    const saldo = Number(saldoDeudorVerificado);
+    if (!Number.isFinite(saldo) || saldo <= 0) return 'Ingresa el saldo verificado para ver el cálculo.';
+    if (saldo <= 10000) {
+      return 'Para netos ≤ Bs 10.000 aplica mínimo de Bs 450: bruto = neto + 450.';
+    }
+    return `Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilRiesgo || 'N/D'}).`;
+  }, [saldoDeudorVerificado, comisionOriginacion, perfilRiesgo]);
 
   const videoCallOk = !!perfilSeleccionado?.videollamada_ok;
   const videoCallAt = perfilSeleccionado?.videollamada_at;
@@ -118,29 +129,50 @@ const RiskAnalystDashboard = () => {
   // Efecto para calcular el Gross-Up con la comisión según perfil
   useEffect(() => {
     const saldo = parseFloat(saldoDeudorVerificado);
-    if (saldo > 0 && comisionOriginacion > 0 && comisionOriginacion < 1) {
-      const montoCalculado = saldo / (1 - comisionOriginacion);
-      setMontoTotalPrestamo(montoCalculado.toFixed(2));
+    if (saldo > 0 && comisionOriginacion > 0) {
+      const { bruto } = calcOriginacionYBruto(saldo, comisionOriginacion * 100);
+      setMontoTotalPrestamo(bruto > 0 ? bruto.toFixed(2) : null);
     } else {
       setMontoTotalPrestamo(null);
     }
   }, [saldoDeudorVerificado, comisionOriginacion]);
 
+  useEffect(() => {
+    if (!perfilSeleccionado?.id) return;
+    const key = SALDO_VERIFICADO_KEY(perfilSeleccionado.id);
+    const value = saldoDeudorVerificado ? String(saldoDeudorVerificado) : '';
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(key, value);
+      } catch (_) {}
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [saldoDeudorVerificado, perfilSeleccionado?.id]);
   const handleSelectPerfil = (perfil) => {
     setPerfilSeleccionado(perfil);
     if (perfil?.id) {
       sessionStorage.setItem(SELECTED_PROFILE_KEY, String(perfil.id));
     }
-    // Limpiar los campos de cálculo al cambiar de perfil
+    // Limpiar los campos de c�lculo al cambiar de perfil
     const netFromPerfil = perfil?.saldo_deuda_tc || perfil?.monto_solicitado || '';
-    setSaldoDeudorVerificado(netFromPerfil ? String(netFromPerfil) : '');
+    let stored = null;
+    if (perfil?.id) {
+      try {
+        stored = localStorage.getItem(SALDO_VERIFICADO_KEY(perfil.id));
+      } catch (_) {}
+    }
+    if (stored && !Number.isNaN(Number(stored))) {
+      setSaldoDeudorVerificado(stored);
+    } else {
+      setSaldoDeudorVerificado(netFromPerfil ? String(netFromPerfil) : '');
+    }
     setMontoTotalPrestamo(null);
     setInfocredError(null);
     setInfocredScore('');
     setInfocredRiskLevel('');
   };
 
-  // Abre el modal para tomar la decisión
+  // Abre el modal para tomar la decisi�n
   const handleOpenDecisionModal = (decision) => {
     setDecisionType(decision);
     setIsModalOpen(true);
@@ -1111,7 +1143,7 @@ const RiskAnalystDashboard = () => {
                   <div className="metrica-calculada">
                     <span className="metrica-titulo">Monto Total del Préstamo (Gross-Up)</span>
                     <span className="metrica-valor-calculado">Bs. {montoTotalPrestamo}</span>
-                    <HelpTooltip text={`Este es el monto total que se solicitará a los inversionistas. Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilRiesgo || 'N/D'}).`} />
+                    <HelpTooltip text={grossUpHelp} />
                   </div>
                 )}
               </section>
@@ -1163,3 +1195,7 @@ const RiskAnalystDashboard = () => {
 };
 
 export default RiskAnalystDashboard;
+
+
+
+
