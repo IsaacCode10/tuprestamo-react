@@ -32,14 +32,17 @@ Este documento describe el flujo de usuario y técnico completo, desde la solici
 
 1.  **Revisión del Perfil:** `[✅ Completado]` El analista de riesgo (Sarai) ve el nuevo perfil en su `RiskAnalystDashboard.jsx` (Scorecard Digital).
 2.  **Verificación de Documentos:** `[✅ Completado]` Sarai revisa los documentos para validar la información del cliente directamente desde el Scorecard.
-3.  **Paso Crítico: Verificación de Deuda:** `[✅ Completado]` El analista ingresa el **saldo deudor verificado** en el Scorecard.
-4.  **Cálculo "Gross-Up" (Automático):** `[✅ Completado]` Se calcula el monto bruto con mínimo Bs 450 hasta 10k o % por perfil sobre 10k.
-5.  **Decisión Final:** `[✅ Completado]` El modal registra en `decisiones_de_riesgo`, actualiza estados y dispara el correo de propuesta.
-
+3.  **Videollamada de Verificación:** `[✅ Completado]` Se realiza una videollamada breve para conocer al prestatario antes de consultar INFOCRED.
+4.  **Consulta INFOCRED:** `[✅ Completado]` Se carga el PDF de INFOCRED luego de la videollamada y con expediente completo.
+5.  **Paso Crítico: Verificación de Deuda:** `[✅ Completado]` El analista ingresa el **saldo deudor verificado** en el Scorecard.
+6.  **Cálculo "Gross-Up" (Automático):** `[✅ Completado]` Se calcula el monto bruto con mínimo Bs 450 hasta 10k o % por perfil sobre 10k.
+7.  **Decisión Final:** `[✅ Completado]` El modal registra en `decisiones_de_riesgo`, actualiza estados y dispara el correo de propuesta.
 ---
 
 ## Fase 4: Desembolso Dirigido [🚧 En Progreso]
 
 1.  **Notificación al Prestatario:** `[✅]` Correo de propuesta branded con CTA; dashboard de propuesta muestra términos finales, admin/seguro prorrateado y tabla de amortización.
 2.  **Publicación a inversionistas:** `[✅]` Al aceptar la propuesta, la oportunidad queda `disponible` para fondeo.
-3.  **Desembolso dirigido:** `[❌ Pendiente]` Automatizar el pago directo al banco acreedor, generar comprobante para el prestatario y marcar el préstamo como activo.
+3.  **Fondeo completo:** `[❌ Pendiente]` La oportunidad pasa a `fondeada` cuando se llena el 100% con inversionistas.
+4.  **Desembolso dirigido:** `[❌ Pendiente]` Automatizar el pago directo al banco acreedor, generar comprobante para el prestatario y marcar el préstamo como activo.
+
