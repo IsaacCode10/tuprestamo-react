@@ -89,7 +89,7 @@ const RiskAnalystDashboard = () => {
   }, [perfilSeleccionado?.perfil_riesgo, perfilSeleccionado?.perfil, perfilSeleccionado?.risk_profile]);
 
   const comisionOriginacion = useMemo(() => {
-    return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo]) ?? DEFAULT_COMISION;
+    return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo])   DEFAULT_COMISION;
   }, [perfilRiesgo]);
 
   const grossUpHelp = useMemo(() => {
@@ -313,8 +313,8 @@ const RiskAnalystDashboard = () => {
       fetchDocumentos(perfilSeleccionado.id);
       const score = perfilSeleccionado?.metricas_evaluacion?.infocred_score;
       const risk = perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level;
-      setInfocredScore(score ?? '');
-      setInfocredRiskLevel(risk ?? '');
+      setInfocredScore(score   '');
+      setInfocredRiskLevel(risk   '');
       // traer métricas frescas desde perfiles_de_riesgo por si no vienen en la lista
       (async () => {
         setMetricsLoading(true);
@@ -326,8 +326,8 @@ const RiskAnalystDashboard = () => {
             .maybeSingle();
           if (!error && data?.metricas_evaluacion) {
             const m = data.metricas_evaluacion;
-            setInfocredScore(m.infocred_score ?? '');
-            setInfocredRiskLevel(m.infocred_risk_level ?? '');
+            setInfocredScore(m.infocred_score   '');
+            setInfocredRiskLevel(m.infocred_risk_level   '');
           }
         } catch (err) {
           console.error('No se pudieron obtener métricas de perfil:', err);
@@ -453,15 +453,15 @@ const RiskAnalystDashboard = () => {
 
       const enriched = (solicitudesData || []).map(item => {
         const inferredPerfil =
-          item?.perfil_riesgo ??
-          oportunidadesMap[item?.id] ??
-          item?.perfil ??
-          item?.risk_profile ??
+          item?.perfil_riesgo  
+          oportunidadesMap[item?.id]  
+          item?.perfil  
+          item?.risk_profile  
           null;
         const perfilMetrics = perfilesMap[item?.id] || {};
         const score =
-          item?.score_confianza ??
-          perfilMetrics?.metricas_evaluacion?.score_confianza ??
+          item?.score_confianza  
+          perfilMetrics?.metricas_evaluacion?.score_confianza  
           null;
         return { ...item, perfil_riesgo: inferredPerfil, score_confianza: score, metricas_evaluacion: perfilMetrics?.metricas_evaluacion };
       });
@@ -721,8 +721,8 @@ useEffect(() => {
     const uploadedRequiredCount = requiredDocs.filter(docId => !!docByType[docId]).length;
     const analyzedCount = analyzedSet.size;
     const infocredStatus = infocredDoc ? 'PDF subido' : 'Pendiente';
-    const infocredScoreValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? infocredScore) || 'N/D';
-    const infocredRiskValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? infocredRiskLevel) || 'N/D';
+    const infocredScoreValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_score   infocredScore) || 'N/D';
+    const infocredRiskValue = (perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level   infocredRiskLevel) || 'N/D';
 
     if (error && !isModalOpen) { // No mostrar error de fondo si el modal está abierto
       return <div className="centered-message error">Error: {error}</div>;
@@ -821,7 +821,7 @@ useEffect(() => {
                               <div className="history-summary">
                                 <div className="label">Condiciones finales</div>
                                 <p>
-                                Monto bruto: {item.oportunidad?.monto || 'N/D'} Â· Neto banco: {item.oportunidad?.saldo_deudor_verificado || 'N/D'} Â· Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m Â· Estado opp: {item.oportunidad?.estado || 'N/D'}
+                                Monto bruto: {item.oportunidad?.monto || 'N/D'} · Neto banco: {item.oportunidad?.saldo_deudor_verificado || 'N/D'} · Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m · Estado opp: {item.oportunidad?.estado || 'N/D'}
                                 </p>
                                 <p>
                                   Score INFOCRED: {item.perfil?.metricas_evaluacion?.infocred_score || 'N/D'} ({item.perfil?.metricas_evaluacion?.infocred_risk_level || 'N/D'})
@@ -852,7 +852,7 @@ useEffect(() => {
                     <div>
                       <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
                       <div className="muted">
-                        ID: {perfil.id} Â· DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')} Â· CI: {perfil.cedula_identidad || 'N/A'}
+                        ID: {perfil.id} · DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')} · CI: {perfil.cedula_identidad || 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -900,7 +900,7 @@ useEffect(() => {
                     <div className="muted">Situación laboral</div>
                     <strong>{perfilSeleccionado.situacion_laboral || 'N/D'}</strong>
                     {perfilSeleccionado.antiguedad_laboral && (
-                      <div className="muted">AntigÃ¼edad: {perfilSeleccionado.antiguedad_laboral} meses</div>
+                      <div className="muted">Antigüedad: {perfilSeleccionado.antiguedad_laboral} meses</div>
                     )}
                   </div>
                   <div>
@@ -953,15 +953,15 @@ useEffect(() => {
                   <HelpTooltip
                     text={
                       perfilRiesgo
-                        ? `Perfil ${perfilRiesgo}: tasa prestatario ${TASA_INTERES_PRESTATARIO[perfilRiesgo] ?? 'N/D'}% anual; comisión de originación ${(comisionOriginacion * 100).toFixed(1)}%.`
+                        ? `Perfil ${perfilRiesgo}: tasa prestatario ${TASA_INTERES_PRESTATARIO[perfilRiesgo]   'N/D'}% anual; comisión de originación ${(comisionOriginacion * 100).toFixed(1)}%.`
                         : 'Perfil aún no asignado. Se definirá tras el scorecard y validaciones.'
                     }
                   />
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Score INFOCRED</span>
-                  <span className="metrica-valor">{perfilSeleccionado?.metricas_evaluacion?.infocred_score ?? 'N/D'}</span>
-                  <div className="muted">Nivel: {perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level ?? 'N/D'} (buró)</div>
+                  <span className="metrica-valor">{perfilSeleccionado?.metricas_evaluacion?.infocred_score   'N/D'}</span>
+                  <div className="muted">Nivel: {perfilSeleccionado?.metricas_evaluacion?.infocred_risk_level   'N/D'} (buró)</div>
                   <HelpTooltip text="Score INFOCRED (300â€“850): 850 = menor probabilidad de default, 300 = mayor riesgo. Nivel Aâ€“H es la clase de riesgo del buró; A es menor riesgo, H es mayor." />
                 </div>
               </section>

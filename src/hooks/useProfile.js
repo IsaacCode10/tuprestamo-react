@@ -1,11 +1,11 @@
-﻿import { useState, useEffect } from 'react';
+ï»¿import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { identifyUser, resetMixpanel } from '@/analytics.js';
 
 /**
  * Un hook personalizado para obtener y gestionar el perfil completo del usuario,
  * incluyendo su rol desde la tabla 'profiles'.
- * Devuelve el evento de autenticaciÃ³n para que el componente App pueda manejar la redirecciÃ³n.
+ * Devuelve el evento de autenticaci?n para que el componente App pueda manejar la redirecci?n.
  */
 export function useProfile() {
   const [session, setSession] = useState(null);

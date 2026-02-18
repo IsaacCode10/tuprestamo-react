@@ -70,7 +70,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
   const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
   const cuotaPromedio = oportunidad?.cuota_promedio ? Number(oportunidad.cuota_promedio) : null;
   const cuotaCalc = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
-  const cuotaTotal = cuotaPromedio ?? cuotaCalc;
+  const cuotaTotal = cuotaPromedio   cuotaCalc;
   const adminSeguro = adminSeguroFlat;
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
@@ -273,7 +273,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
   const cuotaPromedio = oportunidad?.cuota_promedio ? Number(oportunidad.cuota_promedio) : null;
   const computedCuota = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
-  const cuotaTotal = cuotaPromedio ?? computedCuota;
+  const cuotaTotal = cuotaPromedio   computedCuota;
   const adminSeguro = adminSeguroFlat;
   const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
   const totalPagar = neto + costoCredito;
@@ -884,9 +884,9 @@ const AmortizationTable = ({ schedule }) => ( <div/> );
 const PaymentHistory = ({ history }) => ( <div/> );
 const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
   // Valores de ejemplo si no hay datos reales del préstamo aún
-  const principal = Number(loan?.capital_pendiente ?? 12000);
-  const annualRate = Number(loan?.tasa_anual ?? 24);
-  const months = Number(loan?.plazo_restante ?? 24);
+  const principal = Number(loan?.capital_pendiente   12000);
+  const annualRate = Number(loan?.tasa_anual   24);
+  const months = Number(loan?.plazo_restante   24);
   const [showModal, setShowModal] = useState(false);
   const [amount, setAmount] = useState('');
   const [msg, setMsg] = useState('');
@@ -989,10 +989,10 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
         : null;
     const oportunidadFallback = getFallbackOpportunity(solicitud);
     const activeOpportunity = oportunidadObj || oportunidadFallback;
-    const requestedAmountValue = parseNumberValue(solicitud?.saldo_deuda_tc ?? solicitud?.monto_solicitado);
+    const requestedAmountValue = parseNumberValue(solicitud?.saldo_deuda_tc   solicitud?.monto_solicitado);
 
     const [simulation, setSimulation] = useState({
-        montoDeuda: requestedAmountValue ?? '',
+        montoDeuda: requestedAmountValue   '',
         tasaActual: solicitud.tasa_interes_tc || '',
         plazo: solicitud.plazo_meses || 24,
         costoMantenimientoBanco: '100',
@@ -1000,12 +1000,12 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
 
     useEffect(() => {
         if (!solicitud) return;
-        const preferredDebt = parseNumberValue(solicitud?.saldo_deuda_tc ?? solicitud?.monto_solicitado);
+        const preferredDebt = parseNumberValue(solicitud?.saldo_deuda_tc   solicitud?.monto_solicitado);
         setSimulation(prev => ({
             ...prev,
-            montoDeuda: preferredDebt ?? prev.montoDeuda,
-            tasaActual: solicitud.tasa_interes_tc ?? prev.tasaActual,
-            plazo: solicitud.plazo_meses ?? prev.plazo,
+            montoDeuda: preferredDebt   prev.montoDeuda,
+            tasaActual: solicitud.tasa_interes_tc   prev.tasaActual,
+            plazo: solicitud.plazo_meses   prev.plazo,
         }));
     }, [solicitud?.saldo_deuda_tc, solicitud?.monto_solicitado, solicitud?.tasa_interes_tc, solicitud?.plazo_meses]);
 
@@ -1184,7 +1184,7 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = 
       'pagado': 7,
       'activo': 7
     };
-    let currentStepIndex = stepMap[currentStep] ?? 0;
+    let currentStepIndex = stepMap[currentStep]   0;
 
     if (currentStepIndex === 0 && currentStep !== 'pendiente') {
       currentStepIndex = 1; // ensure verification step is marked when no longer pending
@@ -1255,7 +1255,7 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, us
   const monto = Number(simulation.montoDeuda) || 0;
   const tasaBancoAnual = Number(simulation.tasaActual) || 0;
   const plazo = Number(simulation.plazo) || 0;
-  const tasaTP = oportunidad?.tasa_interes_prestatario ?? null;
+  const tasaTP = oportunidad?.tasa_interes_prestatario   null;
   const cuotaTpResumen = pagoTotalMensualTP;
 
     const effectiveMonto = Number(simulation.montoDeuda) || Number(oportunidad?.monto) || Number(solicitud?.monto_solicitado) || 0;

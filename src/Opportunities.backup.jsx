@@ -14,7 +14,7 @@ const OpportunityCard = ({ opp }) => {
   const riskLabel = ({
     A: 'Conservador (A)',
     B: 'Balanceado (B)',
-    C: 'DinÃƒÂ¡mico (C)'
+    C: 'DinÃƒÆ’Ã‚¡mico (C)'
   }[opp.perfil_riesgo]) || `Riesgo ${opp.perfil_riesgo}`;
 
   const handleViewDetails = () => {
@@ -41,7 +41,7 @@ const OpportunityCard = ({ opp }) => {
           </div>
         </div>
         <div className="returns-breakdown">
-          <span>ComisiÃƒÂ³n de servicio: {comisionServicio}%</span>
+          <span>ComisiÃƒÆ’Ã‚Â³n de servicio: {comisionServicio}%</span>
           <br />
           <span>Tu rendimiento neto estimado: <strong>{rendimientoNeto.toFixed(2)}%</strong></span>
         </div>
@@ -79,7 +79,7 @@ const Opportunities = () => {
 
       if (error) {
         console.error('Error fetching opportunities:', error);
-        setError('Error al cargar las oportunidades de inversiÃƒÂ³n.');
+        setError('Error al cargar las oportunidades de inversiÃƒÆ’Ã‚Â³n.');
       } else {
         setOpportunities(data || []);
       }
@@ -148,15 +148,15 @@ const Opportunities = () => {
         { label: 'Inicio', to: '/investor-dashboard' },
         { label: 'Oportunidades' },
       ]} />
-      <h2>Oportunidades de InversiÃƒÂ³n</h2>
+      <h2>Oportunidades de InversiÃƒÆ’Ã‚Â³n</h2>
       <div className="filters-bar">
         <button className="btn btn--secondary" onClick={() => setShowFilters(v => !v)}>
           {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
         </button>
         {showFilters && (
           <div className="filters-group">
-            <span className="filters-label">Rendimiento mÃƒÂ­nimo:</span>
-            <div className="segmented" role="tablist" aria-label="Rendimiento mÃƒÂ­nimo">
+            <span className="filters-label">Rendimiento mÃƒÆ’Ã‚Â­nimo:</span>
+            <div className="segmented" role="tablist" aria-label="Rendimiento mÃƒÆ’Ã‚Â­nimo">
               {[10,12,15].map((r) => {
                 const active = String(filters.minRate)===String(r);
                 return (
@@ -171,8 +171,8 @@ const Opportunities = () => {
                 );
               })}
             </div>
-            <span className="filters-label" style={{ marginLeft: '0.75rem' }}>Plazo mÃƒÂ¡ximo:</span>
-            <div className="segmented" role="tablist" aria-label="Plazo mÃƒÂ¡ximo">
+            <span className="filters-label" style={{ marginLeft: '0.75rem' }}>Plazo mÃƒÆ’Ã‚¡ximo:</span>
+            <div className="segmented" role="tablist" aria-label="Plazo mÃƒÆ’Ã‚¡ximo">
               {[12,18,24].map((m) => {
                 const active = String(filters.maxMonths)===String(m);
                 return (
@@ -194,11 +194,11 @@ const Opportunities = () => {
       {showFilters && (
         <>
           <p style={{ fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem 0' }}>
-            CÃƒÂ³mo elegir: Conservador ~10%, Balanceado ~12%, DinÃƒÂ¡mico ~15% anual.
+            CÃƒÆ’Ã‚Â³mo elegir: Conservador ~10%, Balanceado ~12%, DinÃƒÆ’Ã‚¡mico ~15% anual.
           </p>
           {filters.minRate && (
             <p style={{ fontSize: '0.9rem', color: '#555', marginTop: 0 }}>
-              SelecciÃƒÂ³n actual: {filters.minRate === '10' ? 'Conservador (~10%)' : filters.minRate === '12' ? 'Balanceado (~12%)' : filters.minRate === '15' ? 'DinÃƒÂ¡mico (~15%)' : `${filters.minRate}%`}.
+              SelecciÃƒÆ’Ã‚Â³n actual: {filters.minRate === '10' ? 'Conservador (~10%)' : filters.minRate === '12' ? 'Balanceado (~12%)' : filters.minRate === '15' ? 'DinÃƒÆ’Ã‚¡mico (~15%)' : `${filters.minRate}%`}.
             </p>
           )}
         </>

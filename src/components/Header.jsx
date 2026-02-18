@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Link as ScrollLink } from 'react-scroll';
+  // Si estamos en la p?gina principal, usamos ScrollLink para un scroll suave
 import { supabase } from '../supabaseClient';
 import { trackEvent, resetMixpanel } from '../analytics';
 import { useProfile } from '../hooks/useProfile';
@@ -23,14 +23,14 @@ const NavButton = ({ to, text }) => {
     }, 100);
   };
 
-  // Si estamos en la pÃ¡gina principal, usamos ScrollLink para un scroll suave
+  // Si estamos en la p?gina principal, usamos ScrollLink para un scroll suave
   if (location.pathname === '/') {
     return (
-      <ScrollLink to={to} smooth={true} duration={500} offset={-80} className="header__nav-button">{text}</ScrollLink>
+  // Si estamos en la p?gina principal, usamos ScrollLink para un scroll suave
     );
   }
 
-  // Si estamos en otra pÃ¡gina, navegamos primero y luego hacemos scroll
+  // Si estamos en otra p?gina, navegamos primero y luego hacemos scroll
   return (
     <button onClick={handleNavigateAndScroll} className="header__nav-button">{text}</button>
   );
@@ -75,7 +75,7 @@ const Header = () => {
     } catch (_) { /* noop */ }
   };
 
-  // Carga inicial para mostrar badge sin abrir menú
+  // Carga inicial para mostrar badge sin abrir men?
   useEffect(() => {
     loadNotifications();
   }, []);
@@ -86,7 +86,7 @@ const Header = () => {
     window.addEventListener('tp-refresh-notifications', handler);
     return () => window.removeEventListener('tp-refresh-notifications', handler);
   }, []);
-  // Cargar notificaciones al abrir el menÃº de usuario
+  // Cargar notificaciones al abrir el men? de usuario
   useEffect(() => {
     const load = async () => {
       try {
@@ -113,7 +113,7 @@ const Header = () => {
     if (isMenuOpen) load();
   }, [isMenuOpen]);
 
-  // SuscripciÃ³n Realtime a nuevas notificaciones
+  // Suscripci?n Realtime a nuevas notificaciones
   useEffect(() => {
     let channel;
     (async () => {
@@ -176,7 +176,7 @@ const Header = () => {
   let displayName = 'Mi Cuenta';
 
   if (profile) {
-    // Construir el nombre a mostrar con una lÃƒÂ³gica de fallbacks
+  // Construir el nombre a mostrar con una l?gica de fallbacks
     const firstName = profile.nombre_completo?.split(' ')[0];
     const emailUsername = profile.email?.split('@')[0];
     displayName = `Hola, ${firstName || emailUsername || 'Usuario'}`;
@@ -196,7 +196,7 @@ const Header = () => {
     }
   }
 
-  // ÃƒÂrea del inversionista (para personalizar el header)
+  // ?rea del inversionista (para personalizar el header)
   const investorAreaPaths = [
     '/investor-dashboard',
     '/mis-inversiones',
@@ -208,18 +208,18 @@ const Header = () => {
     '/terminos',
     '/privacidad'
   ];
-  // Solo aplicar header de inversionista si hay sesiÃƒÂ³n y rol vÃƒÂ¡lido
+  // Solo aplicar header de inversionista si hay sesi?n y rol v?lido
   const isInvestorLogged = !!profile && (profile.role === 'inversionista' || profile.role === 'admin');
   const isInvestorArea = isInvestorLogged && investorAreaPaths.some((p) => location.pathname.startsWith(p));
   const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
   const statusLabel = {
     verificado: 'Verificada',
-    pendiente_revision: 'En revisiÃƒÂ³n',
-    requiere_revision_manual: 'Requiere revisiÃƒÂ³n',
+    pendiente_revision: 'En revisi?n',
+    requiere_revision_manual: 'Requiere revisi?n',
     no_iniciado: 'Pendiente',
   }[verificationStatus] || 'Pendiente';
 
-  // Cerrar menÃƒÂº central al hacer click fuera
+  // Cerrar men? central al hacer click fuera
   useEffect(() => {
     const handleDocClick = (e) => {
       try {
@@ -231,7 +231,7 @@ const Header = () => {
     return () => document.removeEventListener('click', handleDocClick);
   }, [openCenterMenu]);
 
-  // Cerrar menú de usuario al hacer click fuera
+  // Cerrar men? de usuario al hacer click fuera
   useEffect(() => {
     const onDocClick = (e) => {
       try {
@@ -243,7 +243,7 @@ const Header = () => {
     return () => document.removeEventListener('click', onDocClick);
   }, [isMenuOpen]);
 
-  // Al cambiar de ruta, cerrar menÃƒÂºs abiertos (user y central)
+  // Al cambiar de ruta, cerrar men?s abiertos (user y central)
   useEffect(() => {
     if (isMenuOpen) setIsMenuOpen(false);
     if (openCenterMenu) setOpenCenterMenu(null);

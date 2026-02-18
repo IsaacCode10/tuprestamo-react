@@ -5,11 +5,11 @@ const mixpanelEnabled = import.meta.env.MODE === 'production';
 const MIXPANEL_TOKEN = import.meta.env.VITE_MIXPANEL_TOKEN;
 
 // Config por entorno (con defaults seguros y baratos)
-const REPLAY_PUBLIC_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT ?? 5); // % en rutas públicas
-const REPLAY_AUTH_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_AUTH_PERCENT ?? 15); // % en dashboards
-const ENABLE_ACTIVE_PING = String(import.meta.env.VITE_MIXPANEL_ENABLE_ACTIVE_PING ?? 'false') === 'true';
-const ACTIVE_PING_INTERVAL_MS = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_INTERVAL_MS ?? 60000);
-const ACTIVE_PING_MAX_PER_SESSION = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_MAX ?? 5);
+const REPLAY_PUBLIC_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT   5); // % en rutas públicas
+const REPLAY_AUTH_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_AUTH_PERCENT   15); // % en dashboards
+const ENABLE_ACTIVE_PING = String(import.meta.env.VITE_MIXPANEL_ENABLE_ACTIVE_PING   'false') === 'true';
+const ACTIVE_PING_INTERVAL_MS = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_INTERVAL_MS   60000);
+const ACTIVE_PING_MAX_PER_SESSION = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_MAX   5);
 
 let initialized = false;
 let activePingTimer = null;
