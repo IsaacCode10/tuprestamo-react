@@ -1201,7 +1201,7 @@ const FinalReviewNote = ({ visible }) => {
   return (
     <div className="final-review-note">
       <p>
-        Antes de la decisión final, haremos una videollamada para conocerte y que nos conozcas. Será breve, natural y te explicaremos los siguientes pasos. Luego realizamos la consulta INFOCRED.
+        Primero revisamos tu documentación; si todo está OK, te haremos una videollamada para conocerte. Luego recibirás la propuesta del préstamo en este panel.
       </p>
       <p>
         Ya con todos tus documentos en mano, nuestros analistas revisarán con cuidado que todo cumpla riesgo, compliance y requisitos internos; si todo está alineado, recibirás la propuesta del préstamo desde este mismo panel.
@@ -1959,6 +1959,7 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
+
 
 
 
