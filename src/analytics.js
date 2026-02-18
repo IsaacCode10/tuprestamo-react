@@ -5,11 +5,11 @@ const mixpanelEnabled = import.meta.env.MODE === 'production';
 const MIXPANEL_TOKEN = import.meta.env.VITE_MIXPANEL_TOKEN;
 
 // Config por entorno (con defaults seguros y baratos)
-const REPLAY_PUBLIC_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT   5); // % en rutas públicas
-const REPLAY_AUTH_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_AUTH_PERCENT   15); // % en dashboards
-const ENABLE_ACTIVE_PING = String(import.meta.env.VITE_MIXPANEL_ENABLE_ACTIVE_PING   'false') === 'true';
-const ACTIVE_PING_INTERVAL_MS = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_INTERVAL_MS   60000);
-const ACTIVE_PING_MAX_PER_SESSION = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_MAX   5);
+const REPLAY_PUBLIC_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT || 5); // % en rutas públicas
+const REPLAY_AUTH_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_AUTH_PERCENT || 15); // % en dashboards
+const ENABLE_ACTIVE_PING = String(import.meta.env.VITE_MIXPANEL_ENABLE_ACTIVE_PING || 'false') === 'true';
+const ACTIVE_PING_INTERVAL_MS = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_INTERVAL_MS || 60000);
+const ACTIVE_PING_MAX_PER_SESSION = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_MAX || 5);
 
 let initialized = false;
 let activePingTimer = null;
@@ -27,7 +27,7 @@ const shouldSample = (percent) => {
 
 const isAuthDashboardPath = () => {
   try {
-    const p = window.location?.pathname || '';
+    const p = window.location.pathname || '';
     return /dashboard|borrower-dashboard|investor-dashboard|admin-dashboard/i.test(p);
   } catch {
     return false;
@@ -36,7 +36,7 @@ const isAuthDashboardPath = () => {
 
 const startReplayWithSampling = () => {
   if (typeof mixpanel.start_session_recording !== 'function') return;
-  const percent = isAuthDashboardPath() ? REPLAY_AUTH_PERCENT : REPLAY_PUBLIC_PERCENT;
+  const percent = isAuthDashboardPath()  REPLAY_AUTH_PERCENT : REPLAY_PUBLIC_PERCENT;
   if (percent <= 0) return;
   if (!shouldSample(percent)) return;
   try { mixpanel.start_session_recording(); } catch (_) { /* noop */ }
@@ -132,7 +132,7 @@ export const identifyUser = (userId, properties) => {
       // Super props persistentes (no confundir con People)
       mixpanel.register(properties);
       // Si el plan permite People, esto setea el perfil
-      mixpanel.people?.set?.(properties);
+      mixpanel.people.set.(properties);
     } catch (_) {
       // Ignorar si People no está habilitado en el plan
     }
