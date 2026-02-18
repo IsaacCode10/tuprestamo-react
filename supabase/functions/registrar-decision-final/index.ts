@@ -138,6 +138,63 @@ serve(async (req) => {
         supabase.from("oportunidades").update({ estado: "descartada", motivo }).eq("solicitud_id", solicitud_id),
       ]);
 
+      if (resend && solicitud.email) {
+        try {
+          const appUrl = (Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com") + "/borrower-dashboard";
+          const nombre = solicitud.nombre_completo || "cliente";
+          await resend.emails.send({
+            from: "Tu PrÃ©stamo <contacto@tuprestamobo.com>",
+            to: [solicitud.email],
+            subject: "Tu solicitud no fue aprobada en esta ocasiÃ³n",
+            html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tu PrÃ©stamo</title>
+</head>
+<body style="margin:0;padding:0;background:#F8F8F8;font-family: Arial, Helvetica, sans-serif;color:#222;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F8F8F8;padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background:#00445A;padding:18px 20px;">
+              <img src="https://www.tuprestamobo.com/Logo-Tu-Prestamo.png" alt="Tu PrÃ©stamo" style="height:38px;display:block;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 20px 8px 20px;">
+              <h1 style="margin:0;font-size:22px;color:#00445A;font-weight:700;font-family: Montserrat, Arial, sans-serif;">Hola, ${nombre}</h1>
+              <p style="margin:12px 0 0 0;font-size:15px;line-height:1.6;color:#222;">Revisamos tu informaciÃ³n con detalle y por el momento no podemos aprobar tu crÃ©dito.</p>
+              <p style="margin:12px 0 0 0;font-size:15px;line-height:1.6;color:#222;">PodrÃ¡s volver a postular cuando tu situaciÃ³n financiera mejore. Queremos acompaÃ±arte en el proceso.</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:14px 20px 24px 20px;">
+              <a href="${appUrl}" target="_blank" rel="noreferrer" style="display:inline-block;background:#26C2B2;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 18px;border-radius:6px;">Ir a mi panel</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 20px 18px 20px;font-size:13px;line-height:1.5;color:#555;border-top:1px solid #e9ecef;">
+              <p style="margin:12px 0 4px 0;">Â¿Necesitas ayuda? EscrÃ­benos a <a href="mailto:soporte@tuprestamobo.com" style="color:#00445A;text-decoration:none;">soporte@tuprestamobo.com</a>.</p>
+              <p style="margin:0;color:#777;">Este es un correo automÃ¡tico. Por favor no respondas a esta direcciÃ³n.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+            `,
+          });
+        } catch (e) {
+          console.error("No se pudo enviar correo de rechazo:", e);
+        }
+      }
+
       return new Response(JSON.stringify({ message: "Solicitud rechazada" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

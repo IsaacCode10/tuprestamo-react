@@ -1225,6 +1225,25 @@ const FinalReviewNote = ({ visible }) => {
   );
 };
 
+const RejectedView = ({ solicitud }) => (
+  <div className="borrower-dashboard">
+    <InvestorBreadcrumbs items={[{ label: 'Inicio', to: '/borrower-dashboard' }, { label: 'Estado de Solicitud' }]} />
+    <div className="dashboard-header">
+      <h2>Tu solicitud no fue aprobada en esta ocasión</h2>
+      <p className="muted">
+        Revisamos tu información con detalle, pero por el momento no podemos aprobar el crédito.
+      </p>
+    </div>
+    <div className="card">
+      <p style={{ margin: 0 }}>
+        Podrás volver a postular cuando tu situación financiera mejore. Si necesitas ayuda, escríbenos a soporte@tuprestamobo.com.
+      </p>
+      {solicitud?.id && (
+        <div className="muted" style={{ marginTop: 8 }}>Solicitud ID: {solicitud.id}</div>
+      )}
+    </div>
+  </div>
+);
 const UploadToast = ({ visible }) => (
   <div className={`upload-toast ${visible ? 'upload-toast--visible' : ''}`} role="status" aria-live="polite">
     <span className="upload-toast__icon" aria-hidden="true">✔</span>
@@ -1958,6 +1977,10 @@ const BorrowerDashboard = () => {
     );
   }
 
+  if (['rechazado', 'rechazado_final'].includes(estadoSolicitud)) {
+    return <RejectedView solicitud={solicitud} />;
+  }
+
   if (['pendiente_notariado', 'prestatario_acepto', 'fondeada', 'desembolsado', 'activo', 'en_curso', 'pagado'].includes(estadoSolicitud)) {
     const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
     return <BorrowerPublishedView solicitud={solicitud} oportunidad={opp} userId={user?.id} />;
@@ -1974,6 +1997,7 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
+
 
 
 
