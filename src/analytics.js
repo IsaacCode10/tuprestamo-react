@@ -132,7 +132,7 @@ export const identifyUser = (userId, properties) => {
       // Super props persistentes (no confundir con People)
       mixpanel.register(properties);
       // Si el plan permite People, esto setea el perfil
-      mixpanel.people.set.(properties);
+      mixpanel.people.set(properties);
     } catch (_) {
       // Ignorar si People no está habilitado en el plan
     }
