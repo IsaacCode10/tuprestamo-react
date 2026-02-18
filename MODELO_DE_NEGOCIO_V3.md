@@ -71,6 +71,42 @@ Para maximizar la conversión, el flujo operativo se enriquece con una experienc
 
 3.  **Puente a la Verificación:** Este dashboard provisional actúa como una herramienta de conversión, incentivando al usuario a proceder con la carga de documentos para llegar a la **Verificación** (Paso 2 del flujo operativo) y obtener su oferta final.
 
+## Estados del Panel del Prestatario (UI)
+
+Esta sección documenta los estados que se muestran en el panel del prestatario y la lógica de avance que aplica la UI. La fuente de verdad en UI es `solicitud.estado`, y en algunos pasos se complementa con el estado de la oportunidad y el desembolso.
+
+### Pasos del progreso (stepper)
+
+1. Solicitud Recibida
+2. Verificación Inicial
+3. Sube tus Documentos
+4. Revisión Final
+5. Préstamo Aprobado
+6. Propuesta Publicada
+7. 100% Fondeada
+8. Préstamo desembolsado
+
+### Mapeo principal de estados (solicitud.estado)
+
+| solicitud.estado | Paso UI | Qué ve el prestatario |
+| --- | --- | --- |
+| `pendiente` | 1–2 | Solicitud recibida / verificación inicial (sin oferta aún) |
+| `pre-aprobado` | 3 | Solicitud preaprobada, pendiente de documentos |
+| `documentos-en-revision` | 4 | Revisión final de documentos |
+| `aprobado` | 5 | Propuesta lista (vista de oferta) |
+| `aprobado_para_oferta` | 5 | Propuesta lista (vista de oferta) |
+| `prestatario_acepto` | 6 | Oportunidad publicada y en fondeo |
+| `fondeada` | 7 | 100% fondeada, previo al desembolso |
+| `pago_dirigido` / `desembolsado` / `activo` / `pagado` | 8 | Préstamo desembolsado o activo, con cronograma |
+
+### Reglas adicionales de avance en la UI
+
+- Si el prestatario sube todos sus documentos (`allDocumentsUploaded = true`), el stepper fuerza el paso **Revisión Final** aunque el estado aún no haya cambiado a `documentos-en-revision`.
+- Si la oportunidad está en estado `fondeada` o existe un desembolso, el stepper avanza al paso **100% Fondeada**.
+- Si la oportunidad está en `desembolsado` / `activo` / `pagado`, o el desembolso está pagado, el stepper marca **Préstamo desembolsado**.
+
+Nota: la UI refleja estados; las transiciones se definen en backend/operaciones. Si un estado nuevo se agrega en backend, se debe mapear aquí para mantener coherencia.
+
 ## Cargos Recurrentes al Prestatario (MVP)
 
 * **Admin + Seguro:** `0,15% mensual` sobre saldo, con **mínimo 10 Bs/mes** (cargo decreciente incluido en la cuota simulada).
