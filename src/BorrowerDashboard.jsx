@@ -1203,9 +1203,6 @@ const FinalReviewNote = ({ visible }) => {
       <p>
         Primero revisamos tu documentación; si todo está OK, te haremos una videollamada para conocerte. Luego recibirás la propuesta del préstamo en este panel.
       </p>
-      <p>
-        Ya con todos tus documentos en mano, nuestros analistas revisarán con cuidado que todo cumpla riesgo, compliance y requisitos internos; si todo está alineado, recibirás la propuesta del préstamo desde este mismo panel.
-      </p>
     </div>
   );
 };
@@ -1959,6 +1956,7 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
+
 
 
 
