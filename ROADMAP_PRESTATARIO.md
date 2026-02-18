@@ -39,10 +39,12 @@ Este documento describe el flujo de usuario y técnico completo, desde la solici
 7.  **Decisión Final:** `[✅ Completado]` El modal registra en `decisiones_de_riesgo`, actualiza estados y dispara el correo de propuesta.
 ---
 
-## Fase 4: Desembolso Dirigido [🚧 En Progreso]
+## Fase 4: Desembolso Dirigido [EN PROGRESO]
 
-1.  **Notificación al Prestatario:** `[✅]` Correo de propuesta branded con CTA; dashboard de propuesta muestra términos finales, admin/seguro prorrateado y tabla de amortización.
-2.  **Publicación a inversionistas:** `[✅]` Al aceptar la propuesta, la oportunidad queda `disponible` para fondeo.
-3.  **Fondeo completo:** `[❌ Pendiente]` La oportunidad pasa a `fondeada` cuando se llena el 100% con inversionistas.
-4.  **Desembolso dirigido:** `[❌ Pendiente]` Automatizar el pago directo al banco acreedor, generar comprobante para el prestatario y marcar el préstamo como activo.
+1.  **Notificaci�n al Prestatario:** [OK] Correo de propuesta branded con CTA; dashboard de propuesta muestra t�rminos finales, admin/seguro prorrateado y tabla de amortizaci�n.
+2.  **Firma notariada (previo a publicar):** [PENDIENTE] El prestatario firma el contrato notariado. Sin firma, no se publica la oportunidad.
+3.  **Publicaci�n a inversionistas:** [PENDIENTE] Con contrato notariado OK, la oportunidad queda disponible para fondeo.
+4.  **Fondeo completo:** [PENDIENTE] La oportunidad pasa a fondeada cuando se llena el 100% con inversionistas.
+5.  **Desembolso dirigido:** [PENDIENTE] Automatizar el pago directo al banco acreedor, generar comprobante para el prestatario y marcar el pr�stamo como activo.
+
 

@@ -161,6 +161,12 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
         </div>
       </div>
 
+      <div className="card" style={{ background: '#f7fbfb', border: '1px solid #e6f4f3' }}>
+        <p className="muted" style={{ margin: 0 }}>
+          Importante: antes de publicar tu oportunidad, necesitamos la firma notariada del contrato. Esto garantiza un desembolso seguro y rápido una vez se complete el fondeo.
+        </p>
+      </div>
+
       <div className="card transparency-card">
         <h2>Transparencia Total</h2>
         <p className="muted">Desglose final del crédito a {plazo} meses</p>
@@ -291,13 +297,21 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
 
+  const isNotariadoPending = solicitud?.estado === 'pendiente_notariado' || oppEstado === 'pendiente_notariado';
   const currentStepperState = (() => {
     if (disbEstado === 'pagado' || oppEstado === 'activo') return 'desembolsado';
     if (disbursement || oppEstado === 'fondeada') return 'fondeada';
+    if (isNotariadoPending) return 'pendiente_notariado';
     return 'prestatario_acepto';
   })();
 
   const headerCopy = (() => {
+    if (isNotariadoPending) {
+      return {
+        title: 'Firma notariada pendiente',
+        subtitle: 'Antes de publicar tu oportunidad necesitamos la firma notariada del contrato. Apenas esté lista, publicamos tu oportunidad para fondeo.'
+      };
+    }
     if (disbEstado === 'pagado' || oppEstado === 'activo') {
       return {
         title: 'Tu préstamo fue desembolsado',
@@ -317,6 +331,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   })();
 
   const breadcrumbLabel = (() => {
+    if (isNotariadoPending) return 'Firma notariada';
     if (disbEstado === 'pagado' || oppEstado === 'activo') return 'Préstamo desembolsado';
     if (disbursement || oppEstado === 'fondeada') return '100% fondeada';
     return 'Propuesta publicada';
@@ -601,7 +616,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         </table>
       </div>
 
-      {(oppEstado === 'activo' || disbEstado === 'pagado' || disbursement) && (
+      {(oppEstado === 'activo' || disbEstado === 'pagado') && (
         <div className="card" style={{ display: 'grid', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h2>Tu próxima cuota</h2>
@@ -726,9 +741,11 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         <div className="card">
           <h2>Pago dirigido y contrato</h2>
           <p className="muted">
-            {disbursement?.paid_at || disbursement?.estado === 'pagado'
-              ? 'Ya realizamos el pago de tu tarjeta. Aqui puedes ver el comprobante y tu contrato.'
-              : 'Te avisaremos por correo cuando paguemos tu tarjeta. Aqui veras el comprobante y tu contrato PDF.'}
+            {isNotariadoPending
+              ? 'Para publicar tu oportunidad necesitamos la firma notariada del contrato. Aqui puedes descargar el PDF y agendar la firma.'
+              : (disbursement?.paid_at || disbursement?.estado === 'pagado'
+                ? 'Ya realizamos el pago de tu tarjeta. Aqui puedes ver el comprobante y tu contrato.'
+                : 'Te avisaremos por correo cuando paguemos tu tarjeta. Aqui veras el comprobante y tu contrato PDF.')}
           </p>
           {loadingDisb && <p className="muted">Cargando información de desembolso...</p>}
           {disbError && <p style={{ color: 'red' }}>{disbError}</p>}
@@ -738,7 +755,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
               <div><strong>Monto neto al banco:</strong> {formatMoney(disbursement.monto_neto || neto)}</div>
               {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                 <div style={{ padding: 12, borderRadius: 8, background: '#fff7ec', border: '1px solid #ffd7b0', color: '#8a4b06' }}>
-                  <strong>Contrato notariado pendiente.</strong> Para continuar con el pago al banco debes agendar la firma notariada.
+                  <strong>Contrato notariado pendiente.</strong> Para publicar tu oportunidad y continuar con el pago al banco debes agendar la firma notariada.
                 </div>
               )}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -772,7 +789,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         </div>
       )}
 
-      {(oppEstado === 'activo' || disbEstado === 'pagado' || disbursement) && (
+      {(oppEstado === 'activo' || disbEstado === 'pagado') && (
         <div className="card">
           <h2>Cronograma de pagos</h2>
           <p className="muted">Fechas, montos y estado de cada cuota.</p>
@@ -1159,6 +1176,7 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = 
       'pre-aprobado': 2,
       'documentos-en-revision': 3,
       'aprobado': 4,
+      'pendiente_notariado': 4,
       'prestatario_acepto': 5,
       'fondeada': 6,
       'pago_dirigido': 7,
@@ -1940,7 +1958,7 @@ const BorrowerDashboard = () => {
     );
   }
 
-  if (['prestatario_acepto', 'fondeada', 'desembolsado', 'activo', 'en_curso', 'pagado'].includes(estadoSolicitud)) {
+  if (['pendiente_notariado', 'prestatario_acepto', 'fondeada', 'desembolsado', 'activo', 'en_curso', 'pagado'].includes(estadoSolicitud)) {
     const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
     return <BorrowerPublishedView solicitud={solicitud} oportunidad={opp} userId={user?.id} />;
   }

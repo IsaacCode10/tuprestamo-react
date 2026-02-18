@@ -809,6 +809,25 @@ const AdminOperations = () => {
     }
   };
 
+  const publishOpportunityAfterNotary = async (disbRow) => {
+    if (!disbRow?.opportunity_id) {
+      setError('No se pudo identificar la oportunidad.');
+      return;
+    }
+    setError('');
+    setInfoMessage('Publicando oportunidad...');
+    try {
+      const { data, error } = await supabase.functions.invoke('publicar-oportunidad-notariado', {
+        body: { opportunity_id: disbRow.opportunity_id },
+      });
+      if (error) throw error;
+      setInfoMessage(data?.message || 'Oportunidad publicada.');
+      setTimeout(() => setInfoMessage(''), 4000);
+    } catch (e) {
+      setError(e?.message || 'No se pudo publicar la oportunidad.');
+    }
+  };
+
   const uploadDisbReceiptImmediate = async (disbRow, file) => {
     if (!file || !disbRow?.id) return;
     try {
@@ -1472,32 +1491,40 @@ const AdminOperations = () => {
                   </td>
                 <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   <button
+                    className="btn"
+                    disabled={!d.notariado_ok}
+                    onClick={() => publishOpportunityAfterNotary(d)}
+                    title="Requiere contrato notariado. Publica la oportunidad para fondeo."
+                  >
+                    Publicar oportunidad
+                  </button>
+                  <button
                     className="btn btn--primary"
                     disabled={d.estado === 'pagado' || !d.notariado_ok}
                     onClick={() => registerDirectedPayment(d)}
-                      title="Requiere contrato notariado. Luego sube el comprobante del pago al banco y pulsa aquÃ­. Generaremos el contrato automÃ¡tico y notificaremos al prestatario e inversionistas."
-                    >
-                      Registrar pago dirigido
-                    </button>
-                    <span
-                      title="Sube el comprobante del pago al banco antes de registrar. El contrato se genera automÃ¡tico y se notifican prestatario e inversionistas."
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 22,
-                        height: 22,
-                        borderRadius: '50%',
-                        background: '#e5ecef',
-                        color: '#1f2f38',
-                        fontWeight: 800,
-                        fontSize: '0.9rem',
-                        cursor: 'help',
-                      }}
-                    >
-                      ?
-                    </span>
-                  </td>
+                    title="Requiere contrato notariado. Luego sube el comprobante del pago al banco y pulsa aquí. Generaremos el contrato automático y notificaremos al prestatario e inversionistas."
+                  >
+                    Registrar pago dirigido
+                  </button>
+                  <span
+                    title="Sube el comprobante del pago al banco antes de registrar. El contrato se genera automático y se notifican prestatario e inversionistas."
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      background: '#e5ecef',
+                      color: '#1f2f38',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      cursor: 'help',
+                    }}
+                  >
+                    ?
+                  </span>
+                </td>
                 </tr>
               ))}
               {disbursements.length === 0 && (
@@ -1514,3 +1541,7 @@ const AdminOperations = () => {
 };
 
 export default AdminOperations;
+
+
+
+

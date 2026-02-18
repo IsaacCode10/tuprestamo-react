@@ -37,7 +37,7 @@ const ComoFunciona = () => {
             </div>
             <h3 className="step-card__title">Fondeo Colectivo</h3>
             <p className="step-card__text">
-              Tu pr&eacute;stamo aprobado se publica como oportunidad de inversi&oacute;n. Inversionistas aportan desde Bs 700 hasta completar el total.
+              Tras la firma notariada del contrato, tu pr&eacute;stamo se publica como oportunidad de inversi&oacute;n. Inversionistas aportan desde Bs 700 hasta completar el total.
             </p>
           </div>
         </div>
@@ -72,4 +72,5 @@ const ComoFunciona = () => {
 };
 
 export default ComoFunciona;
+
 

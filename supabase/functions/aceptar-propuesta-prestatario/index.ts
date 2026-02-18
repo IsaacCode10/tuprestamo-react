@@ -71,11 +71,47 @@ serve(async (req) => {
       });
     }
 
-    // Aceptar
+    if (!oportunidad?.id) {
+      throw new Error("Oportunidad no encontrada para la solicitud");
+    }
+
+    // Aceptar: requerir contrato notariado antes de publicar
     await Promise.all([
-      supabase.from("solicitudes").update({ estado: "prestatario_acepto" }).eq("id", solicitud_id),
-      supabase.from("oportunidades").update({ estado: "disponible", monto: brutoCalc }).eq("solicitud_id", solicitud_id),
+      supabase.from("solicitudes").update({ estado: "pendiente_notariado" }).eq("id", solicitud_id),
+      supabase.from("oportunidades").update({ estado: "pendiente_notariado", monto: brutoCalc }).eq("solicitud_id", solicitud_id),
     ]);
+
+    // Asegurar fila de desembolso para contrato/notariado
+    const { data: disb } = await supabase
+      .from("desembolsos")
+      .select("id, contract_url")
+      .eq("opportunity_id", oportunidad.id)
+      .maybeSingle();
+
+    if (!disb) {
+      await supabase.from("desembolsos").insert({
+        opportunity_id: oportunidad.id,
+        monto_bruto: brutoCalc,
+        monto_neto: neto,
+        estado: "pendiente",
+      });
+    }
+
+    // Generar contrato PDF (best-effort)
+    try {
+      const fnUrl = `${supabaseUrl}/functions/v1/generate-contract`;
+      await fetch(fnUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          apikey: serviceKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ opportunity_id: oportunidad.id }),
+      });
+    } catch (e) {
+      console.error("No se pudo generar contrato automáticamente:", e);
+    }
 
     if (resend && solicitud.email) {
       try {
@@ -83,7 +119,7 @@ serve(async (req) => {
         await resend.emails.send({
           from: "Tu Préstamo <contacto@tuprestamobo.com>",
           to: [solicitud.email],
-          subject: "Publicamos tu oportunidad para fondeo",
+          subject: "Firma notariada pendiente",
           html: `
 <!DOCTYPE html>
 <html>
@@ -104,8 +140,8 @@ serve(async (req) => {
           </tr>
           <tr>
             <td style="padding:20px 20px 8px 20px;">
-              <h1 style="margin:0;font-size:22px;color:#00445A;font-weight:700;font-family: Montserrat, Arial, sans-serif;">¡Listo, ${solicitud.nombre_completo || "cliente"}!</h1>
-              <p style="margin:12px 0 0 0;font-size:15px;line-height:1.6;color:#222;">Publicamos tu oportunidad para fondeo. Te avisaremos cuando esté financiada y paguemos tu tarjeta directamente en tu banco acreedor.</p>
+              <h1 style="margin:0;font-size:22px;color:#00445A;font-weight:700;font-family: Montserrat, Arial, sans-serif;">¡Gracias, ${solicitud.nombre_completo || "cliente"}!</h1>
+              <p style="margin:12px 0 0 0;font-size:15px;line-height:1.6;color:#222;">Recibimos tu aceptación. Antes de publicar tu oportunidad necesitamos la firma notariada del contrato.</p>
             </td>
           </tr>
           <tr>
@@ -117,7 +153,7 @@ serve(async (req) => {
                     <strong>Monto a pagar a tu banco (neto):</strong> Bs ${Number(neto || 0).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br/>
                     <strong>Tasa anual:</strong> ${tasa}%<br/>
                     <strong>Plazo:</strong> ${plazo} meses<br/>
-                    <span style="color:#00445A;">Puedes ver tu tabla de amortización y el detalle completo en tu panel.</span>
+                    <span style="color:#00445A;">En tu panel podrás descargar el contrato y agendar la firma notariada.</span>
                   </td>
                 </tr>
               </table>
@@ -147,7 +183,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ message: "Propuesta aceptada y publicada a inversionistas" }), {
+    return new Response(JSON.stringify({ message: "Propuesta aceptada. Pendiente de firma notariada antes de publicar." }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

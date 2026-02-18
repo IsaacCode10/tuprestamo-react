@@ -13,7 +13,7 @@ Flujo completo desde que llega del landing hasta que cobra retornos, con reserva
 4. **Bienvenida:** Notificación/email de bienvenida (opcional) con CTA al dashboard.
 
 ### Fase 2: Explorar y Reservar `[✅ Completado]`
-1. **Dashboard/Marketplace:** `Opportunities.jsx` lista oportunidades `disponible` (prestatario aceptó la propuesta). Cards en grilla con rendimiento bruto/neta, plazo, cupo restante y barra de fondeo.  
+1. **Dashboard/Marketplace:** `Opportunities.jsx` lista oportunidades `disponible` (prestatario aceptó la propuesta y firmó contrato notariado). Cards en grilla con rendimiento bruto/neta, plazo, cupo restante y barra de fondeo.  
 2. **Detalle:** `OpportunityDetail.jsx` muestra resumen, beneficios (pagos mensuales, reinversión, comisión 1%), medios de pago.  
 3. **Reserva (48h):** RPC `create_investment_intent` valida cupo, crea `payment_intent` + `inversion` `pendiente_pago`. Countdown 48h, botón renovar si expira.  
 4. **Pago y comprobante:** El inversionista paga (QR/transferencia) y sube comprobante (bucket privado `comprobantes-pagos`). Sección de pago en la misma vista.
@@ -37,6 +37,7 @@ Flujo completo desde que llega del landing hasta que cobra retornos, con reserva
 - Mostrar pagos recibidos/payouts en el portafolio.  
 - Automatizar generación de cuotas y payouts desde el plan de pagos.  
 - Asegurar RLS/roles en `/admin/operaciones` (solo admin/analista).  
+
 
 
 
