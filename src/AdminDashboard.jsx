@@ -681,7 +681,7 @@ const AdminDashboard = () => {
                       <td>{formatCurrency(row.comision_plataforma)}</td>
                       <td>{formatCurrency(row.diferencia)}</td>
                       <td>
-                        {row.movimientos_pendientes   0} / {row.payouts_pending   0}
+                        {row.movimientos_pendientes || 0} / {row.payouts_pending || 0}
                       </td>
                       <td>
                         <span className={`fuente-status-chip ${row.status === 'ok' ? 'ok' : 'alert'}`}>
@@ -842,7 +842,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <strong>Perfil de riesgo</strong>
-              <p>{selectedRequest.perfil_riesgo   '--'}</p>
+              <p>{selectedRequest.perfil_riesgo || '--'}</p>
             </div>
             <div>
               <strong>Monto solicitado</strong>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-  // Si estamos en la p?gina principal, usamos ScrollLink para un scroll suave
 import { supabase } from '../supabaseClient';
 import { trackEvent, resetMixpanel } from '../analytics';
 import { useProfile } from '../hooks/useProfile';
@@ -13,28 +12,30 @@ const NavButton = ({ to, text }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleNavigateAndScroll = () => {
-    navigate('/');
-    setTimeout(() => {
-      const element = document.getElementById(to);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
+  const scrollToId = () => {
+    const element = document.getElementById(to);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
-  // Si estamos en la p?gina principal, usamos ScrollLink para un scroll suave
+  const handleNavigateAndScroll = () => {
+    navigate('/');
+    setTimeout(scrollToId, 100);
+  };
+
   if (location.pathname === '/') {
     return (
-  // Si estamos en la p?gina principal, usamos ScrollLink para un scroll suave
+      <button onClick={scrollToId} className="header__nav-button">{text}</button>
     );
   }
 
-  // Si estamos en otra p?gina, navegamos primero y luego hacemos scroll
   return (
     <button onClick={handleNavigateAndScroll} className="header__nav-button">{text}</button>
   );
 };
+
+
 
 const Header = () => {
   const { profile } = useProfile();

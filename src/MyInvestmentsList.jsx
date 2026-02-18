@@ -147,7 +147,7 @@ const MyInvestmentsList = () => {
   const pendingPayouts = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending'), [payouts]);
   const totalInvested = useMemo(() => rows.reduce((acc, r) => acc + Number(r.amount || 0), 0), [rows]);
   const totalPaid = useMemo(() => paidPayouts.reduce((acc, p) => {
-    const monto = p.paid_amount   p.amount   p.expected_amount   0;
+    const monto = p.paid_amount || p.amount || p.expected_amount || 0;
     return acc + Number(monto || 0);
   }, 0), [paidPayouts]);
   const nextPendingPayout = useMemo(() => {
@@ -214,7 +214,7 @@ const MyInvestmentsList = () => {
     ordered.forEach((p) => {
       const oppId = Number(p.opportunity_id);
       if (!oppId) return;
-      const amount = p.paid_amount   p.amount   p.expected_amount   0;
+      const amount = p.paid_amount || p.amount || p.expected_amount || 0;
       if (Number(amount || 0) > 0) map[oppId] = Number(amount || 0);
     });
     return map;
@@ -245,7 +245,7 @@ const MyInvestmentsList = () => {
     return {
       label,
       due_date: target.due_date,
-      expected_amount: target.expected_amount   0,
+      expected_amount: target.expected_amount || 0,
       opportunity_id: target.opportunity_id,
       installment_no: scheduleItem?.installment_no || null,
       total_installments: oppItems.length || null,
@@ -272,7 +272,7 @@ const MyInvestmentsList = () => {
     const paidAmount = oppId ? lastPaidAmountByOpp[oppId] : null;
     return {
       due_date: target.due_date,
-      expected_amount: paidAmount   target.payment_investor_neto   target.payment_investor_bruto   0,
+      expected_amount: paidAmount || target.payment_investor_neto || target.payment_investor_bruto || 0,
       opportunity_id: oppId || target.opportunity_id,
       installment_no: target.installment_no,
       total_installments: oppItems.length || null,
@@ -291,7 +291,7 @@ const MyInvestmentsList = () => {
       return {
         label: 'Pendiente',
         due_date: scheduleItem?.due_date || nextPendingPayout.created_at,
-        expected_amount: nextPendingPayout.amount   nextPendingPayout.expected_amount   scheduleItem?.payment_investor_neto   scheduleItem?.payment_investor_bruto   0,
+        expected_amount: nextPendingPayout.amount || nextPendingPayout.expected_amount || scheduleItem?.payment_investor_neto || scheduleItem?.payment_investor_bruto || 0,
         installment_no: scheduleItem?.installment_no || targetNo,
         total_installments: oppItems.length || null,
       };
@@ -306,7 +306,7 @@ const MyInvestmentsList = () => {
       return {
         label: 'Confirmado',
         due_date: paid.paid_at,
-        expected_amount: paid.paid_amount   paid.amount   paid.expected_amount   0,
+        expected_amount: paid.paid_amount || paid.amount || paid.expected_amount || 0,
       };
     }
     return null;
@@ -483,14 +483,14 @@ const MyInvestmentsList = () => {
                     </thead>
                     <tbody>
                       {payouts.map((p) => {
-                        const oppMonto = p.opportunity_monto   0;
+                        const oppMonto = p.opportunity_monto || 0;
                         const scheduleInfo = payoutScheduleMap[p.id] || {};
                         const isPaid = (p.status || '').toLowerCase() === 'paid';
                         const fecha = isPaid ? p.paid_at : (scheduleInfo.due_date || p.created_at);
                         const cuotaLabel = scheduleInfo.installment_no
                           ? `Cuota ${scheduleInfo.installment_no}${scheduleInfo.total_installments ? `/${scheduleInfo.total_installments}` : ''}`
                           : '-';
-                        const montoCobrado = p.paid_amount   p.amount   p.expected_amount   0;
+                        const montoCobrado = p.paid_amount || p.amount || p.expected_amount || 0;
                         const signedReceipt = payoutSignedMap[p.id] || null;
                         const status = (p.status || '').toLowerCase();
                         return (
