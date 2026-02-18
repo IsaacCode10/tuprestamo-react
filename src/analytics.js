@@ -1,11 +1,11 @@
 import mixpanel from 'mixpanel-browser';
 
-// Solo enviar en producción por defecto
+// Solo enviar en produccion por defecto
 const mixpanelEnabled = import.meta.env.MODE === 'production';
 const MIXPANEL_TOKEN = import.meta.env.VITE_MIXPANEL_TOKEN;
 
 // Config por entorno (con defaults seguros y baratos)
-const REPLAY_PUBLIC_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT || 5); // % en rutas públicas
+const REPLAY_PUBLIC_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_PUBLIC_PERCENT || 5); // % en rutas publicas
 const REPLAY_AUTH_PERCENT = Number(import.meta.env.VITE_MIXPANEL_REPLAY_AUTH_PERCENT || 15); // % en dashboards
 const ENABLE_ACTIVE_PING = String(import.meta.env.VITE_MIXPANEL_ENABLE_ACTIVE_PING || 'false') === 'true';
 const ACTIVE_PING_INTERVAL_MS = Number(import.meta.env.VITE_MIXPANEL_ACTIVE_PING_INTERVAL_MS || 60000);
@@ -36,18 +36,18 @@ const isAuthDashboardPath = () => {
 
 const startReplayWithSampling = () => {
   if (typeof mixpanel.start_session_recording !== 'function') return;
-  const percent = isAuthDashboardPath()  REPLAY_AUTH_PERCENT : REPLAY_PUBLIC_PERCENT;
+  const percent = isAuthDashboardPath() ? REPLAY_AUTH_PERCENT : REPLAY_PUBLIC_PERCENT;
   if (percent <= 0) return;
   if (!shouldSample(percent)) return;
   try { mixpanel.start_session_recording(); } catch (_) { /* noop */ }
 };
 
-// Active Ping: mide actividad real (visible + interacción reciente)
+// Active Ping: mide actividad real (visible + interaccion reciente)
 const canSendActivePing = () => {
   if (document.visibilityState !== 'visible') return false;
-  // interacción reciente en 30s
+  // interaccion reciente en 30s
   if (Date.now() - lastUserActivityTs > 30000) return false;
-  // Evitar duplicados entre pestañas: solo 1 ping por intervalo global
+  // Evitar duplicados entre pestanas: solo 1 ping por intervalo global
   try {
     const key = 'tp_active_ping_last_ts';
     const last = Number(localStorage.getItem(key) || '0');
