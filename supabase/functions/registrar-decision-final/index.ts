@@ -295,7 +295,11 @@ serve(async (req) => {
         const nombre = solicitud.nombre_completo || "cliente";
         const titulo = `${nombre}, tu propuesta de crédito está lista`;
         const buttonUrl = (Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com") + "/dashboard-prestatario";
-        const montoFmt = monto.toLocaleString("es-BO");
+        const montoFmt = Number(monto || 0).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const netoFmt = Number(netoVerificado || 0).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const originacionMonto = Math.max(0, Number(monto || 0) - Number(netoVerificado || 0));
+        const originacionMontoFmt = originacionMonto.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const originacionPct = pricing?.comision_originacion ?? null;
         const tasa = pricing ? pricing.tasa_prestatario : "N/D";
         await resend.emails.send({
           from: "Tu Préstamo <contacto@tuprestamobo.com>",
@@ -331,6 +335,9 @@ serve(async (req) => {
                 <tr>
                   <td style="font-size:15px;line-height:1.6;color:#222;">
                     <strong>Monto aprobado:</strong> Bs ${montoFmt}<br/>
+                    <strong>Saldo deudor verificado (neto al banco):</strong> Bs ${netoFmt}<br/>
+                    <strong>Comisión de originación:</strong> Bs ${originacionMontoFmt}${originacionPct != null ? ` (${originacionPct}%)` : ''}<br/>
+                    <strong>Cargo mensual de servicio y seguro:</strong> 0.15% sobre saldo (mínimo Bs 10 por mes)<br/>
                     <strong>Plazo:</strong> ${nuevoPlazo} meses<br/>
                     <strong>Tasa anual:</strong> ${tasa}%<br/>
                     <span style="color:#00445A;">El desembolso se hará directo a tu banco acreedor.</span>
@@ -346,7 +353,8 @@ serve(async (req) => {
           </tr>
           <tr>
             <td style="padding:0 20px 18px 20px;font-size:13px;line-height:1.5;color:#555;border-top:1px solid #e9ecef;">
-              <p style="margin:12px 0 4px 0;">¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@tuprestamobo.com" style="color:#00445A;text-decoration:none;">soporte@tuprestamobo.com</a>.</p>
+              <p style="margin:12px 0 4px 0;">Verás el detalle completo y cronograma en tu panel antes de aceptar la propuesta.</p>
+              <p style="margin:0 0 4px 0;">¿Necesitas ayuda? Escríbenos a <a href="mailto:contacto@tuprestamobo.com" style="color:#00445A;text-decoration:none;">contacto@tuprestamobo.com</a>.</p>
               <p style="margin:0;color:#777;">Este es un correo automático. Por favor no respondas a esta dirección.</p>
             </td>
           </tr>
