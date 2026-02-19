@@ -35,3 +35,45 @@
   - `src/Auth.css` (colores),
   - `supabase/functions/handle-new-solicitud/index.ts` (template rechazo).
 - Continuar flujo E2E con nueva oportunidad (videollamada, boleta electricidad, agendar firma, notariado, pago dirigido, contrato/cronograma).
+
+## Actualizacion 2026-02-18
+
+**Lo hecho hoy:**
+- Se corrigieron errores de build provocados por `||` faltantes en:
+  - `src/AdminDashboard.jsx`
+  - `src/BorrowerDashboard.jsx`
+  - `src/MyInvestmentsList.jsx`
+  - `src/RiskAnalystDashboard.jsx`
+- Se reparo el componente `NavButton` en `src/components/Header.jsx` (estaba roto por comentarios en medio del return).
+- El build de Vite vuelve a pasar sin errores (queda solo el warning de `hero-bg.jpg` sin resolver en build time).
+
+**Pendiente para manana (E2E):**
+- Continuar E2E de la oportunidad nueva desde el punto actual con flujos prestatario/analista/operaciones.
+- Validar end-to-end: aprobacion final -> propuesta -> aceptacion -> firma notariada -> publicacion -> fondeo -> pago dirigido -> contrato/cronograma.
+
+## Actualizacion 2026-02-19
+
+**Lo hecho hoy:**
+- Se estabilizo el flujo de aprobacion en analista corrigiendo errores 500 por RPC faltante (`apply_risk_decision_state`) y desalineacion de firma/parametros.
+- Se mejoro el manejo de errores en frontend de analista (`RiskAnalystDashboard`): ahora muestra detalle real del backend en lugar de mensaje generico.
+- Se corrigio UX del campo "Saldo Deudor Verificado": inicia vacio, persiste el valor ingresado por analista y se mostro prefijo `Bs.` con entrada decimal simple.
+- Se corrigio ruta de CTA en correo de propuesta (`/borrower-dashboard`) y se agrego redireccion de compatibilidad desde `/dashboard-prestatario`.
+- Se reforzo hardening para solicitudes duplicadas activas por email (backend + mensaje claro en frontend).
+- Se unifico calculo de costos/cuota bajo SSOT en aprobacion y propuesta, incluyendo persistencia canonica de:
+  - `interes_total`
+  - `comision_servicio_seguro_total`
+  - `costo_total_credito`
+  - `cuota_promedio`
+- Se saneo historial de migraciones Supabase:
+  - legacy `20251127` movida a `supabase/sql/`
+  - legacy `20260219` movida a `supabase/sql/`
+  - `db push --linked` vuelve a funcionar y queda `Remote database is up to date`.
+- Se documento en `MODE_DE_TRABAJO_CODEX.md` el procedimiento obligatorio de migraciones (naming, flujo, recovery y plan B).
+
+**Pendiente para siguiente bloque:**
+- Ejecutar una corrida E2E nueva completa para validar consistencia final SSOT:
+  - propuesta (cuota/costos),
+  - tabla de amortizacion,
+  - correo de propuesta.
+- Confirmar con SQL post-aprobacion que `oportunidades` persiste valores canonicos coherentes en todos los campos de costo.
+- Registrar cierre funcional definitivo del capitulo "Aprobacion y propuesta" si la corrida E2E queda 100% consistente.
