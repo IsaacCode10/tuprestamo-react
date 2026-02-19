@@ -23,6 +23,23 @@ type DecisionPayload = {
 const resendKey = Deno.env.get("RESEND_API_KEY");
 const resend = resendKey ? new Resend(resendKey) : null;
 
+const getRequiredDocs = (situacionLaboral?: string | null): string[] => {
+  const baseDocs = [
+    "ci_anverso",
+    "ci_reverso",
+    "boleta_aviso_electricidad",
+    "extracto_tarjeta",
+    "selfie_ci",
+    "autorizacion_infocred_firmada",
+  ];
+  const situacionDocs: Record<string, string[]> = {
+    Dependiente: ["boleta_pago", "certificado_gestora"],
+    Independiente: ["extracto_bancario_m1", "extracto_bancario_m2", "extracto_bancario_m3"],
+    Jubilado: ["boleta_jubilacion"],
+  };
+  return [...baseDocs, ...(situacionDocs[situacionLaboral || ""] || [])];
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -77,7 +94,7 @@ serve(async (req) => {
     // Traer solicitud y perfil de riesgo
     const { data: solicitud, error: solError } = await supabase
       .from("solicitudes")
-      .select("id, email, nombre_completo, user_id, plazo_meses, estado, monto_solicitado")
+      .select("id, email, nombre_completo, user_id, plazo_meses, estado, monto_solicitado, situacion_laboral")
       .eq("id", solicitud_id)
       .single();
     if (solError || !solicitud) throw solError || new Error("Solicitud no encontrada");
@@ -124,6 +141,29 @@ serve(async (req) => {
     const pricing = PRICING[perfilKey as keyof typeof PRICING];
     const comisionPct = pricing?.comision_originacion ?? 0;
     const netoVerificado = Number(saldo_deudor_verificado) > 0 ? Number(saldo_deudor_verificado) : null;
+
+    if (decision === "Aprobado") {
+      const requiredDocs = getRequiredDocs(solicitud.situacion_laboral);
+      const { data: uploadedDocs, error: docsError } = await supabase
+        .from("documentos")
+        .select("tipo_documento, estado")
+        .eq("solicitud_id", solicitud_id)
+        .eq("estado", "subido");
+      if (docsError) throw docsError;
+
+      const uploadedSet = new Set((uploadedDocs || []).map((d: any) => String(d.tipo_documento || "")));
+      const hasDomicilio = uploadedSet.has("boleta_aviso_electricidad") || uploadedSet.has("factura_servicio");
+      const missing = requiredDocs.filter((docId) => {
+        if (docId === "boleta_aviso_electricidad") return !hasDomicilio;
+        return !uploadedSet.has(docId);
+      });
+      if (missing.length > 0) {
+        return new Response(JSON.stringify({ error: `No se puede aprobar. Faltan documentos: ${missing.join(", ")}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
     const brutoCalculado = (() => {
       if (!netoVerificado) return null;
       if (netoVerificado <= 10000) return netoVerificado + 450; // mínimo aplicado

@@ -6,7 +6,7 @@ import { calcOriginacionYBruto } from './utils/loan';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
 const getRequiredDocsBySituation = (situacion) => {
-  const baseDocs = ['ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'extracto_tarjeta', 'selfie_ci'];
+  const baseDocs = ['ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'extracto_tarjeta', 'selfie_ci', 'autorizacion_infocred_firmada'];
   const map = {
     Dependiente: [...baseDocs, 'boleta_pago', 'certificado_gestora'],
     Independiente: [...baseDocs, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3', 'nit'],
@@ -212,6 +212,11 @@ const RiskAnalystDashboard = () => {
     try {
       const netVerified = Number(saldoDeudorVerificado);
       if (decisionData.decision === 'Aprobado') {
+        if (!isProfileComplete(perfilSeleccionado)) {
+          alert('No puedes aprobar: faltan documentos requeridos por subir/verificar.');
+          setIsSavingDecision(false);
+          return;
+        }
         if (!netVerified || netVerified <= 0) {
           alert('Ingresa el saldo deudor verificado antes de aprobar.');
           setIsSavingDecision(false);
@@ -1240,6 +1245,7 @@ useEffect(() => {
                   <button 
                     className="btn-decision aprobar" 
                     onClick={() => handleOpenDecisionModal('Aprobado')}
+                    disabled={!isProfileComplete(perfilSeleccionado)}
                   >
                     Aprobar Préstamo
                   </button>
@@ -1280,7 +1286,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
 
