@@ -96,7 +96,7 @@ const RiskAnalystDashboard = () => {
     const saldo = Number(saldoDeudorVerificado);
     if (!Number.isFinite(saldo) || saldo <= 0) return 'Ingresa el saldo verificado para ver el cálculo.';
     if (saldo <= 10000) {
-      return 'Para netos â‰¤ Bs 10.000 aplica mínimo de Bs 450: bruto = neto + 450.';
+      return 'Para netos <= Bs 10.000 aplica minimo de Bs 450: bruto = neto + 450.';
     }
     return `Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilRiesgo || 'N/D'}).`;
   }, [saldoDeudorVerificado, comisionOriginacion, perfilRiesgo]);
@@ -142,13 +142,31 @@ const RiskAnalystDashboard = () => {
     if (!perfilSeleccionado?.id) return;
     const key = SALDO_VERIFICADO_KEY(perfilSeleccionado.id);
     const value = saldoDeudorVerificado ? String(saldoDeudorVerificado) : '';
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(key, value);
-      } catch (_) {}
-    }, 400);
-    return () => clearTimeout(timer);
+    try {
+      localStorage.setItem(key, value);
+    } catch (_) {}
   }, [saldoDeudorVerificado, perfilSeleccionado?.id]);
+
+  const saldoInitProfileRef = useRef(null);
+  useEffect(() => {
+    if (!perfilSeleccionado?.id) {
+      saldoInitProfileRef.current = null;
+      return;
+    }
+    if (saldoInitProfileRef.current === perfilSeleccionado.id) return;
+    saldoInitProfileRef.current = perfilSeleccionado.id;
+
+    const netFromPerfil = perfilSeleccionado?.saldo_deuda_tc || perfilSeleccionado?.monto_solicitado || '';
+    let stored = null;
+    try {
+      stored = localStorage.getItem(SALDO_VERIFICADO_KEY(perfilSeleccionado.id));
+    } catch (_) {}
+    if (stored && !Number.isNaN(Number(stored))) {
+      setSaldoDeudorVerificado(stored);
+    } else {
+      setSaldoDeudorVerificado(netFromPerfil ? String(netFromPerfil) : '');
+    }
+  }, [perfilSeleccionado?.id, perfilSeleccionado?.saldo_deuda_tc, perfilSeleccionado?.monto_solicitado]);
   const handleSelectPerfil = (perfil) => {
     const currentScroll = window.scrollY || 0;
     try {
@@ -453,15 +471,15 @@ const RiskAnalystDashboard = () => {
 
       const enriched = (solicitudesData || []).map(item => {
         const inferredPerfil =
-          item?.perfil_riesgo  
-          oportunidadesMap[item?.id]  
-          item?.perfil  
-          item?.risk_profile  
+          item?.perfil_riesgo ||
+          oportunidadesMap[item?.id] ||
+          item?.perfil ||
+          item?.risk_profile ||
           null;
         const perfilMetrics = perfilesMap[item?.id] || {};
         const score =
-          item?.score_confianza  
-          perfilMetrics?.metricas_evaluacion?.score_confianza  
+          item?.score_confianza ||
+          perfilMetrics?.metricas_evaluacion?.score_confianza ||
           null;
         return { ...item, perfil_riesgo: inferredPerfil, score_confianza: score, metricas_evaluacion: perfilMetrics?.metricas_evaluacion };
       });
@@ -582,7 +600,9 @@ useEffect(() => {
     }, 250);
   };
   const saveScroll = () => {
-    sessionStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY || 0));
+    try {
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, String(window.scrollY || 0));
+    } catch (_) {}
   };
   const handleVisibility = () => {
     if (document.visibilityState === 'hidden') saveScroll();
@@ -591,6 +611,7 @@ useEffect(() => {
   window.addEventListener('scroll', handleScroll, { passive: true });
   document.addEventListener('visibilitychange', handleVisibility);
   return () => {
+    saveScroll();
     window.removeEventListener('beforeunload', saveScroll);
     window.removeEventListener('scroll', handleScroll);
     document.removeEventListener('visibilitychange', handleVisibility);
@@ -598,13 +619,16 @@ useEffect(() => {
       clearTimeout(scrollSaveTimerRef.current);
     }
   };
-}, []);// Aplicar scroll pendiente cuando ya cargó la data
+}, []);
+
+  // Aplicar scroll pendiente cuando ya cargó la data
   useEffect(() => {
     if (pendingScroll !== null && !loading) {
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         window.scrollTo(0, pendingScroll);
-        setPendingScroll(null);
-      }, 50);
+        setTimeout(() => window.scrollTo(0, pendingScroll), 120);
+        setTimeout(() => setPendingScroll(null), 180);
+      });
     }
   }, [pendingScroll, loading]);
 
@@ -1214,8 +1238,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
-
 
 
 
