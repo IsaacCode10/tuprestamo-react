@@ -132,11 +132,12 @@ serve(async (req) => {
     })();
 
     if (decision === "Rechazado") {
-      await Promise.all([
-        supabase.from("solicitudes").update({ estado: "rechazado_final" }).eq("id", solicitud_id),
-        supabase.from("perfiles_de_riesgo").update({ estado: "revisado_rechazado" }).eq("solicitud_id", solicitud_id),
-        supabase.from("oportunidades").update({ estado: "descartada", motivo }).eq("solicitud_id", solicitud_id),
-      ]);
+      const { error: rejectStateError } = await supabase.rpc("apply_risk_decision_state", {
+        p_solicitud_id: solicitud_id,
+        p_decision: "Rechazado",
+        p_motivo: motivo,
+      });
+      if (rejectStateError) throw rejectStateError;
 
       if (resend && solicitud.email) {
         try {
@@ -231,23 +232,22 @@ serve(async (req) => {
       updateOportunidad.cargo_servicio_seguro_porcentaje = 0.15;
     }
 
-    const [{ error: solicitudUpdateError }, { error: perfilUpdateError }, { error: oportunidadUpdateError }] = await Promise.all([
-      supabase
-        .from("solicitudes")
-        .update({
-          estado: "aprobado_para_oferta",
-          monto_solicitado: netoVerificado ?? monto,
-          saldo_deuda_tc: netoVerificado ?? solicitud.monto_solicitado,
-          plazo_meses: nuevoPlazo,
-        })
-        .eq("id", solicitud_id),
-      supabase.from("perfiles_de_riesgo").update({ estado: "revisado_aprobado" }).eq("solicitud_id", solicitud_id),
-      supabase.from("oportunidades").update(updateOportunidad).eq("solicitud_id", solicitud_id),
-    ]);
-
-    if (solicitudUpdateError) throw solicitudUpdateError;
-    if (perfilUpdateError) throw perfilUpdateError;
-    if (oportunidadUpdateError) throw oportunidadUpdateError;
+    const { error: approveStateError } = await supabase.rpc("apply_risk_decision_state", {
+      p_solicitud_id: solicitud_id,
+      p_decision: "Aprobado",
+      p_neto_verificado: netoVerificado,
+      p_monto_bruto: monto,
+      p_plazo_meses: nuevoPlazo,
+      p_cuota_promedio: cuotaPromedio,
+      p_perfil_riesgo: updateOportunidad.perfil_riesgo ?? null,
+      p_tasa_interes_prestatario: updateOportunidad.tasa_interes_prestatario ?? null,
+      p_tasa_interes_anual: updateOportunidad.tasa_interes_anual ?? null,
+      p_tasa_rendimiento_inversionista: updateOportunidad.tasa_rendimiento_inversionista ?? null,
+      p_comision_originacion_porcentaje: updateOportunidad.comision_originacion_porcentaje ?? null,
+      p_comision_servicio_inversionista_porcentaje: updateOportunidad.comision_servicio_inversionista_porcentaje ?? null,
+      p_cargo_servicio_seguro_porcentaje: updateOportunidad.cargo_servicio_seguro_porcentaje ?? null,
+    });
+    if (approveStateError) throw approveStateError;
 
     // Correo al prestatario si tenemos Resend
     if (resend && solicitud.email) {

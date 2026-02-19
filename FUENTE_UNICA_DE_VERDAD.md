@@ -159,3 +159,11 @@ La SSOT es "clase mundial" si cumple:
 - Confirmar que el flujo de creacion de intents siempre setea `due_date`.
 
 Con esto, la fuente unica de verdad queda estable y confiable.
+
+## 9) Atomicidad en decisión de riesgo (Aprobado/Rechazado)
+
+- Para evitar estados parciales, la transición crítica del analista (solicitud/perfil/oportunidad) debe ejecutarse de forma **atómica**.
+- Se implementa por RPC transaccional: `public.apply_risk_decision_state(...)`.
+- Regla operativa:
+  - Si falla una actualización, **no se confirma ninguna**.
+  - Recién después de confirmar estado en BD se envían correos/notificaciones.
