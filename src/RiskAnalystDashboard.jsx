@@ -33,6 +33,21 @@ const FALLBACK_PROFILE = {
   ]
 };
 
+const normalizeMoneyInput = (value) => {
+  const raw = String(value ?? '').replace(',', '.').replace(/[^0-9.]/g, '');
+  const firstDot = raw.indexOf('.');
+  if (firstDot === -1) return raw;
+  const intPart = raw.slice(0, firstDot + 1);
+  const fracPart = raw.slice(firstDot + 1).replace(/\./g, '').slice(0, 2);
+  return `${intPart}${fracPart}`;
+};
+
+const parseMoneyInput = (value) => {
+  const normalized = normalizeMoneyInput(value);
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 const RiskAnalystDashboard = () => {
   const [perfiles, setPerfiles] = useState([]);
   const [loading, setLoading] = useState(false); // Inicia en false
@@ -96,14 +111,16 @@ const RiskAnalystDashboard = () => {
     return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo]) || DEFAULT_COMISION;
   }, [perfilRiesgo]);
 
+  const saldoVerificadoNumber = useMemo(() => parseMoneyInput(saldoDeudorVerificado), [saldoDeudorVerificado]);
+
   const grossUpHelp = useMemo(() => {
-    const saldo = Number(saldoDeudorVerificado);
+    const saldo = saldoVerificadoNumber;
     if (!Number.isFinite(saldo) || saldo <= 0) return 'Ingresa el saldo verificado para ver el cálculo.';
     if (saldo <= 10000) {
       return 'Para netos <= Bs 10.000 aplica minimo de Bs 450: bruto = neto + 450.';
     }
     return `Se calcula como: Saldo Verificado / (1 - ${(comisionOriginacion * 100).toFixed(1)}% de comisión de originación para el perfil ${perfilRiesgo || 'N/D'}).`;
-  }, [saldoDeudorVerificado, comisionOriginacion, perfilRiesgo]);
+  }, [saldoVerificadoNumber, comisionOriginacion, perfilRiesgo]);
 
   const videoCallOk = !!perfilSeleccionado?.videollamada_ok;
   const videoCallAt = perfilSeleccionado?.videollamada_at;
@@ -133,14 +150,14 @@ const RiskAnalystDashboard = () => {
 
   // Efecto para calcular el Gross-Up con la comisión según perfil
   useEffect(() => {
-    const saldo = parseFloat(saldoDeudorVerificado);
+    const saldo = saldoVerificadoNumber;
     if (saldo > 0 && comisionOriginacion > 0) {
       const { bruto } = calcOriginacionYBruto(saldo, comisionOriginacion * 100);
       setMontoTotalPrestamo(bruto > 0 ? bruto.toFixed(2) : null);
     } else {
       setMontoTotalPrestamo(null);
     }
-  }, [saldoDeudorVerificado, comisionOriginacion]);
+  }, [saldoVerificadoNumber, comisionOriginacion]);
 
   useEffect(() => {
     if (!perfilSeleccionado?.id) return;
@@ -209,7 +226,7 @@ const RiskAnalystDashboard = () => {
   const handleSubmitDecision = async (decisionData) => {
     setIsSavingDecision(true);
     try {
-      const netVerified = Number(saldoDeudorVerificado);
+      const netVerified = saldoVerificadoNumber;
       if (decisionData.decision === 'Aprobado') {
         if (!isProfileComplete(perfilSeleccionado)) {
           alert('No puedes aprobar: faltan documentos requeridos por subir/verificar.');
@@ -247,6 +264,10 @@ const RiskAnalystDashboard = () => {
       setIsSavingDecision(false);
       setIsModalOpen(false);
     }
+  };
+
+  const handleSaldoVerificadoChange = (e) => {
+    setSaldoDeudorVerificado(normalizeMoneyInput(e.target.value));
   };
   
   useEffect(() => {
@@ -1218,14 +1239,18 @@ useEffect(() => {
                 <h2>Verificación y Cálculo Final</h2>
                 <div className="metrica">
                   <label htmlFor="saldo-verificado" className="metrica-titulo">Saldo Deudor Verificado (del extracto)</label>
-                  <input
-                    type="number"
-                    id="saldo-verificado"
-                    className="metrica-input"
-                    value={saldoDeudorVerificado}
-                    onChange={(e) => setSaldoDeudorVerificado(e.target.value)}
-                    placeholder="Ej: 5500.50"
-                  />
+                  <div className="currency-input-wrap">
+                    <span className="currency-prefix">Bs.</span>
+                    <input
+                      type="text"
+                      id="saldo-verificado"
+                      className="metrica-input currency-input"
+                      inputMode="decimal"
+                      value={saldoDeudorVerificado}
+                      onChange={handleSaldoVerificadoChange}
+                      placeholder="Ej: 5500.50"
+                    />
+                  </div>
                   <HelpTooltip text="Ingrese aquí el saldo deudor exacto que figura en el extracto de la tarjeta de crédito del cliente." />
                 </div>
                 {montoTotalPrestamo && (
@@ -1285,7 +1310,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
 

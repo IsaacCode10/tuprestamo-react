@@ -678,6 +678,27 @@ section h2 {
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
+.currency-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.currency-prefix {
+  min-width: 42px;
+  padding: 12px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fafafa;
+  font-weight: 700;
+  color: #00445A;
+  text-align: center;
+}
+
+.currency-input {
+  flex: 1;
+}
+
 .metrica-calculada {
   margin-top: 20px;
   padding: 15px;
