@@ -742,7 +742,7 @@ useEffect(() => {
         <aside className="lista-perfiles">
           <header>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
-              <h2 style={{margin:0}}>Perfiles a Revisar ({perfiles.length})</h2>
+              <h2 style={{margin:0}}>Perfiles por revisar ({perfiles.length})</h2>
               <div className="filter-group" style={{display:'flex',gap:6}}>
                 <button
                   type="button"
@@ -821,7 +821,7 @@ useEffect(() => {
                               <div className="history-summary">
                                 <div className="label">Condiciones finales</div>
                                 <p>
-                                Monto bruto: {item.oportunidad?.monto || 'N/D'} · Neto banco: {item.oportunidad?.saldo_deudor_verificado || 'N/D'} · Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m · Estado opp: {item.oportunidad?.estado || 'N/D'}
+                                Monto bruto: {item.oportunidad?.monto || 'N/D'} | Neto banco: {item.oportunidad?.saldo_deudor_verificado || 'N/D'} | Plazo: {item.oportunidad?.plazo_meses || 'N/D'}m | Estado opp: {item.oportunidad?.estado || 'N/D'}
                                 </p>
                                 <p>
                                   Score INFOCRED: {item.perfil?.metricas_evaluacion?.infocred_score || 'N/D'} ({item.perfil?.metricas_evaluacion?.infocred_risk_level || 'N/D'})
@@ -852,7 +852,7 @@ useEffect(() => {
                     <div>
                       <strong>{perfil.nombre_completo || 'Sin Nombre'}</strong>
                       <div className="muted">
-                        ID: {perfil.id} · DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')} · CI: {perfil.cedula_identidad || 'N/A'}
+                        ID: {perfil.id} | DTI: {perfil.dti || (perfil.saldo_deuda_tc && perfil.ingreso_mensual ? `${(((perfil.saldo_deuda_tc * 0.01 + (perfil.saldo_deuda_tc * (perfil.tasa_interes_tc || 0) / 100) / 12)) / (perfil.ingreso_mensual || 1) * 100).toFixed(1)}%` : 'N/A')} | CI: {perfil.cedula_identidad || 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -1214,7 +1214,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
 
