@@ -46,3 +46,11 @@
 ```
 git add ... && git commit -m "..." && npm run build && npx vercel --prod
 ```
+
+## Regla de codificación UTF-8 (antimojibake)
+- El proyecto usa UTF-8 + LF por defecto (`.editorconfig` y `.gitattributes` ya configurados). No cambiarlos sin motivo.
+- Antes de deploy, revisar rápido caracteres rotos en `src/`:
+  - `rg -n "Ã|Â|�" src`
+- Si aparece mojibake, corregir el literal en el archivo fuente antes de compilar.
+- En Windows/PowerShell, evitar copiar/pegar texto desde fuentes que cambian codificación (Word, WhatsApp Desktop, etc.) sin validar.
+- Si se tocan textos con acentos en JSX/TS/MD, verificar visualmente en UI la sección afectada.
