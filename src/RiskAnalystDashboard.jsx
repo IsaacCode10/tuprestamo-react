@@ -160,7 +160,6 @@ const RiskAnalystDashboard = () => {
     if (saldoInitProfileRef.current === perfilSeleccionado.id) return;
     saldoInitProfileRef.current = perfilSeleccionado.id;
 
-    const netFromPerfil = perfilSeleccionado?.saldo_deuda_tc || perfilSeleccionado?.monto_solicitado || '';
     let stored = null;
     try {
       stored = localStorage.getItem(SALDO_VERIFICADO_KEY(perfilSeleccionado.id));
@@ -168,7 +167,8 @@ const RiskAnalystDashboard = () => {
     if (stored && !Number.isNaN(Number(stored))) {
       setSaldoDeudorVerificado(stored);
     } else {
-      setSaldoDeudorVerificado(netFromPerfil ? String(netFromPerfil) : '');
+      // Primer uso: debe iniciar vacío; solo persistimos lo que ingrese el analista.
+      setSaldoDeudorVerificado('');
     }
   }, [perfilSeleccionado?.id, perfilSeleccionado?.saldo_deuda_tc, perfilSeleccionado?.monto_solicitado]);
   const handleSelectPerfil = (perfil) => {
@@ -182,7 +182,6 @@ const RiskAnalystDashboard = () => {
       sessionStorage.setItem(SELECTED_PROFILE_KEY, String(perfil.id));
     }
     // Limpiar los campos de cálculo al cambiar de perfil
-    const netFromPerfil = perfil?.saldo_deuda_tc || perfil?.monto_solicitado || '';
     let stored = null;
     if (perfil?.id) {
       try {
@@ -192,7 +191,7 @@ const RiskAnalystDashboard = () => {
     if (stored && !Number.isNaN(Number(stored))) {
       setSaldoDeudorVerificado(stored);
     } else {
-      setSaldoDeudorVerificado(netFromPerfil ? String(netFromPerfil) : '');
+      setSaldoDeudorVerificado('');
     }
     setMontoTotalPrestamo(null);
     setInfocredError(null);
@@ -1286,7 +1285,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
 
