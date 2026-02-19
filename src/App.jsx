@@ -277,6 +277,7 @@ function App() {
               </BorrowerRoute>
             }
           >
+            <Route path="/dashboard-prestatario" element={<Navigate to="/borrower-dashboard" replace />} />
             <Route path="/borrower-dashboard" element={<BorrowerDashboard />} />
             <Route path="/perfil" element={<Profile />} />
           </Route>

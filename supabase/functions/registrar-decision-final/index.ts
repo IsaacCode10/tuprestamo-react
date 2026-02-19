@@ -295,7 +295,7 @@ serve(async (req) => {
       try {
         const nombre = solicitud.nombre_completo || "cliente";
         const titulo = `${nombre}, tu propuesta de crédito está lista`;
-        const buttonUrl = (Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com") + "/dashboard-prestatario";
+        const buttonUrl = (Deno.env.get("APP_BASE_URL") || "https://www.tuprestamobo.com") + "/borrower-dashboard";
         const montoFmt = Number(monto || 0).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const netoFmt = Number(netoVerificado || 0).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const originacionMonto = Math.max(0, Number(monto || 0) - Number(netoVerificado || 0));
