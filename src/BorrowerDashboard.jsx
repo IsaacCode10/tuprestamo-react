@@ -58,28 +58,57 @@ const diagLog = (...args) => {
   if (isDev) console.log(...args);
 };
 
-const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading }) => {
-  const [showAmortModal, setShowAmortModal] = useState(false);
-  const neto = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
+const getOfferFinancials = (solicitud, oportunidad) => {
+  const netoFromOpp = Number(oportunidad?.saldo_deudor_verificado || 0);
+  const netoFallback = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
+  const neto = netoFromOpp > 0 ? netoFromOpp : netoFallback;
+
   const plazo = Number(oportunidad?.plazo_meses || solicitud?.plazo_meses || 24);
   const tasa = Number(oportunidad?.tasa_interes_prestatario || solicitud?.tasa_interes_tc || 0);
   const originacionPct = Number(oportunidad?.comision_originacion_porcentaje || 0);
   const breakdown = calcTPBreakdown(neto, tasa, plazo, originacionPct);
-  const montoBruto = breakdown.bruto || Number(oportunidad?.monto || 0);
-  const originacionMonto = breakdown.originacion || 0;
-  const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
-  const cuotaPromedio = oportunidad?.cuota_promedio ? Number(oportunidad.cuota_promedio) : null;
-  const cuotaCalc = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
-  const cuotaTotal = cuotaPromedio || cuotaCalc;
-  const adminSeguro = adminSeguroFlat;
-  const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
+
+  const montoBrutoDb = Number(oportunidad?.monto || 0);
+  const montoBruto = montoBrutoDb > 0 ? montoBrutoDb : (breakdown.bruto || 0);
+  const originacionMonto = montoBruto > 0 && neto > 0 ? Math.max(0, montoBruto - neto) : (breakdown.originacion || 0);
+
+  const serviceTotalDb = Number(oportunidad?.comision_servicio_seguro_total || 0);
+  const serviceTotal = serviceTotalDb > 0 ? serviceTotalDb : (breakdown.totalServiceFee || 0);
+  const adminSeguroFlat = plazo > 0 ? serviceTotal / plazo : 0;
+
+  const cuotaPromedioDb = Number(oportunidad?.cuota_promedio || 0);
+  const cuotaTotal = cuotaPromedioDb > 0 ? cuotaPromedioDb : ((breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat);
+
+  const interesTotalDb = Number(oportunidad?.interes_total || 0);
+  const interesTotal = interesTotalDb > 0 ? interesTotalDb : (breakdown.totalInterest || 0);
+  const costoCreditoDb = Number(oportunidad?.costo_total_credito || 0);
+  const costoCredito = costoCreditoDb > 0 ? costoCreditoDb : (interesTotal + serviceTotal + originacionMonto);
   const totalPagar = neto + costoCredito;
+
+  return {
+    neto,
+    plazo,
+    tasa,
+    originacionPct,
+    montoBruto,
+    originacionMonto,
+    adminSeguroFlat,
+    cuotaTotal,
+    costoCredito,
+    totalPagar,
+  };
+};
+
+const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading }) => {
+  const [showAmortModal, setShowAmortModal] = useState(false);
+  const { neto, plazo, tasa, originacionPct, montoBruto, adminSeguroFlat, cuotaTotal, costoCredito, totalPagar } =
+    getOfferFinancials(solicitud, oportunidad);
   const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const schedule = (() => {
     const items = [];
     const monthlyRate = tasa / 100 / 12;
-    const payment = breakdown.monthlyPaymentAmort || 0;
+    const payment = Math.max(0, Number(cuotaTotal || 0) - Number(adminSeguroFlat || 0));
     const serviceFee = adminSeguroFlat;
     let balance = montoBruto;
     for (let i = 1; i <= plazo; i++) {
@@ -130,7 +159,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
     {
       id: 'admin',
       title: 'Costo Admin + Seguro mensual',
-      value: formatMoney(adminSeguro),
+      value: formatMoney(adminSeguroFlat),
       tooltip: 'Costo de administración de plataforma + seguro de desgravamen. Mínimo 10 Bs/mes, baja con el saldo.',
     },
   ];
@@ -263,20 +292,9 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
 };
 
 const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
-  const neto = Number(solicitud?.saldo_deuda_tc || solicitud?.monto_solicitado || 0);
-  const plazo = Number(oportunidad?.plazo_meses || solicitud?.plazo_meses || 24);
-  const tasa = Number(oportunidad?.tasa_interes_prestatario || solicitud?.tasa_interes_tc || 0);
-  const originacionPct = Number(oportunidad?.comision_originacion_porcentaje || 0);
-  const breakdown = calcTPBreakdown(neto, tasa, plazo, originacionPct);
-  const montoBruto = breakdown.bruto || Number(oportunidad?.monto || 0);
-  const originacionMonto = breakdown.originacion || 0;
-  const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
-  const cuotaPromedio = oportunidad?.cuota_promedio ? Number(oportunidad.cuota_promedio) : null;
-  const computedCuota = (breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat;
-  const cuotaTotal = cuotaPromedio || computedCuota;
+  const { neto, plazo, tasa, originacionPct, montoBruto, originacionMonto, adminSeguroFlat, cuotaTotal, costoCredito, totalPagar } =
+    getOfferFinancials(solicitud, oportunidad);
   const adminSeguro = adminSeguroFlat;
-  const costoCredito = (breakdown.totalInterest || 0) + (breakdown.totalServiceFee || 0) + originacionMonto;
-  const totalPagar = neto + costoCredito;
   const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const [disbursement, setDisbursement] = useState(null);
   const [contractLink, setContractLink] = useState(null);
@@ -2015,7 +2033,6 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
 
 
 

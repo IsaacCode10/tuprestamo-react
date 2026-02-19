@@ -18,11 +18,17 @@ const AmortizationSchedule = ({ userId, fallbackOpportunity = null, fallbackSoli
     if (!neto || neto <= 0 || !plazo || plazo <= 0 || !tasa) return [];
 
     const breakdown = calcTPBreakdown(neto, tasa, plazo, originacionPct);
-    const adminSeguroFlat = plazo > 0 ? (breakdown.totalServiceFee || 0) / plazo : 0;
+    const serviceTotalDb = Number(opp.comision_servicio_seguro_total || 0);
+    const adminSeguroFlat = plazo > 0
+      ? (serviceTotalDb > 0 ? serviceTotalDb / plazo : (breakdown.totalServiceFee || 0) / plazo)
+      : 0;
     const monthlyRate = tasa / 100 / 12;
-    const paymentBase = breakdown.monthlyPaymentAmort || 0;
-    const paymentTotal = paymentBase + adminSeguroFlat;
-    let balance = breakdown.bruto || neto;
+    const montoBrutoDb = Number(opp.monto || 0);
+    const principal = montoBrutoDb > 0 ? montoBrutoDb : (breakdown.bruto || neto);
+    const cuotaPromedioDb = Number(opp.cuota_promedio || 0);
+    const paymentTotal = cuotaPromedioDb > 0 ? cuotaPromedioDb : ((breakdown.monthlyPaymentAmort || 0) + adminSeguroFlat);
+    const paymentBase = Math.max(0, paymentTotal - adminSeguroFlat);
+    let balance = principal;
     const sim = [];
     for (let i = 1; i <= plazo; i++) {
       const interest = balance * monthlyRate;
