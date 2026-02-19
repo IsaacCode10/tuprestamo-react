@@ -228,11 +228,10 @@ serve(async (req) => {
       updateOportunidad.tasa_rendimiento_inversionista = pricing.tasa_inversionista;
       updateOportunidad.comision_originacion_porcentaje = pricing.comision_originacion;
       updateOportunidad.comision_servicio_inversionista_porcentaje = 1;
-      updateOportunidad.seguro_desgravamen_porcentaje = 0.5;
-      updateOportunidad.comision_administracion_porcentaje = 0.1;
+      updateOportunidad.cargo_servicio_seguro_porcentaje = 0.15;
     }
 
-    await Promise.all([
+    const [{ error: solicitudUpdateError }, { error: perfilUpdateError }, { error: oportunidadUpdateError }] = await Promise.all([
       supabase
         .from("solicitudes")
         .update({
@@ -245,6 +244,10 @@ serve(async (req) => {
       supabase.from("perfiles_de_riesgo").update({ estado: "revisado_aprobado" }).eq("solicitud_id", solicitud_id),
       supabase.from("oportunidades").update(updateOportunidad).eq("solicitud_id", solicitud_id),
     ]);
+
+    if (solicitudUpdateError) throw solicitudUpdateError;
+    if (perfilUpdateError) throw perfilUpdateError;
+    if (oportunidadUpdateError) throw oportunidadUpdateError;
 
     // Correo al prestatario si tenemos Resend
     if (resend && solicitud.email) {
