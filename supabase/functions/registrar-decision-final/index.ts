@@ -275,6 +275,7 @@ serve(async (req) => {
     const { error: approveStateError } = await supabase.rpc("apply_risk_decision_state", {
       p_solicitud_id: solicitud_id,
       p_decision: "Aprobado",
+      p_motivo: null,
       p_neto_verificado: netoVerificado,
       p_monto_bruto: monto,
       p_plazo_meses: nuevoPlazo,
