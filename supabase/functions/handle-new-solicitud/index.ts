@@ -4,7 +4,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { Resend } from 'https://esm.sh/resend@3.2.0';
 import { ensureAuthorizationPreprint } from '../_shared/preprint.ts';
 
-console.log('Function handle-new-solicitud (V8.1 - PDF Auth) starting up.');
+console.log('Function handle-new-solicitud (V8.2 - single active solicitud) starting up.');
 
 // --- Modelo de Negocio v3.1 ---
 const PRICING_MODEL = {
@@ -120,6 +120,7 @@ const runRiskScorecard = (solicitud) => {
 };
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY')!);
+const ACTIVE_SOLICITUD_STATES = ['pendiente', 'pre-aprobado', 'documentos-en-revision', 'aprobado_para_oferta'];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -220,6 +221,42 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    // Hardening: evita duplicados activos por email para prestatarios.
+    const { data: existingActiveSolicitudes, error: existingActiveError } = await supabaseAdmin
+      .from('solicitudes')
+      .select('id,estado')
+      .eq('tipo_solicitud', 'prestatario')
+      .eq('email', email)
+      .neq('id', solicitud_id)
+      .in('estado', ACTIVE_SOLICITUD_STATES)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (existingActiveError) {
+      console.error(`Solicitud ${solicitud_id}: error validando solicitudes activas existentes:`, existingActiveError);
+      throw existingActiveError;
+    }
+
+    if ((existingActiveSolicitudes || []).length > 0) {
+      const activeRef = existingActiveSolicitudes![0];
+      console.warn(
+        `Solicitud ${solicitud_id}: bloqueada por solicitud activa existente (id=${activeRef.id}, estado=${activeRef.estado}).`
+      );
+      await supabaseAdmin
+        .from('solicitudes')
+        .update({ estado: 'rechazado' })
+        .eq('id', solicitud_id);
+
+      return new Response(
+        JSON.stringify({
+          message: 'Solicitud bloqueada: ya existe una solicitud activa para este correo.',
+          active_solicitud_id: activeRef.id,
+          active_estado: activeRef.estado,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
     const riskProfile = runRiskScorecard(solicitud);
     console.log(`Solicitud ${solicitud_id}: Perfil Asignado=${riskProfile.label}`);
 
