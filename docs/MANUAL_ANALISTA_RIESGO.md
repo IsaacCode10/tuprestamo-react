@@ -26,6 +26,28 @@
 - Tasa/plazo asignados según perfil; originación aplicada correctamente.
 - Oportunidad publicada solo cuando el prestatario acepta la propuesta.
 
+## 4.1 Registro INFOCRED (obligatorio)
+- **Precondiciones**:
+  - Expediente documental completo.
+  - Videollamada validada.
+  - Autorización INFOCRED firmada a mano cargada en el panel del prestatario.
+- **Paso 1: subir PDF de INFOCRED**:
+  - En el panel del analista, sección "Historial INFOCRED", subir el PDF emitido por INFOCRED.
+  - Verificar que el archivo quede como "PDF subido" y accesible para revisión.
+- **Paso 2: registrar score y nivel**:
+  - En "Score INFOCRED", cargar el valor exactamente como aparece en el reporte.
+  - `infocred_score`: número entre **300 y 850**.
+  - `infocred_risk_level`: letra entre **A y H** (A menor riesgo, H mayor riesgo).
+  - Guardar con el botón "Guardar Score INFOCRED".
+- **Validaciones del sistema**:
+  - Si `score` está fuera de 300-850, se rechaza el guardado.
+  - Si `nivel` no está en A-H, se rechaza el guardado.
+- **Regla operativa**:
+  - No avanzar a decisión final sin PDF INFOCRED + score + nivel registrados.
+- **Calidad de dato**:
+  - No estimar ni interpolar score/nivel.
+  - Si el PDF no es legible o hay inconsistencia, solicitar nuevo reporte antes de continuar.
+
 ## 5. Incidencias comunes
 - **Documento ilegible/faltante**: solicitar recarga; no aprobar hasta validar saldo.
 - **Saldo inconsistente**: volver a calcular gross-up y ajustar oferta antes de publicar.
