@@ -48,6 +48,28 @@ const parseMoneyInput = (value) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const extractFunctionErrorMessage = async (err) => {
+  if (!err) return 'Hubo un inconveniente al guardar la decisión.';
+
+  const directMessage = String(err?.message || '').trim();
+  if (directMessage && !directMessage.includes('non-2xx status code')) {
+    return directMessage;
+  }
+
+  // Supabase FunctionsHttpError puede traer el detalle en context.json()
+  if (err?.context && typeof err.context.json === 'function') {
+    try {
+      const payload = await err.context.json();
+      const nested = String(payload?.error || payload?.message || '').trim();
+      if (nested) return nested;
+    } catch (_) {
+      // Ignorar errores de parseo del body de la respuesta.
+    }
+  }
+
+  return 'Hubo un inconveniente al guardar la decisión. Intenta nuevamente.';
+};
+
 const RiskAnalystDashboard = () => {
   const [perfiles, setPerfiles] = useState([]);
   const [loading, setLoading] = useState(false); // Inicia en false
@@ -259,7 +281,9 @@ const RiskAnalystDashboard = () => {
       fetchPerfiles();
     } catch (err) {
       console.error('Error guardando decisión:', err);
-      alert('Hubo un inconveniente al guardar la decisión. Intenta nuevamente.');
+      const detail = await extractFunctionErrorMessage(err);
+      setError(detail);
+      alert(`No se pudo guardar la decisión: ${detail}`);
     } finally {
       setIsSavingDecision(false);
       setIsModalOpen(false);
@@ -1310,7 +1334,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
 
