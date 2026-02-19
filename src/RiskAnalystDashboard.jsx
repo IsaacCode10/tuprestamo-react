@@ -70,6 +70,8 @@ const RiskAnalystDashboard = () => {
   const [savingVideoCall, setSavingVideoCall] = useState(false);
 
   const SCROLL_STORAGE_KEY = 'risk-analyst-scroll';
+  const MAIN_SCROLL_STORAGE_KEY = 'risk-analyst-main-scroll';
+  const LIST_SCROLL_STORAGE_KEY = 'risk-analyst-list-scroll';
   const SELECTED_PROFILE_KEY = 'risk-analyst-selected-id';
   const SALDO_VERIFICADO_KEY = (id) => `saldo_verificado_${id}`;
   const [pendingScroll, setPendingScroll] = useState(() => {
@@ -82,6 +84,8 @@ const RiskAnalystDashboard = () => {
   const [historialLoading, setHistorialLoading] = useState(false);
   const [historialError, setHistorialError] = useState(null);
   const scrollSaveTimerRef = useRef(null);
+  const mainPanelRef = useRef(null);
+  const perfilesListRef = useRef(null);
 
   const perfilRiesgo = useMemo(() => {
     const raw = perfilSeleccionado?.perfil_riesgo || perfilSeleccionado?.perfil || perfilSeleccionado?.risk_profile;
@@ -632,6 +636,44 @@ useEffect(() => {
     }
   }, [pendingScroll, loading]);
 
+  // Persistencia de scroll para contenedores internos del panel de analista
+  useEffect(() => {
+    const mainEl = mainPanelRef.current;
+    const listEl = perfilesListRef.current;
+    if (!mainEl && !listEl) return;
+
+    const saveMain = () => {
+      try { sessionStorage.setItem(MAIN_SCROLL_STORAGE_KEY, String(mainEl?.scrollTop || 0)); } catch (_) {}
+    };
+    const saveList = () => {
+      try { sessionStorage.setItem(LIST_SCROLL_STORAGE_KEY, String(listEl?.scrollTop || 0)); } catch (_) {}
+    };
+
+    const restore = () => {
+      try {
+        const savedMain = Number(sessionStorage.getItem(MAIN_SCROLL_STORAGE_KEY) || 0);
+        if (mainEl && !Number.isNaN(savedMain)) mainEl.scrollTop = savedMain;
+      } catch (_) {}
+      try {
+        const savedList = Number(sessionStorage.getItem(LIST_SCROLL_STORAGE_KEY) || 0);
+        if (listEl && !Number.isNaN(savedList)) listEl.scrollTop = savedList;
+      } catch (_) {}
+    };
+
+    restore();
+    const t = setTimeout(restore, 120);
+    mainEl?.addEventListener('scroll', saveMain, { passive: true });
+    listEl?.addEventListener('scroll', saveList, { passive: true });
+
+    return () => {
+      clearTimeout(t);
+      saveMain();
+      saveList();
+      mainEl?.removeEventListener('scroll', saveMain);
+      listEl?.removeEventListener('scroll', saveList);
+    };
+  }, [loading, viewMode]);
+
   const handleInfocredUpload = async (file) => {
     if (!file || !perfilSeleccionado?.id) return;
     setUploadingInfocred(true);
@@ -795,7 +837,7 @@ useEffect(() => {
             </div>
             <HelpTooltip text="Estos son los perfiles de prestatarios que han completado la carga de documentos y están listos para un análisis de riesgo." />
           </header>
-          <div className="perfiles-list">
+          <div className="perfiles-list" ref={perfilesListRef}>
             {showHistory ? (
               historialLoading ? (
                 <div className="centered-message">Cargando historial...</div>
@@ -910,7 +952,7 @@ useEffect(() => {
           </section>
         </aside>
 
-        <main className="scorecard-digital">
+        <main className="scorecard-digital" ref={mainPanelRef}>
           {perfilSeleccionado ? (
               <>
               <header className="scorecard-header">
@@ -1238,7 +1280,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
 
