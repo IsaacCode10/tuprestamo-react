@@ -36,6 +36,7 @@ const LoanRequestForm = ({ onClose, role }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const ACTIVE_SOLICITUD_STATES = ['pendiente', 'pre-aprobado', 'documentos-en-revision', 'aprobado_para_oferta'];
 
   const handleFormSubmit = async (answers) => {
     setLoading(true);
@@ -71,6 +72,23 @@ const LoanRequestForm = ({ onClose, role }) => {
     };
 
     try {
+      const { data: existingActive, error: checkError } = await supabase
+        .from('solicitudes')
+        .select('id,estado')
+        .eq('tipo_solicitud', 'prestatario')
+        .ilike('email', answers.email)
+        .in('estado', ACTIVE_SOLICITUD_STATES)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if ((existingActive || []).length > 0) {
+        const active = existingActive[0];
+        setError(`Ya tienes una solicitud activa (ID ${active.id}). Continua con esa desde tu panel.`);
+        return;
+      }
+
       const { error: insertError } = await supabase.from('solicitudes').insert(dataToInsert);
 
       if (insertError) {
