@@ -1596,6 +1596,15 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
       if (shouldActivateManualFallback(err)) {
         console.warn('Gemini fallback manual activado:', err.message || err);
         activateManualFallback(docId, 'La IA no pudo leer este documento, lo mantenemos en revisión manual.');
+        // El flujo no debe depender de IA: re-evaluar avance por documentos subidos.
+        try {
+          const { error: notifyError } = await supabase.functions.invoke('notify-uploads-complete', {
+            body: { solicitud_id: solicitud.id }
+          });
+          if (notifyError) console.warn('Error calling notify-uploads-complete (fallback):', notifyError);
+        } catch (notifyErr) {
+          console.warn('Fallo invocando notify-uploads-complete en fallback manual:', notifyErr);
+        }
         setErrors(prev => ({ ...prev, [docId]: null }));
         trackEvent('ManualFallbackTriggered', { document_type: docId });
       } else {
@@ -1670,6 +1679,15 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
           await analyzeDocument(docId, filePath);
           trackEvent('Successfully Uploaded Document', { document_type: docId });
         } else {
+          // La autorización firmada no pasa por IA, pero sí debe habilitar avance de flujo.
+          try {
+            const { error: notifyError } = await supabase.functions.invoke('notify-uploads-complete', {
+              body: { solicitud_id: solicitud.id }
+            });
+            if (notifyError) console.warn('Error calling notify-uploads-complete (signed auth):', notifyError);
+          } catch (notifyErr) {
+            console.warn('Fallo invocando notify-uploads-complete para autorización firmada:', notifyErr);
+          }
           trackEvent('Uploaded Signed Authorization', { solicitud_id: solicitud.id, document_type: docId });
         }
       if (typeof onRefreshData === 'function') {
@@ -1997,7 +2015,6 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
 
 
 
