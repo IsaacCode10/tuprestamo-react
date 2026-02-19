@@ -9,6 +9,64 @@ const PRICING = {
   C: { tasa_prestatario: 20, tasa_inversionista: 15, comision_originacion: 5 },
 };
 
+const calcApprovedOfferCosts = (montoBruto: number, netoVerificado: number | null, tasaAnualPct: number, plazoMeses: number) => {
+  const principal = Number(montoBruto) || 0;
+  const neto = Number(netoVerificado) || 0;
+  const n = Number(plazoMeses) || 0;
+  const tasaAnual = Number(tasaAnualPct) || 0;
+
+  if (principal <= 0 || n <= 0) {
+    return {
+      interesTotal: 0,
+      servicioSeguroTotal: 0,
+      costoTotalCredito: 0,
+      cuotaPromedio: null as number | null,
+    };
+  }
+
+  const monthlyRate = tasaAnual / 100 / 12;
+  const serviceFeeRate = 0.0015;
+  const minServiceFee = 10;
+
+  const pmt = monthlyRate > 0
+    ? (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n))
+    : (principal / n);
+
+  let balance = principal;
+  let totalInterest = 0;
+  let totalServiceFee = 0;
+
+  if (!isFinite(pmt)) {
+    const principalPayment = principal / n;
+    for (let i = 0; i < n; i++) {
+      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+      totalServiceFee += serviceFee;
+      balance -= principalPayment;
+    }
+  } else {
+    for (let i = 0; i < n; i++) {
+      const interestPayment = balance * monthlyRate;
+      const serviceFee = Math.max(balance * serviceFeeRate, minServiceFee);
+      const principalPayment = pmt - interestPayment;
+      totalInterest += interestPayment;
+      totalServiceFee += serviceFee;
+      balance -= principalPayment;
+    }
+  }
+
+  const originacionMonto = Math.max(0, principal - neto);
+  const costoTotalCredito = originacionMonto + totalInterest + totalServiceFee;
+  const avgServiceFee = n > 0 ? totalServiceFee / n : 0;
+  const cuotaPromedio = (isFinite(pmt) ? pmt : 0) + avgServiceFee;
+
+  return {
+    interesTotal: Number(totalInterest.toFixed(2)),
+    servicioSeguroTotal: Number(totalServiceFee.toFixed(2)),
+    costoTotalCredito: Number(costoTotalCredito.toFixed(2)),
+    cuotaPromedio: Number(cuotaPromedio.toFixed(2)),
+  };
+};
+
 type DecisionPayload = {
   solicitud_id?: number;
   decision?: "Aprobado" | "Rechazado";
@@ -246,21 +304,17 @@ serve(async (req) => {
     const nuevoPlazo = plazo_meses || solicitud.plazo_meses || 24;
     const montoBase = brutoCalculado ?? (monto_bruto_aprobado || solicitud.monto_solicitado || 0);
     const monto = Number.isFinite(montoBase) ? montoBase : 0;
-    const monthlyRate = (pricing?.tasa_prestatario || 0) / 100 / 12;
-    const adminSeguroFlat = netoVerificado ? Math.max(netoVerificado * 0.0015, 10) : 0; // 0.15% mensual, mínimo 10 Bs
-    const cuotaBase =
-      netoVerificado && nuevoPlazo > 0
-        ? (monthlyRate > 0
-            ? monto * monthlyRate / (1 - Math.pow(1 + monthlyRate, -nuevoPlazo))
-            : monto / nuevoPlazo)
-        : null;
-    const cuotaPromedio = cuotaBase != null ? cuotaBase + adminSeguroFlat : null;
+    const costos = calcApprovedOfferCosts(monto, netoVerificado, pricing?.tasa_prestatario || 0, nuevoPlazo);
+    const cuotaPromedio = costos.cuotaPromedio;
     const updateOportunidad: Record<string, unknown> = {
       estado: "borrador", // se quedará borrador hasta aceptación del prestatario
       monto,
       plazo_meses: nuevoPlazo,
       saldo_deudor_verificado: netoVerificado ?? monto,
       cuota_promedio: cuotaPromedio,
+      interes_total: costos.interesTotal,
+      comision_servicio_seguro_total: costos.servicioSeguroTotal,
+      costo_total_credito: costos.costoTotalCredito,
     };
     if (pricing) {
       updateOportunidad.perfil_riesgo = perfilKey;
@@ -287,6 +341,9 @@ serve(async (req) => {
       p_comision_originacion_porcentaje: updateOportunidad.comision_originacion_porcentaje ?? null,
       p_comision_servicio_inversionista_porcentaje: updateOportunidad.comision_servicio_inversionista_porcentaje ?? null,
       p_cargo_servicio_seguro_porcentaje: updateOportunidad.cargo_servicio_seguro_porcentaje ?? null,
+      p_interes_total: updateOportunidad.interes_total ?? null,
+      p_comision_servicio_seguro_total: updateOportunidad.comision_servicio_seguro_total ?? null,
+      p_costo_total_credito: updateOportunidad.costo_total_credito ?? null,
     });
     if (approveStateError) throw approveStateError;
 
