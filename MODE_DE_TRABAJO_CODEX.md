@@ -42,6 +42,18 @@
 ## Deploy de Supabase
 - Si hay cambios en funciones/SQL de backend, incluyo también los comandos de deploy y ejemplos de invocación de edge functions (PowerShell usa `Invoke-WebRequest` en lugar de `curl`).
 
+## Regla CTO: deploy vs migración (obligatoria)
+- **Responsable:** Codex (CTO) debe detectar siempre si un cambio requiere solo deploy o también migración de base de datos.
+- **Deploy de function NO reemplaza migración.**
+  - `supabase functions deploy ...` actualiza solo código de Edge Functions.
+  - `supabase db push --linked` (o SQL manual en Dashboard) actualiza objetos de DB: tablas, columnas, RPC, triggers, policies.
+- **Cuándo migrar sí o sí:** cuando el cambio usa/crea/modifica SQL en `supabase/migrations/*.sql` o depende de una nueva función RPC/columna/trigger/policy.
+- **Checklist de cierre que debe entregar Codex:**
+  1) Comandos de git/push.
+  2) Comandos de deploy de functions afectadas.
+  3) Comandos de migración DB (si aplica) o script SQL manual alternativo.
+  4) Query de verificación final (que confirme que la función/columna/policy existe).
+
 ## Bloque estándar de deploy (frontend + git)
 ```
 git add ... && git commit -m "..." && npm run build && npx vercel --prod
