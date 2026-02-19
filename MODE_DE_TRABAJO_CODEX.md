@@ -54,6 +54,39 @@
   3) Comandos de migración DB (si aplica) o script SQL manual alternativo.
   4) Query de verificación final (que confirme que la función/columna/policy existe).
 
+## Procedimiento estándar de migraciones (evitar desalineaciones)
+### 1) Reglas de nombres (obligatorio)
+- Todo archivo en `supabase/migrations/` debe cumplir: `YYYYMMDDHHMMSS_descripcion.sql` (o timestamp compatible que acepte Supabase CLI).
+- **Nunca** usar nombres sin sufijo (ej: `20251127.sql`) dentro de `migrations/`; el CLI lo ignora.
+- SQL legacy que no cumple patrón debe vivir en `supabase/sql/` (no en `migrations/`).
+
+### 2) Flujo correcto cuando hay cambios de DB
+1. Crear/editar migración SQL en `supabase/migrations/` con nombre válido.
+2. Ejecutar:
+   - `supabase migration list --linked`
+   - `supabase db push --linked`
+3. Verificar objeto creado (RPC/tabla/columna) con query SQL concreta.
+4. Recién después probar frontend/backend.
+
+### 3) Si `db push --linked` falla por historial
+1. Diagnóstico:
+   - `supabase migration list --linked`
+2. Si aparece una versión legacy remota sin archivo local válido (caso real `20251127`):
+   - Mantener esa pieza como legacy en `supabase/sql/`.
+   - Marcarla como revertida en historial remoto:
+     - `supabase migration repair --status reverted 20251127`
+3. Reintentar:
+   - `supabase migration list --linked`
+   - `supabase db push --linked`
+4. Objetivo: lista local/remota alineada y `Remote database is up to date`.
+
+### 4) Plan B (operación urgente)
+- Si hay urgencia productiva y la migración no se puede aplicar por CLI:
+  1) Ejecutar el SQL directo en Supabase SQL Editor.
+  2) `select pg_notify('pgrst', 'reload schema');` si se creó/modificó RPC.
+  3) Verificar existencia del objeto con query.
+  4) Luego normalizar historial con CLI en una ventana de mantenimiento.
+
 ## Bloque estándar de deploy (frontend + git)
 ```
 git add ... && git commit -m "..." && npm run build && npx vercel --prod
