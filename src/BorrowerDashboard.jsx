@@ -1476,6 +1476,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
   const uploadedSet = new Set((uploadedDocuments || []).map(d => d.tipo_documento));
   const analyzedSet = new Set(analyzedDocTypes || []);
   const requiredDocIds = useMemo(() => (requiredDocs || []).map(doc => doc.id), [requiredDocs]);
+  const isReviewLocked = solicitud?.estado === 'documentos-en-revision';
 
   const activateManualFallback = useCallback((docId, message) => {
     setManualFallback(prev => ({
@@ -1673,6 +1674,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
 
 
   const handleFileUpload = async (file, docId) => {
+    if (isReviewLocked) return;
     if (!file) return;
     trackEvent('Started Document Upload', { document_type: docId });
 
@@ -1748,9 +1750,18 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
   };
 
   return (
-    <div className="card">
+    <div className={`card ${isReviewLocked ? 'document-manager-locked' : ''}`}>
       <h2 className="tp-section-title">Sube tu Documentación</h2>
-      <p>Arrastra y suelta tus archivos en las casillas correspondientes o haz clic para seleccionarlos. Formatos aceptados: PDF, JPG, PNG.</p>
+      {isReviewLocked && (
+        <p className="document-lock-copy">
+          Tu documentación ya está en revisión final y no puede modificarse en esta etapa.
+        </p>
+      )}
+      <p>
+        {isReviewLocked
+          ? 'La carga de archivos está temporalmente bloqueada mientras el equipo de riesgo finaliza la revisión.'
+          : 'Arrastra y suelta tus archivos en las casillas correspondientes o haz clic para seleccionarlos. Formatos aceptados: PDF, JPG, PNG.'}
+      </p>
       <div className="document-grid">
         {requiredDocs.map(doc => {
           // Considerar documento "subido" si existe registro, sin depender del estado específico
@@ -1792,7 +1803,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                   (doc.id === 'boleta_aviso_electricidad' ? uploadedDocuments.find(d => d.tipo_documento === 'factura_servicio') : null)
                 )}
                 onFileSelect={(file) => handleFileUpload(file, doc.id)}
-                disabled={(isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !authPreprintUrl)}
+                disabled={isReviewLocked || ((isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !authPreprintUrl))}
                 isAnalyzed={isAnalyzed}
               />
             </div>
@@ -1804,12 +1815,15 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
           className={`help-pill help-pill--global ${globalHelpRequested ? 'help-pill--active' : ''}`}
           type="button"
           onClick={handleGlobalHelp}
-          disabled={globalHelpRequested}
+          disabled={globalHelpRequested || isReviewLocked}
         >
           {globalHelpRequested ? 'Ayuda solicitada' : 'Necesito ayuda para subir un documento'}
         </button>
-        {globalHelpRequested && (
+        {globalHelpRequested && !isReviewLocked && (
           <span className="help-pill-subtext">Te contactaremos en breve para ayudarte.</span>
+        )}
+        {isReviewLocked && (
+          <span className="help-pill-subtext">Si necesitas una corrección, contacta al equipo de soporte.</span>
         )}
       </div>
     </div>
@@ -2057,7 +2071,5 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
-
 
 
