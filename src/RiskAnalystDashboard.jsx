@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from './supabaseClient';
 import './RiskAnalystDashboard.css';
 import HelpTooltip from './components/HelpTooltip';
-import { calcOriginacionYBruto } from './utils/loan';
+import { calcOriginacionYBruto, calcTPBreakdown } from './utils/loan';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
 const getRequiredDocsBySituation = (situacion) => {
@@ -139,6 +139,22 @@ const RiskAnalystDashboard = () => {
     const parsed = Number(perfilSeleccionado?.plazo_meses);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }, [perfilSeleccionado?.plazo_meses]);
+  const cuotaEstimacion = useMemo(() => {
+    const netoVerificado = Number(saldoVerificadoNumber || 0);
+    const netoDeclarado = Number(perfilSeleccionado?.saldo_deuda_tc || perfilSeleccionado?.monto_solicitado || 0);
+    const netoBase = netoVerificado > 0 ? netoVerificado : netoDeclarado;
+    const plazoBase = plazoSolicitud || 24;
+    const tasaBase = tasaPerfil || null;
+    if (!netoBase || !tasaBase || !plazoBase) {
+      return { value: null, source: 'Sin datos suficientes' };
+    }
+    const breakdown = calcTPBreakdown(netoBase, tasaBase, plazoBase, comisionOriginacion * 100);
+    const cuota = Number(breakdown?.monthlyPaymentTotal || 0);
+    return {
+      value: cuota > 0 ? cuota : null,
+      source: netoVerificado > 0 ? 'Basada en saldo verificado' : 'Provisional con deuda declarada',
+    };
+  }, [saldoVerificadoNumber, perfilSeleccionado?.saldo_deuda_tc, perfilSeleccionado?.monto_solicitado, plazoSolicitud, tasaPerfil, comisionOriginacion]);
 
   const saldoVerificadoNumber = useMemo(() => parseMoneyInput(saldoDeudorVerificado), [saldoDeudorVerificado]);
 
@@ -1061,6 +1077,15 @@ useEffect(() => {
                   <div className="muted">Se usa para cuota y costo total</div>
                 </div>
                 <div className="metrica">
+                  <span className="metrica-titulo">Cuota Mensual Estimada</span>
+                  <span className="metrica-valor">
+                    {cuotaEstimacion.value != null
+                      ? `Bs. ${cuotaEstimacion.value.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : 'N/D'}
+                  </span>
+                  <div className="muted">{cuotaEstimacion.source}</div>
+                </div>
+                <div className="metrica">
                   <span className="metrica-titulo">Debt-to-Income (DTI)</span>
                   <span className="metrica-valor">
                     {perfilSeleccionado.dti || (dtiCalculado ? `${dtiCalculado.toFixed(1)}%` : 'N/A')}
@@ -1348,6 +1373,5 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
