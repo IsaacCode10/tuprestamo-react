@@ -20,7 +20,13 @@ const borrowerQuestions = [
   { id: 6, texto: '¿Cuántos meses de antigüedad tienes en tu trabajo o actividad actual?', tipo: 'number', clave: 'antiguedad_laboral', required: true },
   { id: 7, texto: '¿Cuál es tu ingreso mensual promedio (neto) en Bolivianos (Bs)?', tipo: 'number', clave: 'ingreso_mensual', required: true },
   { id: 8, texto: '¿Cuál es el saldo total aproximado de tu deuda en tarjetas de crédito? (en Bs)', tipo: 'number', clave: 'saldo_deuda_tc', required: true, validation: { min: 5000, max: 70000, errorMessage: 'El saldo debe estar entre 5,000 Bs. y 70,000 Bs.' }, helperText: 'Monto mínimo: 5,000 Bs. y máximo: 70,000 Bs.' },
-  { id: 9, texto: '¿Recuerdas la tasa de interés anual que pagas? (ej. 24 para 24%)', tipo: 'number', clave: 'tasa_interes_tc', required: true },
+  { id: 9, texto: '¿En cuántos meses te gustaría pagar tu crédito?', tipo: 'select', clave: 'plazo_meses', required: true, opciones: [
+      { value: 12, label: '12 meses' },
+      { value: 24, label: '24 meses' },
+      { value: 36, label: '36 meses' },
+      { value: 48, label: '48 meses' },
+  ] },
+  { id: 10, texto: '¿Recuerdas la tasa de interés anual que pagas? (ej. 24 para 24%)', tipo: 'number', clave: 'tasa_interes_tc', required: true },
 ];
 
 
@@ -61,6 +67,7 @@ const LoanRequestForm = ({ onClose, role }) => {
       saldo_deuda_tc: parseToNumberOrNull(answers.saldo_deuda_tc),
       tasa_interes_tc: parseToNumberOrNull(answers.tasa_interes_tc),
       antiguedad_laboral: parseToNumberOrNull(answers.antiguedad_laboral),
+      plazo_meses: parseToNumberOrNull(answers.plazo_meses),
       autoriza_infocred: true,
       acepta_contacto: true,
       departamento: null,
@@ -68,7 +75,6 @@ const LoanRequestForm = ({ onClose, role }) => {
       nombre_empresa: null,
       bancos_deuda: null,
       monto_solicitado: null,
-      plazo_meses: null,
     };
 
     try {
@@ -100,6 +106,7 @@ const LoanRequestForm = ({ onClose, role }) => {
         monthly_income: dataToInsert.ingreso_mensual,
         total_debt: dataToInsert.saldo_deuda_tc,
         tenure_months: dataToInsert.antiguedad_laboral,
+        loan_term_months: dataToInsert.plazo_meses,
       });
 
       setSuccess(true);

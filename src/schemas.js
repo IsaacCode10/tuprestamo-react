@@ -23,6 +23,12 @@ export const solicitudPrestatarioSchema = z.object({
     (val) => Number(String(val).replace(/[^0-9.]/g, '')),
     z.number({ invalid_type_error: "La tasa debe ser un número." }).min(1, "La tasa de interés no es válida").max(100, "La tasa de interés es demasiado alta")
   ),
+  plazo_meses: z.preprocess(
+    (val) => Number(String(val).replace(/[^0-9]/g, '')),
+    z.union([z.literal(12), z.literal(24), z.literal(36), z.literal(48)], {
+      errorMap: () => ({ message: "Debes seleccionar un plazo válido (12, 24, 36 o 48 meses)." }),
+    })
+  ),
 });
 
 // Esquema para la actualización de datos del perfil
