@@ -132,6 +132,13 @@ const RiskAnalystDashboard = () => {
   const comisionOriginacion = useMemo(() => {
     return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo]) || DEFAULT_COMISION;
   }, [perfilRiesgo]);
+  const tasaPerfil = useMemo(() => {
+    return (perfilRiesgo && TASA_INTERES_PRESTATARIO[perfilRiesgo]) || null;
+  }, [perfilRiesgo]);
+  const plazoSolicitud = useMemo(() => {
+    const parsed = Number(perfilSeleccionado?.plazo_meses);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [perfilSeleccionado?.plazo_meses]);
 
   const saldoVerificadoNumber = useMemo(() => parseMoneyInput(saldoDeudorVerificado), [saldoDeudorVerificado]);
 
@@ -1049,6 +1056,11 @@ useEffect(() => {
                   <div className="muted">Pago mín. estimado: Bs. {(interesMensual + amortizacion).toFixed(0)}</div>
                 </div>
                 <div className="metrica">
+                  <span className="metrica-titulo">Plazo Solicitado</span>
+                  <span className="metrica-valor">{plazoSolicitud ? `${plazoSolicitud} meses` : 'N/D'}</span>
+                  <div className="muted">Se usa para cuota y costo total</div>
+                </div>
+                <div className="metrica">
                   <span className="metrica-titulo">Debt-to-Income (DTI)</span>
                   <span className="metrica-valor">
                     {perfilSeleccionado.dti || (dtiCalculado ? `${dtiCalculado.toFixed(1)}%` : 'N/A')}
@@ -1063,7 +1075,9 @@ useEffect(() => {
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Perfil de Riesgo</span>
-                  <span className="metrica-valor">{perfilRiesgo || 'N/D'}</span>
+                  <span className="metrica-valor">
+                    {perfilRiesgo ? `${perfilRiesgo}${tasaPerfil ? ` (${tasaPerfil}%)` : ''}` : 'N/D'}
+                  </span>
                   <div className="muted">Determina tasa y originación</div>
                   <HelpTooltip
                     text={
@@ -1334,7 +1348,6 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
 
 
