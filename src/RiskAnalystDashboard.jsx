@@ -1068,7 +1068,6 @@ useEffect(() => {
                 <div className="metrica">
                   <span className="metrica-titulo">Deuda Total Declarada</span>
                   <span className="metrica-valor">Bs. {(perfilSeleccionado.saldo_deuda_tc || 0).toLocaleString('es-BO')}</span>
-                  <div className="muted">Pago mín. estimado: Bs. {(interesMensual + amortizacion).toFixed(0)}</div>
                 </div>
                 <div className="metrica">
                   <span className="metrica-titulo">Plazo Solicitado</span>
@@ -1372,4 +1371,3 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
