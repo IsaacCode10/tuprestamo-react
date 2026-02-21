@@ -358,6 +358,7 @@ serve(async (req) => {
         const originacionMonto = Math.max(0, Number(monto || 0) - Number(netoVerificado || 0));
         const originacionMontoFmt = originacionMonto.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const originacionPct = pricing?.comision_originacion ?? null;
+        const shouldShowOriginacionPct = Number(netoVerificado || 0) > 10000 && originacionPct != null;
         const tasa = pricing ? pricing.tasa_prestatario : "N/D";
         await resend.emails.send({
           from: "Tu Préstamo <contacto@tuprestamobo.com>",
@@ -394,7 +395,7 @@ serve(async (req) => {
                   <td style="font-size:15px;line-height:1.6;color:#222;">
                     <strong>Monto aprobado:</strong> Bs ${montoFmt}<br/>
                     <strong>Saldo deudor verificado (neto al banco):</strong> Bs ${netoFmt}<br/>
-                    <strong>Comisión de originación:</strong> Bs ${originacionMontoFmt}${originacionPct != null ? ` (${originacionPct}%)` : ''}<br/>
+                    <strong>Comisión de originación:</strong> Bs ${originacionMontoFmt}${shouldShowOriginacionPct ? ` (${originacionPct}%)` : ''}<br/>
                     <strong>Cargo mensual de servicio y seguro:</strong> 0.15% sobre saldo (mínimo Bs 10 por mes)<br/>
                     <strong>Plazo:</strong> ${nuevoPlazo} meses<br/>
                     <strong>Tasa anual:</strong> ${tasa}%<br/>
