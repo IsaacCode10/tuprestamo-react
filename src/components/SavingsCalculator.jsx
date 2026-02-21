@@ -84,7 +84,7 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
   return (
     <div className="savings-calculator">
       <h2>Calcula tu Ahorro y ¡Decídete!</h2>
-      <form className="calculator-form" onSubmit={(e) => { e.preventDefault(); handleCalcular(); }}>
+      <div className="calculator-form">
         <div className="input-wrapper">
           <label htmlFor="montoDeuda">Monto de la deuda (Bs)</label>
           <input type="number" id="montoDeuda" value={montoDeuda} onChange={(e) => onSimulationChange({ montoDeuda: e.target.value })} required />
@@ -105,8 +105,7 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
             ))}
           </select>
         </div>
-        <button type="submit" className="btn btn--primary">Calcular</button>
-      </form>
+      </div>
 
       {resultados && (
         <div className="results-container">
