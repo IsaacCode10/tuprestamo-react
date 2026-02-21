@@ -9,8 +9,8 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
   
   const [resultados, setResultados] = useState(null);
 
-  // Opciones de plazo dinámicas
-  const standardPlazos = [12, 18, 24];
+  // Opciones de plazo para el MVP
+  const standardPlazos = [12, 24, 36, 48];
   const [availablePlazos, setAvailablePlazos] = useState(standardPlazos);
 
   if (!oportunidad) {

@@ -1031,6 +1031,29 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
         setSimulation(prev => ({ ...prev, ...newValues }));
     };
 
+    useEffect(() => {
+      if (!solicitud?.id) return;
+      const selectedPlazo = Number(simulation.plazo);
+      if (![12, 24, 36, 48].includes(selectedPlazo)) return;
+      const persistedPlazo = Number(solicitud.plazo_meses || 0);
+      if (persistedPlazo === selectedPlazo) return;
+
+      const timer = setTimeout(async () => {
+        const { error } = await supabase
+          .from('solicitudes')
+          .update({ plazo_meses: selectedPlazo })
+          .eq('id', solicitud.id);
+
+        if (error) {
+          console.error('No se pudo guardar el plazo seleccionado por el prestatario:', error);
+          return;
+        }
+        if (typeof onRefreshData === 'function') onRefreshData();
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }, [simulation.plazo, solicitud?.id, solicitud?.plazo_meses, onRefreshData]);
+
     const breakdownTP = calcTPBreakdown(
         parseFloat(simulation.montoDeuda),
         activeOpportunity?.tasa_interes_prestatario,
@@ -2033,7 +2056,6 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
 
 
 
