@@ -1180,6 +1180,13 @@
   text-align: left;
 }
 
+.borrower-dashboard .tp-section-title {
+  text-align: center;
+  font-family: var(--tp-font-main);
+  font-size: var(--tp-h2-size) !important;
+  color: var(--tp-title);
+}
+
 .payment-history th, .amortization-table th,
 .payment-history td, .amortization-table td {
   padding: 0.8rem 1rem;

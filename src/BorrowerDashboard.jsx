@@ -173,7 +173,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       <ProgressStepper currentStep="prestatario_acepto" allDocumentsUploaded />
 
       <div className="card">
-        <h2>Resumen de tu Solicitud</h2>
+        <h2 className="tp-section-title">Resumen de tu Solicitud</h2>
         <div className="loan-summary-grid">
           {summaryItems.map(item => (
             <div key={item.id} className="loan-summary-card">
@@ -197,7 +197,7 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       </div>
 
       <div className="card transparency-card">
-        <h2>Transparencia Total</h2>
+        <h2 className="tp-section-title">Transparencia Total</h2>
         <p className="muted">Desglose final del crédito a {plazo} meses</p>
         <div style={{ margin: '8px 0', color: '#0d1a26' }}>
           <div style={{ fontWeight: 700, marginBottom: 4 }}>Costos Únicos al Desembolso</div>
@@ -584,7 +584,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       />
 
       <div className="card">
-        <h2>Resumen de tu Solicitud</h2>
+        <h2 className="tp-section-title">Resumen de tu Solicitud</h2>
         <div className="loan-summary-grid">
           {summaryItems.map(item => (
             <div key={item.id} className="loan-summary-card">
@@ -601,7 +601,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       </div>
 
       <div className="card transparency-card">
-        <h2>Transparencia Total</h2>
+        <h2 className="tp-section-title">Transparencia Total</h2>
         <p className="muted">Desglose final del crédito a {plazo} meses</p>
         <div style={{ margin: '8px 0', color: '#0d1a26' }}>
           <div style={{ fontWeight: 700, marginBottom: 4 }}>Costos Únicos al Desembolso</div>
@@ -1343,7 +1343,7 @@ const StatusCard = ({ solicitud, oportunidad, simulation, pagoTotalMensualTP, us
 
   return (
     <div className="card">
-      <h2>Resumen de tu Solicitud</h2>
+      <h2 className="tp-section-title">Resumen de tu Solicitud</h2>
       <div className="loan-summary-grid">
         {summaryItems.map((item) => (
           <div key={item.id} className="loan-summary-card">
@@ -1748,7 +1748,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
 
   return (
     <div className="card">
-      <h2>Sube tu Documentación</h2>
+      <h2 className="tp-section-title">Sube tu Documentación</h2>
       <p>Arrastra y suelta tus archivos en las casillas correspondientes o haz clic para seleccionarlos. Formatos aceptados: PDF, JPG, PNG.</p>
       <div className="document-grid">
         {requiredDocs.map(doc => {
@@ -2056,7 +2056,6 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
 
 
 

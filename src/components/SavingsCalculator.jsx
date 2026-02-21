@@ -83,7 +83,7 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
 
   return (
     <div className="savings-calculator">
-      <h2>Calcula tu Ahorro y ¡Decídete!</h2>
+      <h2 className="tp-section-title">Calcula tu Ahorro y ¡Decídete!</h2>
       <div className="calculator-form">
         <div className="input-wrapper">
           <label htmlFor="montoDeuda">Monto de la deuda (Bs)</label>
@@ -109,7 +109,7 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
 
       {resultados && (
         <div className="results-container">
-          <h3 className="results-title">Propuesta de Ahorro</h3>
+          <h3 className="results-title tp-section-title">Propuesta de Ahorro</h3>
           <table className="comparison-table">
             <thead><tr><th>Concepto</th><th>Con tu Banco</th><th className="tu-prestamo-header">Con Tu Préstamo</th></tr></thead>
             <tbody>
@@ -131,7 +131,7 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
           </div>
 
           <div className="transparency-details">
-            <h4 className="transparency-title">Transparencia Total</h4>
+            <h4 className="transparency-title tp-section-title">Transparencia Total</h4>
             <p className="transparency-subtitle">Desglose final del crédito a {plazo} meses</p>
             <table className="comparison-table">
               <thead><tr><th>Concepto</th><th>Con tu Banco</th><th className="tu-prestamo-header">Con Tu Préstamo</th></tr></thead>
