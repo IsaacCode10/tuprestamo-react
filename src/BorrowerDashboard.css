@@ -1115,6 +1115,71 @@
   margin-top: 1rem;
 }
 
+/* --- Typography audit fix (solo panel prestatario) --- */
+.borrower-dashboard {
+  --tp-text-main: #17323a;
+  --tp-text-muted: #4f6b73;
+  --tp-title: #0f2e36;
+  --tp-h2-size: 1.45rem;
+  --tp-h3-size: 1.2rem;
+  --tp-body-size: 1rem;
+  --tp-small-size: 0.92rem;
+  --tp-font-main: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+  font-family: var(--tp-font-main);
+}
+
+.borrower-dashboard p,
+.borrower-dashboard li,
+.borrower-dashboard label,
+.borrower-dashboard td,
+.borrower-dashboard th,
+.borrower-dashboard .muted {
+  color: var(--tp-text-main);
+  font-size: var(--tp-body-size);
+  font-family: var(--tp-font-main);
+}
+
+.borrower-dashboard .muted,
+.borrower-dashboard .dashboard-header p,
+.borrower-dashboard .summary-card-title,
+.borrower-dashboard .transparency-subtitle {
+  color: var(--tp-text-muted);
+  font-size: var(--tp-small-size);
+}
+
+.borrower-dashboard .dashboard-header h1 {
+  color: var(--tp-title);
+  font-family: var(--tp-font-main);
+}
+
+.borrower-dashboard .card h2,
+.borrower-dashboard .card h3,
+.borrower-dashboard .offer-hero h2,
+.borrower-dashboard .offer-cta h3,
+.borrower-dashboard .savings-calculator h2,
+.borrower-dashboard .savings-calculator .results-title,
+.borrower-dashboard .transparency-title {
+  color: var(--tp-title);
+  text-align: left;
+  font-family: var(--tp-font-main);
+}
+
+.borrower-dashboard .card h2,
+.borrower-dashboard .savings-calculator h2 {
+  font-size: var(--tp-h2-size);
+}
+
+.borrower-dashboard .card h3,
+.borrower-dashboard .offer-cta h3,
+.borrower-dashboard .savings-calculator .results-title,
+.borrower-dashboard .transparency-title {
+  font-size: var(--tp-h3-size);
+}
+
+.borrower-dashboard .transparency-subtitle {
+  text-align: left;
+}
+
 .payment-history th, .amortization-table th,
 .payment-history td, .amortization-table td {
   padding: 0.8rem 1rem;
@@ -1167,7 +1232,7 @@
 }
 
 .help-pill {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.02em;
   padding: 6px 14px;
@@ -1189,7 +1254,7 @@
   margin-top: 6px;
   font-size: 0.8rem;
   color: #385b64;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
 }
 
 .document-help-footer {
