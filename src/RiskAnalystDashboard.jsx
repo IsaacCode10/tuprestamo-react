@@ -132,6 +132,7 @@ const RiskAnalystDashboard = () => {
   const comisionOriginacion = useMemo(() => {
     return (perfilRiesgo && COMISION_ORIGINACION[perfilRiesgo]) || DEFAULT_COMISION;
   }, [perfilRiesgo]);
+  const saldoVerificadoNumber = useMemo(() => parseMoneyInput(saldoDeudorVerificado), [saldoDeudorVerificado]);
   const tasaPerfil = useMemo(() => {
     return (perfilRiesgo && TASA_INTERES_PRESTATARIO[perfilRiesgo]) || null;
   }, [perfilRiesgo]);
@@ -155,8 +156,6 @@ const RiskAnalystDashboard = () => {
       source: netoVerificado > 0 ? 'Basada en saldo verificado' : 'Provisional con deuda declarada',
     };
   }, [saldoVerificadoNumber, perfilSeleccionado?.saldo_deuda_tc, perfilSeleccionado?.monto_solicitado, plazoSolicitud, tasaPerfil, comisionOriginacion]);
-
-  const saldoVerificadoNumber = useMemo(() => parseMoneyInput(saldoDeudorVerificado), [saldoDeudorVerificado]);
 
   const grossUpHelp = useMemo(() => {
     const saldo = saldoVerificadoNumber;
@@ -1373,5 +1372,4 @@ useEffect(() => {
 };
 
 export default RiskAnalystDashboard;
-
 
