@@ -1180,7 +1180,11 @@
   text-align: left;
 }
 
-.borrower-dashboard .tp-section-title {
+.borrower-dashboard .card h2.tp-section-title,
+.borrower-dashboard .savings-calculator h2.tp-section-title,
+.borrower-dashboard .savings-calculator .results-title.tp-section-title,
+.borrower-dashboard .savings-calculator .transparency-title.tp-section-title,
+.borrower-dashboard h4.tp-section-title {
   text-align: center;
   font-family: var(--tp-font-main);
   font-size: var(--tp-h2-size) !important;
