@@ -1114,10 +1114,11 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                     />
 
                 <>
-                        <SavingsCalculator 
+                    <SavingsCalculator 
                             oportunidad={activeOpportunity}
                         simulation={simulation}
                         onSimulationChange={handleSimulationChange}
+                        isLocked={solicitud.estado === 'documentos-en-revision'}
                     />
                     <div className="card" style={{ display: 'grid', gap: 10 }}>
                         <div>
@@ -2056,7 +2057,6 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
 
 
 

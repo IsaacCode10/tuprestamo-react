@@ -753,6 +753,30 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
+.savings-calculator.is-locked {
+  background: #f2f4f5;
+  border: 1px solid #d6dde0;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.savings-calculator .lock-copy {
+  margin: -0.4rem 0 1rem 0;
+  color: #5e7178;
+  font-size: 0.92rem;
+}
+
+.savings-calculator.is-locked .calculator-form {
+  opacity: 0.7;
+}
+
+.savings-calculator.is-locked input,
+.savings-calculator.is-locked select {
+  background: #e9ecef;
+  color: #5f6f75;
+  cursor: not-allowed;
+}
+
 .savings-calculator .calculator-form .btn-submit {
   grid-column: span 2; /* El botón ocupa ambas columnas */
   padding: 12px 25px;

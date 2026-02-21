@@ -3,7 +3,7 @@ import './InteractiveForm.css'; // Reutilizamos estilos para consistencia
 import '../BorrowerDashboard.css'; // Usamos estilos del dashboard para la tabla
 import { calcTPBreakdown } from '@/utils/loan.js';
 
-const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
+const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange, isLocked = false }) => {
   // Los valores ahora vienen del prop `simulation`
   const { montoDeuda, tasaActual, plazo, costoMantenimientoBanco } = simulation;
   
@@ -82,24 +82,29 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange }) => {
   }, [oportunidad?.tasa_interes_prestatario, montoDeuda, tasaActual, plazo, costoMantenimientoBanco]);
 
   return (
-    <div className="savings-calculator">
+    <div className={`savings-calculator ${isLocked ? 'is-locked' : ''}`}>
       <h2 className="tp-section-title">Calcula tu Ahorro y ¡Decídete!</h2>
+      {isLocked && (
+        <p className="lock-copy">
+          Estos valores ya fueron tomados para la evaluación de tu crédito y no se pueden modificar en esta etapa.
+        </p>
+      )}
       <div className="calculator-form">
         <div className="input-wrapper">
           <label htmlFor="montoDeuda">Monto de la deuda (Bs)</label>
-          <input type="number" id="montoDeuda" value={montoDeuda} onChange={(e) => onSimulationChange({ montoDeuda: e.target.value })} required />
+          <input type="number" id="montoDeuda" value={montoDeuda} onChange={(e) => onSimulationChange({ montoDeuda: e.target.value })} required disabled={isLocked} />
         </div>
         <div className="input-wrapper">
           <label htmlFor="tasaActual">Tasa de tu Banco (%)</label>
-          <input type="number" id="tasaActual" value={tasaActual} onChange={(e) => onSimulationChange({ tasaActual: e.target.value })} required />
+          <input type="number" id="tasaActual" value={tasaActual} onChange={(e) => onSimulationChange({ tasaActual: e.target.value })} required disabled={isLocked} />
         </div>
         <div className="input-wrapper">
           <label htmlFor="costoMantenimientoBanco">Mantenimiento y Seguros de tu Banco (Bs/mes)</label>
-          <input type="number" id="costoMantenimientoBanco" value={costoMantenimientoBanco} onChange={(e) => onSimulationChange({ costoMantenimientoBanco: e.target.value })} required />
+          <input type="number" id="costoMantenimientoBanco" value={costoMantenimientoBanco} onChange={(e) => onSimulationChange({ costoMantenimientoBanco: e.target.value })} required disabled={isLocked} />
         </div>
         <div className="input-wrapper">
           <label htmlFor="plazo">Plazo (meses)</label>
-          <select id="plazo" value={plazo} onChange={(e) => onSimulationChange({ plazo: parseInt(e.target.value, 10) })}>
+          <select id="plazo" value={plazo} onChange={(e) => onSimulationChange({ plazo: parseInt(e.target.value, 10) })} disabled={isLocked}>
             {availablePlazos.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
