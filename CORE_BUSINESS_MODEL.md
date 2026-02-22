@@ -36,6 +36,20 @@ Nuestras comisiones están diseñadas para ser claras y alineadas al riesgo.
 *   **Para el Inversionista:**
     *   **Comisión por Servicio:** `1%` sobre **cada pago recibido** (capital + interés). Este modelo nos alinea con el éxito del inversionista, cobrando sobre el flujo de caja total que ayudamos a generar.
 
+#### **3.1 Spread de Plataforma (Activo - Pasivo)**
+
+Además de las comisiones, Tu Préstamo captura un ingreso financiero por diferencial de tasa:
+
+- **Tasa activa (prestatario):** según perfil A/B/C.
+- **Tasa pasiva objetivo (inversionista):** según perfil A/B/C.
+- **Spread plataforma:** diferencia entre el flujo cobrado al prestatario y el flujo pagado al inversionista (después de su comisión de servicio), por cuota.
+
+Regla de control:
+
+- El rendimiento del inversionista debe respetar la tasa pasiva objetivo publicada.
+- Cualquier diferencia positiva entre cobro y payout se registra como `spread_plataforma`.
+- No se considera "ingreso del viento"; debe quedar en ledger y en reportes.
+
 #### **4. Análisis de Unidad Económica: Caso de Estudio (Crédito 10,000 Bs - Nivel B - 12 meses)**
 
 **4.1. Propuesta de Valor para el PRESTATARIO (Ahorro Real)**
@@ -65,6 +79,12 @@ Comparación del rendimiento anual de invertir 10,000 Bs contra un DPF bancario 
 | - Comisión por Servicio         | 0 Bs                      | ~107 Bs (1% del flujo)|
 | **GANANCIA NETA ANUAL**         | **350 Bs**                | **~555 Bs**           |
 | **GANANCIA ADICIONAL**          |                           | **+58%** y Flujo Mensual|
+
+Nota de gobierno financiero:
+
+- El P&L de Tu Préstamo se evalúa con cuatro capas:  
+  `originación neta + comisiones de servicio + spread_plataforma + admin_plataforma`  
+  y excluye de ingreso neto los conceptos pass-through (ej. seguro transferido a tercero).
 
 #### **5. Flujo de Experiencia del Prestatario (Pre-Aprobación a Conversión)**
 

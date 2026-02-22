@@ -9,6 +9,7 @@ Parámetros confirmados
 - Originación: mínimo Bs 450 hasta neto 10.000; sobre netos >10.000 aplicar A 3% – B 4% – C 5% con gross-up (ingreso mes de desembolso)
 - Costo notariado por préstamo desembolsado (MVP): Bs 150 aprox. (absorbido por la plataforma; no se cobra extra al prestatario)
 - Comisión inversionista: 1% sobre cada pago mensual (capital + interés)
+- Spread de plataforma: diferencia entre tasa activa (prestatario) y tasa pasiva objetivo (inversionista), registrada por cuota
 - Servicio+Seguro mensual sobre saldo deudor:
   - Servicio plataforma: 0,10% (ingreso de la plataforma)
   - Seguro desgravamen: 0,50% (pass-through; no ingreso)
@@ -32,9 +33,10 @@ Metodología de cálculo
 - Ingresos plataforma por cohorte:
   1) Originación bruta (una vez, mes 0)
   1.1) Menos costo notariado por préstamo (MVP): Bs 150
-  2) 1% sobre cobro mensual (capital+interés)
-  3) 0,10% mensual sobre saldo (servicio plataforma)
-- EL=2% reduce proporcionalmente 2) y 3)
+  2) Comisión de servicio inversionista (1% mensual sobre flujo definido)
+  3) Admin plataforma (0,10% mensual sobre saldo)
+  4) Spread plataforma (activo - pasivo) por cuota
+- EL=2% reduce proporcionalmente 2), 3) y 4) cuando aplica
 - Estado estable: cuando conviven hasta 24 cohortes (para plazo 24m)
 
 Estimaciones base actualizadas (mix A/B/C uniforme, plazo 24m)
@@ -42,19 +44,21 @@ Estimaciones base actualizadas (mix A/B/C uniforme, plazo 24m)
 - Originación bruta por préstamo (promedio A/B/C): ~ 4% × 17.000 = Bs 680
 - Menos costo notariado absorbido (MVP): Bs 150
 - Originación neta para la plataforma: Bs 530
-- 1% sobre cobros (vida 24m, con EL): ~ Bs 198
-- Servicio 0,10% sobre saldo (vida 24m, con EL): ~ Bs 219
-- Total vida por préstamo (neto plataforma) ~ Bs 947
-- MRR por préstamo activo (EL aplicado): ~ Bs 17,3/mes
+- Comisión servicio inversionista (vida 24m, con EL): ~ Bs 198
+- Admin plataforma 0,10% sobre saldo (vida 24m, con EL): ~ Bs 219
+- Spread plataforma (vida 24m, con EL): **pendiente de calibración con waterfall canónico**
+- Total vida por préstamo (neto plataforma): 947 + spread real capturado
+- MRR por préstamo activo (EL aplicado): base ~ Bs 17,3/mes + componente spread
 - Préstamos activos en estable ~ 24 × N (N = préstamos/mes)
-- Ingreso mensual estable ~ (17,3 × 24 × N) + (530 × N) = (415 + 530) × N = 945 × N
+- Ingreso mensual estable (base sin spread) ~ (17,3 × 24 × N) + (530 × N) = (415 + 530) × N = 945 × N
+- Ingreso mensual estable total = `base sin spread + spread capturado`
 
 Escenarios – Ingreso mensual estable
 
-- 10 préstamos/mes → ~ Bs 9.450/mes
-- 50 préstamos/mes → ~ Bs 47.250/mes
-- 100 préstamos/mes → ~ Bs 94.500/mes
-- 200 préstamos/mes → ~ Bs 189.000/mes
+- 10 préstamos/mes → ~ Bs 9.450/mes + spread
+- 50 préstamos/mes → ~ Bs 47.250/mes + spread
+- 100 préstamos/mes → ~ Bs 94.500/mes + spread
+- 200 préstamos/mes → ~ Bs 189.000/mes + spread
 
 Costo de buró (sensibilidad por aprobado)
 

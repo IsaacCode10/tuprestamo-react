@@ -66,6 +66,20 @@ Para resolver esto, el **Monto Total del Préstamo** debe ser una cifra "bruta" 
 4.  **Aprobación:** Se aprueba el préstamo por el monto bruto.
 5.  **Desembolso:** Se transfiere el monto neto al banco acreedor.
 
+## Regla Financiera de Spread (Plataforma)
+
+Para mantener consistencia entre promesa comercial y contabilidad:
+
+* El prestatario paga según su tasa activa (A/B/C).
+* El inversionista cobra según su tasa pasiva objetivo (A/B/C), menos su comisión de servicio aplicable.
+* La diferencia por cuota se registra como **`spread_plataforma`**.
+
+Esto significa que el spread:
+
+* no desaparece,
+* no se "regala" por error al inversionista,
+* y queda auditable en el ledger para P&L.
+
 ## Flujo de Experiencia del Prestatario (Pre-Aprobación)
 
 Para maximizar la conversión, el flujo operativo se enriquece con una experiencia de usuario diseñada para motivar al prestatario a completar el proceso.
@@ -118,3 +132,16 @@ Nota: la UI refleja estados; las transiciones se definen en backend/operaciones.
 * **Admin + Seguro:** `0,15% mensual` sobre saldo, con **mínimo 10 Bs/mes** (cargo decreciente incluido en la cuota simulada).
 * **Base de cálculo:** Siempre el saldo deudor verificado (neto). El bruto se calcula vía gross-up o suma del mínimo según corresponda.
 * **Presentación en la propuesta:** Para mantener una **cuota fija comunicada al cliente**, el total de admin/seguro calculado con la regla anterior se **prorratea en partes iguales** entre las cuotas y se suma a la cuota de capital+interés. El costo total no cambia; solo la presentación.
+
+## Trazabilidad Contable (Auditoría)
+
+Cada cuota debe permitir reconciliar:
+
+1. Cobro bruto al prestatario.
+2. Payout al inversionista.
+3. Comisión de servicio inversionista.
+4. Spread de plataforma.
+5. Componente admin plataforma.
+6. Componente seguro pass-through.
+
+Objetivo: que la suma por cuota y por oportunidad cuadre en reportes de administración, fuente única de verdad y auditorías.

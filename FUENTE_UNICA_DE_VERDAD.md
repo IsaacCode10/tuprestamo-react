@@ -100,6 +100,23 @@ Implementacion backend:
   - No existe un cargo adicional al prestatario por este concepto.
   - El costo se cubre internamente con la comisión de originación (impacta margen neto, no el cálculo bruto/neto del cliente).
 
+## 4.2) Regla oficial de distribución de cuota (waterfall SSOT)
+
+Para cada cuota pagada del prestatario, el backend debe registrar y reconciliar en este orden lógico:
+
+1. `cobro_prestatario` (entrada de caja total de la cuota).
+2. `payout_inversionista` (salida al inversionista según tasa pasiva objetivo).
+3. `comision_servicio_inversionista` (ingreso por fee sobre payout o flujo definido).
+4. `spread_plataforma` (diferencia activo-pasivo capturada por Tu Préstamo).
+5. `admin_plataforma` (ingreso por administración).
+6. `seguro_passthrough` (monto transferido a tercero; no ingreso neto).
+
+Regla de consistencia por intent/cuota:
+
+`cobro_prestatario = payout_inversionista + comision_servicio_inversionista + spread_plataforma + admin_plataforma + seguro_passthrough`
+
+Si la igualdad no se cumple (tolerancia 0.01), el estado de control debe marcarse como `revisar`.
+
 ## 5) Loop de 3 capas (para que no falle)
 
 El objetivo es evitar que el join falle o que la vista muestre NULLs cuando el
@@ -154,6 +171,8 @@ La SSOT es "clase mundial" si cumple:
 - El backend NO permite intents sin los campos de join.
 - La vista es tolerante a fallos y no rompe la UI.
 - Existe mecanismo de backfill para reparar historicos.
+- El ledger distingue ingresos reales de pass-through (seguro).
+- El spread queda registrado explícitamente y trazable por oportunidad e intent.
 
 ## 8) Acciones recomendadas inmediatas (si se detecta el bug)
 
