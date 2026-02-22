@@ -1343,10 +1343,10 @@
 }
 
 .borrower-dashboard .total-savings .total-savings-value {
-  font-size: clamp(3rem, 5.5vw, 4.2rem) !important;
+  font-size: clamp(2.2rem, 4.2vw, 3.1rem) !important;
   line-height: 1.02 !important;
   font-weight: 900 !important;
-  color: #FFA800 !important;
+  color: #26C2B2 !important;
 }
 
 .borrower-dashboard .total-savings .total-savings-sublabel {
