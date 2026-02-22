@@ -8,6 +8,7 @@ const PRICING = {
   B: { tasa_prestatario: 17, tasa_inversionista: 12, comision_originacion: 4 },
   C: { tasa_prestatario: 20, tasa_inversionista: 15, comision_originacion: 5 },
 };
+const COSTO_NOTARIADO_MVP = 150;
 
 const calcApprovedOfferCosts = (montoBruto: number, netoVerificado: number | null, tasaAnualPct: number, plazoMeses: number) => {
   const principal = Number(montoBruto) || 0;
@@ -304,6 +305,9 @@ serve(async (req) => {
     const nuevoPlazo = plazo_meses || solicitud.plazo_meses || 24;
     const montoBase = brutoCalculado ?? (monto_bruto_aprobado || solicitud.monto_solicitado || 0);
     const monto = Number.isFinite(montoBase) ? montoBase : 0;
+    const originacionBruta = Math.max(0, Number(monto || 0) - Number(netoVerificado || 0));
+    const costoNotariado = originacionBruta > 0 ? COSTO_NOTARIADO_MVP : 0;
+    const originacionNeta = Math.max(0, originacionBruta - costoNotariado);
     const costos = calcApprovedOfferCosts(monto, netoVerificado, pricing?.tasa_prestatario || 0, nuevoPlazo);
     const cuotaPromedio = costos.cuotaPromedio;
     const updateOportunidad: Record<string, unknown> = {
@@ -315,6 +319,10 @@ serve(async (req) => {
       interes_total: costos.interesTotal,
       comision_servicio_seguro_total: costos.servicioSeguroTotal,
       costo_total_credito: costos.costoTotalCredito,
+      originacion_bruta: originacionBruta,
+      costo_notariado: costoNotariado,
+      originacion_neta: originacionNeta,
+      notariado_absorbido: true,
     };
     if (pricing) {
       updateOportunidad.perfil_riesgo = perfilKey;
@@ -344,6 +352,10 @@ serve(async (req) => {
       p_interes_total: updateOportunidad.interes_total ?? null,
       p_comision_servicio_seguro_total: updateOportunidad.comision_servicio_seguro_total ?? null,
       p_costo_total_credito: updateOportunidad.costo_total_credito ?? null,
+      p_originacion_bruta: updateOportunidad.originacion_bruta ?? null,
+      p_costo_notariado: updateOportunidad.costo_notariado ?? null,
+      p_originacion_neta: updateOportunidad.originacion_neta ?? null,
+      p_notariado_absorbido: updateOportunidad.notariado_absorbido ?? null,
     });
     if (approveStateError) throw approveStateError;
 
