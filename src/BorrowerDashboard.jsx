@@ -315,6 +315,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [uploadingReceiptId, setUploadingReceiptId] = useState(null);
   const [receiptUploadMessage, setReceiptUploadMessage] = useState('');
   const [receiptUploadError, setReceiptUploadError] = useState('');
+  const [acceptanceFlash, setAcceptanceFlash] = useState('');
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
 
@@ -357,6 +358,14 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     if (disbursement || oppEstado === 'fondeada') return '100% fondeada';
     return 'Propuesta publicada';
   })();
+
+  useEffect(() => {
+    const msg = sessionStorage.getItem('borrower_proposal_flash');
+    if (msg) {
+      setAcceptanceFlash(msg);
+      sessionStorage.removeItem('borrower_proposal_flash');
+    }
+  }, []);
 
   useEffect(() => {
     const fetchDisbursement = async () => {
@@ -585,6 +594,11 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         disbursementState={disbursement?.estado}
         opportunityState={oportunidad?.estado}
       />
+      {acceptanceFlash && (
+        <div className="final-review-note" style={{ marginTop: 12 }}>
+          <p>{acceptanceFlash}</p>
+        </div>
+      )}
 
       <div className="card">
         <h2 className="tp-section-title">Resumen de tu Solicitud</h2>
@@ -1866,6 +1880,7 @@ const BorrowerDashboard = () => {
   const [documents, setDocuments] = useState(cached.documents || []);
   const [analyzedDocTypes, setAnalyzedDocTypes] = useState(cached.analyzedDocTypes || []);
   const [proposalLoading, setProposalLoading] = useState(false);
+  const [proposalNotice, setProposalNotice] = useState('');
   const navigate = useNavigate();
   const hasHydratedFromCache = useRef(false);
 
@@ -2042,17 +2057,20 @@ const BorrowerDashboard = () => {
   const handleProposalDecision = async (decision) => {
     if (!solicitud?.id) return;
     setProposalLoading(true);
+    setProposalNotice('');
     try {
       const { data, error } = await supabase.functions.invoke('aceptar-propuesta-prestatario', {
         body: { solicitud_id: solicitud.id, decision },
       });
       if (error) throw error;
       trackEvent('Borrower_Proposal_Decision', { decision, solicitud_id: solicitud.id });
+      const uiMessage = data?.message || 'Acción registrada.';
+      sessionStorage.setItem('borrower_proposal_flash', uiMessage);
       await fetchData({ silent: true });
-      alert(data?.message || 'Acción registrada.');
+      setProposalNotice(uiMessage);
     } catch (err) {
       console.error('Error registrando decisión de propuesta:', err);
-      alert('No pudimos registrar tu decisión. Intenta nuevamente.');
+      setProposalNotice('No pudimos registrar tu decisión. Intenta nuevamente.');
     } finally {
       setProposalLoading(false);
     }
@@ -2066,13 +2084,20 @@ const BorrowerDashboard = () => {
   if (estadoSolicitud === 'aprobado_para_oferta') {
     const opp = Array.isArray(solicitud.oportunidades) ? solicitud.oportunidades[0] : null;
     return (
-      <BorrowerOfferView
-        solicitud={solicitud}
-        oportunidad={opp}
-        onAccept={() => handleProposalDecision('Aceptar')}
-        onReject={() => handleProposalDecision('Rechazar')}
-        loading={proposalLoading}
-      />
+      <>
+        {proposalNotice && (
+          <div className="final-review-note">
+            <p>{proposalNotice}</p>
+          </div>
+        )}
+        <BorrowerOfferView
+          solicitud={solicitud}
+          oportunidad={opp}
+          onAccept={() => handleProposalDecision('Aceptar')}
+          onReject={() => handleProposalDecision('Rechazar')}
+          loading={proposalLoading}
+        />
+      </>
     );
   }
 
