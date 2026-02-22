@@ -832,7 +832,7 @@
 .total-savings {
   text-align: center;
   margin-top: 20px;
-  padding: 22px 16px;
+  padding: 26px 18px;
   background-color: #eef8f8;
   border: 1px solid rgba(38, 194, 178, 0.25);
   border-radius: 10px;
@@ -840,10 +840,10 @@
 }
 
 .total-savings-label {
-  font-size: 1.45rem;
+  font-size: 1.7rem;
   font-weight: 800;
   letter-spacing: 0.02em;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   font-family: 'Montserrat', 'Segoe UI', 'Roboto', sans-serif;
   color: #00445A;
 }
@@ -853,15 +853,17 @@
 }
 
 .total-savings-value {
-  font-size: 2.8rem;
-  font-weight: 800;
-  margin: 4px 0 6px;
-  color: #00445A;
+  font-size: clamp(3rem, 5.5vw, 4.2rem);
+  line-height: 1.02;
+  font-weight: 900;
+  margin: 6px 0 10px;
+  color: #FFA800;
+  text-shadow: 0 2px 0 rgba(0, 68, 90, 0.12);
   font-family: 'Montserrat', 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .total-savings-sublabel {
-  font-size: 1.2rem;
+  font-size: 1.28rem;
   color: #00445A;
   font-weight: 600;
   font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
