@@ -291,7 +291,9 @@ begin
 end;
 $$;
 
-create or replace view public.fuente_unica_checks as
+drop view if exists public.fuente_unica_checks;
+
+create view public.fuente_unica_checks as
 select
   s.opportunity_id::bigint as opportunity_id,
   s.borrower_payment_intent_id,
@@ -356,3 +358,5 @@ left join (
   from payouts_inversionistas
   group by opportunity_id
 ) p on p.opportunity_id = s.opportunity_id::bigint;
+
+alter view public.fuente_unica_checks set (security_invoker = true);
