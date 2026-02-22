@@ -125,7 +125,9 @@ const SavingsCalculator = ({ oportunidad, simulation, onSimulationChange, isLock
           </table>
 
           <div className="total-savings">
-            <p className="total-savings-label">Ahorrarías un total de:</p>
+            <p className="total-savings-label">
+              <span className="total-savings-highlight">AHORRO</span> total estimado:
+            </p>
             <p className="total-savings-value">Bs. {resultados.ahorroTotal > 0 ? resultados.ahorroTotal : '0.00'}</p>
             <p className="total-savings-sublabel">en costos financieros durante los {plazo} meses del crédito</p>
           </div>

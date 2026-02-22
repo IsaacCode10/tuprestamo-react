@@ -832,26 +832,34 @@
 .total-savings {
   text-align: center;
   margin-top: 20px;
-  padding: 15px;
+  padding: 22px 16px;
   background-color: #d4edda;
   border-radius: 8px;
   color: #155724;
 }
 
 .total-savings-label {
-  font-size: 1.1rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   margin-bottom: 5px;
+}
+
+.total-savings-highlight {
+  color: #0b5e56;
 }
 
 .total-savings-value {
-  font-size: 2.2rem;
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin: 4px 0 6px;
+  color: #0f2e36;
 }
 
 .total-savings-sublabel {
-  font-size: 0.9rem;
-  color: #333;
+  font-size: 1.2rem;
+  color: #17323a;
+  font-weight: 600;
 }
 
 .transparency-details {
