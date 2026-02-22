@@ -323,6 +323,9 @@ serve(async (req) => {
       costo_notariado: costoNotariado,
       originacion_neta: originacionNeta,
       notariado_absorbido: true,
+      cashflow_model_version: "v2",
+      admin_plataforma_porcentaje: 0.10,
+      seguro_passthrough_porcentaje: 0.05,
     };
     if (pricing) {
       updateOportunidad.perfil_riesgo = perfilKey;
@@ -356,6 +359,9 @@ serve(async (req) => {
       p_costo_notariado: updateOportunidad.costo_notariado ?? null,
       p_originacion_neta: updateOportunidad.originacion_neta ?? null,
       p_notariado_absorbido: updateOportunidad.notariado_absorbido ?? null,
+      p_cashflow_model_version: updateOportunidad.cashflow_model_version ?? null,
+      p_admin_plataforma_porcentaje: updateOportunidad.admin_plataforma_porcentaje ?? null,
+      p_seguro_passthrough_porcentaje: updateOportunidad.seguro_passthrough_porcentaje ?? null,
     });
     if (approveStateError) throw approveStateError;
 
