@@ -40,6 +40,12 @@ Para resolver esto, el **Monto Total del Préstamo** debe ser una cifra "bruta" 
 * Si el **saldo verificado ≤ Bs. 10.000**, la **originación es fija de Bs. 450** y el **monto bruto = neto + 450** (marcamos `minApplied=true`).
 * Si el **saldo verificado > Bs. 10.000**, se aplica la fórmula de gross-up con la comisión por perfil (A 3%, B 4%, C 5%).
 
+### Política de Notariado (MVP)
+
+*   El costo de firma de contrato notariado (referencia operativa: **~Bs. 150** por operación) es **absorbido por Tu Préstamo**.
+*   Para el prestatario, este costo se comunica como **incluido**: no se agrega un cargo extra separado.
+*   En términos de unidad económica, este monto se descuenta del margen de originación de la plataforma.
+
 **Ejemplo del Flujo Correcto:**
 1.  **Saldo Deudor Verificado (Neto a Pagar):** Bs. 10,000
 2.  **Cálculo del Préstamo (Bruto):**

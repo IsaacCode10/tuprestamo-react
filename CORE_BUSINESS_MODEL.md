@@ -30,6 +30,7 @@ Nuestras comisiones están diseñadas para ser claras y alineadas al riesgo.
             *   **Nivel A:** 3.0%
             *   **Nivel B:** 4.0%
             *   **Nivel C:** 5.0%
+        *   **Notariado (MVP):** Tu Préstamo absorbe internamente el costo del contrato notariado (referencia operativa ~Bs 150). No se cobra una línea adicional al prestatario.
     *   **Comisión por Servicio y Seguro:** `0.15% mensual` sobre el **saldo deudor**, con un **mínimo de 10 Bs por mes**. Unifica los costos de administración y el seguro de desgravamen en un solo cargo transparente y decreciente. En la UI de propuesta mostramos un cargo mensual **prorrateado fijo** (total de admin/seguro dividido entre las cuotas) para mantener la cuota fija comunicada, sin alterar el costo total calculado con la regla oficial.
 
 *   **Para el Inversionista:**

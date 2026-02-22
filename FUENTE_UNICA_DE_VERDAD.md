@@ -96,6 +96,9 @@ Implementacion backend:
   - **Bruto = neto / (1 - comisión)**.
 - Esta regla se usa en el cálculo de propuesta y en la aprobación final; no debe variar entre frontend y backend.
 - **Backend manda:** si existe `saldo_deudor_verificado`, el backend **ignora** cualquier `monto_bruto_aprobado` manual y recalcula el bruto con la regla oficial.
+- **Política MVP de notariado:** Tu Préstamo absorbe el costo del contrato notariado (referencia operativa: **Bs 150** por préstamo desembolsado).
+  - No existe un cargo adicional al prestatario por este concepto.
+  - El costo se cubre internamente con la comisión de originación (impacta margen neto, no el cálculo bruto/neto del cliente).
 
 ## 5) Loop de 3 capas (para que no falle)
 
