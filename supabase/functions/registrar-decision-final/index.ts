@@ -408,6 +408,7 @@ serve(async (req) => {
                     <strong>Monto aprobado:</strong> Bs ${montoFmt}<br/>
                     <strong>Saldo deudor verificado (neto al banco):</strong> Bs ${netoFmt}<br/>
                     <strong>Comisión de originación:</strong> Bs ${originacionMontoFmt}${shouldShowOriginacionPct ? ` (${originacionPct}%)` : ''}<br/>
+                    <strong>Costo de firma notariada:</strong> Incluido por Tu Préstamo (sin cargo adicional para ti)<br/>
                     <strong>Cargo mensual de servicio y seguro:</strong> 0.15% sobre saldo (mínimo Bs 10 por mes)<br/>
                     <strong>Plazo:</strong> ${nuevoPlazo} meses<br/>
                     <strong>Tasa anual:</strong> ${tasa}%<br/>

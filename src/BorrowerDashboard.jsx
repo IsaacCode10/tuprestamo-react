@@ -209,6 +209,9 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
                 ? `${originacionPct}% aplicado en el bruto`
                 : 'N/D'}
           </div>
+          <div style={{ fontWeight: 700 }}>
+            Costo de firma notariada: Incluido por Tu Préstamo (sin cargo adicional para ti)
+          </div>
         </div>
         <table className="transparency-table">
           <thead>
@@ -613,6 +616,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 ? `${originacionPct}% aplicado en el bruto`
                 : 'N/D'}
           </div>
+          <div style={{ fontWeight: 700 }}>
+            Costo de firma notariada: Incluido por Tu Préstamo (sin cargo adicional para ti)
+          </div>
         </div>
         <table className="transparency-table">
           <thead>
@@ -760,7 +766,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
           <h2>Pago dirigido y contrato</h2>
           <p className="muted">
             {isNotariadoPending
-              ? 'Para publicar tu oportunidad necesitamos la firma notariada del contrato. Aqui puedes descargar el PDF y agendar la firma.'
+              ? 'Para publicar tu oportunidad necesitamos la firma notariada del contrato. Aquí puedes descargar el PDF y agendar la firma. El costo notarial está cubierto por Tu Préstamo.'
               : (disbursement?.paid_at || disbursement?.estado === 'pagado'
                 ? 'Ya realizamos el pago de tu tarjeta. Aqui puedes ver el comprobante y tu contrato.'
                 : 'Te avisaremos por correo cuando paguemos tu tarjeta. Aqui veras el comprobante y tu contrato PDF.')}
@@ -773,7 +779,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
               <div><strong>Monto neto al banco:</strong> {formatMoney(disbursement.monto_neto || neto)}</div>
               {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                 <div style={{ padding: 12, borderRadius: 8, background: '#fff7ec', border: '1px solid #ffd7b0', color: '#8a4b06' }}>
-                  <strong>Contrato notariado pendiente.</strong> Para publicar tu oportunidad y continuar con el pago al banco debes agendar la firma notariada.
+                  <strong>Contrato notariado pendiente.</strong> Para publicar tu oportunidad y continuar con el pago al banco debes agendar la firma notariada. El costo notarial está cubierto por Tu Préstamo.
                 </div>
               )}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -2071,5 +2077,4 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
 

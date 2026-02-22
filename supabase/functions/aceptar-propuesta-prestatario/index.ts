@@ -151,6 +151,7 @@ serve(async (req) => {
                   <td style="font-size:15px;line-height:1.6;color:#222;">
                     <strong>Monto aprobado (bruto):</strong> Bs ${Number(bruto || 0).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br/>
                     <strong>Monto a pagar a tu banco (neto):</strong> Bs ${Number(neto || 0).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<br/>
+                    <strong>Costo de firma notariada:</strong> Incluido por Tu Préstamo (sin cargo adicional para ti)<br/>
                     <strong>Tasa anual:</strong> ${tasa}%<br/>
                     <strong>Plazo:</strong> ${plazo} meses<br/>
                     <span style="color:#00445A;">En tu panel podrás descargar el contrato y agendar la firma notariada.</span>
