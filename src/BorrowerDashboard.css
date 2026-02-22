@@ -1335,3 +1335,21 @@
   border-color: rgba(0,0,0,0.1);
   color: #00445A;
 }
+
+/* Force visual hierarchy in ahorro card (overrides generic borrower-dashboard p styles) */
+.borrower-dashboard .total-savings .total-savings-label {
+  font-size: 1.7rem !important;
+  font-weight: 800 !important;
+}
+
+.borrower-dashboard .total-savings .total-savings-value {
+  font-size: clamp(3rem, 5.5vw, 4.2rem) !important;
+  line-height: 1.02 !important;
+  font-weight: 900 !important;
+  color: #FFA800 !important;
+}
+
+.borrower-dashboard .total-savings .total-savings-sublabel {
+  font-size: 1.28rem !important;
+  font-weight: 600 !important;
+}
