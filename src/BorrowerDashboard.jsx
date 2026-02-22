@@ -246,10 +246,10 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
       <div className="card offer-cta">
         <div>
           <h2>¿Aceptas esta propuesta?</h2>
-          <p className="muted">Al aceptar, publicaremos tu oportunidad para que los inversionistas la fondeen. El pago se hará directamente a tu banco acreedor.</p>
+          <p className="muted">Al aceptar, pasarás al paso de firma notariada del contrato. Una vez firmado, publicaremos tu oportunidad para fondeo y luego realizaremos el pago directamente a tu banco acreedor.</p>
         </div>
         <div className="offer-cta-actions">
-          <button className="btn btn--primary" onClick={onAccept} disabled={loading}>Aceptar propuesta</button>
+          <button className="btn btn--primary" onClick={onAccept} disabled={loading}>Aceptar y continuar a firma notariada</button>
           <button className="btn" onClick={onReject} disabled={loading}>No aceptar</button>
         </div>
       </div>
@@ -1075,6 +1075,9 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
         documents.some(uploadedDoc => uploadedDoc.tipo_documento === doc.id && uploadedDoc.estado === 'subido')
     );
     const showFinalReviewNote = allDocumentsUploaded || ['documentos-en-revision','aprobado'].includes(solicitud.estado);
+    const showNotariadoStepNote =
+      solicitud.estado === 'pendiente_notariado' ||
+      (activeOpportunity?.estado || '').toLowerCase() === 'pendiente_notariado';
     const [showUploadToast, setShowUploadToast] = useState(false);
     const prevAllDocs = useRef(allDocumentsUploaded);
     useEffect(() => {
@@ -1103,8 +1106,13 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
                 <div className="dashboard-header">
                     <p>Bienvenido a tu centro de control. Aquí puedes ver el progreso de tu solicitud.</p>
                 </div>
-                <ProgressStepper currentStep={solicitud.estado} allDocumentsUploaded={allDocumentsUploaded} />
+                <ProgressStepper
+                  currentStep={solicitud.estado}
+                  allDocumentsUploaded={allDocumentsUploaded}
+                  opportunityState={activeOpportunity?.estado}
+                />
                 <UploadToast visible={showUploadToast} />
+                <NotariadoStepNote visible={showNotariadoStepNote} />
                 <FinalReviewNote visible={showFinalReviewNote} />
                 
                 <StatusCard 
@@ -1215,8 +1223,8 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = 
     'Sube tus Documentos',
     'Revisión Final',
     'Préstamo Aprobado',
-    'Propuesta Publicada',
-    '100% Fondeada',
+    'Firma notariada',
+    'Propuesta publicada y fondeo',
     'Préstamo desembolsado'
   ];
   const getStepStatus = (stepIndex) => {
@@ -1224,7 +1232,7 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = 
       'pre-aprobado': 2,
       'documentos-en-revision': 3,
       'aprobado': 4,
-      'pendiente_notariado': 4,
+      'pendiente_notariado': 5,
       'prestatario_acepto': 5,
       'fondeada': 6,
       'pago_dirigido': 7,
@@ -1268,6 +1276,17 @@ const FinalReviewNote = ({ visible }) => {
     <div className="final-review-note">
       <p>
         Primero revisamos tu documentación; si todo está OK, te haremos una videollamada para conocerte. Luego recibirás la propuesta del préstamo en este panel.
+      </p>
+    </div>
+  );
+};
+
+const NotariadoStepNote = ({ visible }) => {
+  if (!visible) return null;
+  return (
+    <div className="final-review-note">
+      <p>
+        Tu propuesta fue aceptada. Siguiente paso: firma notariada del contrato para publicar la oportunidad y habilitar el fondeo.
       </p>
     </div>
   );
@@ -2077,4 +2096,3 @@ const BorrowerDashboard = () => {
 };
 
 export default BorrowerDashboard;
-
