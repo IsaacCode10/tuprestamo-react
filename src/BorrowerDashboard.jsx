@@ -317,7 +317,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [receiptUploadError, setReceiptUploadError] = useState('');
   const [acceptanceFlash, setAcceptanceFlash] = useState('');
   const [notaryActionLoading, setNotaryActionLoading] = useState(false);
-  const [notaryActionMessage, setNotaryActionMessage] = useState('');
   const [notaryActionError, setNotaryActionError] = useState('');
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
@@ -411,7 +410,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     if (!disbursement?.id || notaryActionLoading) return;
     setNotaryActionLoading(true);
     setNotaryActionError('');
-    setNotaryActionMessage('');
     try {
       const { error } = await supabase
         .from('desembolsos')
@@ -419,7 +417,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         .eq('id', disbursement.id);
       if (error) throw error;
       setDisbursement((prev) => prev ? { ...prev, notariado_agendado_at: new Date().toISOString() } : prev);
-      setNotaryActionMessage('Firma agendada. Te avisaremos cuando notaría valide el contrato.');
     } catch (e) {
       console.error('Error marcando firma notariada como agendada:', e);
       setNotaryActionError('No pudimos registrar tu confirmación. Intenta nuevamente.');
@@ -832,7 +829,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                   )}
                 </div>
               )}
-              {notaryActionMessage && <p style={{ color: '#0a7a4b', margin: '0 0 4px 0' }}>{notaryActionMessage}</p>}
               {notaryActionError && <p style={{ color: '#b00020', margin: '0 0 4px 0' }}>{notaryActionError}</p>}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {disbursement.comprobante_url ? (
@@ -848,29 +844,31 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                   <>
                     {disbursement.notariado_agendado_at ? (
-                      <button className="btn btn--primary" type="button" disabled title="Ya registramos tu confirmación de firma agendada.">
-                        Agendar firma
+                      <button className="btn" type="button" disabled title="Ya registramos tu confirmación de firma agendada.">
+                        Firma agendada
                       </button>
                     ) : (
-                      <a
-                        className="btn btn--primary"
-                        href={`https://wa.me/59178271936?text=${encodeURIComponent(
-                          `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${(oportunidad?.id || disbursement?.opportunity_id) ? ` / Oportunidad ${oportunidad?.id || disbursement?.opportunity_id}` : ''}.`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Agendar firma
-                      </a>
+                      <>
+                        <a
+                          className="btn btn--primary"
+                          href={`https://wa.me/59178271936?text=${encodeURIComponent(
+                            `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${(oportunidad?.id || disbursement?.opportunity_id) ? ` / Oportunidad ${oportunidad?.id || disbursement?.opportunity_id}` : ''}.`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Agendar firma
+                        </a>
+                        <button
+                          className="btn"
+                          type="button"
+                          onClick={markNotaryScheduled}
+                          disabled={notaryActionLoading}
+                        >
+                          {notaryActionLoading ? 'Guardando...' : 'Ya agendé mi firma'}
+                        </button>
+                      </>
                     )}
-                    <button
-                      className="btn"
-                      type="button"
-                      onClick={markNotaryScheduled}
-                      disabled={notaryActionLoading || !!disbursement.notariado_agendado_at}
-                    >
-                      {disbursement.notariado_agendado_at ? 'Firma agendada' : (notaryActionLoading ? 'Guardando...' : 'Ya agendé mi firma')}
-                    </button>
                   </>
                 )}
               </div>
