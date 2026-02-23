@@ -25,6 +25,26 @@ serve(async (req) => {
   try {
     if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
+    // Guard: only admin/operaciones users can trigger contract generation.
+    const authHeader = req.headers.get('Authorization') || ''
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!token) return json({ error: 'No autorizado' }, 401)
+
+    const { data: authData, error: authErr } = await supabaseAdmin.auth.getUser(token)
+    if (authErr || !authData?.user?.id) return json({ error: 'No autorizado' }, 401)
+
+    const { data: requester, error: requesterErr } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user.id)
+      .maybeSingle()
+    if (requesterErr) throw requesterErr
+
+    const role = String(requester?.role || '').toLowerCase()
+    if (!['admin', 'operaciones', 'ops', 'admin_ops'].includes(role)) {
+      return json({ error: 'Permisos insuficientes' }, 403)
+    }
+
     const body = await req.json().catch(() => ({}))
     const paymentIntentId = body?.payment_intent_id as string | undefined
     const investmentId = body?.investment_id as number | undefined
@@ -172,4 +192,3 @@ function json(obj: Record<string, unknown>, status = 200) {
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   })
 }
-
