@@ -316,6 +316,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [receiptUploadMessage, setReceiptUploadMessage] = useState('');
   const [receiptUploadError, setReceiptUploadError] = useState('');
   const [acceptanceFlash, setAcceptanceFlash] = useState('');
+  const [notaryActionLoading, setNotaryActionLoading] = useState(false);
+  const [notaryActionMessage, setNotaryActionMessage] = useState('');
+  const [notaryActionError, setNotaryActionError] = useState('');
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
 
@@ -331,7 +334,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     if (isNotariadoPending) {
       return {
         title: 'Firma notariada pendiente',
-        subtitle: 'Estás en la etapa previa a publicación. Revisa tu contrato y agenda la firma notariada para continuar.'
+        subtitle: disbursement?.notariado_agendado_at
+          ? 'Tu firma está agendada. Estamos coordinando con notaría para validarla y continuar con la publicación.'
+          : 'Estás en la etapa previa a publicación. Revisa tu contrato y agenda la firma notariada para continuar.'
       };
     }
     if (disbEstado === 'pagado' || oppEstado === 'activo') {
@@ -375,7 +380,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       try {
         const { data, error } = await supabase
           .from('desembolsos')
-          .select('id, estado, monto_bruto, monto_neto, comprobante_url, contract_url, notariado_ok, paid_at, created_at')
+          .select('id, estado, monto_bruto, monto_neto, comprobante_url, contract_url, notariado_ok, notariado_agendado_at, paid_at, created_at')
           .eq('opportunity_id', oportunidad.id)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -401,6 +406,27 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     };
     fetchDisbursement();
   }, [oportunidad?.id, userId]);
+
+  const markNotaryScheduled = async () => {
+    if (!disbursement?.id || notaryActionLoading) return;
+    setNotaryActionLoading(true);
+    setNotaryActionError('');
+    setNotaryActionMessage('');
+    try {
+      const { error } = await supabase
+        .from('desembolsos')
+        .update({ notariado_agendado_at: new Date().toISOString() })
+        .eq('id', disbursement.id);
+      if (error) throw error;
+      setDisbursement((prev) => prev ? { ...prev, notariado_agendado_at: new Date().toISOString() } : prev);
+      setNotaryActionMessage('Firma agendada. Te avisaremos cuando notaría valide el contrato.');
+    } catch (e) {
+      console.error('Error marcando firma notariada como agendada:', e);
+      setNotaryActionError('No pudimos registrar tu confirmación. Intenta nuevamente.');
+    } finally {
+      setNotaryActionLoading(false);
+    }
+  };
 
   const loadBorrowerIntents = useCallback(async () => {
     if (!oportunidad?.id || !userId) return;
@@ -780,7 +806,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
           <h2>Pago dirigido y contrato</h2>
           <p className="muted">
             {isNotariadoPending
-              ? 'Aquí puedes descargar tu contrato y completar la firma notariada. Cuando esté validada, publicaremos tu oportunidad para fondeo.'
+              ? (disbursement?.notariado_agendado_at
+                ? 'Recibimos tu confirmación de firma agendada. En cuanto esté validada por notaría, publicaremos tu oportunidad para fondeo.'
+                : 'Aquí puedes descargar tu contrato y completar la firma notariada. Cuando esté validada, publicaremos tu oportunidad para fondeo.')
               : (disbursement?.paid_at || disbursement?.estado === 'pagado'
                 ? 'Ya realizamos el pago de tu tarjeta. Aqui puedes ver el comprobante y tu contrato.'
                 : 'Te avisaremos por correo cuando paguemos tu tarjeta. Aqui veras el comprobante y tu contrato PDF.')}
@@ -793,9 +821,19 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
               <div><strong>Monto neto al banco:</strong> {formatMoney(disbursement.monto_neto || neto)}</div>
               {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                 <div style={{ padding: 12, borderRadius: 8, background: '#fff7ec', border: '1px solid #ffd7b0', color: '#8a4b06' }}>
-                  <strong>Acción requerida:</strong> agenda la firma notariada para habilitar la publicación y el siguiente paso de pago al banco.
+                  {disbursement.notariado_agendado_at ? (
+                    <>
+                      <strong>Firma agendada.</strong> Estamos en coordinación con notaría para validar el documento y habilitar la publicación.
+                    </>
+                  ) : (
+                    <>
+                      <strong>Acción requerida:</strong> agenda la firma notariada para habilitar la publicación y el siguiente paso de pago al banco.
+                    </>
+                  )}
                 </div>
               )}
+              {notaryActionMessage && <p style={{ color: '#0a7a4b', margin: '0 0 4px 0' }}>{notaryActionMessage}</p>}
+              {notaryActionError && <p style={{ color: '#b00020', margin: '0 0 4px 0' }}>{notaryActionError}</p>}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {disbursement.comprobante_url ? (
                   <a className="btn" href={disbursement.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante banco</a>
@@ -808,16 +846,26 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                   <span className="muted">Contrato en proceso</span>
                 )}
                 {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
-                  <a
-                    className="btn btn--primary"
-                    href={`https://wa.me/59178271936?text=${encodeURIComponent(
-                      `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${(oportunidad?.id || disbursement?.opportunity_id) ? ` / Oportunidad ${oportunidad?.id || disbursement?.opportunity_id}` : ''}.`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Agendar firma
-                  </a>
+                  <>
+                    <a
+                      className="btn btn--primary"
+                      href={`https://wa.me/59178271936?text=${encodeURIComponent(
+                        `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${(oportunidad?.id || disbursement?.opportunity_id) ? ` / Oportunidad ${oportunidad?.id || disbursement?.opportunity_id}` : ''}.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Agendar firma
+                    </a>
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={markNotaryScheduled}
+                      disabled={notaryActionLoading || !!disbursement.notariado_agendado_at}
+                    >
+                      {disbursement.notariado_agendado_at ? 'Firma agendada' : (notaryActionLoading ? 'Guardando...' : 'Ya agendé mi firma')}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
