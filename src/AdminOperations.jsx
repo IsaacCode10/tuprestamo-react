@@ -571,7 +571,7 @@ const AdminOperations = () => {
     setError('');
     const { data, error } = await supabase
       .from('desembolsos')
-      .select('id, opportunity_id, monto_bruto, monto_neto, estado, comprobante_url, contract_url, notariado_ok, notariado_url, paid_at, created_at')
+      .select('id, opportunity_id, monto_bruto, monto_neto, estado, comprobante_url, contract_url, notariado_ok, notariado_url, paid_at, created_at, oportunidades(estado)')
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) setError(error.message);
@@ -598,7 +598,8 @@ const AdminOperations = () => {
           contract_signed_url = signed?.signedUrl || null;
         } catch (_) {}
       }
-      return { ...d, comprobante_signed_url, contract_signed_url, notariado_signed_url };
+      const opportunity_state = d?.oportunidades?.estado || null;
+      return { ...d, opportunity_state, comprobante_signed_url, contract_signed_url, notariado_signed_url };
     }));
     setDisbursements(withSigned);
     setLoading(false);
@@ -829,6 +830,7 @@ const AdminOperations = () => {
       });
       if (error) throw error;
       setInfoMessage(data?.message || 'Oportunidad publicada.');
+      await refreshAll();
       setTimeout(() => setInfoMessage(''), 4000);
     } catch (e) {
       setError(e?.message || 'No se pudo publicar la oportunidad.');
@@ -1472,6 +1474,7 @@ const AdminOperations = () => {
                     {d.estado}
                     <div className="muted">{d.paid_at ? `Pagado: ${new Date(d.paid_at).toLocaleString('es-BO')}` : 'Pendiente'}</div>
                     <div className="muted">Notariado: {d.notariado_ok ? 'OK' : 'Pendiente'}</div>
+                    <div className="muted">Estado oportunidad: {d.opportunity_state || 'N/D'}</div>
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1500,14 +1503,22 @@ const AdminOperations = () => {
                     </div>
                   </td>
                 <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <button
-                    className="btn"
-                    disabled={!d.notariado_ok}
-                    onClick={() => publishOpportunityAfterNotary(d)}
-                    title="Requiere contrato notariado. Publica la oportunidad para fondeo."
-                  >
-                    Publicar oportunidad
-                  </button>
+                  {(() => {
+                    const oppState = String(d.opportunity_state || '').toLowerCase();
+                    const alreadyPublished = ['disponible', 'fondeada', 'activo', 'desembolsado', 'pagado'].includes(oppState);
+                    return (
+                      <button
+                        className="btn"
+                        disabled={!d.notariado_ok || alreadyPublished}
+                        onClick={() => publishOpportunityAfterNotary(d)}
+                        title={alreadyPublished
+                          ? `La oportunidad ya está en estado ${oppState || 'publicada'}.`
+                          : 'Requiere contrato notariado. Publica la oportunidad para fondeo.'}
+                      >
+                        {alreadyPublished ? 'Ya publicada' : 'Publicar oportunidad'}
+                      </button>
+                    );
+                  })()}
                   <button
                     className="btn btn--primary"
                     disabled={d.estado === 'pagado' || !d.notariado_ok}
