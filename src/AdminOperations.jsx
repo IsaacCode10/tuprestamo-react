@@ -1485,9 +1485,12 @@ const AdminOperations = () => {
                       ) : (
                         <span className="muted">Contrato notariado pendiente</span>
                       )}
-                      <label className="ops-file-upload-label">
+                      <label
+                        className="ops-file-upload-label"
+                        title={d.notariado_ok ? 'Ya validado. Puedes reemplazar el archivo si detectas una corrección.' : 'Sube el contrato notariado firmado.'}
+                      >
                         <input className="ops-file-input-hidden" type="file" accept=".pdf,image/*" onChange={(e) => uploadNotaryImmediate(d, e.target.files?.[0] || null)} />
-                        Subir contrato notariado
+                        {d.notariado_ok ? 'Reemplazar contrato notariado' : 'Subir contrato notariado'}
                       </label>
                       {d.contract_url ? (
                         <a href={d.contract_signed_url || d.contract_url} target="_blank" rel="noreferrer">Contrato generado</a>
