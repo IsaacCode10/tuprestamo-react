@@ -1512,12 +1512,12 @@ const AdminOperations = () => {
                     className="btn btn--primary"
                     disabled={d.estado === 'pagado' || !d.notariado_ok}
                     onClick={() => registerDirectedPayment(d)}
-                    title="Requiere contrato notariado. Luego sube el comprobante del pago al banco y pulsa aquí. Generaremos el contrato automático y notificaremos al prestatario e inversionistas."
+                    title="Úsalo cuando la oportunidad ya esté publicada/fondeada y tengas el comprobante del pago al banco. Este paso registra el desembolso dirigido."
                   >
                     Registrar pago dirigido
                   </button>
                   <span
-                    title="Sube el comprobante del pago al banco antes de registrar. El contrato se genera automático y se notifican prestatario e inversionistas."
+                    title="Orden sugerido: 1) Notariado OK, 2) Publicar oportunidad, 3) Fondear, 4) Subir comprobante banco, 5) Registrar pago dirigido."
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
