@@ -195,7 +195,9 @@ async function buildPdf(payload: ContractPayload): Promise<Uint8Array> {
   drawBlock('2) Fondeo por inversionistas', [
     `Meta de fondeo: Bs ${formatMoney(funding.monto_objetivo)}`,
     `Monto acreditado: Bs ${formatMoney(funding.total_pagado)}`,
-    investors.length > 0 ? 'Participaciones:' : 'Sin participaciones registradas',
+    investors.length > 0
+      ? 'Participaciones registradas al momento de emisión:'
+      : 'Participaciones: se completará una vez publicada y fondeada la oportunidad.',
   ])
 
   investors.forEach((inv) => {
@@ -209,24 +211,35 @@ async function buildPdf(payload: ContractPayload): Promise<Uint8Array> {
   y -= 4
 
   drawBlock('3) Mandato de pago dirigido', [
-    'El prestatario autoriza a Tu Préstamo a pagar el saldo de su tarjeta/crédito directamente al banco acreedor usando los fondos fondeados.',
-    'Al ejecutarse el pago dirigido, el préstamo se considera desembolsado y comienza el cronograma de cuotas.',
+    'El prestatario otorga mandato expreso a Tu Préstamo para pagar el saldo de su tarjeta/crédito directamente al banco acreedor con los fondos fondeados.',
+    'Este mandato aplica exclusivamente al pago dirigido de la presente operación y se mantiene vigente hasta su ejecución o extinción de la obligación.',
+    'La publicación y ejecución del pago dirigido requieren validación de firma notariada y fondeo completo de la oportunidad.',
+    'Al ejecutarse el pago dirigido, el préstamo se considera desembolsado y se activa el cronograma de cuotas.',
     'El comprobante del pago al banco formará parte de este contrato.',
   ])
 
   drawBlock('4) Cronograma y obligaciones', [
-    'Se aplicará un cronograma de cuota fija mensual: capital + interés + admin/seguro según las condiciones aprobadas.',
+    'Se aplicará un cronograma de cuota fija mensual: capital + interés + cargo de administración/seguro según las condiciones aprobadas.',
     'Los pagos deben realizarse en las fechas de vencimiento publicadas en el panel del prestatario.',
-    'Incumplimientos pueden generar cargos por mora conforme a la política vigente.',
+    'Imputación de pagos: (i) cargos por mora, (ii) interés, (iii) administración/seguro, (iv) capital.',
+    'En mora, podrán aplicarse cargos conforme a la política vigente publicada en Tu Préstamo.',
   ])
 
-  drawBlock('5) Declaración de riesgos', [
+  drawBlock('5) Transparencia económica y riesgos', [
+    'El prestatario declara conocer y aceptar: monto bruto, monto neto al banco, comisión de originación, cargo mensual de administración/seguro, plazo y cronograma.',
+    'Costo de firma notariada: asumido por Tu Préstamo en esta operación (sin cargo adicional al prestatario).',
     'Inversionistas: los retornos dependen del pago del prestatario. No existe garantía estatal ni custodia de fondos.',
     'Prestatario: la tasa es fija, pero el impago puede afectar su historial crediticio y derivar en gestiones de cobranza.',
   ])
 
-  drawBlock('6) Aceptación y sello', [
-    'Este documento es un acuse digital. Las acciones en la plataforma constituyen aceptación (clickwrap).',
+  drawBlock('6) Ley aplicable, jurisdicción y notificaciones', [
+    'Este contrato se rige por la normativa vigente del Estado Plurinacional de Bolivia.',
+    'Las partes señalan como domicilio contractual los datos declarados en plataforma y aceptan notificaciones por medios digitales registrados.',
+    'Toda controversia será tratada conforme a la jurisdicción competente en Bolivia, según normativa aplicable.',
+  ])
+
+  drawBlock('7) Aceptación y control documental', [
+    'La aceptación en plataforma constituye consentimiento electrónico; la firma notariada otorga formalidad para la ejecución operativa del pago dirigido.',
     `Hash de control: op-${opp.id || 'n/a'}-${Date.now()}`,
   ])
 
