@@ -847,16 +847,22 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 )}
                 {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                   <>
-                    <a
-                      className="btn btn--primary"
-                      href={`https://wa.me/59178271936?text=${encodeURIComponent(
-                        `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${(oportunidad?.id || disbursement?.opportunity_id) ? ` / Oportunidad ${oportunidad?.id || disbursement?.opportunity_id}` : ''}.`
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Agendar firma
-                    </a>
+                    {disbursement.notariado_agendado_at ? (
+                      <button className="btn btn--primary" type="button" disabled title="Ya registramos tu confirmación de firma agendada.">
+                        Agendar firma
+                      </button>
+                    ) : (
+                      <a
+                        className="btn btn--primary"
+                        href={`https://wa.me/59178271936?text=${encodeURIComponent(
+                          `Hola, soy ${solicitud?.nombre_completo || 'un cliente'} y mi crédito fue aprobado. Quiero agendar la firma notariada. Solicitud ID ${solicitud?.id || 'N/D'}${(oportunidad?.id || disbursement?.opportunity_id) ? ` / Oportunidad ${oportunidad?.id || disbursement?.opportunity_id}` : ''}.`
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Agendar firma
+                      </a>
+                    )}
                     <button
                       className="btn"
                       type="button"
