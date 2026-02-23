@@ -331,7 +331,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     if (isNotariadoPending) {
       return {
         title: 'Firma notariada pendiente',
-        subtitle: 'Antes de publicar tu oportunidad necesitamos la firma notariada del contrato. Apenas esté lista, publicamos tu oportunidad para fondeo.'
+        subtitle: 'Estás en la etapa previa a publicación. Revisa tu contrato y agenda la firma notariada para continuar.'
       };
     }
     if (disbEstado === 'pagado' || oppEstado === 'activo') {
@@ -780,7 +780,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
           <h2>Pago dirigido y contrato</h2>
           <p className="muted">
             {isNotariadoPending
-              ? 'Para publicar tu oportunidad necesitamos la firma notariada del contrato. Aquí puedes descargar el PDF y agendar la firma. El costo notarial está cubierto por Tu Préstamo.'
+              ? 'Aquí puedes descargar tu contrato y completar la firma notariada. Cuando esté validada, publicaremos tu oportunidad para fondeo.'
               : (disbursement?.paid_at || disbursement?.estado === 'pagado'
                 ? 'Ya realizamos el pago de tu tarjeta. Aqui puedes ver el comprobante y tu contrato.'
                 : 'Te avisaremos por correo cuando paguemos tu tarjeta. Aqui veras el comprobante y tu contrato PDF.')}
@@ -793,7 +793,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
               <div><strong>Monto neto al banco:</strong> {formatMoney(disbursement.monto_neto || neto)}</div>
               {!disbursement.notariado_ok && disbursement.estado !== 'pagado' && !disbursement.paid_at && (
                 <div style={{ padding: 12, borderRadius: 8, background: '#fff7ec', border: '1px solid #ffd7b0', color: '#8a4b06' }}>
-                  <strong>Contrato notariado pendiente.</strong> Para publicar tu oportunidad y continuar con el pago al banco debes agendar la firma notariada. El costo notarial está cubierto por Tu Préstamo.
+                  <strong>Acción requerida:</strong> agenda la firma notariada para habilitar la publicación y el siguiente paso de pago al banco.
                 </div>
               )}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
