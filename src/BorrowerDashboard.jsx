@@ -407,16 +407,16 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   }, [oportunidad?.id, userId]);
 
   const markNotaryScheduled = async () => {
-    if (!disbursement?.id || notaryActionLoading) return;
+    if (!oportunidad?.id || notaryActionLoading) return;
     setNotaryActionLoading(true);
     setNotaryActionError('');
     try {
-      const { error } = await supabase
-        .from('desembolsos')
-        .update({ notariado_agendado_at: new Date().toISOString() })
-        .eq('id', disbursement.id);
+      const { data, error } = await supabase.functions.invoke('mark-notary-scheduled', {
+        body: { opportunity_id: oportunidad.id },
+      });
       if (error) throw error;
-      setDisbursement((prev) => prev ? { ...prev, notariado_agendado_at: new Date().toISOString() } : prev);
+      const markedAt = data?.notariado_agendado_at || new Date().toISOString();
+      setDisbursement((prev) => prev ? { ...prev, notariado_agendado_at: markedAt } : prev);
     } catch (e) {
       console.error('Error marcando firma notariada como agendada:', e);
       setNotaryActionError('No pudimos registrar tu confirmación. Intenta nuevamente.');
