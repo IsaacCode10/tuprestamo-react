@@ -15,6 +15,7 @@ const MyInvestmentsList = () => {
   const [intentsMap, setIntentsMap] = useState({ byId: {}, byOpportunity: {} });
   const [investorSchedules, setInvestorSchedules] = useState({});
   const [payoutSignedMap, setPayoutSignedMap] = useState({});
+  const [investorContractSignedMap, setInvestorContractSignedMap] = useState({});
   const [activeTab, setActiveTab] = useState('inversiones');
   const [nextPayments, setNextPayments] = useState([]);
 
@@ -43,12 +44,24 @@ const MyInvestmentsList = () => {
 
         const { data: invs, error: invErr } = await supabase
           .from('inversiones')
-          .select('id, opportunity_id, amount, status, created_at')
+          .select('id, opportunity_id, amount, status, created_at, investor_contract_url')
           .eq('investor_id', user.id)
           .order('created_at', { ascending: false });
         if (invErr) throw invErr;
 
         setRows(invs || []);
+        const contractSignedMap = {};
+        await Promise.all((invs || []).map(async (inv) => {
+          if (!inv?.investor_contract_url) return;
+          try {
+            const { data: signed, error: signErr } = await supabase
+              .storage
+              .from('contratos')
+              .createSignedUrl(inv.investor_contract_url, 60 * 60);
+            if (!signErr && signed?.signedUrl) contractSignedMap[inv.id] = signed.signedUrl;
+          } catch (_) {}
+        }));
+        setInvestorContractSignedMap(contractSignedMap);
         const oppIds = Array.from(new Set((invs || []).map(r => r.opportunity_id).filter(Boolean)));
         if (oppIds.length > 0) {
           const opps = await Promise.all(oppIds.map(async (oid) => {
@@ -450,6 +463,10 @@ const MyInvestmentsList = () => {
                             </button>
                           ) : showReview ? (
                             <span className="status-pill status-pill--warning">En revision</span>
+                          ) : (r.status || '').toLowerCase() === 'pagado' && investorContractSignedMap[r.id] ? (
+                            <a className="btn btn--secondary btn--sm" href={investorContractSignedMap[r.id]} target="_blank" rel="noreferrer">
+                              Contrato
+                            </a>
                           ) : (
                             <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
                               Ver

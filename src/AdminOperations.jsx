@@ -647,6 +647,13 @@ const AdminOperations = () => {
         logOps('Marcando pagado', { id, currentStatus: intentRow?.status });
         const { data: rpcData, error: rpcErr } = await supabase.rpc('mark_payment_intent_paid', { p_payment_intent_id: id });
         if (rpcErr) throw rpcErr;
+        try {
+          await supabase.functions.invoke('generate-investor-contract', {
+            body: { payment_intent_id: id },
+          });
+        } catch (contractErr) {
+          console.warn('No se pudieron generar contratos de inversionista para el intent', id, contractErr);
+        }
         // Notificaciones básicas al inversionista/prestatario
         try {
           await sendNotificationsForPaidIntent(intentRow, rpcData);
