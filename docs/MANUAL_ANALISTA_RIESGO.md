@@ -7,7 +7,7 @@
 ## 2. Nomenclatura en la plataforma
 - **Oportunidad 61**: número corto de operación; usar este ID en comunicaciones internas.
 - **Prestatario**: se muestra como nombre/email; si falta, UUID abreviado (ej. `f6b6…b8b7`).
-- **Estados solicitud/oportunidad**: borrador, disponible, fondeada, activo, cerrado/en mora.
+- **Estados solicitud/oportunidad**: borrador, `pendiente_notariado`, disponible, fondeada, activo, cerrado/en mora.
 - **Documentos**: CI, extracto de tarjeta, comprobantes; ubicados en `documentos-prestatarios` (privado).
 
 ## 3. Flujo de trabajo (RiskAnalystDashboard)
@@ -18,13 +18,14 @@
    - Gross-up automático: originación mínima 450 hasta 10k; sobre 10k aplicar % por perfil (A/B/C).
    - Confirmar tasa y plazo aprobados.
 5) **Guardar decisión**: guardar en `decisiones_de_riesgo`; actualizar oportunidad/solicitud.
-6) **Propuesta final**: disparar propuesta al prestatario (correo/notif) y publicar oportunidad (estado `disponible`) tras aceptación.
+6) **Propuesta final**: disparar propuesta al prestatario (correo/notif).
+7) **Paso posterior (Operaciones)**: tras aceptación del prestatario, la operación pasa a `pendiente_notariado`; Operaciones valida notariado y recién publica oportunidad (`disponible`).
 
 ## 4. Checklist por solicitud
 - Documentos completos y legibles (CI, extracto tarjeta).
 - Saldo verificado registrado y consistente con la oferta.
 - Tasa/plazo asignados según perfil; originación aplicada correctamente.
-- Oportunidad publicada solo cuando el prestatario acepta la propuesta.
+- Oportunidad publicada solo después de notariado validado por Operaciones.
 
 ## 4.1 Registro INFOCRED (obligatorio)
 - **Precondiciones**:
@@ -50,10 +51,10 @@
 
 ## 5. Incidencias comunes
 - **Documento ilegible/faltante**: solicitar recarga; no aprobar hasta validar saldo.
-- **Saldo inconsistente**: volver a calcular gross-up y ajustar oferta antes de publicar.
+- **Saldo inconsistente**: volver a calcular gross-up y ajustar oferta antes de emitir propuesta final.
 - **Estado en inglés**: refrescar; si persiste, reportar a soporte.
 
 ## 6. Checklist diario
 - Revisar nuevas solicitudes y documentos pendientes.
-- Completar decisiones en cola y publicar oportunidades aprobadas.
+- Completar decisiones en cola y transferir a Operaciones las aprobadas (`pendiente_notariado`) para cierre notarial/publicación.
 - Coordinar con Operaciones si hay cambios de datos que afecten pagos/cronos.

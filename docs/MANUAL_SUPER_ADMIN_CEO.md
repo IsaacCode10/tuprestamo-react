@@ -23,11 +23,13 @@
 - Notificaciones en producción (p. ej. payout pending/paid, pagos verificados).
 
 ## 5. Checklist E2E (validación con oportunidad real)
-1) Confirmar que el prestatario subió comprobante de cuota.
-2) Verificar que Operaciones marcó `Pagado` y se generaron payouts.
-3) Verificar en panel inversionista: payout `Pagado` y comprobante visible.
-4) Validar “Fuente Única” sin brechas.
-5) Registrar evidencia (capturas y IDs).
+1) Confirmar aceptación del prestatario y paso a `pendiente_notariado`.
+2) Verificar notariado validado por Operaciones y publicación de oportunidad.
+3) Confirmar fondeo, pago dirigido al banco y activación de cronograma.
+4) Verificar que Operaciones marcó cuota `Pagado` y se generaron payouts.
+5) Verificar en panel inversionista: payout `Pagado`, comprobante visible y constancia de inversión.
+6) Validar “Fuente Única” sin brechas.
+7) Registrar evidencia (capturas y IDs).
 
 ## 6. Qué NO hacer
 - No tocar código directamente.
