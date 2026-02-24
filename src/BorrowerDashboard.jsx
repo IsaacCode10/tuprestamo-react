@@ -324,7 +324,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const isNotariadoPending = solicitud?.estado === 'pendiente_notariado' || oppEstado === 'pendiente_notariado';
   const currentStepperState = (() => {
     if (disbEstado === 'pagado' || oppEstado === 'activo') return 'desembolsado';
-    if (disbursement || oppEstado === 'fondeada') return 'fondeada';
+    if (oppEstado === 'fondeada') return 'fondeada';
     if (isNotariadoPending) return 'pendiente_notariado';
     return 'prestatario_acepto';
   })();
@@ -344,7 +344,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         subtitle: 'Pagamos tu tarjeta directamente en tu banco. Tu contrato está al final de la página, al igual que el cronograma de pagos.'
       };
     }
-    if (disbursement || oppEstado === 'fondeada') {
+    if (oppEstado === 'fondeada') {
       return {
         title: 'Tu oportunidad se fondeó al 100%',
         subtitle: 'Estamos ejecutando el pago dirigido a tu banco. Te avisaremos cuando esté confirmado y podrás descargar tu contrato aquí.'
@@ -359,7 +359,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const breadcrumbLabel = (() => {
     if (isNotariadoPending) return 'Firma notariada';
     if (disbEstado === 'pagado' || oppEstado === 'activo') return 'Préstamo desembolsado';
-    if (disbursement || oppEstado === 'fondeada') return '100% fondeada';
+    if (oppEstado === 'fondeada') return '100% fondeada';
     return 'Propuesta publicada';
   })();
 
@@ -613,7 +613,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       <ProgressStepper
         currentStep={currentStepperState}
         allDocumentsUploaded
-        hasDisbursement={!!disbursement}
         disbursementState={disbursement?.estado}
         opportunityState={oportunidad?.estado}
       />
@@ -1282,7 +1281,7 @@ const parseNumberValue = (value) => {
 };
 
 // --- PROGRESS STEPPER CON LÓGICA DE UI MEJORADA ---
-const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = false, disbursementState, opportunityState }) => {
+const ProgressStepper = ({ currentStep, allDocumentsUploaded, disbursementState, opportunityState }) => {
   const steps = [
     'Solicitud Recibida',
     'Verificación Inicial',
@@ -1318,7 +1317,7 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded, hasDisbursement = 
 
     const oppState = (opportunityState || '').toLowerCase();
     const disbState = (disbursementState || '').toLowerCase();
-    if (oppState === 'fondeada' || hasDisbursement) {
+    if (oppState === 'fondeada') {
       currentStepIndex = Math.max(currentStepIndex, 6);
     }
     if (['pagado', 'desembolsado', 'activo'].includes(oppState) || disbState === 'pagado') {
