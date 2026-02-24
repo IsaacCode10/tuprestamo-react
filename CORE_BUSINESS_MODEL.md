@@ -85,6 +85,11 @@ Nota de gobierno financiero:
 - El P&L de Tu Préstamo se evalúa con cuatro capas:  
   `originación neta + comisiones de servicio + spread_plataforma + admin_plataforma`  
   y excluye de ingreso neto los conceptos pass-through (ej. seguro transferido a tercero).
+- Sobre ese margen operativo se descuentan costos unitarios del funnel:
+  - **Costo analista de riesgo por crédito aprobado:** **Bs 50**.
+  - **Costo INFOCRED por consulta:** **Bs 11** por evaluación.
+  - Métrica de contribución mensual:  
+    `resultado_neto_aprox = EBITDA_aprox - (aprobados_mes * 50) - (consultas_infocred_mes * 11)`.
 
 #### **5. Flujo de Experiencia del Prestatario (Pre-Aprobación a Conversión)**
 

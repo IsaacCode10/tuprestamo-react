@@ -80,6 +80,17 @@ Esto significa que el spread:
 * no se "regala" por error al inversionista,
 * y queda auditable en el ledger para P&L.
 
+## Costos Unitarios de Evaluación (P&L)
+
+Además del waterfall de caja por cuota, Tu Préstamo reconoce costos unitarios de originación comercial:
+
+* **Analista de riesgo:** Bs 50 por crédito aprobado.
+* **Consulta INFOCRED:** Bs 11 por consulta.
+
+Estos costos se descuentan en el P&L gerencial mensual (no en el ledger transaccional de cuotas):
+
+`resultado_neto_aprox = EBITDA_aprox - (aprobados_mes * 50) - (consultas_infocred_mes * 11)`
+
 ## Flujo de Experiencia del Prestatario (Pre-Aprobación)
 
 Para maximizar la conversión, el flujo operativo se enriquece con una experiencia de usuario diseñada para motivar al prestatario a completar el proceso.

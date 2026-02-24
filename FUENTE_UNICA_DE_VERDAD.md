@@ -117,6 +117,19 @@ Regla de consistencia por intent/cuota:
 
 Si la igualdad no se cumple (tolerancia 0.01), el estado de control debe marcarse como `revisar`.
 
+## 4.3) Costos unitarios fuera del waterfall (unit economics / P&L)
+
+Para evitar mezclar caja operativa con costos del funnel:
+
+- **NO** registrar costo de analista ni costo de INFOCRED en `movimientos` de cuota.
+- Estos costos se tratan como **OPEX unitario** y se calculan para P&L de gestión:
+  - `costo_analista_mes = aprobados_mes * 50`
+  - `costo_infocred_mes = consultas_infocred_mes * 11`
+- Resultado de contribución mensual:
+  - `resultado_neto_aprox = EBITDA_aprox - costo_analista_mes - costo_infocred_mes`
+
+Esto mantiene intacta la conciliación de cuotas (SSOT transaccional) y separa claramente el P&L gerencial.
+
 ## 5) Loop de 3 capas (para que no falle)
 
 El objetivo es evitar que el join falle o que la vista muestre NULLs cuando el

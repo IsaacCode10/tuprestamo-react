@@ -8,6 +8,8 @@ Parámetros confirmados
 - Tasas prestatario por nivel: A 15% – B 17% – C 20%
 - Originación: mínimo Bs 450 hasta neto 10.000; sobre netos >10.000 aplicar A 3% – B 4% – C 5% con gross-up (ingreso mes de desembolso)
 - Costo notariado por préstamo desembolsado (MVP): Bs 150 aprox. (absorbido por la plataforma; no se cobra extra al prestatario)
+- Costo analista de riesgo por crédito aprobado: Bs 50
+- Costo INFOCRED por consulta: Bs 11
 - Comisión inversionista: 1% sobre cada pago mensual (capital + interés)
 - Spread de plataforma: diferencia entre tasa activa (prestatario) y tasa pasiva objetivo (inversionista), registrada por cuota
 - Servicio+Seguro mensual sobre saldo deudor:
@@ -24,7 +26,7 @@ Datos a definir (para versión 2)
 - Mix A/B/C (%)
 - Mix de plazos 12/18/24 (%)
 - Tasa de aprobación del funnel (approval rate)
-  - Costo de buró: Bs 11 por consulta → costo por aprobado = 11 / approval_rate
+  - Costo de buró: Bs 11 por consulta -> costo por aprobado = 11 / approval_rate
   - Sensibilidad sugerida: 15% / 25% / 35%
 
 Metodología de cálculo
@@ -36,6 +38,11 @@ Metodología de cálculo
   2) Comisión de servicio inversionista (1% mensual sobre flujo definido)
   3) Admin plataforma (0,10% mensual sobre saldo)
   4) Spread plataforma (activo - pasivo) por cuota
+- Costos unitarios para P&L:
+  5) Costo analista: `aprobados_mes * 50`
+  6) Costo INFOCRED: `consultas_infocred_mes * 11`
+- Resultado neto unitario:
+  - `resultado_neto_aprox = EBITDA_aprox - costo_analista - costo_infocred`
 - EL=2% reduce proporcionalmente 2), 3) y 4) cuando aplica
 - Estado estable: cuando conviven hasta 24 cohortes (para plazo 24m)
 

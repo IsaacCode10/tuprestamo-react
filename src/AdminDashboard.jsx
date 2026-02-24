@@ -30,6 +30,9 @@ const formatPercent = (value) => {
   return `${num.toFixed(1)}%`;
 };
 
+const COSTO_ANALISTA_POR_APROBADO = 50;
+const COSTO_INFOCRED_POR_CONSULTA = 11;
+
 const PendingInvestments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -202,7 +205,15 @@ const AdminDashboard = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   const [ledgerRows, setLedgerRows] = useState([]);
-  const [ledgerTotals, setLedgerTotals] = useState({ cobros: 0, payouts: 0, comisiones: 0, margen: 0 });
+  const [ledgerTotals, setLedgerTotals] = useState({ cobros: 0, payouts: 0, comisiones: 0, originacion: 0, margen: 0 });
+  const [unitEconomics, setUnitEconomics] = useState({
+    aprobadosMes: 0,
+    consultasInfocredMes: 0,
+    costoAnalistaMes: 0,
+    costoInfocredMes: 0,
+    costosUnitariosMes: 0,
+    resultadoNetoMes: 0,
+  });
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [ledgerError, setLedgerError] = useState(null);
   const [fuenteChecks, setFuenteChecks] = useState([]);
@@ -440,6 +451,42 @@ const AdminDashboard = () => {
       }, { cobros: 0, payouts: 0, comisiones: 0, originacion: 0, margen: 0 });
       setLedgerRows(list);
       setLedgerTotals(totals);
+
+      const { count: aprobadosMesCount, error: aprobadosMesError } = await supabase
+        .from('decisiones_riesgo')
+        .select('id', { count: 'exact', head: true })
+        .eq('decision', 'Aprobado')
+        .gte('created_at', start.toISOString())
+        .lt('created_at', end.toISOString());
+      if (aprobadosMesError) {
+        console.warn('No se pudo cargar aprobados del mes para unit economics', aprobadosMesError);
+      }
+
+      const { data: infocredRows, error: infocredError } = await supabase
+        .from('documentos')
+        .select('solicitud_id, uploaded_at')
+        .eq('tipo_documento', 'historial_infocred')
+        .gte('uploaded_at', start.toISOString())
+        .lt('uploaded_at', end.toISOString());
+      if (infocredError) {
+        console.warn('No se pudo cargar consultas INFOCRED del mes para unit economics', infocredError);
+      }
+
+      const consultasInfocredMes = infocredError ? 0 : new Set((infocredRows || []).map((row) => row.solicitud_id)).size;
+      const aprobadosMes = aprobadosMesError ? 0 : Number(aprobadosMesCount || 0);
+      const costoAnalistaMes = aprobadosMes * COSTO_ANALISTA_POR_APROBADO;
+      const costoInfocredMes = consultasInfocredMes * COSTO_INFOCRED_POR_CONSULTA;
+      const costosUnitariosMes = costoAnalistaMes + costoInfocredMes;
+      const resultadoNetoMes = totals.margen - costosUnitariosMes;
+
+      setUnitEconomics({
+        aprobadosMes,
+        consultasInfocredMes,
+        costoAnalistaMes,
+        costoInfocredMes,
+        costosUnitariosMes,
+        resultadoNetoMes,
+      });
     } catch (err) {
       console.error('Error loading ledger', err);
       setLedgerError('No pudimos cargar el resumen contable.');
@@ -593,7 +640,7 @@ const AdminDashboard = () => {
               />
             </label>
             <button className="btn" onClick={exportLedgerCsv} disabled={ledgerRows.length === 0}>Exportar CSV</button>
-            <div className="muted">EBITDA aprox = comisión TP (1%) sin OPEX; usa movimientos contables.</div>
+            <div className="muted">EBITDA aprox = comisión TP + originación; costos unitarios (analista + INFOCRED) se muestran debajo.</div>
           </div>
           {ledgerLoading && <p className="muted">Cargando resumen contable...</p>}
           {ledgerError && <p style={{ color: 'red' }}>{ledgerError}</p>}
@@ -604,7 +651,11 @@ const AdminDashboard = () => {
                 <KpiCard title="Payouts inversionistas" value={formatCurrency(ledgerTotals.payouts)} type="secondary" />
                 <KpiCard title="Comisión TP (1%)" value={formatCurrency(ledgerTotals.comisiones)} />
                 <KpiCard title="Originación" value={formatCurrency(ledgerTotals.originacion)} />
-                <KpiCard title="EBITDA aprox." value={formatCurrency(ledgerTotals.margen)} type="success" subtitle="Comisión+originación; sin gastos OPEX" />
+                <KpiCard title="EBITDA aprox." value={formatCurrency(ledgerTotals.margen)} type="success" subtitle="Comisión+originación; sin OPEX general" />
+                <KpiCard title="Aprobados (mes)" value={unitEconomics.aprobadosMes} subtitle={`Costo analista: ${formatCurrency(COSTO_ANALISTA_POR_APROBADO)} c/u`} />
+                <KpiCard title="Consultas INFOCRED (mes)" value={unitEconomics.consultasInfocredMes} subtitle={`Costo buró: ${formatCurrency(COSTO_INFOCRED_POR_CONSULTA)} c/u`} />
+                <KpiCard title="Costos unitarios (mes)" value={formatCurrency(unitEconomics.costosUnitariosMes)} type="secondary" subtitle="Analista + INFOCRED" />
+                <KpiCard title="Resultado neto aprox." value={formatCurrency(unitEconomics.resultadoNetoMes)} type={unitEconomics.resultadoNetoMes >= 0 ? 'success' : 'total-rejected'} subtitle="EBITDA aprox - costos unitarios" />
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
