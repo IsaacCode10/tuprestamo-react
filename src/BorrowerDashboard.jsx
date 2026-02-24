@@ -1317,6 +1317,9 @@ const ProgressStepper = ({ currentStep, allDocumentsUploaded, disbursementState,
 
     const oppState = (opportunityState || '').toLowerCase();
     const disbState = (disbursementState || '').toLowerCase();
+    if (oppState === 'disponible') {
+      currentStepIndex = Math.max(currentStepIndex, 6);
+    }
     if (oppState === 'fondeada') {
       currentStepIndex = Math.max(currentStepIndex, 6);
     }
