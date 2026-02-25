@@ -401,8 +401,10 @@ const AdminOperations = () => {
           user_id: borrowerId,
           title: 'Tu préstamo fue fondeado',
           body: `Tu préstamo fue fondeado. Ahora pagaremos directamente a tu banco${bankName ? ` (${bankName})` : ''} por ${formatMoney(montoTotal)}.`,
-          link_url: '/panel-prestatario',
+          link_url: '/borrower-dashboard',
+          cta_label: 'IR A MI PANEL',
           type: 'loan_funded',
+          email: true,
         });
       }
     }

@@ -102,7 +102,13 @@ Esto nos ayuda a mantener una estÃ©tica coherente en la publicidad, redes soci
   - Saludo: “Hola {Nombre},” (si no hay nombre, usar solo “Hola,”)
   - Párrafo inicial claro y orientado a acción. Evitar texto largo.
   - CTA único y destacado (botón turquesa #26C2B2 sobre texto #FFFFFF)
+  - Para prestatario, CTA estándar obligatorio: **“IR A MI PANEL”**
+  - URL estándar de prestatario: **`/borrower-dashboard`** (evitar rutas legacy)
   - Footer discreto con ayuda/soporte y nota de automatización.
+
+- Política de canal por tipo de usuario
+  - Inversionista: priorizar notificación in-app + email en hitos críticos.
+  - Prestatario: priorizar **email proactivo en hitos de estado** (aprobación, publicación, fondeo, pago dirigido), porque su frecuencia de ingreso al panel es puntual.
 
 - Plantilla visual (HTML)
   - Logo superior (PNG transparente), margen inferior 12–16px
