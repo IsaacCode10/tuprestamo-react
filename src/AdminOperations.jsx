@@ -468,7 +468,7 @@ const AdminOperations = () => {
       if (!profErr && profs) {
         const map = {};
         profs.forEach(p => { map[p.id] = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim(); });
-        setInvestorMap(map);
+        setInvestorMap((prev) => ({ ...(prev || {}), ...map }));
       }
     }
     setLoading(false);
@@ -553,7 +553,7 @@ const AdminOperations = () => {
       if (profs) {
         const map = {};
         profs.forEach(p => { map[p.id] = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim(); });
-        setInvestorMap(map);
+        setInvestorMap((prev) => ({ ...(prev || {}), ...map }));
       }
       const { data: banks } = await supabase
         .from('cuentas_bancarias_inversionistas')
@@ -994,6 +994,17 @@ const AdminOperations = () => {
     return shortId(id);
   };
 
+  const renderUserCell = (id, map) => {
+    const label = userLabel(id, map);
+    const fallback = !(map && map[id]);
+    return (
+      <div style={{ display: 'grid', gap: 2 }}>
+        <div>{label}</div>
+        {!fallback && <div className="muted">ID: {shortId(id)}</div>}
+      </div>
+    );
+  };
+
   return (
     <div className="admin-ops" style={{ maxWidth: 1200, margin: '0 auto', padding: 16 }}>
       <h2>Operaciones</h2>
@@ -1058,7 +1069,7 @@ const AdminOperations = () => {
                   <tr key={i.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{userLabel(i.investor_id, investorMap)}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{renderUserCell(i.investor_id, investorMap)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '--'}</td>
@@ -1132,7 +1143,7 @@ const AdminOperations = () => {
                   <tr key={i.id}>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{userLabel(i.investor_id, investorMap)}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{renderUserCell(i.investor_id, investorMap)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '--'}</td>
@@ -1385,7 +1396,7 @@ const AdminOperations = () => {
                       <tr key={p.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{p.id}</td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                              {userLabel(p.investor_id, investorMap)}
+                              {renderUserCell(p.investor_id, investorMap)}
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                               <div>Neto a pagar: {formatMoney(p.amount)}</div>
