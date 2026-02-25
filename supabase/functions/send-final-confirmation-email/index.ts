@@ -47,7 +47,7 @@ serve(async (req) => {
         <p>Nuestro equipo de analistas de riesgo comenzará la revisión final. Te notificaremos sobre la decisión de tu crédito en los próximos días.</p>
         <p>Puedes revisar el estado de tu solicitud en cualquier momento desde tu panel de control:</p>
         <p style="margin-top: 30px; margin-bottom: 30px;">
-          <a href="${APP_DASHBOARD_URL}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;">IR A MI PANEL DE CONTROL</a>
+          <a href="${APP_DASHBOARD_URL}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;">IR A MI PANEL</a>
         </p>
         <p>Atentamente,<br>El equipo de Tu Préstamo</p>
       </div>

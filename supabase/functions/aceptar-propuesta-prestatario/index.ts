@@ -162,7 +162,7 @@ serve(async (req) => {
           </tr>
           <tr>
             <td align="center" style="padding:14px 20px 24px 20px;">
-              <a href="${appUrl}" target="_blank" rel="noreferrer" style="display:inline-block;background:#26C2B2;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 18px;border-radius:6px;">Ir a mi panel</a>
+              <a href="${appUrl}" target="_blank" rel="noreferrer" style="display:inline-block;background:#26C2B2;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 18px;border-radius:6px;">IR A MI PANEL</a>
             </td>
           </tr>
           <tr>

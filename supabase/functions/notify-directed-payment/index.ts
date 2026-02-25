@@ -92,7 +92,7 @@ serve(async (req) => {
       type: 'loan_disbursed',
       title: 'Pagamos tu tarjeta',
       body: `Transferimos Bs ${formatMoney(disb?.monto_neto ?? opp.saldo_deudor_verificado)} a tu banco${sol?.bancos_deuda ? ` (${sol.bancos_deuda})` : ''}. Tu cronograma inicia desde hoy.`,
-      link_url: '/panel-prestatario',
+      link_url: '/borrower-dashboard',
       priority: 'high',
     })
 
@@ -123,8 +123,8 @@ serve(async (req) => {
         title: 'Pagamos tu tarjeta en el banco',
         intro: `Transferimos Bs ${formatMoney(disb?.monto_neto ?? opp.saldo_deudor_verificado)}${sol?.bancos_deuda ? ` a ${sol.bancos_deuda}` : ''}. Desde hoy corre tu cronograma de cuotas.`,
         body: 'Ingresa a tu panel para ver el comprobante, descargar tu contrato y consultar tu QR de pago mensual.',
-        ctaLabel: 'Ir a mi panel',
-        ctaHref: `${APP_BASE_URL}/panel-prestatario`,
+        ctaLabel: 'IR A MI PANEL',
+        ctaHref: `${APP_BASE_URL}/borrower-dashboard`,
         extraHtml: contractSignedUrl
           ? `<p style="margin:12px 0 0 0;color:#222;">Contrato PDF: <a href="${contractSignedUrl}" target="_blank">Descargar</a></p>`
           : '',
