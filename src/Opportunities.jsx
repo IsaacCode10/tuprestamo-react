@@ -155,6 +155,12 @@ const Opportunities = () => {
 
   const totalPages = Math.max(1, Math.ceil((opportunities || []).length / PAGE_SIZE));
   const paginated = opportunities.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const availableCount = opportunities.filter((o) => {
+    const goal = Number(o?.monto || 0);
+    const funded = Number(o?.total_funded || 0);
+    const remaining = o?.saldo_pendiente != null ? Number(o.saldo_pendiente) : Math.max(goal - funded, 0);
+    return remaining > 0;
+  }).length;
 
   const lastPublished = (() => {
     const withDate = opportunities.filter(o => o.created_at instanceof Date && !isNaN(o.created_at));
@@ -163,7 +169,7 @@ const Opportunities = () => {
     return maxDate;
   })();
 
-  const summaryText = `${opportunities.length} oportunidad${opportunities.length === 1 ? '' : 'es'} disponibles`;
+  const summaryText = `${availableCount} oportunidad${availableCount === 1 ? '' : 'es'} disponible${availableCount === 1 ? '' : 's'}`;
   const totalText = allOpportunities.length > 0 && opportunities.length !== allOpportunities.length
     ? `Mostrando ${opportunities.length} de ${allOpportunities.length}`
     : null;
