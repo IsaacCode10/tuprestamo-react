@@ -962,7 +962,7 @@ const AdminOperations = () => {
   };
 
   const formatDateShort = (value) => {
-    if (!value) return 'â€”';
+    if (!value) return '--';
     try {
       return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch (_) {
@@ -977,7 +977,7 @@ const AdminOperations = () => {
       case 'paid': return 'Pagado';
       case 'expired': return 'Expirado';
       case 'unmatched': return 'Por conciliar';
-      default: return status || 'â€”';
+      default: return status || '--';
     }
   };
 
@@ -985,7 +985,7 @@ const AdminOperations = () => {
     if (!id) return 'n/d';
     const str = String(id);
     if (str.length <= 8) return str;
-    return `${str.slice(0, 4)}â€¦${str.slice(-4)}`;
+    return `${str.slice(0, 4)}...${str.slice(-4)}`;
   };
 
   const userLabel = (id, map) => {
@@ -1061,7 +1061,7 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{userLabel(i.investor_id, investorMap)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : 'â€”'}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '--'}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     {i.receipt_signed_url ? (
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1080,11 +1080,11 @@ const AdminOperations = () => {
                           </span>
                         )}
                         <span style={{ color: '#55747b', fontSize: '0.85rem' }}>
-                          Actualizado {i.updated_at ? new Date(i.updated_at).toLocaleString('es-BO') : 'â€”'}
+                          Actualizado {i.updated_at ? new Date(i.updated_at).toLocaleString('es-BO') : '--'}
                         </span>
                       </div>
                     ) : (
-                      'â€”'
+                      '--'
                     )}
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -1135,7 +1135,7 @@ const AdminOperations = () => {
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{userLabel(i.investor_id, investorMap)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : 'â€”'}</td>
+                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '--'}</td>
                     <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                       {i.receipt_signed_url ? (
                         <a className="btn" href={i.receipt_signed_url} target="_blank" rel="noreferrer">Ver</a>
