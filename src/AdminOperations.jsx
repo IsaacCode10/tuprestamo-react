@@ -115,6 +115,35 @@ const AdminOperations = () => {
   const payoutReceiptPickerRef = useRef(null);
   const payoutReceiptTargetRef = useRef(null);
 
+  const fetchProfileLabels = async (userIds = []) => {
+    const ids = Array.from(new Set((userIds || []).filter(Boolean)));
+    if (ids.length === 0) return {};
+    try {
+      const { data, error } = await supabase.rpc('get_ops_profile_labels', { p_user_ids: ids });
+      if (error) throw error;
+      const map = {};
+      (data || []).forEach((p) => {
+        const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
+        map[p.id] = label || p.id;
+      });
+      return map;
+    } catch (rpcErr) {
+      // Fallback defensivo si el RPC aún no fue migrado en remote.
+      console.warn('No se pudo usar get_ops_profile_labels, fallback a profiles:', rpcErr);
+      const { data: profs, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, nombre_completo, email')
+        .in('id', ids);
+      if (profErr) throw profErr;
+      const map = {};
+      (profs || []).forEach((p) => {
+        const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
+        map[p.id] = label || p.id;
+      });
+      return map;
+    }
+  };
+
   const handlePayoutReceiptChange = async (payoutId, file) => {
     if (!file) {
       logOps('Payout receipt: no file selected', { payoutId });
@@ -277,16 +306,8 @@ const AdminOperations = () => {
     const missingInvestors = investorIds.filter((id) => !investorLabelMap[id]);
     if (missingInvestors.length > 0) {
       try {
-        const { data: profs } = await supabase
-          .from('profiles')
-          .select('id, nombre_completo, email')
-          .in('id', missingInvestors);
-        if (profs) {
-          profs.forEach((p) => {
-            const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
-            investorLabelMap[p.id] = label || p.id;
-          });
-        }
+        const labels = await fetchProfileLabels(missingInvestors);
+        investorLabelMap = { ...investorLabelMap, ...labels };
       } catch (_) {}
     }
 
@@ -461,15 +482,10 @@ const AdminOperations = () => {
     // cargar perfiles para mostrar nombre/email en vez de UUID
     const investorIds = Array.from(new Set(rows.map(r => r.investor_id).filter(Boolean)));
     if (investorIds.length > 0) {
-      const { data: profs, error: profErr } = await supabase
-        .from('profiles')
-        .select('id, nombre_completo, email')
-        .in('id', investorIds);
-      if (!profErr && profs) {
-        const map = {};
-        profs.forEach(p => { map[p.id] = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim(); });
+      try {
+        const map = await fetchProfileLabels(investorIds);
         setInvestorMap((prev) => ({ ...(prev || {}), ...map }));
-      }
+      } catch (_) {}
     }
     setLoading(false);
   };
@@ -502,18 +518,12 @@ const AdminOperations = () => {
     const borrowerIds = Array.from(new Set((data || []).map((r) => r.borrower_id).filter(Boolean)));
     if (borrowerIds.length > 0) {
       try {
-        const { data: profs } = await supabase
-          .from('profiles')
-          .select('id, nombre_completo, email')
-          .in('id', borrowerIds);
-        if (profs) {
-          const map = {};
-          profs.forEach((p) => {
-            const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
-            map[p.id] = label || shortId(p.id);
-          });
-          setBorrowerMap(map);
-        }
+        const labels = await fetchProfileLabels(borrowerIds);
+        const map = {};
+        Object.entries(labels).forEach(([id, label]) => {
+          map[id] = label || shortId(id);
+        });
+        setBorrowerMap(map);
       } catch (_) {}
     }
     setLoading(false);
@@ -546,15 +556,10 @@ const AdminOperations = () => {
     // cargar perfiles
     const investorIds = Array.from(new Set(rows.map(p => p.investor_id).filter(Boolean)));
     if (investorIds.length > 0) {
-      const { data: profs } = await supabase
-        .from('profiles')
-        .select('id, nombre_completo, email')
-        .in('id', investorIds);
-      if (profs) {
-        const map = {};
-        profs.forEach(p => { map[p.id] = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim(); });
+      try {
+        const map = await fetchProfileLabels(investorIds);
         setInvestorMap((prev) => ({ ...(prev || {}), ...map }));
-      }
+      } catch (_) {}
       const { data: banks } = await supabase
         .from('cuentas_bancarias_inversionistas')
         .select('user_id, nombre_banco, numero_cuenta')
