@@ -104,6 +104,7 @@ Esto nos ayuda a mantener una estÃ©tica coherente en la publicidad, redes soci
   - CTA único y destacado (botón turquesa #26C2B2 sobre texto #FFFFFF)
   - Para prestatario, CTA estándar obligatorio: **“IR A MI PANEL”**
   - URL estándar de prestatario: **`/borrower-dashboard`** (evitar rutas legacy)
+  - Excepción para digest de inversionistas: CTA directo a oportunidades abiertas (sin paso intermedio), por ejemplo **“VER OPORTUNIDADES”** -> **`/oportunidades`**.
   - Footer discreto con ayuda/soporte y nota de automatización.
 
 - Política de canal por tipo de usuario
