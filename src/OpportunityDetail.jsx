@@ -534,6 +534,8 @@ const OpportunityDetail = () => {
   const totalFunded = opportunity.total_funded || 0;
   const totalGoal = opportunity.monto;
   const fundedPercentage = totalGoal > 0 ? (totalFunded / totalGoal) * 100 : 0;
+  const progressLabel = `${fundedPercentage.toFixed(2)}%`;
+  const showInsideLabel = fundedPercentage >= 12;
   const remainingAmount = opportunity.saldo_pendiente != null
     ? opportunity.saldo_pendiente
     : totalGoal - totalFunded;
@@ -553,7 +555,7 @@ const OpportunityDetail = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="funding-progress" style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px' }}>
               <h4>Progreso de Financiamiento</h4>
-              <div style={{ backgroundColor: '#e9ecef', borderRadius: '5px', height: '24px', marginBottom: '10px', overflow: 'hidden' }}>
+              <div style={{ backgroundColor: '#e9ecef', borderRadius: '5px', height: '24px', marginBottom: '10px', overflow: 'hidden', position: 'relative' }}>
                   <div style={{
                       width: `${Math.min(fundedPercentage, 100)}%`,
                       height: '100%',
@@ -565,8 +567,21 @@ const OpportunityDetail = () => {
                       fontWeight: 'bold',
                       transition: 'width 0.5s ease-in-out'
                   }}>
-                      {fundedPercentage.toFixed(2)}%
+                      {showInsideLabel ? progressLabel : ''}
                   </div>
+                  {!showInsideLabel && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#00445A',
+                      fontWeight: 'bold'
+                    }}>
+                      {progressLabel}
+                    </div>
+                  )}
               </div>
           <p>
               <strong>Recaudado:</strong> Bs. {totalFunded.toLocaleString('es-BO')} de Bs. {totalGoal.toLocaleString('es-BO')}
