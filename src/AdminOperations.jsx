@@ -1473,8 +1473,8 @@ const AdminOperations = () => {
                     <div className="muted">Neto banco: {formatMoney(d.monto_neto || 0)}</div>
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {d.estado}
-                    <div className="muted">{d.paid_at ? `Pagado: ${new Date(d.paid_at).toLocaleString('es-BO')}` : 'Pendiente'}</div>
+                    {formatStatusLabel(d.estado)}
+                    <div className="muted">{d.paid_at ? `Fecha pago dirigido: ${new Date(d.paid_at).toLocaleString('es-BO')}` : 'Fecha pago dirigido: —'}</div>
                     <div className="muted">Notariado: {d.notariado_ok ? 'OK' : 'Pendiente'}</div>
                     <div className="muted">Estado oportunidad: {d.opportunity_state || 'N/D'}</div>
                   </td>
