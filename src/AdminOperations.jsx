@@ -49,6 +49,8 @@ const AdminOperations = () => {
   const [borrowerIntents, setBorrowerIntents] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const [disbursements, setDisbursements] = useState([]);
+  const [kycQueue, setKycQueue] = useState([]);
+  const [kycBusyUser, setKycBusyUser] = useState(null);
   const [investorMap, setInvestorMap] = useState({});
   const [borrowerMap, setBorrowerMap] = useState({});
   const [bankMap, setBankMap] = useState({});
@@ -630,6 +632,42 @@ const AdminOperations = () => {
     setLoading(false);
   };
 
+  const loadKycQueue = async () => {
+    const { data, error } = await supabase.rpc('get_ops_investor_kyc_queue');
+    if (error) {
+      setError(error.message || 'No se pudo cargar la cola KYC de inversionistas');
+      return;
+    }
+    setKycQueue(data || []);
+  };
+
+  const setInvestorKycStatus = async (userId, newStatus) => {
+    try {
+      setError('');
+      setInfoMessage('');
+      setKycBusyUser(userId);
+      const note = newStatus === 'requiere_revision_manual'
+        ? (window.prompt('Motivo para solicitar corrección al inversionista (opcional):') || '')
+        : '';
+      const { error } = await supabase.rpc('ops_set_investor_kyc_status', {
+        p_user_id: userId,
+        p_new_status: newStatus,
+        p_note: note,
+      });
+      if (error) throw error;
+      setInfoMessage(
+        newStatus === 'verificado'
+          ? 'Inversionista verificado correctamente.'
+          : 'Se solicitó corrección de verificación al inversionista.'
+      );
+      await loadKycQueue();
+    } catch (e) {
+      setError((e).message || 'No se pudo actualizar el estado KYC');
+    } finally {
+      setKycBusyUser(null);
+    }
+  };
+
   const reopenOpportunity = async (opportunityId) => {
     try {
       setError('');
@@ -647,7 +685,7 @@ const AdminOperations = () => {
     setLoading(true);
     setError('');
     setInfoMessage('');
-    await Promise.all([loadIntents(), loadBorrowerIntents(), loadPayouts(), loadDisbursements()]);
+    await Promise.all([loadIntents(), loadBorrowerIntents(), loadPayouts(), loadDisbursements(), loadKycQueue()]);
     setLastRefreshed(new Date());
     setLoading(false);
   };
@@ -1037,6 +1075,7 @@ const AdminOperations = () => {
         <TabButton active={tab === 'disbursements'} onClick={() => setTab('disbursements')}>Desembolso dirigido</TabButton>
         <TabButton active={tab === 'borrower'} onClick={() => setTab('borrower')}>Pagos de prestatarios</TabButton>
         <TabButton active={tab === 'payouts'} onClick={() => setTab('payouts')}>Pagos a inversionistas</TabButton>
+        <TabButton active={tab === 'kyc'} onClick={() => setTab('kyc')}>Verificación inversionistas</TabButton>
         <button className="btn btn--secondary" onClick={refreshAll} disabled={loading}>Refrescar</button>
         {lastRefreshed && (
           <span style={{ color: '#55747b', fontSize: '0.9rem' }}>
@@ -1587,6 +1626,61 @@ const AdminOperations = () => {
               {disbursements.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay desembolsos registrados</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'kyc' && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>CI</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {kycQueue.map((k) => (
+                <tr key={k.user_id}>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    <div style={{ fontWeight: 700 }}>{k.nombre_completo || 'Sin nombre'}</div>
+                    <div className="muted">{k.email || 'Sin correo'}</div>
+                    <div className="muted">ID: {shortId(k.user_id)}</div>
+                  </td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{k.numero_ci || '--'}</td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                    {k.estado_verificacion === 'pendiente_revision' ? 'Pendiente revisión' :
+                      k.estado_verificacion === 'requiere_revision_manual' ? 'Requiere corrección' :
+                        (k.estado_verificacion || '--')}
+                  </td>
+                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      className="btn btn--primary"
+                      disabled={kycBusyUser === k.user_id}
+                      onClick={() => setInvestorKycStatus(k.user_id, 'verificado')}
+                    >
+                      Aprobar verificación
+                    </button>
+                    <button
+                      className="btn"
+                      disabled={kycBusyUser === k.user_id}
+                      onClick={() => setInvestorKycStatus(k.user_id, 'requiere_revision_manual')}
+                    >
+                      Solicitar corrección
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {kycQueue.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>
+                    No hay verificaciones de inversionistas pendientes.
+                  </td>
                 </tr>
               )}
             </tbody>
