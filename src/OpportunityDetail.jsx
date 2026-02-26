@@ -650,7 +650,9 @@ const OpportunityDetail = () => {
             {remainingAmount > 0 ? (
               <div className="investment-form" style={{ border: '1px solid #ddd', padding: '16px', borderRadius: '8px' }}>
                 <h3>Invertir en esta Oportunidad</h3>
-                <p style={{ marginTop: 0, color: '#0f5a62' }}>Ingresa tu monto y registraremos tu reserva. Te daremos las instrucciones de pago para confirmarla.</p>
+                {!hasActiveReservation && (
+                  <p style={{ marginTop: 0, color: '#0f5a62' }}>Ingresa tu monto y registraremos tu reserva. Te daremos las instrucciones de pago para confirmarla.</p>
+                )}
                 {receiptUnderReview && (
                   <div style={{ marginTop: 8, marginBottom: 12, padding: 12, borderRadius: 8, background: '#f0f9f8', border: '1px solid #26C2B2', color: '#00445A' }}>
                     <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Pago en revisión</p>
