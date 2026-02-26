@@ -184,23 +184,38 @@ export default function InvestorVerification() {
         })
       if (dErr) throw dErr
 
-      // 3) Invocar verificacion (fallback)
-      try {
-        await supabase.functions.invoke('verificar-identidad-inversionista', {
-          body: { record: { user_id: auth.user.id, url_archivo: filePath, tipo_documento: 'ci_inversionista_anverso' } },
-        })
-      } catch {}
+      // 3) Invocar verificación y exigir respuesta válida
+      const { data: verifyResp, error: verifyErr } = await supabase.functions.invoke('verificar-identidad-inversionista', {
+        body: { record: { user_id: auth.user.id, url_archivo: filePath, tipo_documento: 'ci_inversionista_anverso' } },
+      })
+      if (verifyErr) throw new Error(`No se pudo procesar tu verificación: ${verifyErr.message}`)
+      if (verifyResp?.error) throw new Error(`No se pudo procesar tu verificación: ${verifyResp.error}`)
 
       // 4) No actualizar estado_verificacion desde el cliente.
       //    La Edge Function 'verificar-identidad-inversionista' decide y actualiza el estado.
       //    Esto evita sobreescribir 'verificado' con 'pendiente_revision' por condiciones de carrera.
+      const status = verifyResp?.status
+      if (!status) throw new Error('No recibimos estado de verificación. Intenta nuevamente.')
 
-      // 5) Limpiar borrador
-      try { await supabase.from('verification_drafts').delete().eq('user_id', auth.user.id) } catch {}
-      try { localStorage.removeItem(draftKey) } catch {}
+      // 5) Limpiar borrador sólo cuando el envío quedó en un estado final de revisión/aprobación
+      if (status === 'verificado' || status === 'pendiente_revision') {
+        try { await supabase.from('verification_drafts').delete().eq('user_id', auth.user.id) } catch {}
+        try { localStorage.removeItem(draftKey) } catch {}
+      }
 
-      setSubmitted(true)
-      setInfo('Verificacion enviada con exito. Ya no necesitas hacer nada. Te notificaremos cuando sea aprobada.')
+      if (status === 'verificado') {
+        setSubmitted(true)
+        setInfo('Tu verificación fue aprobada. Ya puedes invertir.')
+      } else if (status === 'pendiente_revision') {
+        setSubmitted(true)
+        setInfo('Verificación enviada. No necesitas hacer nada más por ahora. Te avisaremos por notificación y correo.')
+      } else if (status === 'requiere_revision_manual') {
+        setSubmitted(false)
+        setInfo('No pudimos confirmar tu verificación automáticamente. Revisa tus datos y vuelve a enviarla.')
+      } else {
+        setSubmitted(false)
+        setInfo('Verificación recibida. Te avisaremos cuando finalice la revisión.')
+      }
     } catch (e) {
       setError(e.message)
     } finally {
@@ -279,7 +294,6 @@ export default function InvestorVerification() {
     </div>
   )
 }
-
 
 
 
