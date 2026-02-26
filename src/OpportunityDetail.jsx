@@ -33,8 +33,9 @@ const OpportunityDetail = () => {
 
   const intentStatus = (intentInfo?.status || '').toLowerCase();
   const receiptUnderReview = intentStatus === 'pending' && !!intentInfo?.receipt_url;
+  const isReservableIntent = ['pending', 'unmatched'].includes(intentStatus);
   const hasActiveReservation = Boolean(intentInfo?.id)
-    && ['pending', 'unmatched'].includes(intentStatus)
+    && isReservableIntent
     && countdown !== 'Expirada';
 
   // --- Evento de Analítica: Viewed Loan Details ---
@@ -697,7 +698,7 @@ const OpportunityDetail = () => {
               </form>
               )}
               {renderFormMessage()}
-              {intentInfo && !receiptUnderReview && (
+              {intentInfo && isReservableIntent && !receiptUnderReview && (
                 <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
                   <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada (válida 48h)</p>
               <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
@@ -733,7 +734,7 @@ const OpportunityDetail = () => {
               )}
                 </div>
               )}
-              {intentInfo && !receiptUnderReview && (
+              {intentInfo && isReservableIntent && !receiptUnderReview && (
                 <div style={{ marginTop: 14, borderTop: '1px solid #e6f2f4', paddingTop: 12 }}>
                   <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#00445A' }}>Medios de pago</p>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
@@ -773,6 +774,11 @@ const OpportunityDetail = () => {
                       <small style={{ color: '#55747b' }}>Monto exacto: Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small>
                     </div>
                   )}
+                </div>
+              )}
+              {intentInfo && intentStatus === 'paid' && (
+                <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b', fontWeight: 600 }}>
+                  Pago confirmado. Tu inversión ya figura como pagada en Mis inversiones.
                 </div>
               )}
             </div>
