@@ -28,6 +28,7 @@ const MyInvestmentsList = () => {
     const dt = new Date(value);
     return Number.isNaN(dt.getTime()) ? null : dt;
   };
+  const formatMoney = (value) => Number(value || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   useEffect(() => {
     trackEvent('Viewed Portfolio');
@@ -158,7 +159,10 @@ const MyInvestmentsList = () => {
   const hasRows = useMemo(() => (rows || []).length > 0, [rows]);
   const paidPayouts = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'paid'), [payouts]);
   const pendingPayouts = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending'), [payouts]);
-  const totalInvested = useMemo(() => rows.reduce((acc, r) => acc + Number(r.amount || 0), 0), [rows]);
+  const totalInvested = useMemo(
+    () => rows.filter((r) => (r.status || '').toLowerCase() === 'pagado').reduce((acc, r) => acc + Number(r.amount || 0), 0),
+    [rows]
+  );
   const totalPaid = useMemo(() => paidPayouts.reduce((acc, p) => {
     const monto = p.paid_amount || p.amount || p.expected_amount || 0;
     return acc + Number(monto || 0);
@@ -325,6 +329,53 @@ const MyInvestmentsList = () => {
     return null;
   }, [nextPaymentFromView, nextPendingPayout, nextSchedule, paidPayouts, schedulesByOpp, paidCountByOpp]);
 
+  const investmentGroups = useMemo(() => {
+    const map = {};
+    (rows || []).forEach((r) => {
+      const oppId = Number(r.opportunity_id);
+      if (!oppId) return;
+      if (!map[oppId]) {
+        map[oppId] = {
+          opportunity_id: oppId,
+          rows: [],
+          paidAmount: 0,
+          pendingAmount: 0,
+          cancelledAmount: 0,
+          totalAmount: 0,
+        };
+      }
+      const status = (r.status || '').toLowerCase();
+      const amount = Number(r.amount || 0);
+      map[oppId].rows.push(r);
+      map[oppId].totalAmount += amount;
+      if (status === 'pagado') map[oppId].paidAmount += amount;
+      else if (status === 'pendiente_pago') map[oppId].pendingAmount += amount;
+      else if (status === 'cancelado' || status === 'expired') map[oppId].cancelledAmount += amount;
+    });
+
+    return Object.values(map)
+      .map((g) => {
+        const o = oppsById[g.opportunity_id] || {};
+        const isFondeada = o?.saldo_pendiente != null ? Number(o.saldo_pendiente) <= 0 : false;
+        const statusLabel = isFondeada
+          ? 'Fondeada'
+          : g.pendingAmount > 0
+            ? 'En proceso'
+            : g.paidAmount > 0
+              ? 'Pagada'
+              : 'Sin movimiento';
+        const paidContracts = g.rows
+          .filter((r) => (r.status || '').toLowerCase() === 'pagado' && investorContractSignedMap[r.id])
+          .map((r) => investorContractSignedMap[r.id]);
+        return {
+          ...g,
+          statusLabel,
+          contractUrl: paidContracts[0] || null,
+        };
+      })
+      .sort((a, b) => b.opportunity_id - a.opportunity_id);
+  }, [rows, oppsById, investorContractSignedMap]);
+
   const formatDate = (value) => {
     if (!value) return 'N/D';
     try {
@@ -374,12 +425,12 @@ const MyInvestmentsList = () => {
 
       <div className="investor-kpis">
         <div className="investor-kpi">
-          <span>Total invertido</span>
-          <strong>Bs. {Number(totalInvested).toLocaleString('es-BO')}</strong>
+          <span>Capital invertido (pagado)</span>
+          <strong>Bs. {formatMoney(totalInvested)}</strong>
         </div>
         <div className="investor-kpi">
           <span>Cobros acreditados</span>
-          <strong>Bs. {Number(totalPaid).toLocaleString('es-BO')}</strong>
+          <strong>Bs. {formatMoney(totalPaid)}</strong>
         </div>
         <div className="investor-kpi">
           <span>Proximo pago</span>
@@ -387,7 +438,7 @@ const MyInvestmentsList = () => {
             {nextPaymentDisplay
               ? (() => {
                 const parts = [
-                  `${formatDate(nextPaymentDisplay.due_date)} · Bs. ${Number(nextPaymentDisplay.expected_amount || 0).toLocaleString('es-BO')}`,
+                  `ID ${nextPaymentDisplay.opportunity_id || '-'} · ${formatDate(nextPaymentDisplay.due_date)} · Bs. ${formatMoney(nextPaymentDisplay.expected_amount || 0)}`,
                   `(${nextPaymentDisplay.label})`,
                 ];
                 if (nextPaymentDisplay.installment_no) {
@@ -434,44 +485,33 @@ const MyInvestmentsList = () => {
                 <thead>
                   <tr>
                     <th>Oportunidad</th>
-                    <th className="text-right">Monto (Bs.)</th>
+                    <th className="text-right">Capital pagado (Bs.)</th>
+                    <th className="text-right">Reservas en proceso (Bs.)</th>
                     <th>Estado</th>
                     <th className="text-right">Detalle</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(r => {
-                    const o = oppsById[r.opportunity_id] || {};
-                    const intent = intentsMap.byOpportunity[r.opportunity_id];
-                    const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
-                    const remaining = o.saldo_pendiente != null ? o.saldo_pendiente : null;
-                    const isFondeada = remaining !== null ? remaining <= 0 : false;
-                    const showReview = isPendingPayment && intent?.receipt_url && (intent?.status || '').toLowerCase() === 'pending';
-                    const canPayNow = isPendingPayment && !isFondeada && !showReview;
+                  {investmentGroups.map((g) => {
+                    const o = oppsById[g.opportunity_id] || {};
                     return (
-                      <tr key={r.id}>
+                      <tr key={g.opportunity_id}>
                         <td>
-                          <div className="table-main">ID {r.opportunity_id || '-'}</div>
-                          <div className="table-subtle">Bs. {Number(o.monto || 0).toLocaleString('es-BO')}</div>
+                          <div className="table-main">ID {g.opportunity_id || '-'}</div>
+                          <div className="table-subtle">Monto oportunidad: Bs. {formatMoney(o.monto || 0)}</div>
                         </td>
-                        <td className="text-right">Bs. {Number(r.amount).toLocaleString('es-BO')}</td>
-                        <td>{formatStatus(r, o, intent)}</td>
+                        <td className="text-right">Bs. {formatMoney(g.paidAmount)}</td>
+                        <td className="text-right">Bs. {formatMoney(g.pendingAmount)}</td>
+                        <td>{g.statusLabel}</td>
                         <td className="text-right">
-                          {canPayNow ? (
-                            <button className="btn btn--primary btn--sm" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
-                              Pagar
-                            </button>
-                          ) : showReview ? (
-                            <span className="status-pill status-pill--warning">En revision</span>
-                          ) : (r.status || '').toLowerCase() === 'pagado' && investorContractSignedMap[r.id] ? (
-                            <a className="btn btn--secondary btn--sm" href={investorContractSignedMap[r.id]} target="_blank" rel="noreferrer">
+                          {g.contractUrl ? (
+                            <a className="btn btn--secondary btn--sm" href={g.contractUrl} target="_blank" rel="noreferrer" style={{ marginRight: 8 }}>
                               Contrato
                             </a>
-                          ) : (
-                            <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${r.opportunity_id}`)}>
-                              Ver
-                            </button>
-                          )}
+                          ) : null}
+                          <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${g.opportunity_id}`)}>
+                            Ver
+                          </button>
                         </td>
                       </tr>
                     );
@@ -515,10 +555,10 @@ const MyInvestmentsList = () => {
                             <td>{fecha ? formatDate(fecha) : '-'}</td>
                             <td>
                               <div className="table-main">ID {p.opportunity_id || '-'}</div>
-                              <div className="table-subtle">Bs. {Number(oppMonto || 0).toLocaleString('es-BO')}</div>
+                              <div className="table-subtle">Bs. {formatMoney(oppMonto || 0)}</div>
                             </td>
                             <td>{cuotaLabel}</td>
-                            <td className="text-right">Bs. {Number(montoCobrado).toLocaleString('es-BO')}</td>
+                            <td className="text-right">Bs. {formatMoney(montoCobrado)}</td>
                             <td>{status === 'paid' ? 'Pagado' : 'Pendiente'}</td>
                             <td className="text-right">
                               {status === 'paid' && signedReceipt ? (
