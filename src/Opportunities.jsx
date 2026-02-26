@@ -5,7 +5,7 @@ import { trackEvent } from '@/analytics.js';
 import './Opportunities.css';
 import InvestorBreadcrumbs from '@/components/InvestorBreadcrumbs.jsx';
 
-const OpportunityCard = ({ opp }) => {
+const OpportunityCard = ({ opp, verificationStatus = 'no_iniciado' }) => {
   const rendimientoBruto = opp.tasa_rendimiento_inversionista;
   const comisionServicio = opp.comision_servicio_inversionista_porcentaje;
   const navigate = useNavigate();
@@ -25,8 +25,13 @@ const OpportunityCard = ({ opp }) => {
   }[opp.perfil_riesgo]) || `Riesgo ${opp.perfil_riesgo}`;
 
   const handleViewDetails = () => {
+    if (verificationStatus !== 'verificado') {
+      navigate('/verificar-cuenta');
+      return;
+    }
     navigate(`/oportunidades/${opp.id}`);
   };
+  const kycBlocked = verificationStatus !== 'verificado';
 
   return (
     <div className={`opportunity-card ${isFunded ? 'is-funded' : ''}`}>
@@ -77,7 +82,7 @@ const OpportunityCard = ({ opp }) => {
           <div className="pill-disabled">No disponible (100% fondeada)</div>
         ) : (
           <button className="invest-button" onClick={handleViewDetails}>
-            Invertir ahora
+            {kycBlocked ? 'Completa verificación' : 'Invertir ahora'}
           </button>
         )}
       </div>
@@ -93,6 +98,7 @@ const Opportunities = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ minRate: '', maxMonths: '' });
   const [page, setPage] = useState(1);
+  const [verificationStatus, setVerificationStatus] = useState('no_iniciado');
   const PAGE_SIZE = 9; // 3x3 en desktop
   const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const navigate = useNavigate();
@@ -124,6 +130,24 @@ const Opportunities = () => {
     };
 
     fetchOpportunities();
+  }, []);
+
+  useEffect(() => {
+    const loadVerificationStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) return;
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('estado_verificacion')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (!error && data?.estado_verificacion) {
+          setVerificationStatus(data.estado_verificacion);
+        }
+      } catch (_) {}
+    };
+    loadVerificationStatus();
   }, []);
 
   useEffect(() => {
@@ -195,6 +219,14 @@ const Opportunities = () => {
         </div>
       </div>
       <h2 className="opp-title">Oportunidades de Inversión</h2>
+      {verificationStatus !== 'verificado' && (
+        <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
+          <strong>Antes de invertir, verifica tu identidad.</strong> Es un paso de seguridad para proteger tu cuenta y habilitar tus inversiones.
+          <div style={{ marginTop: 8 }}>
+            <button className="btn btn--primary" onClick={() => navigate('/verificar-cuenta')}>Verificar mi identidad</button>
+          </div>
+        </div>
+      )}
       <div className="opp-summary">
         <div className="summary-left">
           <div className="summary-count">{summaryText}</div>
@@ -274,7 +306,7 @@ const Opportunities = () => {
       ) : (
         <div className={['opportunities-grid', paginated.length <= 2 ? 'opportunities-grid--compact' : ''].filter(Boolean).join(' ')}>
           {paginated.map((opp) => (
-            <OpportunityCard key={opp.id} opp={opp} />
+            <OpportunityCard key={opp.id} opp={opp} verificationStatus={verificationStatus} />
           ))}
         </div>
       )}
