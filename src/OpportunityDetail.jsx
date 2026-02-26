@@ -33,6 +33,9 @@ const OpportunityDetail = () => {
 
   const intentStatus = (intentInfo?.status || '').toLowerCase();
   const receiptUnderReview = intentStatus === 'pending' && !!intentInfo?.receipt_url;
+  const hasActiveReservation = Boolean(intentInfo?.id)
+    && ['pending', 'unmatched'].includes(intentStatus)
+    && countdown !== 'Expirada';
 
   // --- Evento de Analítica: Viewed Loan Details ---
   useEffect(() => {
@@ -167,6 +170,10 @@ const OpportunityDetail = () => {
 
   const handleInvestment = async (e) => {
     e.preventDefault();
+    if (hasActiveReservation) {
+      setFormMessage({ type: 'error', text: 'Ya tienes una reserva activa. Súbela con comprobante o cámbiala de monto.' });
+      return;
+    }
     setIsSubmitting(true);
     setFormMessage({ type: '', text: '' });
     setIntentInfo(null);
@@ -655,6 +662,11 @@ const OpportunityDetail = () => {
                     </div>
                   </div>
                 )}
+                {hasActiveReservation && !receiptUnderReview && (
+                  <div style={{ marginTop: 8, marginBottom: 12, padding: 12, borderRadius: 8, background: '#f7fbfc', border: '1px solid #a8ede6', color: '#0f5a62' }}>
+                    Ya tienes una reserva activa. Para evitar duplicados, completa el pago actual o usa "Cambiar monto".
+                  </div>
+                )}
               <form onSubmit={handleInvestment}>
                 <div style={{ marginBottom: '15px' }}>
                   <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
@@ -673,11 +685,11 @@ const OpportunityDetail = () => {
                     placeholder="Ej: 9.000,55"
                     required
                     style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                    disabled={receiptUnderReview}
+                    disabled={receiptUnderReview || hasActiveReservation}
                   />
                 </div>
-                <button type="submit" disabled={isSubmitting || receiptUnderReview} className="btn btn--primary">
-                  {receiptUnderReview ? 'Pago en revisión' : isSubmitting ? 'Registrando...' : 'Invertir ahora'}
+                <button type="submit" disabled={isSubmitting || receiptUnderReview || hasActiveReservation} className="btn btn--primary">
+                  {receiptUnderReview ? 'Pago en revisión' : hasActiveReservation ? 'Reserva activa' : isSubmitting ? 'Registrando...' : 'Invertir ahora'}
                 </button>
               </form>
               {renderFormMessage()}
