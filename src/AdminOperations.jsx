@@ -121,6 +121,20 @@ const AdminOperations = () => {
     try {
       const { data, error } = await supabase.rpc('get_ops_profile_labels', { p_user_ids: ids });
       if (error) throw error;
+      // Si el RPC responde vacío (p.ej. sesión/claims no disponibles), usar fallback.
+      if (!Array.isArray(data) || data.length === 0) {
+        const { data: profs, error: profErr } = await supabase
+          .from('profiles')
+          .select('id, nombre_completo, email')
+          .in('id', ids);
+        if (profErr) throw profErr;
+        const map = {};
+        (profs || []).forEach((p) => {
+          const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
+          map[p.id] = label || p.id;
+        });
+        return map;
+      }
       const map = {};
       (data || []).forEach((p) => {
         const label = `${p.nombre_completo || ''}${p.email ? ` (${p.email})` : ''}`.trim();
