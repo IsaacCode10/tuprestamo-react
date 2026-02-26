@@ -389,7 +389,9 @@ const AdminOperations = () => {
         title: 'Pago verificado',
         body: `Validamos tu pago de ${formatMoney(expectedAmount)}. Tu participación se activa cuando la oportunidad alcance 100% del fondeo.`,
         link_url: '/mis-inversiones',
+        cta_label: 'VER MIS INVERSIONES',
         type: 'investment_payment_verified',
+        email: true,
       });
     }
 
@@ -413,7 +415,9 @@ const AdminOperations = () => {
           title: 'Oportunidad fondeada',
           body: `Se completó el fondeo de la oportunidad ${opportunityId}. Próximo paso: pago dirigido al banco y cronograma de cuotas.`,
           link_url: '/mis-inversiones',
+          cta_label: 'VER MIS INVERSIONES',
           type: 'opportunity_funded',
+          email: true,
         });
       }
 

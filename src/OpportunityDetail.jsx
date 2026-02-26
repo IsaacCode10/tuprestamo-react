@@ -656,7 +656,7 @@ const OpportunityDetail = () => {
                 {receiptUnderReview && (
                   <div style={{ marginTop: 8, marginBottom: 12, padding: 12, borderRadius: 8, background: '#f0f9f8', border: '1px solid #26C2B2', color: '#00445A' }}>
                     <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Pago en revisión</p>
-                    <p style={{ margin: 0 }}>Ya invertiste Bs. {Number(intentInfo?.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Estamos validando tu pago; verás tu inversión como “Pagada” cuando se acredite.</p>
+                    <p style={{ margin: 0 }}>Ya invertiste Bs. {Number(intentInfo?.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Estamos validando tu pago. Te avisaremos por correo cuando quede confirmado y lo verás como “Pagada” en Mis inversiones.</p>
                     <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button type="button" className="btn" onClick={() => navigate('/mis-inversiones')}>
                         Ver estado en Mis inversiones
