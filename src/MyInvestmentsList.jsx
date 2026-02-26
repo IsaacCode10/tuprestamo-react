@@ -509,17 +509,19 @@ const MyInvestmentsList = () => {
                           <td className="text-right">Bs. {formatMoney(g.pendingAmount)}</td>
                           <td>{g.statusLabel}</td>
                           <td className="text-right">
-                            {g.contractUrl ? (
-                              <a className="btn btn--secondary btn--sm" href={g.contractUrl} target="_blank" rel="noreferrer" style={{ marginRight: 8 }}>
-                                Contrato
-                              </a>
-                            ) : null}
-                            <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${g.opportunity_id}`)} style={{ marginRight: 8 }}>
-                              Ver
-                            </button>
-                            <button className="btn btn--secondary btn--sm" onClick={() => toggleOppRow(g.opportunity_id)}>
-                              {isExpanded ? 'Ocultar movimientos' : 'Ver movimientos'}
-                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
+                              {g.contractUrl ? (
+                                <a className="btn btn--secondary btn--sm" href={g.contractUrl} target="_blank" rel="noreferrer">
+                                  Contrato
+                                </a>
+                              ) : null}
+                              <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${g.opportunity_id}`)}>
+                                Ver
+                              </button>
+                              <button className="btn btn--secondary btn--sm" onClick={() => toggleOppRow(g.opportunity_id)}>
+                                {isExpanded ? 'Ocultar movimientos' : 'Ver movimientos'}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                         {isExpanded && (
