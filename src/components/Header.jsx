@@ -215,8 +215,8 @@ const Header = () => {
   const verificationStatus = profile?.estado_verificacion || 'no_iniciado';
   const statusLabel = {
     verificado: 'Verificada',
-    pendiente_revision: 'En revisi?n',
-    requiere_revision_manual: 'Requiere revisi?n',
+    pendiente_revision: 'En revisión',
+    requiere_revision_manual: 'Requiere revisión',
     no_iniciado: 'Pendiente',
   }[verificationStatus] || 'Pendiente';
 
