@@ -18,6 +18,7 @@ const MyInvestmentsList = () => {
   const [investorContractSignedMap, setInvestorContractSignedMap] = useState({});
   const [activeTab, setActiveTab] = useState('inversiones');
   const [nextPayments, setNextPayments] = useState([]);
+  const [expandedOppRows, setExpandedOppRows] = useState({});
 
   const toLocalDate = (value) => {
     if (!value) return null;
@@ -389,16 +390,17 @@ const MyInvestmentsList = () => {
     }
   };
 
-  const formatStatus = (r, o, intent) => {
-    const isFondeada = o?.saldo_pendiente != null ? o.saldo_pendiente <= 0 : false;
-    const isPendingPayment = (r.status || '').toLowerCase() === 'pendiente_pago';
-    const hasReceipt = !!intent?.receipt_url;
-    const intentPending = (intent?.status || '').toLowerCase() === 'pending';
-    if (isFondeada) return 'Fondeada';
-    if (isPendingPayment && hasReceipt && intentPending) return 'Pago en revision';
-    if (isPendingPayment) return 'Pendiente';
-    if ((r.status || '').toLowerCase() === 'pagado') return 'Pagado';
-    return r.status || 'intencion';
+  const formatInvestmentStatus = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'pagado') return 'Pagada';
+    if (s === 'pendiente_pago') return 'En proceso';
+    if (s === 'cancelado') return 'Cancelada';
+    if (s === 'expired') return 'Expirada';
+    return status || 'Sin estado';
+  };
+
+  const toggleOppRow = (opportunityId) => {
+    setExpandedOppRows((prev) => ({ ...prev, [opportunityId]: !prev[opportunityId] }));
   };
 
   if (loading) return <p>Cargando tu portafolio...</p>;
@@ -494,26 +496,72 @@ const MyInvestmentsList = () => {
                 <tbody>
                   {investmentGroups.map((g) => {
                     const o = oppsById[g.opportunity_id] || {};
+                    const isExpanded = !!expandedOppRows[g.opportunity_id];
+                    const detailRows = [...(g.rows || [])].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
                     return (
-                      <tr key={g.opportunity_id}>
-                        <td>
-                          <div className="table-main">ID {g.opportunity_id || '-'}</div>
-                          <div className="table-subtle">Monto oportunidad: Bs. {formatMoney(o.monto || 0)}</div>
-                        </td>
-                        <td className="text-right">Bs. {formatMoney(g.paidAmount)}</td>
-                        <td className="text-right">Bs. {formatMoney(g.pendingAmount)}</td>
-                        <td>{g.statusLabel}</td>
-                        <td className="text-right">
-                          {g.contractUrl ? (
-                            <a className="btn btn--secondary btn--sm" href={g.contractUrl} target="_blank" rel="noreferrer" style={{ marginRight: 8 }}>
-                              Contrato
-                            </a>
-                          ) : null}
-                          <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${g.opportunity_id}`)}>
-                            Ver
-                          </button>
-                        </td>
-                      </tr>
+                      <React.Fragment key={g.opportunity_id}>
+                        <tr>
+                          <td>
+                            <div className="table-main">ID {g.opportunity_id || '-'}</div>
+                            <div className="table-subtle">Monto oportunidad: Bs. {formatMoney(o.monto || 0)}</div>
+                          </td>
+                          <td className="text-right">Bs. {formatMoney(g.paidAmount)}</td>
+                          <td className="text-right">Bs. {formatMoney(g.pendingAmount)}</td>
+                          <td>{g.statusLabel}</td>
+                          <td className="text-right">
+                            {g.contractUrl ? (
+                              <a className="btn btn--secondary btn--sm" href={g.contractUrl} target="_blank" rel="noreferrer" style={{ marginRight: 8 }}>
+                                Contrato
+                              </a>
+                            ) : null}
+                            <button className="btn btn--secondary btn--sm" onClick={() => navigate(`/oportunidades/${g.opportunity_id}`)} style={{ marginRight: 8 }}>
+                              Ver
+                            </button>
+                            <button className="btn btn--secondary btn--sm" onClick={() => toggleOppRow(g.opportunity_id)}>
+                              {isExpanded ? 'Ocultar movimientos' : 'Ver movimientos'}
+                            </button>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={5} style={{ background: '#f7fbfc', borderBottom: '1px solid #eef3f5' }}>
+                              <div style={{ padding: '10px 8px' }}>
+                                <div className="table-subtle" style={{ marginBottom: 8 }}>Historial de movimientos de tu inversión en esta oportunidad</div>
+                                <div style={{ overflowX: 'auto' }}>
+                                  <table className="minimal-table" style={{ margin: 0 }}>
+                                    <thead>
+                                      <tr>
+                                        <th>Fecha</th>
+                                        <th className="text-right">Monto (Bs.)</th>
+                                        <th>Estado</th>
+                                        <th className="text-right">Detalle</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {detailRows.map((r) => (
+                                        <tr key={r.id}>
+                                          <td>{formatDate(r.created_at)}</td>
+                                          <td className="text-right">Bs. {formatMoney(r.amount || 0)}</td>
+                                          <td>{formatInvestmentStatus(r.status)}</td>
+                                          <td className="text-right">
+                                            {(r.status || '').toLowerCase() === 'pagado' && investorContractSignedMap[r.id] ? (
+                                              <a className="btn btn--secondary btn--sm" href={investorContractSignedMap[r.id]} target="_blank" rel="noreferrer">
+                                                Contrato
+                                              </a>
+                                            ) : (
+                                              <span className="muted">-</span>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
