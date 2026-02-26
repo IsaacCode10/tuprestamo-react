@@ -667,6 +667,7 @@ const OpportunityDetail = () => {
                     Ya tienes una reserva activa. Para evitar duplicados, completa el pago actual o usa "Cambiar monto".
                   </div>
                 )}
+              {!hasActiveReservation && (
               <form onSubmit={handleInvestment}>
                 <div style={{ marginBottom: '15px' }}>
                   <label htmlFor="investmentAmount">Monto a Invertir (Bs.):</label>
@@ -692,6 +693,7 @@ const OpportunityDetail = () => {
                   {receiptUnderReview ? 'Pago en revisión' : hasActiveReservation ? 'Reserva activa' : isSubmitting ? 'Registrando...' : 'Invertir ahora'}
                 </button>
               </form>
+              )}
               {renderFormMessage()}
               {intentInfo && (
                 <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
