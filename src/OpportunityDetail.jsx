@@ -704,21 +704,27 @@ const OpportunityDetail = () => {
                 <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
                 <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
               </ul>
-                  <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,image/*"
-                      onChange={handleSelectReceipt}
-                      style={{ display: 'none' }}
-                    />
-                    <button className="btn btn--secondary" type="button" onClick={triggerFileSelect}>
-                      Subir comprobante
-                    </button>
-                    <button className="btn" type="button" onClick={cancelCurrentIntent} disabled={isCancelling}>
-                      Cambiar monto
-                    </button>
-                  </div>
+                  {!receiptUnderReview ? (
+                    <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,image/*"
+                        onChange={handleSelectReceipt}
+                        style={{ display: 'none' }}
+                      />
+                      <button className="btn btn--secondary" type="button" onClick={triggerFileSelect}>
+                        Subir comprobante
+                      </button>
+                      <button className="btn" type="button" onClick={cancelCurrentIntent} disabled={isCancelling}>
+                        Cambiar monto
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 6, color: '#0f5a62', fontWeight: 600 }}>
+                      Comprobante enviado. Espera la confirmación de Operaciones para marcar tu reserva como pagada.
+                    </div>
+                  )}
               {countdown === 'Expirada' && (
                 <div style={{ margin: 0, color: '#b71c1c', fontWeight: 700, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span>La reserva expiró.</span>
@@ -727,7 +733,7 @@ const OpportunityDetail = () => {
               )}
                 </div>
               )}
-              {intentInfo && (
+              {intentInfo && !receiptUnderReview && (
                 <div style={{ marginTop: 14, borderTop: '1px solid #e6f2f4', paddingTop: 12 }}>
                   <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#00445A' }}>Medios de pago</p>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
