@@ -697,7 +697,7 @@ const OpportunityDetail = () => {
               </form>
               )}
               {renderFormMessage()}
-              {intentInfo && (
+              {intentInfo && !receiptUnderReview && (
                 <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
                   <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada (válida 48h)</p>
               <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
@@ -722,7 +722,7 @@ const OpportunityDetail = () => {
                     </div>
                   ) : (
                     <div style={{ marginTop: 6, color: '#0f5a62', fontWeight: 600 }}>
-                      Comprobante enviado. Espera la confirmación de Operaciones para marcar tu reserva como pagada.
+                      Comprobante enviado. Te avisaremos cuando confirmemos tu pago.
                     </div>
                   )}
               {countdown === 'Expirada' && (

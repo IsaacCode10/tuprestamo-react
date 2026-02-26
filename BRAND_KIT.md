@@ -101,6 +101,7 @@ Esto nos ayuda a mantener una estÃ©tica coherente en la publicidad, redes soci
 - Cuerpo y tono
   - Saludo: “Hola {Nombre},” (si no hay nombre, usar solo “Hola,”)
   - Párrafo inicial claro y orientado a acción. Evitar texto largo.
+  - Lenguaje comercial y simple: evitar tecnicismos internos (ej.: "Operaciones", "conciliación", "RLS", "RPC"). Reemplazar por frases cliente como "nuestro equipo", "estamos validando tu pago", "te avisaremos por correo".
   - CTA único y destacado (botón turquesa #26C2B2 sobre texto #FFFFFF)
   - Para prestatario, CTA estándar obligatorio: **“IR A MI PANEL”**
   - URL estándar de prestatario: **`/borrower-dashboard`** (evitar rutas legacy)
