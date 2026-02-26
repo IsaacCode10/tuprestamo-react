@@ -133,6 +133,8 @@ const Opportunities = () => {
   }, []);
 
   useEffect(() => {
+    let channel;
+    let mounted = true;
     const loadVerificationStatus = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -142,12 +144,39 @@ const Opportunities = () => {
           .select('estado_verificacion')
           .eq('id', user.id)
           .maybeSingle();
+        if (!mounted) return;
         if (!error && data?.estado_verificacion) {
           setVerificationStatus(data.estado_verificacion);
         }
       } catch (_) {}
     };
+
     loadVerificationStatus();
+
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) return;
+        channel = supabase
+          .channel(`opp_profile_${user.id}`)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+            const next = payload?.new?.estado_verificacion;
+            if (next) setVerificationStatus(next);
+          })
+          .subscribe();
+      } catch (_) {}
+    })();
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') loadVerificationStatus();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      mounted = false;
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -220,11 +249,30 @@ const Opportunities = () => {
       </div>
       <h2 className="opp-title">Oportunidades de Inversión</h2>
       {verificationStatus !== 'verificado' && (
-        <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
-          <strong>Antes de invertir, verifica tu identidad.</strong> Es un paso de seguridad para proteger tu cuenta y habilitar tus inversiones.
-          <div style={{ marginTop: 8 }}>
-            <button className="btn btn--primary" onClick={() => navigate('/verificar-cuenta')}>Verificar mi identidad</button>
-          </div>
+        <div
+          style={{
+            marginBottom: 14,
+            padding: 12,
+            borderRadius: 8,
+            background: verificationStatus === 'pendiente_revision' ? '#fff9e6' : verificationStatus === 'requiere_revision_manual' ? '#ffe6e6' : '#eef9f8',
+            border: verificationStatus === 'pendiente_revision' ? '1px solid #ffe08a' : verificationStatus === 'requiere_revision_manual' ? '1px solid #ffb3b3' : '1px solid #a8ede6',
+            color: verificationStatus === 'pendiente_revision' ? '#8a6d3b' : verificationStatus === 'requiere_revision_manual' ? '#8b0000' : '#11696b',
+          }}
+        >
+          {verificationStatus === 'pendiente_revision' ? (
+            <strong>Tu verificación está en revisión. Te avisaremos por correo cuando finalice.</strong>
+          ) : verificationStatus === 'requiere_revision_manual' ? (
+            <strong>No pudimos confirmar tu verificación. Revisa tus datos y vuelve a enviarla.</strong>
+          ) : (
+            <strong>Antes de invertir, verifica tu identidad. Es un paso de seguridad para proteger tu cuenta y habilitar tus inversiones.</strong>
+          )}
+          {verificationStatus !== 'pendiente_revision' && (
+            <div style={{ marginTop: 8 }}>
+              <button className="btn btn--primary" onClick={() => navigate('/verificar-cuenta')}>
+                {verificationStatus === 'requiere_revision_manual' ? 'Revisar verificación' : 'Verificar mi identidad'}
+              </button>
+            </div>
+          )}
         </div>
       )}
       <div className="opp-summary">
