@@ -377,6 +377,24 @@ const AdminOperations = () => {
         return uB - uA;
       });
   }, [filteredIntents]);
+  const intentKpis = useMemo(() => {
+    const now = Date.now();
+    const in24h = now + (24 * 60 * 60 * 1000);
+    const pendingLike = intents.filter((i) => ['pending', 'unmatched'].includes((i.status || '').toLowerCase()));
+    const pendingWithReceipt = pendingLike.filter((i) => Boolean(i.receipt_url));
+    const amountPending = pendingLike.reduce((acc, i) => acc + Number(i.expected_amount || 0), 0);
+    const expiringSoon = pendingLike.filter((i) => {
+      const exp = i.expires_at ? new Date(i.expires_at).getTime() : null;
+      return exp && exp > now && exp <= in24h;
+    });
+    const riskOpps = new Set(expiringSoon.map((i) => i.opportunity_id).filter(Boolean)).size;
+    return {
+      pendingWithReceiptCount: pendingWithReceipt.length,
+      amountPending,
+      expiringSoonCount: expiringSoon.length,
+      riskOpps,
+    };
+  }, [intents]);
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
   const borrowerGroups = useMemo(() => {
@@ -1321,6 +1339,24 @@ const AdminOperations = () => {
 
       {tab === 'intents' && (
         <div style={{ overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 12 }}>
+            <div style={{ border: '1px solid #e5f0f2', borderRadius: 10, padding: 10, background: '#fbfdfe' }}>
+              <div className="muted">Pendientes con comprobante</div>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f5a62' }}>{intentKpis.pendingWithReceiptCount}</div>
+            </div>
+            <div style={{ border: '1px solid #e5f0f2', borderRadius: 10, padding: 10, background: '#fbfdfe' }}>
+              <div className="muted">Monto pendiente total</div>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f5a62' }}>{formatMoney(intentKpis.amountPending)}</div>
+            </div>
+            <div style={{ border: '1px solid #e5f0f2', borderRadius: 10, padding: 10, background: '#fbfdfe' }}>
+              <div className="muted">Vencen en &lt; 24h</div>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f5a62' }}>{intentKpis.expiringSoonCount}</div>
+            </div>
+            <div style={{ border: '1px solid #e5f0f2', borderRadius: 10, padding: 10, background: '#fbfdfe' }}>
+              <div className="muted">Oportunidades en riesgo</div>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f5a62' }}>{intentKpis.riskOpps}</div>
+            </div>
+          </div>
           <div className="ops-filters" style={{ marginBottom: 10 }}>
             <label className="ops-filter-control">
               <span className="muted">Estado</span>
