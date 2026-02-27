@@ -23,6 +23,10 @@ serve(async (req) => {
     const payload: Payload = await req.json()
     const { user_id, type, title, body, link_url, cta_label, footer_note, data, email, suppress_in_app } = payload || ({} as Payload)
     if (!user_id || !type || !title || !body) throw new Error('user_id, type, title y body son requeridos')
+    const appBaseUrl = (Deno.env.get('APP_BASE_URL') || 'https://tuprestamobo.com').replace(/\/$/, '')
+    const emailCtaHref = link_url
+      ? (/^https?:\/\//i.test(link_url) ? link_url : `${appBaseUrl}${link_url.startsWith('/') ? '' : '/'}${link_url}`)
+      : undefined
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -51,8 +55,8 @@ serve(async (req) => {
           greetingName: profile?.nombre_completo || '',
           title,
           body,
-          ctaLabel: link_url ? (cta_label || 'Ver detalles') : undefined,
-          ctaHref: link_url,
+          ctaLabel: emailCtaHref ? (cta_label || 'Ver detalles') : undefined,
+          ctaHref: emailCtaHref,
           footerNote: footer_note,
         })
         await fetch('https://api.resend.com/emails', {
