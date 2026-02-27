@@ -35,6 +35,9 @@ const OPS_PAYOUT_FILTER_KEY = 'ops_payout_filter';
 const OPS_PAYOUT_SEARCH_KEY = 'ops_payout_search';
 const OPS_PAYOUT_PENDING_ONLY_KEY = 'ops_payout_pending_only';
 const OPS_PAYOUT_EXPANDED_KEY = 'ops_payout_expanded';
+const OPS_INTENTS_FILTER_KEY = 'ops_intents_filter';
+const OPS_INTENTS_SEARCH_KEY = 'ops_intents_search';
+const OPS_INTENTS_RECEIPT_ONLY_KEY = 'ops_intents_receipt_only';
 
 const AdminOperations = () => {
   const [tab, setTab] = useState(() => {
@@ -218,6 +221,69 @@ const AdminOperations = () => {
       return false;
     }
   });
+  const [intentStatusFilter, setIntentStatusFilter] = useState(() => {
+    try {
+      return sessionStorage.getItem(OPS_INTENTS_FILTER_KEY) || 'active';
+    } catch (_) {
+      return 'active';
+    }
+  });
+  const [intentSearch, setIntentSearch] = useState(() => {
+    try {
+      return sessionStorage.getItem(OPS_INTENTS_SEARCH_KEY) || '';
+    } catch (_) {
+      return '';
+    }
+  });
+  const [intentReceiptOnly, setIntentReceiptOnly] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(OPS_INTENTS_RECEIPT_ONLY_KEY);
+      return raw ? JSON.parse(raw) : false;
+    } catch (_) {
+      return false;
+    }
+  });
+  const filteredIntents = useMemo(() => {
+    const search = intentSearch.trim().toLowerCase();
+    const statusMatches = (intent) => {
+      const s = (intent.status || '').toLowerCase();
+      if (intentStatusFilter === 'all') return true;
+      if (intentStatusFilter === 'active') return ['pending', 'unmatched'].includes(s);
+      return s === intentStatusFilter;
+    };
+    const priority = (intent) => {
+      const s = (intent.status || '').toLowerCase();
+      const hasReceipt = Boolean(intent.receipt_url);
+      if (['pending', 'unmatched'].includes(s) && hasReceipt) return 0;
+      if (['pending', 'unmatched'].includes(s)) return 1;
+      if (s === 'paid') return 2;
+      if (s === 'expired') return 3;
+      return 4;
+    };
+    return intents
+      .filter((i) => statusMatches(i))
+      .filter((i) => !intentReceiptOnly || Boolean(i.receipt_url))
+      .filter((i) => {
+        if (!search) return true;
+        const opp = String(i.opportunity_id || '').toLowerCase();
+        const intentId = String(i.id || '').toLowerCase();
+        const investorId = String(i.investor_id || '').toLowerCase();
+        const investorLabel = String(investorMap[i.investor_id] || '').toLowerCase();
+        return opp.includes(search) || intentId.includes(search) || investorId.includes(search) || investorLabel.includes(search);
+      })
+      .slice()
+      .sort((a, b) => {
+        const pa = priority(a);
+        const pb = priority(b);
+        if (pa !== pb) return pa - pb;
+        if (pa <= 1) {
+          const aExp = a.expires_at ? new Date(a.expires_at).getTime() : Number.MAX_SAFE_INTEGER;
+          const bExp = b.expires_at ? new Date(b.expires_at).getTime() : Number.MAX_SAFE_INTEGER;
+          return aExp - bExp;
+        }
+        return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+      });
+  }, [intents, intentStatusFilter, intentReceiptOnly, intentSearch, investorMap]);
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
   const borrowerGroups = useMemo(() => {
@@ -1037,6 +1103,21 @@ const AdminOperations = () => {
       sessionStorage.setItem(OPS_PAYOUT_EXPANDED_KEY, JSON.stringify(expandedPayouts || {}));
     } catch (_) {}
   }, [expandedPayouts]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_INTENTS_FILTER_KEY, intentStatusFilter);
+    } catch (_) {}
+  }, [intentStatusFilter]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_INTENTS_SEARCH_KEY, intentSearch);
+    } catch (_) {}
+  }, [intentSearch]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_INTENTS_RECEIPT_ONLY_KEY, JSON.stringify(Boolean(intentReceiptOnly)));
+    } catch (_) {}
+  }, [intentReceiptOnly]);
 
   const isNewReceipt = (intent) => {
     if (!intent?.receipt_signed_url || !intent?.updated_at) return false;
@@ -1139,6 +1220,33 @@ const AdminOperations = () => {
 
       {tab === 'intents' && (
         <div style={{ overflowX: 'auto' }}>
+          <div className="ops-filters" style={{ marginBottom: 10 }}>
+            <label className="ops-filter-control">
+              <span className="muted">Estado</span>
+              <select value={intentStatusFilter} onChange={(e) => setIntentStatusFilter(e.target.value)}>
+                <option value="active">Activos (pendientes)</option>
+                <option value="pending">Pendiente</option>
+                <option value="unmatched">Por conciliar</option>
+                <option value="paid">Pagado</option>
+                <option value="expired">Expirado</option>
+                <option value="all">Todos</option>
+              </select>
+            </label>
+            <label className="ops-filter-control">
+              <span className="muted">Buscar (op/intent/inversionista)</span>
+              <input
+                type="text"
+                value={intentSearch}
+                onChange={(e) => setIntentSearch(e.target.value)}
+                placeholder="70, UUID, nombre o email"
+                className="ops-filter-input"
+              />
+            </label>
+            <label className="ops-checkbox" style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 18 }}>
+              <input type="checkbox" checked={intentReceiptOnly} onChange={(e) => setIntentReceiptOnly(e.target.checked)} />
+              <span>Solo con comprobante</span>
+            </label>
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -1153,7 +1261,7 @@ const AdminOperations = () => {
               </tr>
             </thead>
             <tbody>
-              {intents.map((i) => {
+              {filteredIntents.map((i) => {
                 const statusLower = (i.status || '').toString().trim().toLowerCase();
                 const canPay = ['pending', 'unmatched'].includes(statusLower);
                 const canExpire = statusLower === 'pending';
@@ -1199,9 +1307,9 @@ const AdminOperations = () => {
                   </tr>
                 );
               })}
-              {intents.length === 0 && (
+              {filteredIntents.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay intents</td>
+                  <td colSpan={8} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay registros con este filtro</td>
                 </tr>
               )}
             </tbody>
