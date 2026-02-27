@@ -499,6 +499,8 @@ const OpportunityDetail = () => {
   const renderFormMessage = () => {
     if (!formMessage.text) return null;
     const isError = formMessage.type === 'error';
+    // Evita duplicar mensajes cuando ya mostramos tarjetas de estado de reserva/pago.
+    if (!isError && (hasActiveReservation || receiptUnderReview)) return null;
     const styles = {
       background: isError ? '#ffe6e6' : '#e6fffb',
       border: `1px solid ${isError ? '#ffb3b3' : '#a8ede6'}`,
@@ -665,11 +667,6 @@ const OpportunityDetail = () => {
                     </div>
                   </div>
                 )}
-                {hasActiveReservation && !receiptUnderReview && (
-                  <div style={{ marginTop: 8, marginBottom: 12, padding: 12, borderRadius: 8, background: '#f7fbfc', border: '1px solid #a8ede6', color: '#0f5a62' }}>
-                    Ya tienes una reserva activa. Para evitar duplicados, completa el pago actual o usa "Cambiar monto".
-                  </div>
-                )}
               {!hasActiveReservation && (
               <form onSubmit={handleInvestment}>
                 <div style={{ marginBottom: '15px' }}>
@@ -700,11 +697,14 @@ const OpportunityDetail = () => {
               {renderFormMessage()}
               {intentInfo && isReservableIntent && !receiptUnderReview && (
                 <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#eef9f8', border: '1px solid #a8ede6', color: '#11696b' }}>
-                  <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva creada (válida 48h)</p>
-              <ul style={{ paddingLeft: 18, margin: '0 0 8px 0', color: '#0f5a62' }}>
-                <li>Paga exactamente <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> con el QR en tu panel.</li>
-                <li>Vence: {new Date(intentInfo.expires_at).toLocaleString('es-BO')} {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''}</li>
-              </ul>
+                  <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Reserva activa (válida 48h)</p>
+                  <p style={{ margin: '0 0 8px 0', color: '#0f5a62' }}>
+                    Paga <strong>Bs. {Number(intentInfo.expected_amount || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> antes de
+                    {' '}
+                    <strong>{new Date(intentInfo.expires_at).toLocaleString('es-BO')}</strong>
+                    {' '}
+                    {countdown && countdown !== 'Expirada' ? `(${countdown})` : ''} para confirmar tu fondeo.
+                  </p>
                   {!receiptUnderReview ? (
                     <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                       <input
