@@ -258,6 +258,7 @@ const AdminOperations = () => {
       const s = (intent.status || '').toLowerCase();
       if (intentStatusFilter === 'all') return true;
       if (intentStatusFilter === 'active') return ['pending', 'unmatched'].includes(s);
+      if (intentStatusFilter === 'unmatched') return ['pending', 'unmatched'].includes(s);
       return s === intentStatusFilter;
     };
     const priority = (intent) => {
