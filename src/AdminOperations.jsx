@@ -380,7 +380,7 @@ const AdminOperations = () => {
   const intentKpis = useMemo(() => {
     const now = Date.now();
     const in24h = now + (24 * 60 * 60 * 1000);
-    const pendingLike = intents.filter((i) => ['pending', 'unmatched'].includes((i.status || '').toLowerCase()));
+    const pendingLike = filteredIntents.filter((i) => ['pending', 'unmatched'].includes((i.status || '').toLowerCase()));
     const pendingWithReceipt = pendingLike.filter((i) => Boolean(i.receipt_url));
     const amountPending = pendingLike.reduce((acc, i) => acc + Number(i.expected_amount || 0), 0);
     const expiringSoon = pendingLike.filter((i) => {
@@ -394,7 +394,7 @@ const AdminOperations = () => {
       expiringSoonCount: expiringSoon.length,
       riskOpps,
     };
-  }, [intents]);
+  }, [filteredIntents]);
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
   const borrowerGroups = useMemo(() => {
