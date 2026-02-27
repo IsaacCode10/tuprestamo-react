@@ -556,9 +556,10 @@ const AdminOperations = () => {
     const fundedInfo = Array.isArray(fundedInfoRaw) ? fundedInfoRaw[0] : fundedInfoRaw;
     const pushNotification = async (payload) => {
       try {
-        await supabase.functions.invoke('create-notification', { body: payload });
+        const { error } = await supabase.functions.invoke('create-notification', { body: payload });
+        if (error) throw error;
       } catch (err) {
-        console.warn('No se pudo crear notificación', err);
+        console.warn('No se pudo crear notificación', { payload, err });
       }
     };
 
@@ -576,18 +577,23 @@ const AdminOperations = () => {
     }
 
     // Si con este pago se fondeó al 100%
-    const isFunded = fundedInfo?.funded;
+    // Traer datos de oportunidad para detectar fondeo real.
+    let opp = null;
+    try {
+      const { data: oppRow } = await supabase
+        .from('oportunidades')
+        .select('id, user_id, solicitud_id, monto, estado')
+        .eq('id', opportunityId)
+        .maybeSingle();
+      opp = oppRow;
+    } catch (_) {}
+
+    let isFunded = Boolean(fundedInfo?.funded);
+    if (!isFunded && (opp?.estado || '').toLowerCase() === 'fondeada') {
+      isFunded = true;
+    }
+
     if (isFunded) {
-      // Traer datos de oportunidad y prestatario
-      let opp = null;
-      try {
-        const { data: oppRow } = await supabase
-          .from('oportunidades')
-          .select('id, user_id, solicitud_id, monto')
-          .eq('id', opportunityId)
-          .maybeSingle();
-        opp = oppRow;
-      } catch (_) {}
 
       if (investorId) {
         notificationsPayload.push({
