@@ -38,6 +38,7 @@ const OPS_PAYOUT_EXPANDED_KEY = 'ops_payout_expanded';
 const OPS_INTENTS_FILTER_KEY = 'ops_intents_filter';
 const OPS_INTENTS_SEARCH_KEY = 'ops_intents_search';
 const OPS_INTENTS_RECEIPT_ONLY_KEY = 'ops_intents_receipt_only';
+const OPS_INTENTS_EXPANDED_KEY = 'ops_intents_expanded';
 
 const AdminOperations = () => {
   const [tab, setTab] = useState(() => {
@@ -243,6 +244,14 @@ const AdminOperations = () => {
       return false;
     }
   });
+  const [expandedIntents, setExpandedIntents] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(OPS_INTENTS_EXPANDED_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      return {};
+    }
+  });
   const filteredIntents = useMemo(() => {
     const search = intentSearch.trim().toLowerCase();
     const statusMatches = (intent) => {
@@ -284,6 +293,90 @@ const AdminOperations = () => {
         return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
       });
   }, [intents, intentStatusFilter, intentReceiptOnly, intentSearch, investorMap]);
+  const intentGroups = useMemo(() => {
+    const map = {};
+    filteredIntents.forEach((i) => {
+      const oppId = i.opportunity_id;
+      const s = (i.status || '').toLowerCase();
+      const hasReceipt = Boolean(i.receipt_url);
+      if (!map[oppId]) {
+        map[oppId] = {
+          opportunity_id: oppId,
+          intents: [],
+          totalCount: 0,
+          pendingCount: 0,
+          pendingWithReceipt: 0,
+          paidCount: 0,
+          pendingAmount: 0,
+          paidAmount: 0,
+          nextExpiryTs: null,
+          latestUpdateTs: null,
+        };
+      }
+      const g = map[oppId];
+      g.intents.push(i);
+      g.totalCount += 1;
+      if (['pending', 'unmatched'].includes(s)) {
+        g.pendingCount += 1;
+        g.pendingAmount += Number(i.expected_amount || 0);
+        if (hasReceipt) g.pendingWithReceipt += 1;
+        const expTs = i.expires_at ? new Date(i.expires_at).getTime() : null;
+        if (expTs && (g.nextExpiryTs === null || expTs < g.nextExpiryTs)) g.nextExpiryTs = expTs;
+      }
+      if (s === 'paid') {
+        g.paidCount += 1;
+        g.paidAmount += Number(i.expected_amount || 0);
+      }
+      const updTs = new Date(i.updated_at || i.created_at || 0).getTime();
+      if (!Number.isNaN(updTs) && (g.latestUpdateTs === null || updTs > g.latestUpdateTs)) g.latestUpdateTs = updTs;
+    });
+
+    const sortPriority = (g) => {
+      if (g.pendingWithReceipt > 0) return 0;
+      if (g.pendingCount > 0) return 1;
+      if (g.paidCount > 0) return 2;
+      return 3;
+    };
+
+    return Object.values(map)
+      .map((g) => ({
+        ...g,
+        intents: [...g.intents].sort((a, b) => {
+          const sA = (a.status || '').toLowerCase();
+          const sB = (b.status || '').toLowerCase();
+          const rank = (row) => {
+            const s = (row.status || '').toLowerCase();
+            if (['pending', 'unmatched'].includes(s) && row.receipt_url) return 0;
+            if (['pending', 'unmatched'].includes(s)) return 1;
+            if (s === 'paid') return 2;
+            if (s === 'expired') return 3;
+            return 4;
+          };
+          const rA = rank(a);
+          const rB = rank(b);
+          if (rA !== rB) return rA - rB;
+          if (rA <= 1) {
+            const eA = a.expires_at ? new Date(a.expires_at).getTime() : Number.MAX_SAFE_INTEGER;
+            const eB = b.expires_at ? new Date(b.expires_at).getTime() : Number.MAX_SAFE_INTEGER;
+            return eA - eB;
+          }
+          return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+        }),
+      }))
+      .sort((a, b) => {
+        const pA = sortPriority(a);
+        const pB = sortPriority(b);
+        if (pA !== pB) return pA - pB;
+        if (pA <= 1) {
+          const eA = a.nextExpiryTs ?? Number.MAX_SAFE_INTEGER;
+          const eB = b.nextExpiryTs ?? Number.MAX_SAFE_INTEGER;
+          if (eA !== eB) return eA - eB;
+        }
+        const uA = a.latestUpdateTs ?? 0;
+        const uB = b.latestUpdateTs ?? 0;
+        return uB - uA;
+      });
+  }, [filteredIntents]);
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
   const borrowerGroups = useMemo(() => {
@@ -1118,6 +1211,11 @@ const AdminOperations = () => {
       sessionStorage.setItem(OPS_INTENTS_RECEIPT_ONLY_KEY, JSON.stringify(Boolean(intentReceiptOnly)));
     } catch (_) {}
   }, [intentReceiptOnly]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(OPS_INTENTS_EXPANDED_KEY, JSON.stringify(expandedIntents || {}));
+    } catch (_) {}
+  }, [expandedIntents]);
 
   const isNewReceipt = (intent) => {
     if (!intent?.receipt_signed_url || !intent?.updated_at) return false;
@@ -1132,6 +1230,9 @@ const AdminOperations = () => {
 
   const togglePayoutGroup = (opportunityId) => {
     setExpandedPayouts((prev) => ({ ...prev, [opportunityId]: !prev[opportunityId] }));
+  };
+  const toggleIntentGroup = (opportunityId) => {
+    setExpandedIntents((prev) => ({ ...prev, [opportunityId]: !prev[opportunityId] }));
   };
 
   const formatDateShort = (value) => {
@@ -1247,73 +1348,97 @@ const AdminOperations = () => {
               <span>Solo con comprobante</span>
             </label>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cuota</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Expira</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comprobante</th>
-                <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredIntents.map((i) => {
-                const statusLower = (i.status || '').toString().trim().toLowerCase();
-                const canPay = ['pending', 'unmatched'].includes(statusLower);
-                const canExpire = statusLower === 'pending';
-                const payBtnStyle = canPay ? {} : { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' };
-                return (
-                  <tr key={i.id}>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.opportunity_id}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{renderUserCell(i.investor_id, investorMap)}</td>
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '--'}</td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                    {i.receipt_signed_url ? (
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <a
-                          className="btn"
-                          href={i.receipt_signed_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={() => markReceiptSeen(i.id, i.updated_at)}
-                        >
-                          Ver
-                        </a>
-                        {isNewReceipt(i) && (
-                          <span style={{ background: '#ffefef', color: '#b71c1c', padding: '4px 8px', borderRadius: 999, fontSize: '0.8rem', fontWeight: 700 }}>
-                            Nuevo comprobante
-                          </span>
-                        )}
-                        <span style={{ color: '#55747b', fontSize: '0.85rem' }}>
-                          Actualizado {i.updated_at ? new Date(i.updated_at).toLocaleString('es-BO') : '--'}
-                        </span>
-                      </div>
-                    ) : (
-                      '--'
+          {intentGroups.length === 0 && (
+            <div style={{ padding: 12, textAlign: 'center', color: '#55747b', border: '1px dashed #d9e5e8', borderRadius: 10 }}>
+              No hay registros con este filtro
+            </div>
+          )}
+          {intentGroups.map((g) => {
+            const expanded = !!expandedIntents[g.opportunity_id];
+            return (
+              <div key={g.opportunity_id} style={{ border: '1px solid #e5f0f2', borderRadius: 10, marginBottom: 12, background: '#fbfdfe' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, gap: 10 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ fontWeight: 700, color: '#0f5a62' }}>Oportunidad {g.opportunity_id}</div>
+                    <div className="muted">
+                      Pendientes: {g.pendingCount} ({formatMoney(g.pendingAmount)}) · Pagados: {g.paidCount} ({formatMoney(g.paidAmount)})
+                    </div>
+                    <div className="muted">
+                      Con comprobante por revisar: {g.pendingWithReceipt} · Registros: {g.totalCount}
+                    </div>
+                    {g.nextExpiryTs && (
+                      <div className="muted">Próximo vencimiento: {formatDateShort(g.nextExpiryTs)}</div>
                     )}
-                  </td>
-                  <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <button className="btn btn--primary" style={payBtnStyle} onClick={() => updateIntentStatus(i.id, 'paid')} disabled={!canPay}>Marcar pagado</button>
-                      <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={!canExpire}>Expirar</button>
-                      <button className="btn" onClick={() => reopenOpportunity(i.opportunity_id)} disabled={statusLower === 'paid'}>Reabrir (sin pagos)</button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {filteredIntents.length === 0 && (
-                <tr>
-                  <td colSpan={8} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>No hay registros con este filtro</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                  <button className="btn" onClick={() => toggleIntentGroup(g.opportunity_id)}>
+                    {expanded ? 'Ocultar intents' : 'Ver intents'}
+                  </button>
+                </div>
+                {expanded && (
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Intent</th>
+                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Inversionista</th>
+                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto</th>
+                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Estado</th>
+                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Expira</th>
+                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comprobante</th>
+                        <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {g.intents.map((i) => {
+                        const statusLower = (i.status || '').toString().trim().toLowerCase();
+                        const canPay = ['pending', 'unmatched'].includes(statusLower);
+                        const canExpire = statusLower === 'pending';
+                        const payBtnStyle = canPay ? {} : { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' };
+                        return (
+                          <tr key={i.id}>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', fontFamily: 'monospace', fontSize: '0.9rem' }}>{i.id}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{renderUserCell(i.investor_id, investorMap)}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatMoney(i.expected_amount)}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatStatusLabel(i.status)}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{i.expires_at ? new Date(i.expires_at).toLocaleString('es-BO') : '--'}</td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                              {i.receipt_signed_url ? (
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                  <a
+                                    className="btn"
+                                    href={i.receipt_signed_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={() => markReceiptSeen(i.id, i.updated_at)}
+                                  >
+                                    Ver
+                                  </a>
+                                  {isNewReceipt(i) && (
+                                    <span style={{ background: '#ffefef', color: '#b71c1c', padding: '4px 8px', borderRadius: 999, fontSize: '0.8rem', fontWeight: 700 }}>
+                                      Nuevo comprobante
+                                    </span>
+                                  )}
+                                  <span style={{ color: '#55747b', fontSize: '0.85rem' }}>
+                                    Actualizado {i.updated_at ? new Date(i.updated_at).toLocaleString('es-BO') : '--'}
+                                  </span>
+                                </div>
+                              ) : (
+                                '--'
+                              )}
+                            </td>
+                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              <button className="btn btn--primary" style={payBtnStyle} onClick={() => updateIntentStatus(i.id, 'paid')} disabled={!canPay}>Marcar pagado</button>
+                              <button className="btn" onClick={() => updateIntentStatus(i.id, 'expired')} disabled={!canExpire}>Expirar</button>
+                              <button className="btn" onClick={() => reopenOpportunity(i.opportunity_id)} disabled={statusLower === 'paid'}>Reabrir (sin pagos)</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
