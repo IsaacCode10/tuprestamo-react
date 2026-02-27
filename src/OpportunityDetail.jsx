@@ -202,10 +202,20 @@ const OpportunityDetail = () => {
       return;
     }
 
-    // Optional: Check if investment exceeds opportunity amount
-    const saldoPendiente = (opportunity?.saldo_pendiente != null)
-      ? opportunity.saldo_pendiente
-      : (opportunity.monto - (opportunity.total_funded || 0));
+    // Check canónico de saldo (DB SSOT): incluye reservas activas.
+    let saldoPendiente = (opportunity?.saldo_pendiente != null)
+      ? Number(opportunity.saldo_pendiente)
+      : Number(opportunity.monto - (opportunity.total_funded || 0));
+    try {
+      const { data: availRows, error: availErr } = await supabase.rpc('get_opportunity_available_for_investment', {
+        p_opportunity_id: Number(id),
+      });
+      if (!availErr && Array.isArray(availRows) && availRows[0]) {
+        saldoPendiente = Number(availRows[0].saldo_disponible || 0);
+      }
+    } catch (_) {
+      // Fallback al saldo de UI si el RPC no está disponible aún.
+    }
 
     if (saldoPendiente <= 0) {
       setFormMessage({ type: 'error', text: 'Esta oportunidad ya no tiene saldo pendiente por fondear.' });
@@ -214,7 +224,7 @@ const OpportunityDetail = () => {
     }
 
     if (amount > saldoPendiente) {
-        setFormMessage({ type: 'error', text: `El monto no puede exceder el saldo por invertir (Bs. ${Number(saldoPendiente).toLocaleString('es-BO')}).` });
+        setFormMessage({ type: 'error', text: `La inversión excede el saldo disponible. Restante: ${Number(saldoPendiente).toLocaleString('es-BO')}` });
         setIsSubmitting(false);
         return;
     }
