@@ -26,7 +26,10 @@ export default function InvestorVerification() {
 
   const draftKey = useMemo(() => (userId ? `${DRAFT_KEY_PREFIX}_${userId}` : null), [userId])
   const saveTimer = useRef(null)
-  const isLocked = submitted || profile?.estado_verificacion === 'pendiente_revision' || profile?.estado_verificacion === 'verificado'
+  const verificationState = profile?.estado_verificacion || (submitted ? 'pendiente_revision' : 'no_iniciado')
+  const isVerified = verificationState === 'verificado'
+  const isPendingReview = submitted || verificationState === 'pendiente_revision'
+  const isLocked = isVerified || isPendingReview
 
   useEffect(() => {
     async function boot() {
@@ -196,6 +199,7 @@ export default function InvestorVerification() {
       //    Esto evita sobreescribir 'verificado' con 'pendiente_revision' por condiciones de carrera.
       const status = verifyResp?.status
       if (!status) throw new Error('No recibimos estado de verificación. Intenta nuevamente.')
+      setProfile((prev) => (prev ? { ...prev, estado_verificacion: status } : prev))
 
       // 5) Limpiar borrador sólo cuando el envío quedó en un estado final de revisión/aprobación
       if (status === 'verificado' || status === 'pendiente_revision') {
@@ -236,7 +240,17 @@ export default function InvestorVerification() {
         { label: 'Verificar' },
       ]} />
       <h2>Centro de Verificacion</h2>
-      {isLocked && (
+      {isVerified && (
+        <div style={{ margin:'12px 0', padding:'12px', background:'#e6fffb', border:'1px solid #b5f5ec', color:'#006d75', borderRadius:8 }}>
+          <strong>Tu verificacion fue aprobada.</strong> Ya puedes invertir en oportunidades activas.
+          <div style={{ marginTop: 10 }}>
+            <button type="button" className="btn btn--primary" onClick={() => { window.location.href = '/oportunidades' }}>
+              Ver oportunidades
+            </button>
+          </div>
+        </div>
+      )}
+      {!isVerified && isPendingReview && (
         <div style={{ margin:'12px 0', padding:'12px', background:'#e6fffb', border:'1px solid #b5f5ec', color:'#006d75', borderRadius:8 }}>
           <strong>Verificacion enviada.</strong> Ya no necesitas hacer nada. Te avisaremos por notificaciones y email.
         </div>
@@ -247,7 +261,7 @@ export default function InvestorVerification() {
         <h3>1. Datos Personales</h3>
         <div>
           <label htmlFor="numeroCi">Numero de Cedula de Identidad</label>
-          <input id="numeroCi" type="text" value={numeroCi} onChange={(e) => setNumeroCi(e.target.value)} required />
+          <input id="numeroCi" type="text" value={numeroCi} onChange={(e) => setNumeroCi(e.target.value)} required disabled={isLocked} />
         </div>
 
         <h3>2. Documento de Identidad</h3>
@@ -257,15 +271,17 @@ export default function InvestorVerification() {
             <div style={{ padding: '8px 0' }}>
               <div style={{ color: '#11696b', fontWeight: 600 }}>Documento cargado: {ciUploadedName}</div>
               <small style={{ color: '#666' }}>Puedes continuar luego, el archivo queda guardado.</small>
-              <div style={{ marginTop: 8 }}>
-                <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => handleImmediateUpload(e.target.files?.[0])} />
-                <small style={{ marginLeft: 8, color: '#555' }}>(Reemplazar archivo)</small>
-              </div>
+              {!isLocked && (
+                <div style={{ marginTop: 8 }}>
+                  <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => handleImmediateUpload(e.target.files?.[0])} />
+                  <small style={{ marginLeft: 8, color: '#555' }}>(Reemplazar archivo)</small>
+                </div>
+              )}
             </div>
           ) : (
             <>
-              <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => { setCiFile(e.target.files?.[0] || null); handleImmediateUpload(e.target.files?.[0]); }} required style={{ display: 'none' }} />
-              <label htmlFor="ciFile" className="btn btn--secondary">Seleccionar archivo</label>
+              <input id="ciFile" type="file" accept="image/png, image/jpeg" onChange={(e) => { setCiFile(e.target.files?.[0] || null); handleImmediateUpload(e.target.files?.[0]); }} required style={{ display: 'none' }} disabled={isLocked} />
+              {!isLocked && <label htmlFor="ciFile" className="btn btn--secondary">Seleccionar archivo</label>}
               {(ciUploadedName || ciFile?.name) && (
                 <span style={{ marginLeft: 8 }}>{ciUploadedName || ciFile?.name}</span>
               )}
@@ -277,11 +293,11 @@ export default function InvestorVerification() {
         <p>Esta sera la unica cuenta a la que podras retirar tus fondos.</p>
         <div>
           <label htmlFor="bankName">Nombre del Banco</label>
-          <input id="bankName" type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} required />
+          <input id="bankName" type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} required disabled={isLocked} />
         </div>
         <div>
           <label htmlFor="accountNumber">Numero de Cuenta</label>
-          <input id="accountNumber" type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required />
+          <input id="accountNumber" type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required disabled={isLocked} />
         </div>
 
         <div style={{ marginTop: 12, minHeight: 20 }}>
@@ -289,12 +305,15 @@ export default function InvestorVerification() {
           {info && <span style={{ color: '#11696b' }}>{info}</span>}
         </div>
 
-        <button className="btn btn--primary" type="submit" style={{ marginTop: '1rem' }}>Enviar Verificación</button>
+        {!isLocked && (
+          <button className="btn btn--primary" type="submit" style={{ marginTop: '1rem' }}>
+            {verificationState === 'requiere_revision_manual' ? 'Reenviar Verificacion' : 'Enviar Verificacion'}
+          </button>
+        )}
       </form>
     </div>
   )
 }
-
 
 
 
