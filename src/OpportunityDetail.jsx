@@ -10,6 +10,7 @@ const OpportunityDetail = () => {
   const { id } = useParams(); // Get the ID from the URL
   const navigate = useNavigate();
   const [opportunity, setOpportunity] = useState(null);
+  const [availableBalance, setAvailableBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
@@ -77,6 +78,21 @@ const OpportunityDetail = () => {
     setLoading(false);
   };
 
+  const fetchAvailableBalance = async () => {
+    try {
+      if (!id) return;
+      const { data, error: availErr } = await supabase.rpc('get_opportunity_available_for_investment', {
+        p_opportunity_id: Number(id),
+      });
+      if (availErr) return;
+      if (Array.isArray(data) && data[0]) {
+        setAvailableBalance(Number(data[0].saldo_disponible || 0));
+      }
+    } catch (_) {
+      // no-op: fallback al saldo calculado por opportunity
+    }
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -89,6 +105,7 @@ const OpportunityDetail = () => {
     if (id) {
       fetchOpportunity();
       fetchExistingIntent();
+      fetchAvailableBalance();
     }
   }, [id, userId]);
 
@@ -212,6 +229,7 @@ const OpportunityDetail = () => {
       });
       if (!availErr && Array.isArray(availRows) && availRows[0]) {
         saldoPendiente = Number(availRows[0].saldo_disponible || 0);
+        setAvailableBalance(saldoPendiente);
       }
     } catch (_) {
       // Fallback al saldo de UI si el RPC no está disponible aún.
@@ -313,6 +331,7 @@ const OpportunityDetail = () => {
       setTimeout(() => {
         fetchOpportunity();
         fetchExistingIntent();
+        fetchAvailableBalance();
       }, 2000); // Wait 2 seconds to let user read the message
 
     } catch (error) {
@@ -346,6 +365,7 @@ const OpportunityDetail = () => {
       setCountdown('');
       setInvestmentAmount('');
       fetchOpportunity();
+      fetchAvailableBalance();
     } catch (e) {
       console.error('Error cancelling intent', e);
       setFormMessage({ type: 'error', text: 'No pudimos cancelar la reserva. Intenta nuevamente.' });
@@ -561,6 +581,7 @@ const OpportunityDetail = () => {
   const remainingAmount = opportunity.saldo_pendiente != null
     ? opportunity.saldo_pendiente
     : totalGoal - totalFunded;
+  const displayRemainingAmount = Number.isFinite(availableBalance) ? availableBalance : remainingAmount;
 
   return (
     <div className="opportunity-detail-container" style={{ maxWidth: '1180px', margin: '0 auto', padding: '20px' }}>
@@ -608,8 +629,8 @@ const OpportunityDetail = () => {
           <p>
               <strong>Recaudado:</strong> Bs. {totalFunded.toLocaleString('es-BO')} de Bs. {totalGoal.toLocaleString('es-BO')}
           </p>
-          {remainingAmount > 0 ? (
-             <p><strong>Saldo por invertir:</strong> Bs. {remainingAmount.toLocaleString('es-BO')}</p>
+          {displayRemainingAmount > 0 ? (
+             <p><strong>Saldo por invertir:</strong> Bs. {displayRemainingAmount.toLocaleString('es-BO')}</p>
           ) : (
              <p><strong>¡Esta oportunidad ha sido completamente financiada!</strong></p>
           )}
@@ -637,7 +658,7 @@ const OpportunityDetail = () => {
             </div>
             <div>
               <p style={{ margin: 0, color: '#55747b', fontSize: '0.9rem' }}>Cupo restante</p>
-              <p style={{ margin: 0, fontWeight: 700 }}>Bs. {remainingAmount.toLocaleString('es-BO')}</p>
+              <p style={{ margin: 0, fontWeight: 700 }}>Bs. {displayRemainingAmount.toLocaleString('es-BO')}</p>
             </div>
           </div>
 
@@ -662,7 +683,7 @@ const OpportunityDetail = () => {
 
         {/* Columna derecha: formulario + reserva */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {remainingAmount > 0 ? (
+            {displayRemainingAmount > 0 ? (
               <div className="investment-form" style={{ border: '1px solid #ddd', padding: '16px', borderRadius: '8px' }}>
                 <h3>Invertir en esta Oportunidad</h3>
                 {!hasActiveReservation && (
