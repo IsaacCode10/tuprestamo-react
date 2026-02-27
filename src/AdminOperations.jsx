@@ -666,6 +666,7 @@ const AdminOperations = () => {
             body: 'Tu cuenta ya está verificada y puedes invertir desde ahora.',
             link_url: '/oportunidades',
             cta_label: 'VER OPORTUNIDADES',
+            footer_note: 'Este es un mensaje automático de Tu Préstamo. Si necesitas ayuda, escríbenos a contacto@tuprestamobo.com.',
             email: true,
             suppress_in_app: true,
           }
@@ -676,6 +677,7 @@ const AdminOperations = () => {
             body: note || 'Revisa tus datos y vuelve a enviarlos para completar tu verificación.',
             link_url: '/verificar-cuenta',
             cta_label: 'REVISAR VERIFICACIÓN',
+            footer_note: 'Este es un mensaje automático de Tu Préstamo. Si necesitas ayuda, escríbenos a contacto@tuprestamobo.com.',
             email: true,
             suppress_in_app: true,
           };

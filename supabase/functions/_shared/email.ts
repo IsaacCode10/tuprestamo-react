@@ -28,7 +28,8 @@ export function renderEmail(opts: EmailTemplateOptions) {
   const cta = opts.ctaHref && opts.ctaLabel
     ? `<p style="margin:16px 0 0 0; text-align:center;"><a href="${escapeAttr(opts.ctaHref)}" style="background:#11696b;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block;">${escapeHtml(opts.ctaLabel)}</a></p>`
     : ''
-  const footer = `<p style="color:#777;font-size:12px;margin-top:20px;">Este es un mensaje autom&aacute;tico de Tu Pr&eacute;stamo. Si necesitas ayuda, responde a este correo.</p>`
+  const footerText = opts.footerNote || 'Este es un mensaje autom&aacute;tico de Tu Pr&eacute;stamo. Si necesitas ayuda, responde a este correo.'
+  const footer = `<p style="color:#777;font-size:12px;margin-top:20px;">${footerText}</p>`
 
   return `
   <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;">
