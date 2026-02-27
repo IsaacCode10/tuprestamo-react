@@ -367,6 +367,8 @@ const OpportunityDetail = () => {
         .update({ receipt_url: receiptUrl, updated_at: new Date().toISOString() })
         .eq('id', intentInfo.id);
       if (updErr) throw updErr;
+      // Reflejar el estado en UI inmediatamente (sin esperar refresco/manual reload).
+      setIntentInfo((prev) => (prev ? { ...prev, receipt_url: receiptUrl } : prev));
       setFormMessage({ type: 'success', text: 'Comprobante subido. Procesaremos tu pago al conciliar.' });
       setReceiptFile(null);
       // Notificación in-app para que el inversionista tenga trazabilidad del comprobante
