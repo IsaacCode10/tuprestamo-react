@@ -258,11 +258,14 @@ const OpportunityDetail = () => {
       });
       if (intentError) {
         const msg = intentError?.message || '';
+        const detail = intentError?.details ? `\nDetalle: ${intentError.details}` : '';
+        const hint = intentError?.hint ? `\nSugerencia: ${intentError.hint}` : '';
         if (msg) {
-          setFormMessage({ type: 'error', text: msg });
+          setFormMessage({ type: 'error', text: `${msg}${detail}${hint}` });
         } else {
           setFormMessage({ type: 'error', text: 'Hubo un error al registrar tu inversión. Revisa el monto y vuelve a intentar.' });
         }
+        console.error('create_investment_intent error', intentError);
         setIsSubmitting(false);
         return;
       }
@@ -513,6 +516,7 @@ const OpportunityDetail = () => {
       borderRadius: '8px',
       fontWeight: 700,
       marginTop: '15px',
+      whiteSpace: 'pre-line',
     };
     return (
       <div style={styles} role="status" aria-live="polite">
