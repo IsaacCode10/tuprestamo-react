@@ -11,6 +11,7 @@ type Payload = {
   cta_label?: string
   data?: Record<string, unknown>
   email?: boolean
+  suppress_in_app?: boolean
 }
 
 serve(async (req) => {
@@ -19,7 +20,7 @@ serve(async (req) => {
   }
   try {
     const payload: Payload = await req.json()
-    const { user_id, type, title, body, link_url, cta_label, data, email } = payload || ({} as Payload)
+    const { user_id, type, title, body, link_url, cta_label, data, email, suppress_in_app } = payload || ({} as Payload)
     if (!user_id || !type || !title || !body) throw new Error('user_id, type, title y body son requeridos')
 
     const supabase = createClient(
@@ -27,12 +28,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     )
 
-    // 1) Insertar notificacion in-app
-    const { error: insertErr } = await supabase.from('notifications').insert({
-      user_id, type, title, body, link_url, data: data ?? null,
-      priority: 'normal'
-    })
-    if (insertErr) throw insertErr
+    // 1) Insertar notificacion in-app (opcional)
+    if (!suppress_in_app) {
+      const { error: insertErr } = await supabase.from('notifications').insert({
+        user_id, type, title, body, link_url, data: data ?? null,
+        priority: 'normal'
+      })
+      if (insertErr) throw insertErr
+    }
 
     // 2) Email opcional via Resend
     if (email) {

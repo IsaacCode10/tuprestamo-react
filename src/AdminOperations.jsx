@@ -655,6 +655,35 @@ const AdminOperations = () => {
         p_note: note,
       });
       if (error) throw error;
+
+      // Email proactivo sin duplicar notificación in-app (ya la crea el RPC).
+      try {
+        const payload = newStatus === 'verificado'
+          ? {
+            user_id: userId,
+            type: 'kyc_status',
+            title: 'Tu verificación fue aprobada',
+            body: 'Tu cuenta ya está verificada y puedes invertir desde ahora.',
+            link_url: '/oportunidades',
+            cta_label: 'VER OPORTUNIDADES',
+            email: true,
+            suppress_in_app: true,
+          }
+          : {
+            user_id: userId,
+            type: 'kyc_status',
+            title: 'Necesitamos que ajustes tu verificación',
+            body: note || 'Revisa tus datos y vuelve a enviarlos para completar tu verificación.',
+            link_url: '/verificar-cuenta',
+            cta_label: 'REVISAR VERIFICACIÓN',
+            email: true,
+            suppress_in_app: true,
+          };
+        await supabase.functions.invoke('create-notification', { body: payload });
+      } catch (notifyErr) {
+        console.warn('No se pudo enviar email de estado KYC', notifyErr);
+      }
+
       setInfoMessage(
         newStatus === 'verificado'
           ? 'Inversionista verificado correctamente.'
