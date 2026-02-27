@@ -558,6 +558,9 @@ const OpportunityDetail = () => {
     ? opportunity.saldo_pendiente
     : totalGoal - totalFunded;
   const displayRemainingAmount = Number.isFinite(availableBalance) ? availableBalance : remainingAmount;
+  const hasCupoDisponible = displayRemainingAmount > 0;
+  const isFullyPaid = totalFunded >= totalGoal;
+  const isReservedPending = !isFullyPaid && displayRemainingAmount <= 0;
 
   return (
     <div className="opportunity-detail-container" style={{ maxWidth: '1180px', margin: '0 auto', padding: '20px' }}>
@@ -605,8 +608,10 @@ const OpportunityDetail = () => {
           <p>
               <strong>Recaudado:</strong> Bs. {totalFunded.toLocaleString('es-BO')} de Bs. {totalGoal.toLocaleString('es-BO')}
           </p>
-          {displayRemainingAmount > 0 ? (
+          {hasCupoDisponible ? (
              <p><strong>Saldo por invertir:</strong> Bs. {displayRemainingAmount.toLocaleString('es-BO')}</p>
+          ) : isReservedPending ? (
+             <p><strong>Cupo reservado.</strong> Pendiente de confirmación de pagos de reservas.</p>
           ) : (
              <p><strong>¡Esta oportunidad ha sido completamente financiada!</strong></p>
           )}
@@ -659,7 +664,7 @@ const OpportunityDetail = () => {
 
         {/* Columna derecha: formulario + reserva */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {displayRemainingAmount > 0 ? (
+            {(hasCupoDisponible || hasActiveReservation || receiptUnderReview) ? (
               <div className="investment-form" style={{ border: '1px solid #ddd', padding: '16px', borderRadius: '8px' }}>
                 <h3>Invertir en esta Oportunidad</h3>
                 {!hasActiveReservation && (
