@@ -522,6 +522,14 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const formatDate = (value) => {
     if (!value) return 'N/D';
     try {
+      // Evita drift por zona horaria cuando llega YYYY-MM-DD desde la BD.
+      const raw = String(value);
+      const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        const [, y, m, d] = match;
+        const dt = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+        return dt.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+      }
       return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch (_) {
       return String(value);
@@ -596,6 +604,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   };
 
   const schedule = normalizeSchedule();
+  const hasMeaningfulBalance = schedule.some((row) => Number(row?.balance || 0) > 0);
   const nextPending = schedule.find((row) => (row.uiStatus || '').toLowerCase() !== 'pagado');
   const nextIntent = nextPending?.intent || null;
   const nextIntentAmount = cuotaTotal || nextIntent?.expected_amount || nextPending?.payment || 0;
@@ -891,10 +900,10 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                   <tr>
                     <th>#</th>
                     <th>Vence</th>
-                    <th>Cuota</th>
+                    <th>Cuota total</th>
                     <th>Capital</th>
                     <th>Interés</th>
-                    <th>Saldo</th>
+                    {hasMeaningfulBalance && <th>Saldo</th>}
                     <th>Estado</th>
                     <th>Comprobante</th>
                   </tr>
@@ -907,7 +916,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                       <td>{formatMoney(cuotaTotal || row.payment)}</td>
                       <td>{formatMoney(row.principal)}</td>
                       <td>{formatMoney(row.interest)}</td>
-                      <td>{formatMoney(row.balance)}</td>
+                      {hasMeaningfulBalance && <td>{formatMoney(row.balance)}</td>}
                       <td>{(row.uiStatus || 'pendiente').toUpperCase()}</td>
                       <td>
                         {row.intent?.receipt_signed_url ? (
@@ -922,6 +931,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                   ))}
                 </tbody>
               </table>
+              <p className="muted" style={{ marginTop: 8 }}>
+                Cuota total = capital + interés + admin/seguro mensual.
+              </p>
             </div>
           )}
         </div>
