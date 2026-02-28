@@ -1936,7 +1936,7 @@ const AdminOperations = () => {
                     );
                   })()}
                   <button
-                    className="btn btn--primary"
+                    className={`btn ${String(d.estado || '').trim().toLowerCase() === 'pagado' ? '' : 'btn--primary'}`}
                     disabled={String(d.estado || '').trim().toLowerCase() === 'pagado' || !d.notariado_ok}
                     onClick={() => registerDirectedPayment(d)}
                     title={String(d.estado || '').trim().toLowerCase() === 'pagado'
