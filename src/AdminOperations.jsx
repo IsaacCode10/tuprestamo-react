@@ -402,10 +402,20 @@ const AdminOperations = () => {
     const search = borrowerSearch.trim().toLowerCase();
     // Mapa de orden real por cuota (sin depender del filtro)
     const orderMap = {};
-    borrowerIntents
-      .slice()
-      .sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0))
-      .forEach((intent, idx) => { orderMap[intent.id] = idx + 1; });
+    const byOpp = {};
+    borrowerIntents.forEach((intent) => {
+      const oppId = intent.opportunity_id;
+      if (!byOpp[oppId]) byOpp[oppId] = [];
+      byOpp[oppId].push(intent);
+    });
+    Object.values(byOpp).forEach((rows) => {
+      rows
+        .slice()
+        .sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0))
+        .forEach((intent, idx) => {
+          orderMap[intent.id] = idx + 1;
+        });
+    });
 
     const map = {};
     borrowerIntents.forEach((i) => {
