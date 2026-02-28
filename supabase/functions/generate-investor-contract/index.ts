@@ -101,7 +101,23 @@ async function generateInvestorContract(inv: InvestmentRow): Promise<string> {
     .eq('id', inv.investor_id)
     .maybeSingle()
 
-  const pdfBytes = await buildPdf(inv, opp || {}, profile || {})
+  const { data: disb } = await supabaseAdmin
+    .from('desembolsos')
+    .select('estado, paid_at')
+    .eq('opportunity_id', inv.opportunity_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { data: nextBorrowerIntent } = await supabaseAdmin
+    .from('borrower_payment_intents')
+    .select('due_date')
+    .eq('opportunity_id', inv.opportunity_id)
+    .order('due_date', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  const pdfBytes = await buildPdf(inv, opp || {}, profile || {}, disb || {}, nextBorrowerIntent || {})
   const path = `investor-contracts/opportunity-${inv.opportunity_id}/inversion_${inv.id}_${Date.now()}.pdf`
   const uploadRes = await supabaseAdmin.storage
     .from(BUCKET)
@@ -117,14 +133,29 @@ async function generateInvestorContract(inv: InvestmentRow): Promise<string> {
   return path
 }
 
-async function buildPdf(inv: InvestmentRow, opp: Record<string, unknown>, profile: Record<string, unknown>) {
+async function buildPdf(
+  inv: InvestmentRow,
+  opp: Record<string, unknown>,
+  profile: Record<string, unknown>,
+  disb: Record<string, unknown>,
+  nextBorrowerIntent: Record<string, unknown>,
+) {
   const doc = await PDFDocument.create()
-  const page = doc.addPage([612, 792])
+  const PAGE_WIDTH = 612
+  const PAGE_HEIGHT = 792
+  const MARGIN_X = 52
+  const MARGIN_TOP = 50
+  const MARGIN_BOTTOM = 50
+  const width = PAGE_WIDTH - (MARGIN_X * 2)
+  let page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const bold = await doc.embedFont(StandardFonts.HelveticaBold)
-  let y = 742
-  const x = 52
-  const width = 508
+  let y = PAGE_HEIGHT - MARGIN_TOP
+
+  const newPage = () => {
+    page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+    y = PAGE_HEIGHT - MARGIN_TOP
+  }
 
   const draw = (text: string, opts?: { b?: boolean; s?: number; c?: ReturnType<typeof rgb>; l?: number }) => {
     const size = opts?.s || 12
@@ -144,9 +175,34 @@ async function buildPdf(inv: InvestmentRow, opp: Record<string, unknown>, profil
     }
     if (acc) lines.push(acc)
     for (const ln of lines) {
-      page.drawText(ln, { x, y, size, font: used, color })
+      if (y - line < MARGIN_BOTTOM) newPage()
+      page.drawText(ln, { x: MARGIN_X, y, size, font: used, color })
       y -= line
-      if (y < 70) break
+    }
+  }
+
+  // Optional logo from shared contract env var
+  const logoUrl = Deno.env.get('CONTRACT_LOGO_URL')
+  if (logoUrl) {
+    try {
+      const res = await fetch(logoUrl)
+      if (res.ok) {
+        const bytes = new Uint8Array(await res.arrayBuffer())
+        const contentType = res.headers.get('content-type') || ''
+        const image = contentType.includes('png') ? await doc.embedPng(bytes) : await doc.embedJpg(bytes)
+        const logoWidth = 120
+        const scale = logoWidth / image.width
+        const logoHeight = image.height * scale
+        page.drawImage(image, {
+          x: MARGIN_X,
+          y: PAGE_HEIGHT - MARGIN_TOP + 8 - logoHeight,
+          width: logoWidth,
+          height: logoHeight,
+        })
+        y -= logoHeight + 8
+      }
+    } catch (_) {
+      // Continue without logo if fetch/embed fails
     }
   }
 
@@ -168,13 +224,22 @@ async function buildPdf(inv: InvestmentRow, opp: Record<string, unknown>, profil
   draw(`Estado de la oportunidad: ${String(opp.estado || 'N/D')}`)
   y -= 6
 
-  draw('3) Alcance y condiciones', { b: true, s: 13, c: rgb(0, 0.28, 0.35) })
+  draw('3) Inicio de pagos y activación de retornos', { b: true, s: 13, c: rgb(0, 0.28, 0.35) })
+  draw('La inversión no genera retornos mientras la oportunidad esté en fondeo.')
+  draw('El cronograma de pagos al inversionista inicia únicamente cuando:')
+  draw('• la oportunidad alcanza 100% del fondeo, y')
+  draw('• Tu Préstamo registra el pago dirigido al banco acreedor (desembolso).')
+  draw(`Fecha efectiva de activación: ${disb?.paid_at ? new Date(String(disb.paid_at)).toLocaleString('es-BO') : 'Se define al registrar el desembolso dirigido'}`)
+  draw(`Primera cuota estimada: ${nextBorrowerIntent?.due_date ? new Date(String(nextBorrowerIntent.due_date)).toLocaleDateString('es-BO') : 'Se mostrará en tu panel al activarse el cronograma'}`)
+  y -= 6
+
+  draw('4) Alcance y condiciones', { b: true, s: 13, c: rgb(0, 0.28, 0.35) })
   draw('La presente constancia respalda que el inversionista registró y pagó su inversión en la oportunidad indicada.')
   draw('Los retornos dependen del pago efectivo del prestatario y del cronograma de la operación.')
   draw('No existe garantía estatal. Tu Préstamo actúa como plataforma de intermediación y administración operativa.')
   y -= 6
 
-  draw('4) Aceptación y trazabilidad', { b: true, s: 13, c: rgb(0, 0.28, 0.35) })
+  draw('5) Aceptación y trazabilidad', { b: true, s: 13, c: rgb(0, 0.28, 0.35) })
   draw('La aceptación en plataforma constituye consentimiento electrónico de las condiciones de inversión y del flujo operativo.')
   draw(`Hash de control: inv-${inv.id}-${Date.now()}`)
 

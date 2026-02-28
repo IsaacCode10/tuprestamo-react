@@ -189,3 +189,41 @@ Ejemplo (React)
 Notas
 - Aplicación de filtros: para MVP, los cambios pueden aplicarse automáticamente al hacer clic.
 - Mantener botón “Limpiar” opcional para restablecer.
+
+### VIII. Estandar visual para contratos (PDF)
+
+- Alcance
+  - Este estándar aplica a todos los contratos generados por plataforma:
+    - Contrato de prestatario (préstamo y mandato de pago dirigido).
+    - Contrato/constancia de inversionista.
+
+- Identidad visual obligatoria
+  - Logo Tu Préstamo en cabecera (PNG transparente) con proporción original.
+  - Color de títulos de sección: azul corporativo `#00445A`.
+  - Texto cuerpo: gris oscuro legible (equivalente `#222` / `#0D1A24`).
+  - Fondo blanco, sin bloques recargados ni adornos.
+
+- Tipografía y jerarquía
+  - Título principal: estilo equivalente a Montserrat Bold (en PDF usar Helvetica Bold), 16 pt.
+  - Subtítulos de sección: Bold 13-14 pt.
+  - Texto cuerpo: Regular 11-12 pt.
+  - Interlineado constante, márgenes amplios y paginación limpia.
+
+- Estructura mínima por contrato
+  - Encabezado: tipo de contrato, ID de operación/inversión, fecha de emisión.
+  - Datos de partes.
+  - Condiciones económicas clave (monto, plazo, tasas, comisiones/cargos).
+  - Condición de activación de cronograma y pagos.
+  - Riesgos y alcance legal.
+  - Aceptación digital y hash de control.
+
+- Regla clave de claridad (inversionista)
+  - Debe indicarse explícitamente que el retorno inicia solo cuando:
+    1) la oportunidad llega a 100% de fondeo, y
+    2) se registra el pago dirigido al banco (desembolso).
+  - Si la primera cuota aún no existe, usar copy: "Se mostrará en tu panel al activarse el cronograma."
+
+- Tono
+  - Lenguaje simple, comercial y legalmente claro.
+  - Evitar tecnicismos internos de sistema.
+  - Una idea por párrafo corto.
