@@ -488,6 +488,26 @@ const AdminOperations = () => {
       .map((g) => ({ ...g, payouts: [...g.payouts].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) }))
       .sort((a, b) => Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0));
   }, [payouts, payoutStatusFilter, payoutSearch, investorMap, showPendingOnly, bankMap]);
+  const disbursementRows = useMemo(() => {
+    const isReadyForDirectedPayment = (d) => {
+      const oppState = String(d.opportunity_state || '').toLowerCase();
+      const disbState = String(d.estado || '').toLowerCase();
+      return oppState === 'fondeada' && disbState !== 'pagado' && Boolean(d.notariado_ok);
+    };
+    return [...disbursements].sort((a, b) => {
+      const aReady = isReadyForDirectedPayment(a) ? 1 : 0;
+      const bReady = isReadyForDirectedPayment(b) ? 1 : 0;
+      if (aReady !== bReady) return bReady - aReady;
+      const aPaid = String(a.estado || '').toLowerCase() === 'pagado' ? 1 : 0;
+      const bPaid = String(b.estado || '').toLowerCase() === 'pagado' ? 1 : 0;
+      if (aPaid !== bPaid) return aPaid - bPaid;
+      return Number(b.opportunity_id || 0) - Number(a.opportunity_id || 0);
+    });
+  }, [disbursements]);
+  const disbursementReadyCount = useMemo(
+    () => disbursementRows.filter((d) => String(d.opportunity_state || '').toLowerCase() === 'fondeada' && String(d.estado || '').toLowerCase() !== 'pagado' && Boolean(d.notariado_ok)).length,
+    [disbursementRows]
+  );
 
   const exportPendingCsv = async () => {
     const pending = payouts.filter((p) => (p.status || '').toLowerCase() === 'pending');
@@ -1832,6 +1852,9 @@ const AdminOperations = () => {
 
       {tab === 'disbursements' && (
         <div style={{ overflowX: 'auto' }}>
+          <div style={{ marginBottom: 10, padding: 10, border: '1px solid #d7ece8', background: '#f3fbf9', borderRadius: 10, color: '#0f5a62' }}>
+            <strong>Listas para pago dirigido:</strong> {disbursementReadyCount}
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -1844,7 +1867,7 @@ const AdminOperations = () => {
               </tr>
             </thead>
             <tbody>
-              {disbursements.map((d) => (
+              {disbursementRows.map((d) => (
                 <tr key={d.id}>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{d.id}</td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{d.opportunity_id}</td>
@@ -1857,6 +1880,11 @@ const AdminOperations = () => {
                     <div className="muted">{d.paid_at ? `Fecha pago dirigido: ${new Date(d.paid_at).toLocaleString('es-BO')}` : 'Fecha pago dirigido: —'}</div>
                     <div className="muted">Notariado: {d.notariado_ok ? 'OK' : 'Pendiente'}</div>
                     <div className="muted">Estado oportunidad: {d.opportunity_state || 'N/D'}</div>
+                    {String(d.opportunity_state || '').toLowerCase() === 'fondeada' && String(d.estado || '').toLowerCase() !== 'pagado' && d.notariado_ok && (
+                      <div style={{ marginTop: 6, display: 'inline-block', padding: '4px 8px', borderRadius: 999, background: '#ddf6f1', color: '#0b6a5f', fontWeight: 700, fontSize: '0.8rem' }}>
+                        100% fondeada - lista para pago dirigido
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
