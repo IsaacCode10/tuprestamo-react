@@ -3,6 +3,8 @@
 -- transición de estados en algunos entornos.
 -- Se define una implementación canónica (4 parámetros) con la misma lógica de negocio.
 
+drop function if exists public.registrar_pago_dirigido(bigint, text, text, jsonb);
+
 create or replace function public.registrar_pago_dirigido(
   p_opportunity_id bigint,
   p_comprobante_url text default null,
