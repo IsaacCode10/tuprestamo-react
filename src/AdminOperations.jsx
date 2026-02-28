@@ -1920,6 +1920,7 @@ const AdminOperations = () => {
                 <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   {(() => {
                     const oppState = String(d.opportunity_state || '').toLowerCase();
+                    const directedPaid = String(d.estado || '').trim().toLowerCase() === 'pagado';
                     const alreadyPublished = ['disponible', 'fondeada', 'activo', 'desembolsado', 'pagado'].includes(oppState);
                     return (
                       <button
@@ -1936,11 +1937,13 @@ const AdminOperations = () => {
                   })()}
                   <button
                     className="btn btn--primary"
-                    disabled={d.estado === 'pagado' || !d.notariado_ok}
+                    disabled={String(d.estado || '').trim().toLowerCase() === 'pagado' || !d.notariado_ok}
                     onClick={() => registerDirectedPayment(d)}
-                    title="Úsalo cuando la oportunidad ya esté publicada/fondeada y tengas el comprobante del pago al banco. Este paso registra el desembolso dirigido."
+                    title={String(d.estado || '').trim().toLowerCase() === 'pagado'
+                      ? 'Pago dirigido ya registrado.'
+                      : 'Úsalo cuando la oportunidad ya esté publicada/fondeada y tengas el comprobante del pago al banco. Este paso registra el desembolso dirigido.'}
                   >
-                    Registrar pago dirigido
+                    {String(d.estado || '').trim().toLowerCase() === 'pagado' ? 'Pago dirigido registrado' : 'Registrar pago dirigido'}
                   </button>
                   <span
                     title="Orden sugerido: 1) Notariado OK, 2) Publicar oportunidad, 3) Fondear, 4) Subir comprobante banco, 5) Registrar pago dirigido."
