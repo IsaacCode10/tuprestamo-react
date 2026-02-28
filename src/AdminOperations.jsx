@@ -1077,6 +1077,11 @@ const AdminOperations = () => {
         p_opportunity_id: disbRow.opportunity_id,
         p_comprobante_url: receiptPath,
         p_contract_url: contractPath,
+        p_audit: {
+          source: 'admin_operations',
+          actor: 'ops',
+          ts: new Date().toISOString(),
+        },
       });
       if (rpcErr) throw rpcErr;
 
