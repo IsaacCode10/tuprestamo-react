@@ -1127,6 +1127,7 @@ const AdminOperations = () => {
           body: { opportunity_id: disbRow.opportunity_id },
         });
         if (contractErr) throw contractErr;
+        if (contractRes?.error) throw new Error(contractRes.error);
         if (contractRes?.path) {
           await supabase.from('desembolsos')
             .update({ contract_url: contractRes.path })
@@ -1137,18 +1138,25 @@ const AdminOperations = () => {
       }
 
       // Notificar prestatario e inversionistas (campana) + email prestatario
+      let notifyWarning = '';
       try {
-        await supabase.functions.invoke('notify-directed-payment', {
+        const { data: notifRes, error: notifErr } = await supabase.functions.invoke('notify-directed-payment', {
           body: { opportunity_id: disbRow.opportunity_id },
         });
+        if (notifErr) throw notifErr;
+        if (notifRes?.error) throw new Error(notifRes.error);
+        if (notifRes?.ok !== true) {
+          throw new Error('La función notify-directed-payment no devolvió ok=true');
+        }
       } catch (notifErr) {
+        notifyWarning = ' Aviso: no se pudo enviar notificación/correo automático.';
         console.warn('No se pudo notificar desembolso', notifErr);
       }
 
       setDisbReceiptFiles((prev) => ({ ...prev, [disbRow.id]: null }));
       setDisbContractFiles((prev) => ({ ...prev, [disbRow.id]: null }));
       setDisbNotaryFiles((prev) => ({ ...prev, [disbRow.id]: null }));
-      setInfoMessage('Pago dirigido registrado, cronograma generado y contrato listo.');
+      setInfoMessage(`Pago dirigido registrado, cronograma generado y contrato listo.${notifyWarning}`);
       loadDisbursements();
       loadBorrowerIntents();
     } catch (e) {
