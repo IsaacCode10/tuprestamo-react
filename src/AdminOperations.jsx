@@ -473,6 +473,8 @@ const AdminOperations = () => {
           totalCount: 0,
           pendingCount: 0,
           pendingAmount: 0,
+          oldestPendingTs: null,
+          latestUpdateTs: null,
           bank: null,
           account: null,
         };
@@ -483,6 +485,14 @@ const AdminOperations = () => {
       if (statusLower === 'pending') {
         group.pendingCount += 1;
         group.pendingAmount += Number(p.amount || 0);
+        const createdTs = new Date(p.created_at || 0).getTime();
+        if (!Number.isNaN(createdTs) && (group.oldestPendingTs === null || createdTs < group.oldestPendingTs)) {
+          group.oldestPendingTs = createdTs;
+        }
+      }
+      const updateTs = new Date(p.paid_at || p.created_at || 0).getTime();
+      if (!Number.isNaN(updateTs) && (group.latestUpdateTs === null || updateTs > group.latestUpdateTs)) {
+        group.latestUpdateTs = updateTs;
       }
       const bankInfo = bankMap[p.investor_id];
       if (bankInfo) {
@@ -496,7 +506,23 @@ const AdminOperations = () => {
     });
     return Object.values(map)
       .map((g) => ({ ...g, payouts: [...g.payouts].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) }))
-      .sort((a, b) => Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0));
+      .sort((a, b) => {
+        // 1) grupos con pendientes primero
+        if (a.pendingCount !== b.pendingCount) return b.pendingCount - a.pendingCount;
+        // 2) mayor monto pendiente primero
+        if (a.pendingAmount !== b.pendingAmount) return b.pendingAmount - a.pendingAmount;
+        // 3) si ambos tienen pendientes, priorizar el más antiguo
+        if (a.oldestPendingTs !== b.oldestPendingTs) {
+          const aTs = a.oldestPendingTs ?? Number.MAX_SAFE_INTEGER;
+          const bTs = b.oldestPendingTs ?? Number.MAX_SAFE_INTEGER;
+          return aTs - bTs;
+        }
+        // 4) fallback: más reciente arriba
+        const aUpd = a.latestUpdateTs ?? 0;
+        const bUpd = b.latestUpdateTs ?? 0;
+        if (aUpd !== bUpd) return bUpd - aUpd;
+        return Number(b.opportunity_id || 0) - Number(a.opportunity_id || 0);
+      });
   }, [payouts, payoutStatusFilter, payoutSearch, investorMap, showPendingOnly, bankMap]);
   const disbursementRows = useMemo(() => {
     const isReadyForDirectedPayment = (d) => {
