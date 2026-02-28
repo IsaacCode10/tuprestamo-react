@@ -86,21 +86,20 @@ serve(async (req) => {
     }
 
     // Notificación prestatario (campana)
-    const notifications: any[] = []
-    notifications.push({
+    const notificationRows: Record<string, unknown>[] = [{
       user_id: opp.user_id,
       type: 'loan_disbursed',
       title: 'Pagamos tu tarjeta',
       body: `Transferimos Bs ${formatMoney(disb?.monto_neto ?? opp.saldo_deudor_verificado)} a tu banco${sol?.bancos_deuda ? ` (${sol.bancos_deuda})` : ''}. Tu cronograma inicia desde hoy.`,
       link_url: '/borrower-dashboard',
       priority: 'high',
-    })
+    }]
 
     // Notificación inversionistas (solo campana)
-    (invs || []).forEach((inv) => {
+    ;(Array.isArray(invs) ? invs : []).forEach((inv: InvestorRow) => {
       if (!inv.investor_id) return
       const prof = investorProfiles.find((p) => p.id === inv.investor_id)
-      notifications.push({
+      notificationRows.push({
         user_id: inv.investor_id,
         type: 'loan_disbursed_investor',
         title: 'Préstamo desembolsado',
@@ -111,8 +110,9 @@ serve(async (req) => {
       })
     })
 
-    if (notifications.length > 0) {
-      await supabaseAdmin.from('notifications').insert(notifications)
+    if (notificationRows.length > 0) {
+      const { error: notifInsertErr } = await supabaseAdmin.from('notifications').insert(notificationRows)
+      if (notifInsertErr) throw notifInsertErr
     }
 
     // Email único al prestatario al pagar el banco
@@ -130,7 +130,7 @@ serve(async (req) => {
           : '',
       })
 
-      await fetch('https://api.resend.com/emails', {
+      const resendResp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -140,6 +140,10 @@ serve(async (req) => {
           html,
         }),
       })
+      if (!resendResp.ok) {
+        const txt = await resendResp.text()
+        throw new Error(`Resend error: ${resendResp.status} ${txt}`)
+      }
     }
 
     return json({ ok: true })
