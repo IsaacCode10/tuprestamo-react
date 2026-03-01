@@ -587,12 +587,18 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
 
   const normalizeSchedule = () => {
     if (!Array.isArray(scheduleRows)) return [];
-    return scheduleRows.map((row, idx) => {
-      const rowKey = dateKey(row.due_date);
-      const intentByDate = borrowerIntents.find((b) => dateKey(b?.due_date) === rowKey);
-      const intentByOrder = borrowerIntents[idx];
-      const intent = intentByDate || intentByOrder || null;
-      const intentStatus = (intent?.status || '').toLowerCase();
+    return scheduleRows.map((row) => {
+      const intent = row?.borrower_payment_intent_id ? {
+        id: row.borrower_payment_intent_id,
+        due_date: row.due_date,
+        expected_amount: row.expected_amount,
+        status: row.borrower_status,
+        paid_at: row.paid_at,
+        paid_amount: row.paid_amount,
+        receipt_url: row.receipt_url,
+        receipt_signed_url: row.receipt_signed_url,
+      } : null;
+      const intentStatus = (row?.borrower_status || intent?.status || '').toLowerCase();
       const rowStatus = (row?.status || '').toLowerCase();
       const isPaid = ['paid', 'pagado'].includes(intentStatus) || rowStatus === 'pagado';
       return {
