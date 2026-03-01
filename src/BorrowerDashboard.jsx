@@ -385,17 +385,27 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
           .limit(1)
           .maybeSingle();
         if (error) throw error;
-        setDisbursement(data);
+        let comprobanteSignedUrl = null;
+        let contractSignedUrl = null;
+
+        if (data?.comprobante_url) {
+          const { data: signed, error: signedErr } = await supabase
+            .storage
+            .from('comprobantes-pagos')
+            .createSignedUrl(data.comprobante_url, 60 * 60);
+          if (!signedErr) comprobanteSignedUrl = signed?.signedUrl || null;
+        }
+
         if (data?.contract_url) {
           const { data: signed, error: signedErr } = await supabase
             .storage
             .from('contratos')
             .createSignedUrl(data.contract_url, 60 * 60);
-          if (signedErr) throw signedErr;
-          setContractLink(signed?.signedUrl || null);
-        } else {
-          setContractLink(null);
+          if (!signedErr) contractSignedUrl = signed?.signedUrl || null;
         }
+
+        setDisbursement(data ? { ...data, comprobante_signed_url: comprobanteSignedUrl } : data);
+        setContractLink(contractSignedUrl);
       } catch (err) {
         console.error('Error cargando desembolso:', err);
         setDisbError('No pudimos cargar el desembolso/contrato. Intenta más tarde.');
@@ -846,7 +856,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
               {notaryActionError && <p style={{ color: '#b00020', margin: '0 0 4px 0' }}>{notaryActionError}</p>}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {disbursement.comprobante_url ? (
-                  <a className="btn" href={disbursement.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante banco</a>
+                  <a className="btn" href={disbursement.comprobante_signed_url || disbursement.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante banco</a>
                 ) : (
                   <span className="muted">Comprobante en proceso</span>
                 )}
