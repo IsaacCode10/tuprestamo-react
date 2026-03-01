@@ -592,11 +592,12 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     setUploadingReceiptId(intent.id);
     try {
       const uploadedPath = await uploadBorrowerReceipt(file);
-      const { error } = await supabase
-        .from('borrower_payment_intents')
-        .update({ receipt_url: uploadedPath })
-        .eq('id', intent.id);
-      if (error) throw error;
+      const { data: attachRes, error: attachErr } = await supabase
+        .rpc('attach_borrower_receipt', {
+          p_intent_id: intent.id,
+          p_receipt_url: uploadedPath,
+        });
+      if (attachErr) throw attachErr;
       setReceiptUploadMessage(`Comprobante enviado para la cuota con vencimiento ${formatDate(intent.due_date)}.`);
       await loadBorrowerIntents();
       const { data: verifyRow, error: verifyErr } = await supabase
@@ -608,7 +609,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         console.warn('Debug comprobante: no se pudo verificar la cuota tras upload', verifyErr);
       } else if (!verifyRow?.receipt_url) {
         const debugMsg = `Debug upload intent=${intent.id} opp=${oportunidad?.id || 'N/D'} borrower=${userId || 'N/D'}`;
-        console.warn(debugMsg, verifyRow);
+        console.warn(debugMsg, verifyRow, attachRes);
         setReceiptUploadError(`Comprobante subido, pero aún no se refleja en la cuota. ${debugMsg}`);
       }
     } catch (err) {
