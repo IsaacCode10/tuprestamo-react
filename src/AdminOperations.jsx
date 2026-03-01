@@ -398,24 +398,20 @@ const AdminOperations = () => {
   }, [filteredIntents]);
   const pendingPayoutTotal = useMemo(() => payouts.filter((p) => (p.status || '').toLowerCase() === 'pending').reduce((acc, p) => acc + Number(p.amount || 0), 0), [payouts]);
   const getPayoutRow = (id) => payouts.find((p) => p.id === id);
+  const toDateTs = (value) => {
+    if (!value) return null;
+    const raw = String(value);
+    const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      const [, y, m, d] = match;
+      return Date.UTC(Number(y), Number(m) - 1, Number(d));
+    }
+    const ts = new Date(value).getTime();
+    return Number.isNaN(ts) ? null : ts;
+  };
+
   const borrowerGroups = useMemo(() => {
     const search = borrowerSearch.trim().toLowerCase();
-    // Mapa de orden real por cuota (sin depender del filtro)
-    const orderMap = {};
-    const byOpp = {};
-    borrowerIntents.forEach((intent) => {
-      const oppId = intent.opportunity_id;
-      if (!byOpp[oppId]) byOpp[oppId] = [];
-      byOpp[oppId].push(intent);
-    });
-    Object.values(byOpp).forEach((rows) => {
-      rows
-        .slice()
-        .sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0))
-        .forEach((intent, idx) => {
-          orderMap[intent.id] = idx + 1;
-        });
-    });
 
     const map = {};
     borrowerIntents.forEach((i) => {
@@ -438,13 +434,13 @@ const AdminOperations = () => {
         };
       }
       const group = map[i.opportunity_id];
-      group.intents.push({ ...i, orderNumber: orderMap[i.id] || (group.intents.length + 1) });
+      group.intents.push({ ...i });
       group.totalCount += 1;
       const isPending = statusLower === 'pending';
       if (isPending) {
         group.pendingCount += 1;
         group.pendingAmount += Number(i.expected_amount || 0);
-        const dueTs = i.due_date ? new Date(i.due_date).getTime() : null;
+        const dueTs = toDateTs(i.due_date);
         if (dueTs !== null && (group.nextDue === null || dueTs < group.nextDue)) {
           group.nextDue = dueTs;
           group.nextAmount = Number(i.expected_amount || 0);
@@ -452,7 +448,7 @@ const AdminOperations = () => {
       }
     });
     return Object.values(map)
-      .map((g) => ({ ...g, intents: [...g.intents].sort((a, b) => new Date(a.due_date || 0) - new Date(b.due_date || 0)) }))
+      .map((g) => ({ ...g, intents: [...g.intents].sort((a, b) => (toDateTs(a.due_date) || 0) - (toDateTs(b.due_date) || 0)) }))
       .sort((a, b) => Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0));
   }, [borrowerIntents, borrowerStatusFilter, borrowerSearch]);
   const payoutGroups = useMemo(() => {
@@ -1332,6 +1328,13 @@ const AdminOperations = () => {
   const formatDateShort = (value) => {
     if (!value) return '--';
     try {
+      const raw = String(value);
+      const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        const [, y, m, d] = match;
+        const dt = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+        return dt.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+      }
       return new Date(value).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch (_) {
       return String(value);
@@ -1679,7 +1682,7 @@ const AdminOperations = () => {
                         {g.intents.map((i, idx) => (
                           <tr key={i.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                              Cuota #{i.orderNumber || (idx + 1)}
+                              Cuota #{idx + 1}
                               <div className="muted">ID {i.id}</div>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatDateShort(i.due_date)}</td>
