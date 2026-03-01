@@ -599,6 +599,18 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       if (error) throw error;
       setReceiptUploadMessage(`Comprobante enviado para la cuota con vencimiento ${formatDate(intent.due_date)}.`);
       await loadBorrowerIntents();
+      const { data: verifyRow, error: verifyErr } = await supabase
+        .from('borrower_payment_intents')
+        .select('id, opportunity_id, borrower_id, due_date, status, receipt_url')
+        .eq('id', intent.id)
+        .maybeSingle();
+      if (verifyErr) {
+        console.warn('Debug comprobante: no se pudo verificar la cuota tras upload', verifyErr);
+      } else if (!verifyRow?.receipt_url) {
+        const debugMsg = `Debug upload intent=${intent.id} opp=${oportunidad?.id || 'N/D'} borrower=${userId || 'N/D'}`;
+        console.warn(debugMsg, verifyRow);
+        setReceiptUploadError(`Comprobante subido, pero aún no se refleja en la cuota. ${debugMsg}`);
+      }
     } catch (err) {
       console.error('Error subiendo comprobante prestatario:', err);
       setReceiptUploadError(err?.message || 'No pudimos subir el comprobante. Intenta nuevamente.');
@@ -610,8 +622,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
 
   const normalizeSchedule = () => {
     if (!Array.isArray(scheduleRows)) return [];
+    const intentsById = new Map((borrowerIntents || []).map((it) => [it.id, it]));
     return scheduleRows.map((row) => {
-      const intent = row?.borrower_payment_intent_id ? {
+      const intentFromRow = row?.borrower_payment_intent_id ? {
         id: row.borrower_payment_intent_id,
         due_date: row.due_date,
         expected_amount: row.expected_amount,
@@ -621,6 +634,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         receipt_url: row.receipt_url,
         receipt_signed_url: row.receipt_signed_url,
       } : null;
+      const intent = (row?.borrower_payment_intent_id && intentsById.get(row.borrower_payment_intent_id)) || intentFromRow || null;
       const intentStatus = (row?.borrower_status || intent?.status || '').toLowerCase();
       const rowStatus = (row?.status || '').toLowerCase();
       const isPaid = ['paid', 'pagado'].includes(intentStatus) || rowStatus === 'pagado';
