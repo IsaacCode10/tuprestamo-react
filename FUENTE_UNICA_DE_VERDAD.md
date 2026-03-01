@@ -130,6 +130,29 @@ Para evitar mezclar caja operativa con costos del funnel:
 
 Esto mantiene intacta la conciliación de cuotas (SSOT transaccional) y separa claramente el P&L gerencial.
 
+## 4.4) Politica oficial de fechas (cobro prestatario y pago inversionista)
+
+Para eliminar ambigüedad operativa, la regla oficial es:
+
+- **Ancla de vencimiento prestatario:** día **5** de cada mes.
+- **Primera cuota:** día 5 del mes siguiente al `paid_at` del desembolso dirigido.
+  - Ejemplo: si el desembolso se registra el 25/02/2026, la primera cuota vence el 05/03/2026.
+- **Siguientes cuotas:** mismo día 5 de cada mes hasta completar el plazo.
+- **Mora:** mantiene la regla oficial ya definida en este documento:
+  - 3 días de gracia calendario sobre `due_date`.
+  - Mora desde el día 4 posterior al vencimiento.
+
+Para inversionistas:
+
+- **Condición para pagar:** primero debe estar acreditado el cobro del prestatario.
+- **Ventana operativa de pago:** **T+2 hábiles** desde la confirmación del cobro del prestatario.
+- **Cutoff operativo recomendado:** pagos confirmados hasta 18:00 entran a corrida del día; después de esa hora pasan al siguiente día hábil.
+
+Regla de comunicación:
+
+- Al prestatario se comunica fecha fija de vencimiento (día 5).
+- Al inversionista se comunica acreditación en hasta 2 días hábiles tras el cobro del prestatario.
+
 ## 5) Loop de 3 capas (para que no falle)
 
 El objetivo es evitar que el join falle o que la vista muestre NULLs cuando el
@@ -202,3 +225,64 @@ Con esto, la fuente unica de verdad queda estable y confiable.
 - Regla operativa:
   - Si falla una actualización, **no se confirma ninguna**.
   - Recién después de confirmar estado en BD se envían correos/notificaciones.
+
+## 10) Plan post-lanzamiento: mejora definitiva de cronograma SSOT (sin romper flujo)
+
+Objetivo: migrar a una salida canónica de cronograma con desglose explícito
+(`cuota_credito`, `admin_seguro`, `cuota_total`, `saldo_post_cuota`) sin afectar
+el flujo en producción que ya funciona.
+
+### Fase 0 - Congelamiento y baseline
+
+- Congelar cambios en funciones críticas: `registrar_pago_dirigido`,
+  `process_borrower_payment`, payouts y waterfall.
+- Definir baseline con auditoría SQL de oportunidades reales (por ejemplo 61 y 70).
+- Criterio de entrada: flujo E2E estable en producción.
+
+### Fase 1 - SSOT paralelo en BD (sin reemplazo)
+
+- Crear estructura/vista canónica nueva (ej. `borrower_schedule_view_v2`) en paralelo.
+- Relación explícita por `borrower_payment_intent_id` (evitar joins ambiguos por fecha).
+- No reemplazar ni borrar la vista actual en esta fase.
+
+### Fase 2 - Backfill histórico y consistencia
+
+- Backfill de vínculo intent <-> amortización para históricos.
+- Cálculo y persistencia de `saldo_post_cuota` por oportunidad/cuota.
+- Validaciones: 1 fila canónica por cuota, sin duplicados, sin nulos críticos.
+
+### Fase 3 - Auditoría automática de conciliación
+
+- Reglas por cuota/intent:
+  - `cobro_prestatario = payout_inversionista + comision + spread + admin + seguro`.
+- Tolerancia de conciliación: 0.01.
+- Reporte de diferencias antes de cualquier cambio de frontend.
+
+### Fase 4 - Migración de frontend prestatario (solo lectura)
+
+- `BorrowerDashboard` consume únicamente `borrower_schedule_view_v2`.
+- Eliminar fallback ambiguo en UI (matching por fecha, mezcla de fuentes).
+- Mostrar desglose explícito y consistente con SSOT.
+- Activar por feature flag para rollback inmediato.
+
+### Fase 5 - E2E controlado y rollout gradual
+
+- Pruebas E2E completas en entorno productivo controlado:
+  1) desembolso,
+  2) primera cuota pagada,
+  3) payouts por múltiples inversionistas,
+  4) notificaciones/correos.
+- Rollout gradual por oportunidad/perfil.
+
+### Fase 6 - Corte definitivo y retiro legacy
+
+- Activar v2 por defecto tras 7 días sin diferencias de conciliación.
+- Retirar dependencias legacy y documentar versión final SSOT.
+- Mantener job de auditoría continua.
+
+### Criterio de salida (Done)
+
+- 0 diferencias de conciliación en auditoría automática.
+- 0 drift de fechas en UI.
+- 0 saldos inconsistentes en cronograma.
+- E2E aprobado en múltiples oportunidades y perfiles.

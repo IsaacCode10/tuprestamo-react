@@ -13,6 +13,12 @@
 - **ID interno**: visible en texto secundario solo para soporte/queries.
 
 ## 3. Procedimientos clave
+### 3.0.1 Política operativa de fechas
+- **Prestatario:** vencimiento mensual el día **5**; primera cuota el día 5 del mes siguiente al desembolso.
+- **Gracia/Mora:** 3 días de gracia calendario; mora desde día 4.
+- **Inversionistas:** pago en ventana **T+2 días hábiles** tras confirmar cobro del prestatario.
+- **Cutoff sugerido:** confirmaciones hasta 18:00 entran en corrida del día.
+
 ### 3.0 Orden operativo recomendado (prestatario aprobado)
 1) **Desembolso dirigido**:
    - Verificar `Notariado: Pendiente`.
@@ -40,6 +46,7 @@
 2) Revisar neto pendiente, banco/CTA y comprobantes (si existen).
 3) Exportar CSV si se pagará en lote.
 4) Marcar `Pagado` (dispara `mark_payout_paid` y notifica al inversionista).
+5) Cumplir SLA operativo: ejecutar payout dentro de **T+2 hábiles** desde la confirmación de cobro al prestatario.
 
 ### 3.3 Desembolso dirigido
 1) Subir **contrato notariado** en la fila de la oportunidad.

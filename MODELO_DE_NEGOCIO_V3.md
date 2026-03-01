@@ -66,6 +66,19 @@ Para resolver esto, el **Monto Total del Préstamo** debe ser una cifra "bruta" 
 4.  **Aprobación:** Se aprueba el préstamo por el monto bruto.
 5.  **Desembolso:** Se transfiere el monto neto al banco acreedor.
 
+## Política de Fechas de Pago (MVP)
+
+Para estandarizar cobros y conciliación:
+
+- **Prestatario**
+  - Fecha de vencimiento mensual: **día 5**.
+  - Primera cuota: día 5 del mes siguiente al desembolso dirigido (`paid_at`).
+  - Gracia: 3 días calendario; mora desde el día 4 posterior al vencimiento.
+
+- **Inversionista**
+  - El payout se ejecuta después de confirmar el cobro del prestatario.
+  - Acreditación operativa objetivo: **T+2 días hábiles**.
+
 ## Regla Financiera de Spread (Plataforma)
 
 Para mantener consistencia entre promesa comercial y contabilidad:

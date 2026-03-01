@@ -50,6 +50,22 @@ Regla de control:
 - Cualquier diferencia positiva entre cobro y payout se registra como `spread_plataforma`.
 - No se considera "ingreso del viento"; debe quedar en ledger y en reportes.
 
+#### **3.2 Política de Fechas de Cobro y Pago (Operación)**
+
+Para operar con consistencia y tiempo de conciliación:
+
+- **Prestatario (cobro de cuota):**
+  - Vencimiento fijo el **día 5** de cada mes.
+  - Primera cuota: día 5 del mes siguiente al desembolso dirigido.
+  - Se mantiene **3 días de gracia**; mora desde el día 4 posterior al vencimiento.
+
+- **Inversionista (payout):**
+  - Se paga solo después de confirmar el cobro del prestatario.
+  - Ventana operativa de acreditación: **hasta T+2 días hábiles**.
+  - Cutoff recomendado: confirmaciones hasta 18:00 entran en la corrida del día.
+
+Esta política prioriza previsibilidad para cliente e inversionista y reduce riesgo operativo de conciliación.
+
 #### **4. Análisis de Unidad Económica: Caso de Estudio (Crédito 10,000 Bs - Nivel B - 12 meses)**
 
 **4.1. Propuesta de Valor para el PRESTATARIO (Ahorro Real)**
