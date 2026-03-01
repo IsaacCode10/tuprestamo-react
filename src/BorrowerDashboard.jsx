@@ -653,6 +653,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const nextIntent = nextPending?.intent || null;
   const nextIntentAmount = cuotaTotal || nextIntent?.expected_amount || nextPending?.payment || 0;
   const nextIntentDate = nextIntent?.due_date || nextPending?.due_date;
+  const nextIntentStatus = (nextIntent?.status || '').toLowerCase();
+  const nextIntentHasReceipt = Boolean(nextIntent?.receipt_url);
+  const isNextPaymentUnderReview = nextIntentHasReceipt && ['pending', 'unmatched'].includes(nextIntentStatus);
   const totalCuotas = schedule.length;
   const currentCuotaNumber = nextPending ? (schedule.findIndex((row) => row === nextPending) + 1) : totalCuotas;
 
@@ -733,7 +736,11 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         <div className="card" style={{ display: 'grid', gap: 12 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h2>Tu próxima cuota</h2>
-            <p className="muted">Paga con QR o transferencia. Usa el monto exacto y la referencia de tu nombre/CI.</p>
+            <p className="muted">
+              {isNextPaymentUnderReview
+                ? 'Recibimos tu comprobante. Estamos validando tu pago; te avisaremos cuando quede acreditado.'
+                : 'Paga con QR o transferencia. Usa el monto exacto y la referencia de tu nombre/CI.'}
+            </p>
           </div>
           {loadingIntents && <p className="muted">Cargando tus cuotas...</p>}
           {intentsError && <p style={{ color: 'red' }}>{intentsError}</p>}
@@ -754,7 +761,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 </div>
                 <div style={{ minWidth: 180 }}>
                   <div style={{ fontSize: 14, color: '#385b64' }}>Estado</div>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: '#0a7a4b' }}>{nextPending ? 'Pendiente' : 'Al día'}</div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: '#0a7a4b' }}>
+                    {isNextPaymentUnderReview ? 'Pago en revisión' : (nextPending ? 'Pendiente' : 'Al día')}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', minWidth: 180 }}>
                   <button className={['btn', payMode === 'qr' ? 'btn--primary' : ''].join(' ')} type="button" onClick={() => setPayMode('qr')}>Pagar con QR</button>
@@ -770,13 +779,13 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                   {nextIntent?.receipt_signed_url
                     ? 'Recibido'
                     : nextIntent?.receipt_url
-                      ? 'En revisión'
+                      ? 'Recibido (en revisión)'
                       : nextPending
                         ? 'Pendiente de envío'
                         : 'No corresponde'}
                 </div>
                 {nextIntent?.receipt_url && !nextIntent.receipt_signed_url && (
-                  <small style={{ color: '#55747b' }}>Validaremos tu comprobante en breve.</small>
+                  <small style={{ color: '#55747b' }}>No necesitas hacer nada más por ahora.</small>
                 )}
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
