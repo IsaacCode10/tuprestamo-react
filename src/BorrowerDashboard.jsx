@@ -466,6 +466,30 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         .eq('borrower_id', userId)
         .order('installment_no', { ascending: true });
       if (error) throw error;
+
+      const { data: rawIntents, error: intentsErr } = await supabase
+        .from('borrower_payment_intents')
+        .select('id, due_date, expected_amount, status, paid_at, paid_amount, receipt_url')
+        .eq('opportunity_id', oportunidad.id)
+        .eq('borrower_id', userId)
+        .order('due_date', { ascending: true });
+      if (intentsErr) throw intentsErr;
+
+      const intentSignedMap = new Map();
+      await Promise.all((rawIntents || []).map(async (intent) => {
+        let signedReceipt = null;
+        if (intent.receipt_url) {
+          try {
+            const { data: signed, error: signErr } = await supabase
+              .storage
+              .from('comprobantes-pagos')
+              .createSignedUrl(intent.receipt_url, 60 * 60);
+            if (!signErr) signedReceipt = signed?.signedUrl || null;
+          } catch (_) {}
+        }
+        intentSignedMap.set(intent.id, { ...intent, receipt_signed_url: signedReceipt });
+      }));
+
       const withSigned = await Promise.all((data || []).map(async (row) => {
         let signedReceipt = null;
         if (row.receipt_url) {
@@ -483,18 +507,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         ...row,
         status: row.amortizacion_status,
       })));
-      const intents = withSigned
-        .filter((row) => row.borrower_payment_intent_id)
-        .map((row) => ({
-          id: row.borrower_payment_intent_id,
-          due_date: row.due_date,
-          expected_amount: row.expected_amount,
-          status: row.borrower_status,
-          paid_at: row.paid_at,
-          paid_amount: row.paid_amount,
-          receipt_url: row.receipt_url,
-          receipt_signed_url: row.receipt_signed_url,
-        }));
+      const intents = (rawIntents || []).map((intent) => intentSignedMap.get(intent.id) || intent);
       setBorrowerIntents(intents);
     } catch (err) {
       console.error('Error cargando cuotas prestatario:', err);
@@ -579,11 +592,17 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     setUploadingReceiptId(intent.id);
     try {
       const uploadedPath = await uploadBorrowerReceipt(file);
-      const { error } = await supabase
+      const { data: updatedRows, error } = await supabase
         .from('borrower_payment_intents')
         .update({ receipt_url: uploadedPath })
-        .eq('id', intent.id);
+        .eq('id', intent.id)
+        .eq('borrower_id', userId)
+        .eq('opportunity_id', oportunidad?.id)
+        .select('id');
       if (error) throw error;
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error('No se pudo asociar el comprobante a tu cuota. Intenta nuevamente.');
+      }
       setReceiptUploadMessage(`Comprobante enviado para la cuota con vencimiento ${formatDate(intent.due_date)}.`);
       await loadBorrowerIntents();
     } catch (err) {
