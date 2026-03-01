@@ -412,10 +412,46 @@ const AdminOperations = () => {
 
   const borrowerGroups = useMemo(() => {
     const search = borrowerSearch.trim().toLowerCase();
+    const amountKey = (value) => Number(value || 0).toFixed(2);
+
+    // Detecta la serie canonica por oportunidad y evita mostrar cuotas legacy expiradas
+    // de una segunda serie (monto distinto) que solo agrega ruido operativo.
+    const canonicalAmountByOpp = {};
+    const canonicalInstallmentById = {};
+    const byOpp = {};
+    borrowerIntents.forEach((row) => {
+      const oppId = row.opportunity_id;
+      if (!byOpp[oppId]) byOpp[oppId] = [];
+      byOpp[oppId].push(row);
+    });
+    Object.entries(byOpp).forEach(([oppId, rows]) => {
+      const pending = rows.filter((r) => (r.status || '').toLowerCase() === 'pending');
+      const paid = rows.filter((r) => (r.status || '').toLowerCase() === 'paid');
+      let canonical = null;
+      if (pending.length > 0) canonical = amountKey(pending[0].expected_amount);
+      else if (paid.length > 0) canonical = amountKey(paid[0].expected_amount);
+      else if (rows.length > 0) canonical = amountKey(rows[0].expected_amount);
+      canonicalAmountByOpp[oppId] = canonical;
+
+      const canonicalRows = rows
+        .filter((r) => amountKey(r.expected_amount) === canonical)
+        .sort((a, b) => (toDateTs(a.due_date) || 0) - (toDateTs(b.due_date) || 0));
+      canonicalRows.forEach((r, idx) => {
+        canonicalInstallmentById[r.id] = idx + 1;
+      });
+    });
 
     const map = {};
     borrowerIntents.forEach((i) => {
       const statusLower = (i.status || '').toLowerCase();
+      const canonicalAmount = canonicalAmountByOpp[i.opportunity_id];
+      const isLegacyExpired =
+        statusLower === 'expired' &&
+        canonicalAmount &&
+        amountKey(i.expected_amount) !== canonicalAmount;
+
+      // Oculta cuotas legacy expiradas de series no canonicas.
+      if (isLegacyExpired) return;
       if (borrowerStatusFilter !== 'all' && statusLower !== borrowerStatusFilter) return;
       const oppIdStr = String(i.opportunity_id || '').toLowerCase();
       const borrowerIdStr = String(i.borrower_id || '').toLowerCase();
@@ -434,7 +470,7 @@ const AdminOperations = () => {
         };
       }
       const group = map[i.opportunity_id];
-      group.intents.push({ ...i });
+      group.intents.push({ ...i, installment_no: canonicalInstallmentById[i.id] || null });
       group.totalCount += 1;
       const isPending = statusLower === 'pending';
       if (isPending) {
@@ -1682,7 +1718,7 @@ const AdminOperations = () => {
                         {g.intents.map((i, idx) => (
                           <tr key={i.id}>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                              Cuota #{idx + 1}
+                              Cuota #{i.installment_no || (idx + 1)}
                               <div className="muted">ID {i.id}</div>
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatDateShort(i.due_date)}</td>
