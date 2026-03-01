@@ -649,7 +649,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
 
   const schedule = normalizeSchedule();
   const hasMeaningfulBalance = schedule.some((row) => Number(row?.balance || 0) > 0);
-  const nextPending = schedule.find((row) => (row.uiStatus || '').toLowerCase() !== 'pagado');
+  const pendingLikeStatuses = new Set(['pending', 'unmatched', 'pendiente', 'por_conciliar']);
+  const pendingSchedule = schedule.filter((row) => pendingLikeStatuses.has((row?.intent?.status || row?.uiStatus || '').toLowerCase()));
+  const nextPending = pendingSchedule[0] || null;
   const nextIntent = nextPending?.intent || null;
   const nextIntentAmount = cuotaTotal || nextIntent?.expected_amount || nextPending?.payment || 0;
   const nextIntentDate = nextIntent?.due_date || nextPending?.due_date;
