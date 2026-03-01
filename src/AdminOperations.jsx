@@ -60,6 +60,7 @@ const AdminOperations = () => {
   const [bankMap, setBankMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [receiptFiles, setReceiptFiles] = useState({});
   const [borrowerReceiptFiles, setBorrowerReceiptFiles] = useState({});
   const [disbReceiptFiles, setDisbReceiptFiles] = useState({});
   const [disbContractFiles, setDisbContractFiles] = useState({});
@@ -2125,6 +2126,5 @@ const AdminOperations = () => {
 };
 
 export default AdminOperations;
-
 
 
