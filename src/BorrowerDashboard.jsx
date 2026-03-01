@@ -594,7 +594,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       const uploadedPath = await uploadBorrowerReceipt(file);
       const { data: attachRes, error: attachErr } = await supabase
         .rpc('attach_borrower_receipt', {
-          p_intent_id: intent.id,
+          p_intent_id: String(intent.id),
           p_receipt_url: uploadedPath,
         });
       if (attachErr) throw attachErr;
