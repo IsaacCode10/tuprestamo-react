@@ -596,8 +596,6 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
         .from('borrower_payment_intents')
         .update({ receipt_url: uploadedPath })
         .eq('id', intent.id)
-        .eq('borrower_id', userId)
-        .eq('opportunity_id', oportunidad?.id)
         .select('id');
       if (error) throw error;
       if (!updatedRows || updatedRows.length === 0) {
