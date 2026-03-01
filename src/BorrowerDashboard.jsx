@@ -854,9 +854,9 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                 </div>
               )}
               {notaryActionError && <p style={{ color: '#b00020', margin: '0 0 4px 0' }}>{notaryActionError}</p>}
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <div className="disbursement-actions" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {disbursement.comprobante_url ? (
-                  <a className="btn" href={disbursement.comprobante_signed_url || disbursement.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante banco</a>
+                  <a className="btn btn--secondary" href={disbursement.comprobante_signed_url || disbursement.comprobante_url} target="_blank" rel="noreferrer">Ver comprobante banco</a>
                 ) : (
                   <span className="muted">Comprobante en proceso</span>
                 )}
