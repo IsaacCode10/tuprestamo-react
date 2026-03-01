@@ -1095,7 +1095,14 @@ const AdminOperations = () => {
         });
         if (rpcErr) throw rpcErr;
         setReceiptFiles((prev) => ({ ...prev, [id]: null }));
-        // Notificación se emite en backend (RPC). Evitar duplicados en frontend.
+        // Notificación in-app se emite en RPC; email transaccional se envía por función.
+        try {
+          await supabase.functions.invoke('notify-payout-paid', {
+            body: { payout_id: id },
+          });
+        } catch (emailErr) {
+          console.warn('No se pudo enviar email de payout acreditado', emailErr);
+        }
       } else {
         const payload = { status };
         if (status === 'expired') payload.paid_at = null;
@@ -2118,7 +2125,6 @@ const AdminOperations = () => {
 };
 
 export default AdminOperations;
-
 
 
 
