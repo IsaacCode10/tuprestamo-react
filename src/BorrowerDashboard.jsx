@@ -592,15 +592,11 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
     setUploadingReceiptId(intent.id);
     try {
       const uploadedPath = await uploadBorrowerReceipt(file);
-      const { data: updatedRows, error } = await supabase
+      const { error } = await supabase
         .from('borrower_payment_intents')
         .update({ receipt_url: uploadedPath })
-        .eq('id', intent.id)
-        .select('id');
+        .eq('id', intent.id);
       if (error) throw error;
-      if (!updatedRows || updatedRows.length === 0) {
-        throw new Error('No se pudo asociar el comprobante a tu cuota. Intenta nuevamente.');
-      }
       setReceiptUploadMessage(`Comprobante enviado para la cuota con vencimiento ${formatDate(intent.due_date)}.`);
       await loadBorrowerIntents();
     } catch (err) {
