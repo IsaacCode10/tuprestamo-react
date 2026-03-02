@@ -126,6 +126,15 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
     }
     return items;
   })();
+  const handleProposalHelpClick = useCallback(() => {
+    trackEvent('Borrower Proposal Help Clicked', {
+      solicitud_id: solicitud?.id || null,
+      opportunity_id: oportunidad?.id || null,
+      channel: 'email',
+      destination: 'contacto@tuprestamobo.com',
+      stage: 'proposal_acceptance',
+    });
+  }, [solicitud?.id, oportunidad?.id]);
 
   const summaryItems = [
     {
@@ -247,6 +256,15 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
         <div>
           <h2>¿Aceptas esta propuesta?</h2>
           <p className="muted">Al aceptar, pasarás al paso de firma notariada del contrato. Una vez firmado, publicaremos tu oportunidad para fondeo y luego realizaremos el pago directamente a tu banco acreedor.</p>
+          <p className="muted" style={{ marginTop: 8 }}>
+            ¿Tienes dudas antes de aceptar?{' '}
+            <a
+              href="mailto:contacto@tuprestamobo.com?subject=Duda%20sobre%20mi%20propuesta%20de%20prestamo"
+              onClick={handleProposalHelpClick}
+            >
+              Escríbenos a contacto@tuprestamobo.com
+            </a>
+          </p>
         </div>
         <div className="offer-cta-actions">
           <button className="btn btn--primary" onClick={onAccept} disabled={loading}>Aceptar y continuar a firma notariada</button>
