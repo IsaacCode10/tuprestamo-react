@@ -242,16 +242,31 @@ const MyInvestmentsList = () => {
     if (!nextPayments.length) return null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const sorted = [...nextPayments].sort((a, b) => {
-      const aDate = toLocalDate(a.due_date);
-      const bDate = toLocalDate(b.due_date);
-      return (aDate ? aDate.getTime() : 0) - (bDate ? bDate.getTime() : 0);
-    });
-    const upcoming = sorted.find((row) => {
+    const sourcePriority = (src) => {
+      if (src === 'pending_payout') return 0;
+      if (src === 'programado') return 1;
+      return 2;
+    };
+    const sorted = [...nextPayments]
+      .filter((row) => Number(row?.expected_amount || 0) > 0)
+      .sort((a, b) => {
+        const aDate = toLocalDate(a.due_date);
+        const bDate = toLocalDate(b.due_date);
+        const byDate = (aDate ? aDate.getTime() : 0) - (bDate ? bDate.getTime() : 0);
+        if (byDate !== 0) return byDate;
+        const bySource = sourcePriority(a.source) - sourcePriority(b.source);
+        if (bySource !== 0) return bySource;
+        const byAmount = Number(b.expected_amount || 0) - Number(a.expected_amount || 0);
+        if (byAmount !== 0) return byAmount;
+        return Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0);
+      });
+    if (!sorted.length) return null;
+    const upcoming = sorted.filter((row) => {
       const due = toLocalDate(row.due_date);
       return due && due.getTime() >= today.getTime();
     });
-    const target = upcoming || sorted[sorted.length - 1];
+    const pool = upcoming.length ? upcoming : sorted;
+    const target = pool[0];
     if (!target) return null;
     const label = target.source === 'pending_payout' ? 'Pendiente' : (target.source === 'programado' ? 'Programado' : 'Sin datos');
     const oppId = Number(target.opportunity_id);
@@ -260,6 +275,11 @@ const MyInvestmentsList = () => {
     const scheduleItem = matchDate
       ? oppItems.find((item) => toLocalDate(item.due_date)?.getTime() === matchDate)
       : null;
+    const alternatives = pool.slice(1, 3).map((row) => ({
+      opportunity_id: row.opportunity_id,
+      due_date: row.due_date,
+      expected_amount: row.expected_amount || 0,
+    }));
     return {
       label,
       due_date: target.due_date,
@@ -267,6 +287,8 @@ const MyInvestmentsList = () => {
       opportunity_id: target.opportunity_id,
       installment_no: scheduleItem?.installment_no || null,
       total_installments: oppItems.length || null,
+      alternatives,
+      additional_count: Math.max(pool.length - 1, 0),
     };
   }, [nextPayments, schedulesByOpp]);
 
@@ -450,6 +472,12 @@ const MyInvestmentsList = () => {
               })()
               : 'Sin cronograma'}
           </strong>
+          {nextPaymentDisplay?.additional_count > 0 ? (
+            <div className="table-subtle" style={{ marginTop: 6 }}>
+              +{nextPaymentDisplay.additional_count} pago{nextPaymentDisplay.additional_count > 1 ? 's' : ''} en otras oportunidades
+              {nextPaymentDisplay.alternatives?.length ? ` (ej.: ${nextPaymentDisplay.alternatives.map((alt) => `ID ${alt.opportunity_id} ${formatDate(alt.due_date)} Bs. ${formatMoney(alt.expected_amount)}`).join(' · ')})` : ''}
+            </div>
+          ) : null}
         </div>
       </div>
 
