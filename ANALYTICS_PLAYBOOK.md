@@ -69,3 +69,50 @@ Filosofía: medir lo esencial para tomar decisiones y crecer sin inflar costos. 
 - Notifs: insert en DB + `Notification Clicked` (UI).
 - Pendiente a añadir cuando esté en back: `Payment Marked Paid`, `Payout Received`.
 
+---
+
+## Recomendaciones de lanzamiento (MVP, cuenta gratuita)
+
+Objetivo: **no retrasar salida** y dejar una base analítica suficiente para decisiones de embudo.
+
+### 1) Mantener taxonomía corta (12–15 eventos core)
+- Evitar crear eventos nuevos fuera de este playbook hasta terminar el primer ciclo post-lanzamiento.
+- Priorizar eventos de intención fuerte y de cambio de estado (no micro-interacciones).
+
+### 2) Estandarizar nombres (Title Case)
+- Regla única: `Title Case` para todos los eventos.
+- Evitar mezclar estilos (`snake_case`, guiones bajos o prefijos distintos) para no romper funnels/reportes.
+- Ejemplo a unificar luego de lanzamiento: `Borrower_Proposal_Decision` -> `Borrower Proposal Decision`.
+
+### 3) Definir 2 funnels canónicos de negocio
+- **Funnel Prestatario (Bottom funnel):**
+  1. `Submitted Loan Application`
+  2. `Borrower Proposal Decision` (`decision = Aceptar`)
+  3. `Loan Disbursed` (evento de estado desembolsado)
+- **Funnel Inversionista:**
+  1. `Viewed Marketplace`
+  2. `Created Investment Intent`
+  3. `Receipt Uploaded`
+  4. `Payment Marked Paid`
+  5. `Payout Received`
+
+### 4) Eventos de cierre pendientes (backend)
+- Agregar cuando aplique (sin bloquear lanzamiento):
+  - `Payment Marked Paid` (confirmación Operaciones a intent de inversión)
+  - `Payout Received` (acreditación efectiva al inversionista)
+  - `Loan Disbursed` (confirmación pago dirigido al banco del prestatario)
+
+### 5) Reglas operativas para Free plan
+- Mantener Session Replay en muestreo bajo (actual está OK).
+- No habilitar `Active Ping` salvo experimento puntual.
+- Revisar volumen semanal y tasa de eventos por sesión para evitar ruido/costo.
+
+### 6) Checklist mínimo post-lanzamiento (semana 1)
+- Verificar que cada paso del funnel dispara 1 evento (sin duplicados).
+- Revisar que todos los eventos críticos tengan:
+  - `user_id` identificado,
+  - `role`,
+  - `opportunity_id` o `solicitud_id` según corresponda,
+  - timestamp consistente.
+- Confirmar atribución base: `utm_first_*` y `utm_last_*` pobladas en `Campaign Lead` y `Signed Up`.
+
