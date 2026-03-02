@@ -333,7 +333,7 @@ const Opportunities = () => {
       {showFilters && (
         <>
           <p style={{ fontSize: '0.95rem', color: '#444', margin: '0 0 0.5rem 0' }}>
-            Cómo elegir: Conservador ≈10%, Balanceado ≈12%, Dinámico ≈15% anual.
+            Cómo elegir por rendimiento anual: Conservador ≈10%, Balanceado ≈12%, Dinámico ≈15%.
           </p>
           {(filters.minRate || filters.maxMonths) && (
             <p style={{ fontSize: '0.9rem', color: '#555', marginTop: 0 }}>
