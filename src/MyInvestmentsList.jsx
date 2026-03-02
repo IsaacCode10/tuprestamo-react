@@ -261,21 +261,32 @@ const MyInvestmentsList = () => {
         return Number(a.opportunity_id || 0) - Number(b.opportunity_id || 0);
       });
     if (!sorted.length) return null;
-    const upcoming = sorted.filter((row) => {
+    const isFutureOrToday = (row) => {
       const due = toLocalDate(row.due_date);
       return due && due.getTime() >= today.getTime();
+    };
+    const firstOverdue = sorted.find((row) => {
+      const due = toLocalDate(row.due_date);
+      return due && due.getTime() < today.getTime();
     });
-    const pool = upcoming.length ? upcoming : sorted;
-    const target = pool[0];
+    const firstUpcoming = sorted.find(isFutureOrToday);
+    const target = firstOverdue || firstUpcoming || sorted[0];
     if (!target) return null;
-    const label = target.source === 'pending_payout' ? 'Pendiente' : (target.source === 'programado' ? 'Programado' : 'Sin datos');
+    const targetDue = toLocalDate(target.due_date);
+    const isOverdue = !!targetDue && targetDue.getTime() < today.getTime();
+    const label = isOverdue
+      ? 'Vencido'
+      : (target.source === 'pending_payout' ? 'Pendiente' : (target.source === 'programado' ? 'Programado' : 'Sin datos'));
     const oppId = Number(target.opportunity_id);
     const oppItems = schedulesByOpp[oppId] || [];
     const matchDate = toLocalDate(target.due_date)?.getTime() || null;
     const scheduleItem = matchDate
       ? oppItems.find((item) => toLocalDate(item.due_date)?.getTime() === matchDate)
       : null;
-    const alternatives = pool.slice(1, 3).map((row) => ({
+    const alternatives = sorted
+      .filter((row) => !(Number(row.opportunity_id) === Number(target.opportunity_id) && String(row.due_date) === String(target.due_date) && Number(row.expected_amount || 0) === Number(target.expected_amount || 0)))
+      .slice(0, 3)
+      .map((row) => ({
       opportunity_id: row.opportunity_id,
       due_date: row.due_date,
       expected_amount: row.expected_amount || 0,
@@ -288,7 +299,7 @@ const MyInvestmentsList = () => {
       installment_no: scheduleItem?.installment_no || null,
       total_installments: oppItems.length || null,
       alternatives,
-      additional_count: Math.max(pool.length - 1, 0),
+      additional_count: Math.max(sorted.length - 1, 0),
     };
   }, [nextPayments, schedulesByOpp]);
 
