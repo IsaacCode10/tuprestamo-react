@@ -595,6 +595,14 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       return '';
     }
   };
+  const formatStatusEs = (status) => {
+    const normalized = String(status || '').toLowerCase().trim();
+    if (['pending', 'pendiente', 'unmatched', 'por_conciliar'].includes(normalized)) return 'Pendiente';
+    if (['paid', 'pagado'].includes(normalized)) return 'Pagado';
+    if (['expired', 'expirado'].includes(normalized)) return 'Expirado';
+    if (['cancelado', 'cancelled'].includes(normalized)) return 'Cancelado';
+    return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : 'Pendiente';
+  };
 
   const uploadBorrowerReceipt = async (file) => {
     if (!file) return null;
@@ -992,7 +1000,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
                       <td>{formatMoney(row.principal)}</td>
                       <td>{formatMoney(row.interest)}</td>
                       {hasMeaningfulBalance && <td>{formatMoney(row.balance)}</td>}
-                      <td>{(row.uiStatus || 'pendiente').toUpperCase()}</td>
+                      <td>{formatStatusEs(row.uiStatus || 'pendiente')}</td>
                       <td>
                         {row.intent?.receipt_signed_url ? (
                           <a className="btn btn--sm" href={row.intent.receipt_signed_url} target="_blank" rel="noreferrer">Ver comprobante</a>
