@@ -687,12 +687,13 @@ const AdminOperations = () => {
       if (investorId) {
         notificationsPayload.push({
           user_id: investorId,
-          title: 'Oportunidad fondeada',
-          body: `Se completó el fondeo de la oportunidad ${opportunityId}. Próximo paso: pago dirigido al banco y cronograma de cuotas.`,
+          title: '¡Tu inversión ya está 100% fondeada!',
+          body: `Tu inversión en la oportunidad ${opportunityId} ya está fondeada. Podrás seguir el estado de tu inversión y su cronograma de cuotas desde tu panel.`,
           link_url: '/mis-inversiones',
           cta_label: 'VER MIS INVERSIONES',
           type: 'opportunity_funded',
           email: true,
+          footer_note: 'Este es un mensaje automático de Tu Préstamo. Si necesitas ayuda, escríbenos a contacto@tuprestamobo.com.',
         });
       }
 
@@ -2126,5 +2127,4 @@ const AdminOperations = () => {
 };
 
 export default AdminOperations;
-
 
