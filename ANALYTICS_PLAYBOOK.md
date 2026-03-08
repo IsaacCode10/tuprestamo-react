@@ -142,6 +142,11 @@ Limite operativo recomendado: 5 reportes maximo. El objetivo no es tener un dash
 - `Borrower Proposal Accepted`
 - `Loan Disbursed`
 
+Nota operativa:
+- Este funnel no se considera activo hasta que esos 3 eventos hayan ocurrido al menos una vez en produccion y aparezcan visibles en Mixpanel.
+- Mixpanel no muestra eventos nuevos con valor 0 si nunca fueron emitidos; primero deben entrar al proyecto una vez.
+- Mientras eso no ocurra, este funnel debe tratarse como pendiente de activacion y no como KPI valido del MVP.
+
 5. `Marketplace a intencion`
 - `Viewed Marketplace`
 - `Created Investment Intent`
@@ -216,6 +221,11 @@ Estos no bloquean lanzamiento, pero mejoran la lectura del negocio cuando ya hay
 - `Borrower First Installment Paid`
 - `Borrower Installment Receipt Uploaded`
 - `Borrower Reanalysis Requested`
+- activar y validar visualmente en Mixpanel:
+  - `Borrower Proposal Viewed`
+  - `Borrower Proposal Accepted`
+  - `Borrower Proposal Rejected`
+  - `Loan Disbursed`
 
 ### Inversionista
 - `Payment Marked Paid`
@@ -292,6 +302,9 @@ Lo mas importante ya implementado para la salida:
 - publicacion
 - fondeo
 - desembolso
+
+Pendiente de validacion en Mixpanel:
+- el funnel prestatario de propuesta a desembolso solo se da por terminado cuando `Borrower Proposal Viewed`, `Borrower Proposal Accepted` y `Loan Disbursed` ya existan como eventos visibles en produccion.
 
 Lo que sigue despues del lanzamiento:
 - validar eventos nuevos en Mixpanel
