@@ -105,6 +105,18 @@ const BorrowerOfferView = ({ solicitud, oportunidad, onAccept, onReject, loading
     getOfferFinancials(solicitud, oportunidad);
   const formatMoney = (v) => `Bs ${Number(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+  useEffect(() => {
+    if (!solicitud?.id) return;
+    trackEvent('Borrower Proposal Viewed', {
+      solicitud_id: solicitud.id,
+      opportunity_id: oportunidad?.id || null,
+      loan_amount_gross: montoBruto || null,
+      loan_amount_net: neto || null,
+      term_months: plazo || null,
+      annual_rate: tasa || null,
+    });
+  }, [solicitud?.id, oportunidad?.id, montoBruto, neto, plazo, tasa]);
+
   const schedule = (() => {
     const items = [];
     const monthlyRate = tasa / 100 / 12;
@@ -338,6 +350,7 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
   const [acceptanceFlash, setAcceptanceFlash] = useState('');
   const [notaryActionLoading, setNotaryActionLoading] = useState(false);
   const [notaryActionError, setNotaryActionError] = useState('');
+  const trackedBorrowerStatesRef = useRef(new Set());
   const disbEstado = (disbursement?.estado || '').toLowerCase();
   const oppEstado = (oportunidad?.estado || '').toLowerCase();
 
@@ -390,6 +403,42 @@ const BorrowerPublishedView = ({ solicitud, oportunidad, userId }) => {
       sessionStorage.removeItem('borrower_proposal_flash');
     }
   }, []);
+
+  useEffect(() => {
+    if (!solicitud?.id || !oportunidad?.id) return;
+
+    const stateKey = (() => {
+      if (disbEstado === 'pagado' || oppEstado === 'activo') return 'Loan Disbursed';
+      if (oppEstado === 'fondeada') return 'Loan Funded';
+      if (oppEstado === 'disponible' || oppEstado === 'publicada') return 'Borrower Opportunity Published';
+      return null;
+    })();
+
+    if (!stateKey || trackedBorrowerStatesRef.current.has(stateKey)) return;
+
+    trackEvent(stateKey, {
+      solicitud_id: solicitud.id,
+      opportunity_id: oportunidad.id,
+      opportunity_state: oportunidad.estado || null,
+      disbursement_state: disbursement?.estado || null,
+      borrower_state: solicitud.estado || null,
+      gross_amount: montoBruto || null,
+      net_amount: neto || null,
+      term_months: plazo || null,
+    });
+    trackedBorrowerStatesRef.current.add(stateKey);
+  }, [
+    solicitud?.id,
+    solicitud?.estado,
+    oportunidad?.id,
+    oportunidad?.estado,
+    disbursement?.estado,
+    oppEstado,
+    disbEstado,
+    montoBruto,
+    neto,
+    plazo,
+  ]);
 
   useEffect(() => {
     const fetchDisbursement = async () => {
@@ -1343,8 +1392,8 @@ const deriveRiskProfile = (solicitud) => {
   if (ingresos > 8000) totalScore += 3;
   else if (ingresos >= 5000) totalScore += 2;
   else if (ingresos >= 3000) totalScore += 1;
-  if (dti < 30) totalScore += 3;
-  else if (dti <= 40) totalScore += 2;
+  if (dti < 20) totalScore += 3;
+  else if (dti <= 30) totalScore += 2;
   else if (dti <= 50) totalScore += 1;
   if (antiguedad >= 24) totalScore += 2;
   else if (antiguedad >= 12) totalScore += 1;
@@ -2213,6 +2262,10 @@ const BorrowerDashboard = () => {
       });
       if (error) throw error;
       trackEvent('Borrower_Proposal_Decision', { decision, solicitud_id: solicitud.id });
+      trackEvent(decision === 'Aceptar' ? 'Borrower Proposal Accepted' : 'Borrower Proposal Rejected', {
+        solicitud_id: solicitud.id,
+        opportunity_id: Array.isArray(solicitud?.oportunidades) ? solicitud.oportunidades[0]?.id || null : null,
+      });
       const uiMessage = data?.message || 'Acción registrada.';
       sessionStorage.setItem('borrower_proposal_flash', uiMessage);
       await fetchData({ silent: true });

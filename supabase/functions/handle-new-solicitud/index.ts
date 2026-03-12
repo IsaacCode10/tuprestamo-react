@@ -103,8 +103,8 @@ const runRiskScorecard = (solicitud) => {
   else if (ingresos >= 5000) totalScore += 2;
   else if (ingresos >= 3000) totalScore += 1;
 
-  if (dti < 30) totalScore += 3;
-  else if (dti <= 40) totalScore += 2;
+  if (dti < 20) totalScore += 3;
+  else if (dti <= 30) totalScore += 2;
   else if (dti <= 50) totalScore += 1;
 
   if (antiguedad >= 24) totalScore += 2;
