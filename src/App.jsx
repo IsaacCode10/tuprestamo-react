@@ -9,6 +9,7 @@ import Header from '@/components/Header.jsx';
 import Footer from '@/components/Footer.jsx';
 import LandingPage from '@/components/LandingPage.jsx';
 import CalculatorPage from '@/CalculatorPage.jsx'; // <-- NUEVA PAGINA
+import AuditorTarjetasPage from '@/AuditorTarjetasPage.jsx';
 import Auth from '@/Auth.jsx';
 const AdminDashboard = lazy(() => import('@/AdminDashboard.jsx'));
 const InvestorDashboard = lazy(() => import('@/InvestorDashboard.jsx'));
@@ -189,6 +190,7 @@ function App() {
           <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/calculadora" element={<CalculatorPage />} />
+          <Route path="/auditor-de-tarjetas" element={<AuditorTarjetasPage />} />
           <Route path="/no-disponible" element={<NotAvailable />} /> {/* <-- ANADIMOS LA RUTA */}
           <Route 
             path="/auth" 
