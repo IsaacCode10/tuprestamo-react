@@ -205,9 +205,9 @@ const AuditorTarjetasPage = () => {
                 y compáralo con un escenario estimado de refinanciamiento con Tu Préstamo.
               </p>
               <div className="auditor-hero__badges">
-                <span>Mobile first</span>
-                <span>Cálculo en tiempo real</span>
-                <span>Estimación orientada a lead</span>
+                <span>Auditoría gratuita</span>
+                <span>Resultado al instante</span>
+                <span>Sin compromiso</span>
               </div>
             </div>
 
@@ -500,16 +500,16 @@ const AuditorTarjetasPage = () => {
 
             <div className="auditor-disclaimer-grid">
               <article>
-                <h3>Qué sí mide</h3>
-                <p>Intereses estimados, mantenimiento, seguro y una propuesta comparativa anual.</p>
+                <h3>Qué verás aquí</h3>
+                <p>Una estimación clara de intereses, cargos mensuales y tu ahorro potencial.</p>
               </article>
               <article>
-                <h3>Qué no promete</h3>
-                <p>La tasa final, aprobación o monto definitivo antes de validar tu documentación.</p>
+                <h3>Importante</h3>
+                <p>La oferta final depende de tu perfil y de la validación de tus documentos.</p>
               </article>
               <article>
-                <h3>Cómo usarlo</h3>
-                <p>Como una herramienta de conciencia financiera y un disparador claro de conversión.</p>
+                <h3>Siguiente paso</h3>
+                <p>Si el resultado te conviene, puedes pedir tu evaluación con Tu Préstamo.</p>
               </article>
             </div>
           </div>
