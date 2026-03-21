@@ -22,6 +22,10 @@
   padding-top: 0;
 }
 
+.auditor-page__section--seo {
+  padding-top: 0;
+}
+
 .auditor-hero {
   padding: 2rem 0 2.5rem;
 }
@@ -415,6 +419,65 @@
   color: #526772;
 }
 
+.auditor-seo-intro {
+  margin-bottom: 1.2rem;
+}
+
+.auditor-section-kicker {
+  display: inline-block;
+  margin-bottom: 0.6rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(38, 194, 178, 0.12);
+  color: #0c7368;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.auditor-seo-intro h2 {
+  font-family: var(--font-head);
+  font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+  line-height: 1.1;
+  margin-bottom: 0.65rem;
+}
+
+.auditor-seo-intro p {
+  max-width: 70ch;
+  color: #526772;
+}
+
+.auditor-seo-grid,
+.auditor-seo-bottom {
+  display: grid;
+  gap: 1rem;
+}
+
+.auditor-seo-card,
+.auditor-seo-bottom__card {
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(0, 68, 90, 0.08);
+  box-shadow: 0 14px 30px rgba(0, 68, 90, 0.06);
+  padding: 1.2rem;
+}
+
+.auditor-seo-card h3,
+.auditor-seo-bottom__card h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.auditor-seo-card p,
+.auditor-seo-bottom__card p {
+  color: #526772;
+}
+
+.auditor-seo-bottom {
+  margin-top: 1rem;
+}
+
 @media (min-width: 768px) {
   .auditor-hero {
     padding-top: 2.2rem;
@@ -449,6 +512,14 @@
 
   .auditor-disclaimer-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .auditor-seo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .auditor-seo-bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

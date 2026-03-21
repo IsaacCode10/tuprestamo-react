@@ -171,25 +171,85 @@ const AuditorTarjetasPage = () => {
   return (
     <>
       <Helmet>
-        <title>Auditor de Tarjetas en Bolivia | Calcula cuánto te cuesta tu tarjeta</title>
+        <title>Auditor de Tarjetas Bolivia | Calcula intereses, TEA y comisiones</title>
         <meta
           name="description"
-          content="Audita los cargos de tu tarjeta de crédito en Bolivia, estima intereses, mantenimiento y descubre cuánto podrías ahorrar refinanciando con Tu Préstamo."
+          content="Calcula intereses, TNA, TEA y comisiones de tu tarjeta de crédito en Bolivia. Usa este simulador gratuito para auditar tu extracto y comparar un escenario estimado con Tu Préstamo."
         />
         <meta
           name="keywords"
-          content="calculadora tarjeta de crédito Bolivia, auditor de tarjetas Bolivia, intereses tarjeta BNB Bolivia, refinanciar tarjeta de crédito Bolivia"
+          content="calculadora tarjeta de crédito Bolivia, auditor de tarjetas Bolivia, calcular TEA Bolivia, comisiones tarjeta de crédito Bolivia, interés tarjeta BNB Bolivia"
         />
         <link rel="canonical" href="https://tuprestamobo.com/auditor-de-tarjetas" />
         <script type="application/ld+json">
           {JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'WebPage',
-            name: 'Auditor de Tarjetas',
-            url: `${siteOrigin}/auditor-de-tarjetas`,
-            description:
-              'Herramienta para auditar cargos anuales de una tarjeta de crédito en Bolivia y comparar un escenario estimado de refinanciamiento con Tu Préstamo.',
-            inLanguage: 'es-BO',
+            '@graph': [
+              {
+                '@type': 'WebPage',
+                name: 'Auditor de Tarjetas Bolivia',
+                url: `${siteOrigin}/auditor-de-tarjetas`,
+                description:
+                  'Herramienta para auditar cargos, intereses y comisiones de una tarjeta de crédito en Bolivia y comparar un escenario estimado de refinanciamiento con Tu Préstamo.',
+                inLanguage: 'es-BO',
+              },
+              {
+                '@type': 'SoftwareApplication',
+                name: 'Auditor de Tarjetas Bolivia',
+                applicationCategory: 'FinanceApplication',
+                operatingSystem: 'Web',
+                offers: {
+                  '@type': 'Offer',
+                  price: '0',
+                  priceCurrency: 'BOB',
+                },
+                description:
+                  'Simulador web para calcular intereses, TNA, TEA y comisiones de tarjetas de crédito en Bolivia.',
+                url: `${siteOrigin}/auditor-de-tarjetas`,
+              },
+              {
+                '@type': 'FinancialProduct',
+                name: 'Auditor de Tarjetas de Tu Préstamo',
+                provider: {
+                  '@type': 'Organization',
+                  name: 'Tu Préstamo',
+                  url: siteOrigin,
+                },
+                category: 'Refinanciamiento de deuda de tarjeta de crédito',
+                description:
+                  'Herramienta informativa para estimar el costo financiero de una tarjeta de crédito en Bolivia y comparar un escenario estimado de consolidación.',
+                areaServed: 'BO',
+              },
+              {
+                '@type': 'FAQPage',
+                mainEntity: [
+                  {
+                    '@type': 'Question',
+                    name: '¿Cuál es la diferencia entre TNA y TEA en una tarjeta de crédito?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'La TNA es la tasa nominal anual publicada por el banco. La TEA refleja el efecto de la capitalización mensual. Por ejemplo, una TNA de 24% genera una TEA aproximada de 26.82%.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: '¿Qué comisiones pueden encarecer una tarjeta de crédito en Bolivia?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Además de los intereses, el costo total puede incluir mantenimiento mensual, seguro de desgravamen y otros cargos operativos según la entidad emisora.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: '¿Cómo puedo reducir el costo financiero de mi tarjeta?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Una alternativa es consolidar la deuda con una tasa más baja y condiciones más claras. La oferta final siempre depende de la validación documental y del perfil de riesgo.',
+                    },
+                  },
+                ],
+              },
+            ],
           })}
         </script>
       </Helmet>
@@ -199,7 +259,7 @@ const AuditorTarjetasPage = () => {
           <div className="auditor-shell">
             <div className="auditor-hero__copy">
               <span className="auditor-eyebrow">Auditor de Tarjetas</span>
-              <h1>Descubre cuánto te está costando realmente tu tarjeta</h1>
+              <h1>Calculadora de intereses y comisiones de tarjetas de crédito en Bolivia</h1>
               <p>
                 Simula los cargos de tu extracto, revisa el costo anual de mantener la deuda
                 y compáralo con un escenario estimado de refinanciamiento con Tu Préstamo.
@@ -510,6 +570,76 @@ const AuditorTarjetasPage = () => {
               <article>
                 <h3>Siguiente paso</h3>
                 <p>Si el resultado te conviene, puedes pedir tu evaluación con Tu Préstamo.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section className="auditor-page__section auditor-page__section--seo">
+          <div className="auditor-shell auditor-shell--narrow">
+            <div className="auditor-seo-intro">
+              <span className="auditor-section-kicker">Guía útil</span>
+              <h2>Cómo leer los intereses y comisiones de tu tarjeta en Bolivia</h2>
+              <p>
+                Esta página no solo sirve para simular. También responde preguntas que muchos
+                usuarios se hacen al revisar su extracto: cuánto interés realmente pagan,
+                cómo se interpreta la TEA y por qué cargos como mantenimiento o seguro pueden
+                encarecer la deuda más de lo que parece al principio.
+              </p>
+            </div>
+
+            <div className="auditor-seo-grid">
+              <article className="auditor-seo-card">
+                <h3>¿Cuál es la diferencia entre TNA y TEA en mi extracto?</h3>
+                <p>
+                  La <strong>TNA</strong> es la tasa nominal anual publicada por el banco. La
+                  <strong> TEA</strong> incorpora el efecto de la capitalización mensual y por eso
+                  suele ser más alta. Un ejemplo común es una tarjeta con <strong>24% de TNA</strong>,
+                  cuya <strong>TEA real ronda 26.82%</strong>. Esa diferencia importa porque cambia la
+                  percepción del costo financiero real de la deuda.
+                </p>
+              </article>
+
+              <article className="auditor-seo-card">
+                <h3>¿Por qué el mantenimiento de cuenta impacta tanto?</h3>
+                <p>
+                  Aunque parezca pequeño, un cargo fijo mensual como <strong>Bs 120</strong> termina
+                  sumando <strong>Bs 1.440 al año</strong>, sin contar seguro de desgravamen ni intereses.
+                  Cuando una tarjeta mantiene saldo mes a mes, esos costos fijos se convierten en una
+                  parte importante del gasto total y reducen tu capacidad de salir de la deuda.
+                </p>
+              </article>
+
+              <article className="auditor-seo-card">
+                <h3>¿Cómo reducir el pago de intereses de mi tarjeta?</h3>
+                <p>
+                  La forma más clara de reducir el costo financiero es bajar la tasa efectiva total
+                  y eliminar cargos repetitivos poco transparentes. En Tu Préstamo mostramos un
+                  escenario estimado de consolidación para que compares si te conviene pasar de una
+                  deuda revolvente a una cuota más predecible. La propuesta final depende de tu
+                  perfil y de la validación documental.
+                </p>
+              </article>
+            </div>
+
+            <div className="auditor-seo-bottom">
+              <article className="auditor-seo-bottom__card">
+                <h3>Qué busca resolver este auditor</h3>
+                <p>
+                  Si llegaste buscando “cuánto es el interés de una tarjeta de crédito en Bolivia”,
+                  “cómo calcular la TEA” o “qué comisiones cobran las tarjetas”, esta herramienta
+                  está diseñada para darte una respuesta práctica y una referencia comparativa
+                  inmediata.
+                </p>
+              </article>
+
+              <article className="auditor-seo-bottom__card">
+                <h3>Qué debes recordar antes de decidir</h3>
+                <p>
+                  Todo cálculo de esta página es estimado. El monto final de refinanciamiento, la
+                  tasa y la cuota definitiva se confirman solo después de validar tu documentación,
+                  tu saldo real y tu perfil de riesgo.
+                </p>
               </article>
             </div>
           </div>
