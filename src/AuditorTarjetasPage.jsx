@@ -385,8 +385,11 @@ const AuditorTarjetasPage = () => {
                   <strong>Últimos 30 días</strong>
                 </div>
                 <div className="statement-box">
-                  <span className="statement-box__label">Pago mínimo actual</span>
+                  <span className="statement-box__label">Pago mínimo estimado</span>
                   <strong>Bs {formatCurrency(bankScenario.minimumPayment)}</strong>
+                  <small className="statement-box__help">
+                    Referencia educativa basada en el interés del mes más 1% del saldo. Tu banco puede calcularlo de otra forma.
+                  </small>
                 </div>
                 <div className="statement-box">
                   <span className="statement-box__label">T.E.A. estimada</span>
