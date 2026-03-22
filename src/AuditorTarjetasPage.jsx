@@ -437,7 +437,7 @@ const AuditorTarjetasPage = () => {
                       <th>Fecha</th>
                       <th>Descripción</th>
                       <th>Cargo / Debe</th>
-                      <th>Comparativo Tu Préstamo</th>
+                      <th>Qué significa</th>
                     </tr>
                   </thead>
                   <tbody>
