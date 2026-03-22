@@ -33,8 +33,6 @@ const calculateBankScenario = ({ debt, creditLimit, tna, maintenance, monthlySpe
   const annualCost = annualInterest + annualFixedCharges;
   const availableCredit = Math.max(creditLimit - debt, 0);
   const deferredAmount = debt * DEFERRED_RATIO;
-  const referenceInterestAt15 = debt * (REFERENCE_TU_PRESTAMO_RATE / 100);
-
   return {
     tea: calculateTea(tna),
     monthlyInterest,
@@ -47,7 +45,6 @@ const calculateBankScenario = ({ debt, creditLimit, tna, maintenance, monthlySpe
     creditLimit,
     availableCredit,
     deferredAmount,
-    referenceInterestAt15,
     previousBalance: debt + monthlyInterest + maintenance + MONTHLY_INSURANCE + PUNITIVE_INTEREST,
   };
 };
@@ -67,7 +64,6 @@ const AuditorTarjetasPage = () => {
     [creditLimit, debt, maintenance, monthlySpend, tna],
   );
   const annualMaintenanceCost = maintenance * 12;
-  const annualReferenceInterestGap = Math.max(bankScenario.annualInterest - bankScenario.referenceInterestAt15, 0);
   const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://tuprestamobo.com';
 
   useEffect(() => {
@@ -362,9 +358,9 @@ const AuditorTarjetasPage = () => {
                 <p>Un cargo fijo mensual pequeño puede convertirse en un costo alto al año.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--saving">
-                <span className="auditor-summary-card__label">Interés anual referencial al 15%</span>
-                <strong>Bs {formatCurrency(bankScenario.referenceInterestAt15)}</strong>
-                <p>Te sirve como referencia educativa para comparar una tasa menor con la de tu banco.</p>
+                <span className="auditor-summary-card__label">Intereses anuales estimados</span>
+                <strong>Bs {formatCurrency(bankScenario.annualInterest)}</strong>
+                <p>Es una referencia educativa del peso que pueden tener los intereses en un año.</p>
               </article>
             </div>
           </div>
