@@ -374,12 +374,8 @@ const AuditorTarjetasPage = () => {
             <div className="statement-frame">
               <div className="statement-frame__topbar">
                 <div className="statement-frame__brand statement-frame__brand--bank">
-                  <span>Tu banco actual</span>
+                  <span>Extracto auditado</span>
                   <strong>Extracto auditado</strong>
-                </div>
-                <div className="statement-frame__brand statement-frame__brand--tp">
-                  <span>Lectura simple</span>
-                  <strong>Qué significa tu extracto</strong>
                 </div>
               </div>
 
@@ -424,10 +420,6 @@ const AuditorTarjetasPage = () => {
                 <div className="statement-metric">
                   <span>T.N.A.</span>
                   <strong>{tna.toFixed(2)}%</strong>
-                </div>
-                <div className="statement-metric">
-                  <span>Saldo anterior</span>
-                  <strong>Bs {formatCurrency(bankScenario.previousBalance)}</strong>
                 </div>
                 <div className="statement-metric">
                   <span>Saldo actual</span>
