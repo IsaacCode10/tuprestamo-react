@@ -273,7 +273,7 @@ const AuditorTarjetasPage = () => {
 
               <label className="auditor-field">
                 <span>
-                  Tasa anual de tu tarjeta
+                  Tasa anual de tu tarjeta (T.N.A.)
                 </span>
                 <div className="auditor-field__split">
                   <input
@@ -516,7 +516,7 @@ const AuditorTarjetasPage = () => {
               <article className="auditor-summary-card auditor-summary-card--tp">
                 <span className="auditor-summary-card__label">Tu Préstamo</span>
                 <strong>Desde {REFERENCE_TU_PRESTAMO_RATE}%</strong>
-                <p>Sin mantenimiento mensual y con condiciones más claras que una deuda revolvente.</p>
+                <p>Cargo mensual desde Bs 10 según saldo y condiciones más claras que una deuda revolvente.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--saving">
                 <span className="auditor-summary-card__label">Diferencia educativa</span>
@@ -541,7 +541,7 @@ const AuditorTarjetasPage = () => {
               <div className="auditor-cta__actions">
                 <div className="auditor-cta__list">
                   <span>Tasas desde 15% anual</span>
-                  <span>0 Bs de mantenimiento mensual</span>
+                  <span>Cargo mensual desde Bs 10 según saldo</span>
                   <span>Proceso claro y 100% online</span>
                 </div>
                 <button type="button" className="auditor-cta__button" onClick={handleOpenModal}>
