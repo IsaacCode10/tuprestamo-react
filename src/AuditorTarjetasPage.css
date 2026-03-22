@@ -348,6 +348,14 @@
   font-size: 1.1rem;
 }
 
+.statement-box__help {
+  display: block;
+  margin-top: 0.45rem;
+  color: #5f7480;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
 .statement-metrics-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 0.8rem;
@@ -407,6 +415,33 @@
 .auditor-cta p {
   color: rgba(255, 255, 255, 0.84);
   max-width: 62ch;
+}
+
+.auditor-cta__actions {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.auditor-cta__list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.auditor-cta__list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+}
+
+.auditor-cta__list span::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent-color);
+  box-shadow: 0 0 0 4px rgba(38, 194, 178, 0.16);
 }
 
 .auditor-cta__button {
@@ -551,6 +586,10 @@
 
   .auditor-seo-bottom {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .auditor-cta__actions {
+    min-width: 280px;
   }
 }
 
