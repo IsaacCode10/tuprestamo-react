@@ -9,9 +9,19 @@ const PUNITIVE_INTEREST = 0.07;
 const DEFERRED_RATIO = 3704.29 / 8402.8;
 const TERM_MONTHS = 12;
 
-const PROFILE_OPTIONS = {
-  A: { label: 'Nuestra mejor tasa', annualRate: 0.15, originationPct: 3, helper: 'Escenario referencial desde 15% anual' },
-  B: { label: 'Tasa promedio', annualRate: 0.17, originationPct: 4, helper: 'Escenario referencial de aprobación frecuente' },
+const SCENARIO_OPTIONS = {
+  best_rate: {
+    label: 'Nuestra mejor tasa',
+    annualRate: 0.15,
+    originationPct: 3,
+    helper: 'Escenario referencial desde 15% anual',
+  },
+  average_rate: {
+    label: 'Tasa promedio',
+    annualRate: 0.17,
+    originationPct: 4,
+    helper: 'Escenario referencial de aprobación frecuente',
+  },
 };
 
 const round2 = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -56,14 +66,14 @@ const calculateBankScenario = ({ debt, tna, maintenance, monthlySpend }) => {
   };
 };
 
-const calculateTuPrestamoScenario = ({ debt, profileKey }) => {
-  const profile = PROFILE_OPTIONS[profileKey];
+const calculateTuPrestamoScenario = ({ debt, scenarioKey }) => {
+  const scenario = SCENARIO_OPTIONS[scenarioKey];
   const origination =
     debt <= 10000
       ? 450
-      : debt * (profile.originationPct / 100) / (1 - profile.originationPct / 100);
-  const grossPrincipal = debt <= 10000 ? debt + 450 : debt / (1 - profile.originationPct / 100);
-  const monthlyRate = profile.annualRate / 12;
+      : debt * (scenario.originationPct / 100) / (1 - scenario.originationPct / 100);
+  const grossPrincipal = debt <= 10000 ? debt + 450 : debt / (1 - scenario.originationPct / 100);
+  const monthlyRate = scenario.annualRate / 12;
   const baseInstallment =
     monthlyRate === 0
       ? grossPrincipal / TERM_MONTHS
@@ -87,7 +97,7 @@ const calculateTuPrestamoScenario = ({ debt, profileKey }) => {
   const totalToPay = debt + annualCost;
 
   return {
-    profile,
+    scenario,
     origination,
     grossPrincipal,
     totalInterest,
@@ -103,7 +113,7 @@ const AuditorTarjetasPage = () => {
   const [tna, setTna] = useState(24);
   const [maintenance, setMaintenance] = useState(120);
   const [monthlySpend, setMonthlySpend] = useState(1800);
-  const [profileKey, setProfileKey] = useState('B');
+  const [scenarioKey, setScenarioKey] = useState('average_rate');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [completedTracked, setCompletedTracked] = useState(false);
@@ -113,10 +123,11 @@ const AuditorTarjetasPage = () => {
     [debt, maintenance, monthlySpend, tna],
   );
   const tuPrestamoScenario = useMemo(
-    () => calculateTuPrestamoScenario({ debt, profileKey }),
-    [debt, profileKey],
+    () => calculateTuPrestamoScenario({ debt, scenarioKey }),
+    [debt, scenarioKey],
   );
-  const annualSavings = Math.max(bankScenario.annualCost - tuPrestamoScenario.annualCost, 0);
+  const annualDifference = bankScenario.annualCost - tuPrestamoScenario.annualCost;
+  const hasSavings = annualDifference >= 0;
   const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://tuprestamobo.com';
 
   useEffect(() => {
@@ -132,11 +143,11 @@ const AuditorTarjetasPage = () => {
       bank_tna: tna,
       monthly_spend: round2(monthlySpend),
       maintenance_fee: round2(maintenance),
-      selected_profile: profileKey,
-      annual_savings: round2(annualSavings),
+      selected_scenario: scenarioKey,
+      annual_difference: round2(annualDifference),
     });
     setCompletedTracked(true);
-  }, [annualSavings, completedTracked, debt, hasInteracted, maintenance, monthlySpend, profileKey, tna]);
+  }, [annualDifference, completedTracked, debt, hasInteracted, maintenance, monthlySpend, scenarioKey, tna]);
 
   const markInteraction = (inputName, value) => {
     if (!hasInteracted) {
@@ -152,17 +163,17 @@ const AuditorTarjetasPage = () => {
     if (inputName === 'tna') setTna(value);
     if (inputName === 'maintenance') setMaintenance(value);
     if (inputName === 'monthlySpend') setMonthlySpend(value);
-    if (inputName === 'profile') {
-      setProfileKey(value);
-      trackEvent('Changed Auditor Profile', { selected_profile: value });
+    if (inputName === 'scenario') {
+      setScenarioKey(value);
+      trackEvent('Changed Refinancing Scenario', { selected_scenario: value });
     }
   };
 
   const handleOpenModal = () => {
     trackEvent('Clicked Auditor CTA', {
       debt_amount: round2(debt),
-      annual_savings: round2(annualSavings),
-      selected_profile: profileKey,
+      annual_difference: round2(annualDifference),
+      selected_scenario: scenarioKey,
     });
     setIsModalOpen(true);
   };
@@ -301,12 +312,6 @@ const AuditorTarjetasPage = () => {
               <label className="auditor-field">
                 <span>
                   Tasa anual de tu tarjeta
-                  <span
-                    className="auditor-help"
-                    title="La TNA es la tasa nominal anual que publica el banco. La usamos para estimar cuánto interés genera tu deuda."
-                  >
-                    ¿Qué es esto?
-                  </span>
                 </span>
                 <div className="auditor-field__split">
                   <input
@@ -327,7 +332,7 @@ const AuditorTarjetasPage = () => {
                   />
                 </div>
                 <p className="auditor-field__help">
-                  Es la tasa anual publicada por tu banco. La usamos para simular el interés que genera tu saldo.
+                  Es la tasa que publica tu banco para tu tarjeta. Con ella estimamos cuánto interés genera tu deuda durante el año.
                 </p>
               </label>
 
@@ -380,9 +385,9 @@ const AuditorTarjetasPage = () => {
 
               <div className="auditor-field">
                 <span>Escenario de refinanciamiento con Tu Préstamo</span>
-                <div className="auditor-profile-switcher" role="tablist" aria-label="Perfil estimado">
-                  {Object.entries(PROFILE_OPTIONS).map(([key, option]) => {
-                    const active = profileKey === key;
+                <div className="auditor-profile-switcher" role="tablist" aria-label="Escenario de refinanciamiento">
+                  {Object.entries(SCENARIO_OPTIONS).map(([key, option]) => {
+                    const active = scenarioKey === key;
                     return (
                       <button
                         key={key}
@@ -390,7 +395,7 @@ const AuditorTarjetasPage = () => {
                         role="tab"
                         aria-selected={active}
                         className={`auditor-profile-switcher__item ${active ? 'is-active' : ''}`}
-                        onClick={() => markInteraction('profile', key)}
+                        onClick={() => markInteraction('scenario', key)}
                       >
                         {option.label}
                         <strong>{Math.round(option.annualRate * 100)}%</strong>
@@ -418,12 +423,18 @@ const AuditorTarjetasPage = () => {
               <article className="auditor-summary-card auditor-summary-card--tp">
                 <span className="auditor-summary-card__label">Tu Préstamo</span>
                 <strong>Bs {formatCurrency(tuPrestamoScenario.annualCost)}</strong>
-                <p>Escenario referencial a 12 meses con {tuPrestamoScenario.profile.label.toLowerCase()}.</p>
+                <p>Escenario referencial a 12 meses con {tuPrestamoScenario.scenario.label.toLowerCase()}.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--saving">
-                <span className="auditor-summary-card__label">Ahorro estimado</span>
-                <strong>Bs {formatCurrency(annualSavings)}</strong>
-                <p>Si calificas, este es el espacio económico que podrías recuperar en un año.</p>
+                <span className="auditor-summary-card__label">
+                  {hasSavings ? 'Ahorro estimado' : 'Mayor costo estimado'}
+                </span>
+                <strong>Bs {formatCurrency(Math.abs(annualDifference))}</strong>
+                <p>
+                  {hasSavings
+                    ? 'Si calificas, este es el espacio económico que podrías recuperar en un año.'
+                    : 'Con estos datos, este escenario referencial no mejora el costo anual de tu tarjeta.'}
+                </p>
               </article>
             </div>
           </div>
@@ -514,7 +525,7 @@ const AuditorTarjetasPage = () => {
                     </tr>
                     <tr>
                       <td>Hoy</td>
-                      <td>Intereses por consumos</td>
+                      <td>Intereses estimados del mes</td>
                       <td>Bs {formatCurrency(bankScenario.monthlyInterest)}</td>
                       <td>Cuota fija estimada a 12 meses</td>
                     </tr>
@@ -550,8 +561,8 @@ const AuditorTarjetasPage = () => {
                   <strong>Bs {formatCurrency(tuPrestamoScenario.annualCost)}</strong>
                 </div>
                 <div className="statement-footer-box statement-footer-box--highlight">
-                  <span>Podrías ahorrar</span>
-                  <strong>Bs {formatCurrency(annualSavings)}</strong>
+                  <span>{hasSavings ? 'Podrías ahorrar' : 'Podrías pagar de más'}</span>
+                  <strong>Bs {formatCurrency(Math.abs(annualDifference))}</strong>
                 </div>
               </div>
             </div>
