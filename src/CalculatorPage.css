@@ -30,6 +30,19 @@
   margin: 0 auto;
 }
 
+.page-header__support {
+  max-width: 760px;
+  margin: 0.75rem auto 0;
+  color: #4f6b80;
+  font-size: 1rem;
+}
+
+.calculator-page__link {
+  color: var(--accent-color);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .calculator-wrapper {
   margin-bottom: 4rem;
 }
@@ -53,6 +66,12 @@
   font-size: 1.1rem;
   color: #5f7e97;
   margin-bottom: 2rem;
+}
+
+.cta-section__secondary-link {
+  margin-top: 1rem;
+  margin-bottom: 0;
+  font-size: 0.95rem;
 }
 
 .cta-button {

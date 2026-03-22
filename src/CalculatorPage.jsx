@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
 import PublicSavingsCalculator from './components/PublicSavingsCalculator';
 import LoanRequestForm from './LoanRequestForm'; // Para el CTA
 import './CalculatorPage.css';
@@ -25,6 +26,13 @@ const CalculatorPage = () => {
         <header className="page-header">
           <h1>Calcula tu Ahorro y Libérate de la Deuda</h1>
           <p className="subtitle">Usa nuestra herramienta para simular tu nuevo crédito y descubre cuánto podrías estar ahorrando cada mes.</p>
+          <p className="page-header__support">
+            Si primero quieres entender cuánto te cobra hoy tu tarjeta, visita nuestro{' '}
+            <Link to="/auditor-de-tarjetas" className="calculator-page__link">
+              auditor de tarjetas en Bolivia
+            </Link>
+            .
+          </p>
         </header>
         
         <div className="calculator-wrapper">
@@ -37,6 +45,13 @@ const CalculatorPage = () => {
           <button onClick={handleOpenModal} className="cta-button">
             Iniciar Solicitud
           </button>
+          <p className="cta-section__secondary-link">
+            ¿Todavía comparando opciones? Revisa primero el{' '}
+            <Link to="/auditor-de-tarjetas" className="calculator-page__link">
+              auditor de intereses y comisiones
+            </Link>
+            .
+          </p>
         </section>
       </div>
 

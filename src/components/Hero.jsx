@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-scroll';
+import { Link as RouterLink } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -10,6 +11,13 @@ const Hero = () => {
         </h1>
         <p className="hero__subtitle">
           Conectamos personas que necesitan refinanciar sus tarjetas de crédito con inversionistas que buscan rentabilidad. Tasas justas, proceso simple y 100% en línea.
+        </p>
+        <p className="hero__subtitle hero__subtitle--support">
+          Antes de solicitar, también puedes usar nuestro{' '}
+          <RouterLink to="/auditor-de-tarjetas" className="hero__inline-link">
+            auditor de tarjetas
+          </RouterLink>{' '}
+          para calcular intereses, TEA y comisiones de tu tarjeta en Bolivia.
         </p>
 
         {/* CTA Items */}

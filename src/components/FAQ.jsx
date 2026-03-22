@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import LoanRequestForm from '../LoanRequestForm';
 
 const FaqItem = ({ question, children }) => {
@@ -49,6 +50,17 @@ const FAQ = () => {
               Transparencia total: <strong>no cobramos cargos de mantenimiento mensuales</strong>.
               Comisiones aplicables: 1) <strong>Originación</strong> (una sola vez): <strong>Bs 450</strong> para montos hasta <strong>Bs 10.000</strong>; por montos mayores aplica <strong>A 3% / B 4% / C 5%</strong> según tu perfil de riesgo (a mejor perfil, mejor tasa).
               2) <strong>Servicio + Seguro</strong>: 0,15% mensual sobre el saldo deudor (disminuye cada mes).
+            </p>
+          </FaqItem>
+
+          <FaqItem question="¿Cómo puedo calcular la TEA, los intereses y las comisiones de mi tarjeta?">
+            <p>
+              Puedes usar nuestro{' '}
+              <Link to="/auditor-de-tarjetas" className="link-button cta-inline">
+                <strong>auditor de tarjetas</strong>
+              </Link>
+              . Ahí verás una estimación de <strong>TNA, TEA, mantenimiento, seguro e intereses</strong>
+              para entender mejor cuánto te cuesta hoy tu tarjeta en Bolivia.
             </p>
           </FaqItem>
 
