@@ -361,9 +361,9 @@ const AuditorTarjetasPage = () => {
                 <p>Un cargo fijo mensual pequeño puede convertirse en un costo alto al año.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--saving">
-                <span className="auditor-summary-card__label">Intereses anuales estimados</span>
+                <span className="auditor-summary-card__label">Intereses estimados en 1 año</span>
                 <strong>Bs {formatCurrency(bankScenario.annualInterest)}</strong>
-                <p>Es una referencia educativa del peso que pueden tener los intereses en un año.</p>
+                <p>Te muestra cuánto podrían sumar los intereses en un año si mantienes esta deuda.</p>
               </article>
             </div>
           </div>
@@ -388,7 +388,7 @@ const AuditorTarjetasPage = () => {
                   <span className="statement-box__label">Pago mínimo estimado</span>
                   <strong>Bs {formatCurrency(bankScenario.minimumPayment)}</strong>
                   <small className="statement-box__help">
-                    Referencia educativa basada en el interés del mes más 1% del saldo. Tu banco puede calcularlo de otra forma.
+                    Estimación basada en el interés del mes más 1% del saldo. Tu banco puede calcularlo de otra forma.
                   </small>
                 </div>
                 <div className="statement-box">
@@ -513,9 +513,9 @@ const AuditorTarjetasPage = () => {
                 <p>Cargo mensual desde Bs 10 según saldo y condiciones más claras que una deuda revolvente.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--saving">
-                <span className="auditor-summary-card__label">Diferencia educativa</span>
+                <span className="auditor-summary-card__label">Impacto de una tasa más alta</span>
                 <strong>Bs {formatCurrency(annualReferenceInterestGap)}</strong>
-                <p>Referencia simple de cuánto puede pesar una tasa más alta cuando sostienes deuda durante el año.</p>
+                <p>Una tasa más alta puede hacer que termines pagando mucho más con el tiempo.</p>
               </article>
             </div>
           </div>
@@ -547,7 +547,7 @@ const AuditorTarjetasPage = () => {
             <div className="auditor-disclaimer-grid">
               <article>
                 <h3>Qué verás aquí</h3>
-                <p>Una estimación clara de intereses, cargos mensuales y tu ahorro potencial.</p>
+                <p>Una estimación clara de intereses, cargos mensuales y el costo real de tu tarjeta.</p>
               </article>
               <article>
                 <h3>Importante</h3>
@@ -621,9 +621,9 @@ const AuditorTarjetasPage = () => {
               <article className="auditor-seo-bottom__card">
                 <h3>Qué debes recordar antes de decidir</h3>
                 <p>
-                  Todo cálculo de esta página es estimado. El monto final de refinanciamiento, la
-                  tasa y la cuota definitiva se confirman solo después de validar tu documentación,
-                  tu saldo real y tu perfil de riesgo.
+                  Todo cálculo de esta página es estimado. Si decides solicitar una evaluación, el
+                  monto final, la tasa y las condiciones se confirman solo después de validar tu
+                  documentación, tu saldo real y tu perfil de riesgo.
                 </p>
               </article>
             </div>
