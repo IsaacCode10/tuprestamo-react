@@ -263,25 +263,6 @@ header.header {
   margin-right: auto;
 }
 
-.hero__subtitle--support {
-  max-width: 860px;
-  margin-top: -0.5rem;
-  margin-bottom: 1.4rem;
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.hero__inline-link {
-  color: #ffffff;
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.hero__inline-link:hover {
-  color: #fff3c2;
-}
-
 /* ========================
    CTA ITEMS DENTRO DE HERO
    ======================== */
