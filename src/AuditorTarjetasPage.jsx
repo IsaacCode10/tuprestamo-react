@@ -10,9 +10,8 @@ const DEFERRED_RATIO = 3704.29 / 8402.8;
 const TERM_MONTHS = 12;
 
 const PROFILE_OPTIONS = {
-  A: { label: 'Perfil A', annualRate: 0.15, originationPct: 3 },
-  B: { label: 'Perfil B', annualRate: 0.17, originationPct: 4 },
-  C: { label: 'Perfil C', annualRate: 0.2, originationPct: 5 },
+  A: { label: 'Nuestra mejor tasa', annualRate: 0.15, originationPct: 3, helper: 'Escenario referencial desde 15% anual' },
+  B: { label: 'Tasa promedio', annualRate: 0.17, originationPct: 4, helper: 'Escenario referencial de aprobación frecuente' },
 };
 
 const round2 = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -171,10 +170,10 @@ const AuditorTarjetasPage = () => {
   return (
     <>
       <Helmet>
-        <title>Auditor de Tarjetas Bolivia | Calcula intereses, TEA y comisiones</title>
+        <title>Calculadora de Intereses de Tarjeta de Crédito en Bolivia | Tu Préstamo</title>
         <meta
           name="description"
-          content="Calcula intereses, TNA, TEA y comisiones de tu tarjeta de crédito en Bolivia. Usa este simulador gratuito para auditar tu extracto y comparar un escenario estimado con Tu Préstamo."
+          content="Calcula intereses, TNA, TEA y comisiones de tu tarjeta de crédito en Bolivia. Usa esta calculadora gratuita para revisar tu extracto y comparar un escenario estimado de refinanciamiento con Tu Préstamo."
         />
         <meta
           name="keywords"
@@ -187,7 +186,7 @@ const AuditorTarjetasPage = () => {
             '@graph': [
               {
                 '@type': 'WebPage',
-                name: 'Auditor de Tarjetas Bolivia',
+                name: 'Calculadora de Intereses de Tarjeta de Crédito en Bolivia',
                 url: `${siteOrigin}/auditor-de-tarjetas`,
                 description:
                   'Herramienta para auditar cargos, intereses y comisiones de una tarjeta de crédito en Bolivia y comparar un escenario estimado de refinanciamiento con Tu Préstamo.',
@@ -195,7 +194,7 @@ const AuditorTarjetasPage = () => {
               },
               {
                 '@type': 'SoftwareApplication',
-                name: 'Auditor de Tarjetas Bolivia',
+                name: 'Calculadora de Intereses de Tarjeta de Crédito en Bolivia',
                 applicationCategory: 'FinanceApplication',
                 operatingSystem: 'Web',
                 offers: {
@@ -259,10 +258,10 @@ const AuditorTarjetasPage = () => {
           <div className="auditor-shell">
             <div className="auditor-hero__copy">
               <span className="auditor-eyebrow">Auditor de Tarjetas</span>
-              <h1>Calculadora de intereses y comisiones de tarjetas de crédito en Bolivia</h1>
+              <h1>Calculadora de intereses de tarjeta de crédito en Bolivia</h1>
               <p>
-                Simula los cargos de tu extracto, revisa el costo anual de mantener la deuda
-                y compáralo con un escenario estimado de refinanciamiento con Tu Préstamo.
+                Estima cuánto pagas por intereses, mantenimiento y seguro en tu tarjeta de crédito.
+                Luego compáralo con un escenario referencial de refinanciamiento con Tu Préstamo.
               </p>
               <div className="auditor-hero__badges">
                 <span>Auditoría gratuita</span>
@@ -274,7 +273,7 @@ const AuditorTarjetasPage = () => {
             <div className="auditor-controls">
               <div className="auditor-controls__header">
                 <h2>Ajusta tu escenario</h2>
-                <p>Usa datos aproximados de tu tarjeta para ver el impacto anual.</p>
+                <p>Usa datos aproximados de tu tarjeta para estimar su costo financiero real en Bolivia.</p>
               </div>
 
               <label className="auditor-field">
@@ -300,7 +299,15 @@ const AuditorTarjetasPage = () => {
               </label>
 
               <label className="auditor-field">
-                <span>TNA de tu tarjeta</span>
+                <span>
+                  Tasa anual de tu tarjeta
+                  <span
+                    className="auditor-help"
+                    title="La TNA es la tasa nominal anual que publica el banco. La usamos para estimar cuánto interés genera tu deuda."
+                  >
+                    ¿Qué es esto?
+                  </span>
+                </span>
                 <div className="auditor-field__split">
                   <input
                     type="range"
@@ -319,6 +326,9 @@ const AuditorTarjetasPage = () => {
                     onChange={(event) => markInteraction('tna', Number(event.target.value || 0))}
                   />
                 </div>
+                <p className="auditor-field__help">
+                  Es la tasa anual publicada por tu banco. La usamos para simular el interés que genera tu saldo.
+                </p>
               </label>
 
               <label className="auditor-field">
@@ -363,10 +373,13 @@ const AuditorTarjetasPage = () => {
                     onChange={(event) => markInteraction('monthlySpend', Number(event.target.value || 0))}
                   />
                 </div>
+                <p className="auditor-field__help">
+                  Este monto sirve para simular consumos adicionales y estimar cómo pueden crecer los intereses mes a mes.
+                </p>
               </label>
 
               <div className="auditor-field">
-                <span>Escenario estimado con Tu Préstamo</span>
+                <span>Escenario de refinanciamiento con Tu Préstamo</span>
                 <div className="auditor-profile-switcher" role="tablist" aria-label="Perfil estimado">
                   {Object.entries(PROFILE_OPTIONS).map(([key, option]) => {
                     const active = profileKey === key;
@@ -381,10 +394,14 @@ const AuditorTarjetasPage = () => {
                       >
                         {option.label}
                         <strong>{Math.round(option.annualRate * 100)}%</strong>
+                        <small>{option.helper}</small>
                       </button>
                     );
                   })}
                 </div>
+                <p className="auditor-field__help">
+                  No define tu aprobación ni tu tasa final. Solo te muestra escenarios referenciales para comparar alternativas.
+                </p>
               </div>
             </div>
           </div>
@@ -401,7 +418,7 @@ const AuditorTarjetasPage = () => {
               <article className="auditor-summary-card auditor-summary-card--tp">
                 <span className="auditor-summary-card__label">Tu Préstamo</span>
                 <strong>Bs {formatCurrency(tuPrestamoScenario.annualCost)}</strong>
-                <p>Escenario a 12 meses con {tuPrestamoScenario.profile.label.toLowerCase()}.</p>
+                <p>Escenario referencial a 12 meses con {tuPrestamoScenario.profile.label.toLowerCase()}.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--saving">
                 <span className="auditor-summary-card__label">Ahorro estimado</span>
@@ -579,18 +596,18 @@ const AuditorTarjetasPage = () => {
           <div className="auditor-shell auditor-shell--narrow">
             <div className="auditor-seo-intro">
               <span className="auditor-section-kicker">Guía útil</span>
-              <h2>Cómo leer los intereses y comisiones de tu tarjeta en Bolivia</h2>
+              <h2>Cómo entender los intereses y comisiones de una tarjeta de crédito en Bolivia</h2>
               <p>
-                Esta página no solo sirve para simular. También responde preguntas que muchos
-                usuarios se hacen al revisar su extracto: cuánto interés realmente pagan,
-                cómo se interpreta la TEA y por qué cargos como mantenimiento o seguro pueden
-                encarecer la deuda más de lo que parece al principio.
+                Esta calculadora no solo sirve para simular. También responde preguntas que muchos
+                usuarios tienen al revisar su extracto: cuánto interés realmente pagan, qué diferencia
+                existe entre TNA y TEA y por qué cargos como mantenimiento o seguro pueden encarecer
+                la deuda más de lo que parece.
               </p>
             </div>
 
             <div className="auditor-seo-grid">
               <article className="auditor-seo-card">
-                <h3>¿Cuál es la diferencia entre TNA y TEA en mi extracto?</h3>
+                <h3>¿Cuál es la diferencia entre la tasa anual y la TEA de mi tarjeta?</h3>
                 <p>
                   La <strong>TNA</strong> es la tasa nominal anual publicada por el banco. La
                   <strong> TEA</strong> incorpora el efecto de la capitalización mensual y por eso
@@ -601,7 +618,7 @@ const AuditorTarjetasPage = () => {
               </article>
 
               <article className="auditor-seo-card">
-                <h3>¿Por qué el mantenimiento de cuenta impacta tanto?</h3>
+                <h3>¿Por qué el mantenimiento de cuenta encarece tanto una tarjeta?</h3>
                 <p>
                   Aunque parezca pequeño, un cargo fijo mensual como <strong>Bs 120</strong> termina
                   sumando <strong>Bs 1.440 al año</strong>, sin contar seguro de desgravamen ni intereses.
@@ -611,7 +628,7 @@ const AuditorTarjetasPage = () => {
               </article>
 
               <article className="auditor-seo-card">
-                <h3>¿Cómo reducir el pago de intereses de mi tarjeta?</h3>
+                <h3>¿Cómo bajar los intereses de una tarjeta de crédito en Bolivia?</h3>
                 <p>
                   La forma más clara de reducir el costo financiero es bajar la tasa efectiva total
                   y eliminar cargos repetitivos poco transparentes. En Tu Préstamo mostramos un
@@ -624,12 +641,11 @@ const AuditorTarjetasPage = () => {
 
             <div className="auditor-seo-bottom">
               <article className="auditor-seo-bottom__card">
-                <h3>Qué busca resolver este auditor</h3>
+                <h3>Qué resuelve esta calculadora de intereses</h3>
                 <p>
                   Si llegaste buscando “cuánto es el interés de una tarjeta de crédito en Bolivia”,
                   “cómo calcular la TEA” o “qué comisiones cobran las tarjetas”, esta herramienta
-                  está diseñada para darte una respuesta práctica y una referencia comparativa
-                  inmediata.
+                  te da una respuesta práctica y una referencia comparativa inmediata.
                 </p>
               </article>
 
