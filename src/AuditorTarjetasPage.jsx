@@ -63,6 +63,7 @@ const AuditorTarjetasPage = () => {
     [creditLimit, debt, maintenance, monthlySpend, tna],
   );
   const annualMaintenanceCost = maintenance * 12;
+  const isCreditLimitInvalid = debt > creditLimit;
   const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://tuprestamobo.com';
 
   useEffect(() => {
@@ -264,6 +265,11 @@ const AuditorTarjetasPage = () => {
                 <p className="auditor-field__help">
                   Este dato sale en tu extracto y nos permite mostrar de forma más fiel el crédito utilizado y el disponible.
                 </p>
+                {isCreditLimitInvalid && (
+                  <p className="auditor-field__error">
+                    El límite de crédito no puede ser menor que la deuda actual. Ajusta ese dato para ver un extracto consistente.
+                  </p>
+                )}
               </label>
 
               <label className="auditor-field">
@@ -343,7 +349,7 @@ const AuditorTarjetasPage = () => {
           </div>
         </section>
 
-        <section className="auditor-page__section">
+        <section className="auditor-page__section auditor-page__section--summary-top">
           <div className="auditor-shell auditor-shell--narrow">
             <div className="auditor-summary-grid">
               <article className="auditor-summary-card auditor-summary-card--bank">
@@ -426,6 +432,12 @@ const AuditorTarjetasPage = () => {
                 </div>
               </div>
 
+              {isCreditLimitInvalid && (
+                <div className="statement-alert" role="alert">
+                  Tu deuda actual es mayor que el límite de crédito ingresado. Corrige ese dato para que el extracto sea coherente.
+                </div>
+              )}
+
               <div className="statement-table-wrap">
                 <table className="statement-table">
                   <thead>
@@ -437,29 +449,29 @@ const AuditorTarjetasPage = () => {
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Saldo de deuda auditado</td>
-                      <td>Bs {formatCurrency(debt)}</td>
-                      <td>Es el saldo base sobre el que el banco calcula intereses.</td>
+                      <td data-label="Descripción">Saldo de deuda auditado</td>
+                      <td data-label="Cargo / Debe">Bs {formatCurrency(debt)}</td>
+                      <td data-label="Qué significa">Es el saldo base sobre el que el banco calcula intereses.</td>
                     </tr>
                     <tr>
-                      <td>Cargo mantenimiento de cuenta</td>
-                      <td>Bs {formatCurrency(maintenance)}</td>
-                      <td>Se cobra todos los meses, incluso cuando no haces nuevas compras.</td>
+                      <td data-label="Descripción">Cargo mantenimiento de cuenta</td>
+                      <td data-label="Cargo / Debe">Bs {formatCurrency(maintenance)}</td>
+                      <td data-label="Qué significa">Se cobra todos los meses, incluso cuando no haces nuevas compras.</td>
                     </tr>
                     <tr>
-                      <td>Intereses estimados del mes</td>
-                      <td>Bs {formatCurrency(bankScenario.monthlyInterest)}</td>
-                      <td>Incluye interés sobre tu saldo actual y sobre el gasto mensual que simulas.</td>
+                      <td data-label="Descripción">Intereses estimados del mes</td>
+                      <td data-label="Cargo / Debe">Bs {formatCurrency(bankScenario.monthlyInterest)}</td>
+                      <td data-label="Qué significa">Incluye interés sobre tu saldo actual y sobre el gasto mensual que simulas.</td>
                     </tr>
                     <tr>
-                      <td>Seguro de desgravamen</td>
-                      <td>Bs {formatCurrency(MONTHLY_INSURANCE)}</td>
-                      <td>Es un cargo pequeño, pero repetido puede sumar más de lo que parece.</td>
+                      <td data-label="Descripción">Seguro de desgravamen</td>
+                      <td data-label="Cargo / Debe">Bs {formatCurrency(MONTHLY_INSURANCE)}</td>
+                      <td data-label="Qué significa">Es un cargo pequeño, pero repetido puede sumar más de lo que parece.</td>
                     </tr>
                     <tr>
-                      <td>Intereses punitorios</td>
-                      <td>Bs {formatCurrency(PUNITIVE_INTEREST)}</td>
-                      <td>Aparecen si hay retrasos o condiciones específicas del extracto.</td>
+                      <td data-label="Descripción">Intereses punitorios</td>
+                      <td data-label="Cargo / Debe">Bs {formatCurrency(PUNITIVE_INTEREST)}</td>
+                      <td data-label="Qué significa">Aparecen si hay retrasos o condiciones específicas del extracto.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -483,7 +495,7 @@ const AuditorTarjetasPage = () => {
           </div>
         </section>
 
-        <section className="auditor-page__section">
+        <section className="auditor-page__section auditor-page__section--comparison">
           <div className="auditor-shell auditor-shell--narrow">
             <div className="auditor-summary-grid auditor-summary-grid--two">
               <article className="auditor-summary-card auditor-summary-card--bank">
