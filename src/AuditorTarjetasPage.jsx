@@ -63,7 +63,6 @@ const AuditorTarjetasPage = () => {
     [creditLimit, debt, maintenance, monthlySpend, tna],
   );
   const annualMaintenanceCost = maintenance * 12;
-  const annualReferenceInterestGap = Math.max(bankScenario.annualInterest - bankScenario.referenceInterestAt15, 0);
   const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://tuprestamobo.com';
 
   useEffect(() => {
@@ -488,19 +487,14 @@ const AuditorTarjetasPage = () => {
           <div className="auditor-shell auditor-shell--narrow">
             <div className="auditor-summary-grid">
               <article className="auditor-summary-card auditor-summary-card--bank">
-                <span className="auditor-summary-card__label">Tu banco hoy</span>
-                <strong>{tna.toFixed(2)}%</strong>
-                <p>Tasa anual publicada por tu tarjeta, más mantenimiento y cargos recurrentes.</p>
+                <span className="auditor-summary-card__label">Lo que pagas con tu banco hoy</span>
+                <strong>Bs {formatCurrency(bankScenario.annualCost)}</strong>
+                <p>Estimación anual entre intereses, mantenimiento y seguro sobre el escenario que ingresaste.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--tp">
                 <span className="auditor-summary-card__label">Tu Préstamo</span>
                 <strong>Desde {REFERENCE_TU_PRESTAMO_RATE}%</strong>
-                <p>Cargo mensual desde Bs 10 según saldo y condiciones más claras que una deuda revolvente.</p>
-              </article>
-              <article className="auditor-summary-card auditor-summary-card--saving">
-                <span className="auditor-summary-card__label">Impacto de una tasa más alta</span>
-                <strong>Bs {formatCurrency(annualReferenceInterestGap)}</strong>
-                <p>Una tasa más alta puede hacer que termines pagando mucho más con el tiempo.</p>
+                <p>Cargo mensual desde Bs 10 según saldo, sin mantenimiento de tarjeta y con condiciones más claras.</p>
               </article>
             </div>
           </div>
