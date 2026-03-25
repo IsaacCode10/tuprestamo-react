@@ -434,7 +434,6 @@ const AuditorTarjetasPage = () => {
                 <table className="statement-table">
                   <thead>
                     <tr>
-                      <th>Fecha</th>
                       <th>Descripción</th>
                       <th>Cargo / Debe</th>
                       <th>Qué significa</th>
@@ -442,37 +441,31 @@ const AuditorTarjetasPage = () => {
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Hoy</td>
                       <td>Saldo de deuda auditado</td>
                       <td>Bs {formatCurrency(debt)}</td>
                       <td>Es el saldo base sobre el que el banco calcula intereses.</td>
                     </tr>
                     <tr>
-                      <td>Hoy</td>
                       <td>Cargo mantenimiento de cuenta</td>
                       <td>Bs {formatCurrency(maintenance)}</td>
                       <td>Se cobra todos los meses, incluso cuando no haces nuevas compras.</td>
                     </tr>
                     <tr>
-                      <td>Hoy</td>
                       <td>Intereses estimados del mes</td>
                       <td>Bs {formatCurrency(bankScenario.monthlyInterest)}</td>
                       <td>Incluye interés sobre tu saldo actual y sobre el gasto mensual que simulas.</td>
                     </tr>
                     <tr>
-                      <td>Hoy</td>
                       <td>Seguro de desgravamen</td>
                       <td>Bs {formatCurrency(MONTHLY_INSURANCE)}</td>
                       <td>Es un cargo pequeño, pero repetido puede sumar más de lo que parece.</td>
                     </tr>
                     <tr>
-                      <td>Hoy</td>
                       <td>Intereses punitorios</td>
                       <td>Bs {formatCurrency(PUNITIVE_INTEREST)}</td>
                       <td>Aparecen si hay retrasos o condiciones específicas del extracto.</td>
                     </tr>
                     <tr>
-                      <td>Hoy</td>
                       <td>Estado de diferimientos</td>
                       <td>Monto diferido: Bs {formatCurrency(bankScenario.deferredAmount)}</td>
                       <td>El diferimiento puede aliviar el corto plazo, pero también extender el costo financiero.</td>
