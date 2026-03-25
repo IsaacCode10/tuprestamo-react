@@ -6,7 +6,6 @@ import './AuditorTarjetasPage.css';
 
 const MONTHLY_INSURANCE = 3.07;
 const PUNITIVE_INTEREST = 0.07;
-const DEFERRED_RATIO = 3704.29 / 8402.8;
 const REFERENCE_TU_PRESTAMO_RATE = 15;
 
 const round2 = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -32,7 +31,6 @@ const calculateBankScenario = ({ debt, creditLimit, tna, maintenance, monthlySpe
   const annualFixedCharges = (maintenance + MONTHLY_INSURANCE) * 12;
   const annualCost = annualInterest + annualFixedCharges;
   const availableCredit = Math.max(creditLimit - debt, 0);
-  const deferredAmount = debt * DEFERRED_RATIO;
   const referenceInterestAt15 = debt * (REFERENCE_TU_PRESTAMO_RATE / 100);
   return {
     tea: calculateTea(tna),
@@ -45,7 +43,6 @@ const calculateBankScenario = ({ debt, creditLimit, tna, maintenance, monthlySpe
     annualCost,
     creditLimit,
     availableCredit,
-    deferredAmount,
     referenceInterestAt15,
     previousBalance: debt + monthlyInterest + maintenance + MONTHLY_INSURANCE + PUNITIVE_INTEREST,
   };
@@ -464,11 +461,6 @@ const AuditorTarjetasPage = () => {
                       <td>Intereses punitorios</td>
                       <td>Bs {formatCurrency(PUNITIVE_INTEREST)}</td>
                       <td>Aparecen si hay retrasos o condiciones específicas del extracto.</td>
-                    </tr>
-                    <tr>
-                      <td>Estado de diferimientos</td>
-                      <td>Monto diferido: Bs {formatCurrency(bankScenario.deferredAmount)}</td>
-                      <td>El diferimiento puede aliviar el corto plazo, pero también extender el costo financiero.</td>
                     </tr>
                   </tbody>
                 </table>
