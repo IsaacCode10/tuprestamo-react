@@ -485,7 +485,7 @@ const AuditorTarjetasPage = () => {
 
         <section className="auditor-page__section">
           <div className="auditor-shell auditor-shell--narrow">
-            <div className="auditor-summary-grid">
+            <div className="auditor-summary-grid auditor-summary-grid--two">
               <article className="auditor-summary-card auditor-summary-card--bank">
                 <span className="auditor-summary-card__label">Lo que pagas con tu banco hoy</span>
                 <strong>Bs {formatCurrency(bankScenario.annualCost)}</strong>

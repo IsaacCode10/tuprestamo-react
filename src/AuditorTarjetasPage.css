@@ -215,6 +215,10 @@
   gap: 1rem;
 }
 
+.auditor-summary-grid--two {
+  justify-content: center;
+}
+
 .auditor-summary-card {
   border-radius: 22px;
   padding: 1.25rem;
@@ -565,6 +569,10 @@
 
   .auditor-summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .auditor-summary-grid--two {
+    grid-template-columns: repeat(2, minmax(320px, 420px));
   }
 
   .statement-metrics-grid {
