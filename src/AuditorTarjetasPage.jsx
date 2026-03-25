@@ -494,7 +494,10 @@ const AuditorTarjetasPage = () => {
               <article className="auditor-summary-card auditor-summary-card--tp">
                 <span className="auditor-summary-card__label">Tu Préstamo</span>
                 <strong>Desde {REFERENCE_TU_PRESTAMO_RATE}%</strong>
-                <p>Cargo mensual desde Bs 10 según saldo, sin mantenimiento de tarjeta y con condiciones más claras.</p>
+                <p>
+                  Cargo mensual desde Bs 10 según saldo. La tasa final depende de tu perfil y también
+                  aplica originación según el monto y la evaluación.
+                </p>
               </article>
             </div>
           </div>
