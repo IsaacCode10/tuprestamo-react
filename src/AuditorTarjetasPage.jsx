@@ -522,21 +522,6 @@ const AuditorTarjetasPage = () => {
                 </button>
               </div>
             </div>
-
-            <div className="auditor-disclaimer-grid">
-              <article>
-                <h3>Qué verás aquí</h3>
-                <p>Una estimación clara de intereses, cargos mensuales y el costo real de tu tarjeta.</p>
-              </article>
-              <article>
-                <h3>Importante</h3>
-                <p>La oferta final depende de tu perfil y de la validación de tus documentos.</p>
-              </article>
-              <article>
-                <h3>Siguiente paso</h3>
-                <p>Si el resultado te conviene, puedes pedir tu evaluación con Tu Préstamo.</p>
-              </article>
-            </div>
           </div>
         </section>
 
