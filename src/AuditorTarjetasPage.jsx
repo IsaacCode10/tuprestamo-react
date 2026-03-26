@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { trackEvent } from '@/analytics.js';
 import LoanRequestForm from '@/LoanRequestForm.jsx';
@@ -55,8 +55,6 @@ const AuditorTarjetasPage = () => {
   const [maintenance, setMaintenance] = useState(120);
   const [monthlySpend, setMonthlySpend] = useState(1800);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const [completedTracked, setCompletedTracked] = useState(false);
 
   const bankScenario = useMemo(
     () => calculateBankScenario({ debt, creditLimit, tna, maintenance, monthlySpend }),
@@ -66,35 +64,7 @@ const AuditorTarjetasPage = () => {
   const isCreditLimitInvalid = debt > creditLimit;
   const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://tuprestamobo.com';
 
-  useEffect(() => {
-    trackEvent('Viewed Auditor Tarjetas Page', {
-      page_name: 'auditor_tarjetas',
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!hasInteracted || completedTracked) return;
-    trackEvent('Completed Auditor Simulation', {
-      debt_amount: round2(debt),
-      credit_limit: round2(creditLimit),
-      bank_tna: tna,
-      monthly_spend: round2(monthlySpend),
-      maintenance_fee: round2(maintenance),
-      annual_cost: round2(bankScenario.annualCost),
-    });
-    setCompletedTracked(true);
-  }, [bankScenario.annualCost, completedTracked, creditLimit, debt, hasInteracted, maintenance, monthlySpend, tna]);
-
   const markInteraction = (inputName, value) => {
-    if (!hasInteracted) {
-      trackEvent('Started Auditor Simulation', {
-        first_input: inputName,
-      });
-      setHasInteracted(true);
-    }
-
-    setCompletedTracked(false);
-
     if (inputName === 'debt') setDebt(value);
     if (inputName === 'creditLimit') setCreditLimit(value);
     if (inputName === 'tna') setTna(value);
