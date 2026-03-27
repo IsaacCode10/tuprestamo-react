@@ -31,8 +31,16 @@ const Hero = ({ onBorrowerClick }) => {
             <div className="hero-card">
               <div className="hero-card__badge">Tarjeta actual</div>
               <div className="hero-card__surface">
-                <div className="hero-card__chip"></div>
+                <div className="hero-card__top">
+                  <div className="hero-card__chip"></div>
+                  <div className="hero-card__brand">
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+                <div className="hero-card__contactless"></div>
                 <div className="hero-card__label">Deuda cerrada</div>
+                <div className="hero-card__number">•••• 2048</div>
                 <div className="hero-card__lines">
                   <span>Pago mínimo</span>
                   <span>Intereses</span>
