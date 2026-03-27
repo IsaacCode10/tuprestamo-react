@@ -29,7 +29,7 @@ const Hero = ({ onBorrowerClick }) => {
 
           <div className="hero__visual" aria-hidden="true">
             <div className="hero-card">
-              <div className="hero-card__badge">Tarjeta actual</div>
+              <div className="hero-card__badge">Tu deuda hoy</div>
               <div className="hero-card__surface">
                 <div className="hero-card__top">
                   <div className="hero-card__chip"></div>
@@ -42,9 +42,9 @@ const Hero = ({ onBorrowerClick }) => {
                 <div className="hero-card__label">Deuda cerrada</div>
                 <div className="hero-card__number">•••• 2048</div>
                 <div className="hero-card__lines">
-                  <span>Pago mínimo</span>
-                  <span>Intereses</span>
-                  <span>Mantenimiento</span>
+                  <span>Pago mínimo: no te libera</span>
+                  <span>Intereses: suben tu costo</span>
+                  <span>Mantenimiento: suma cada mes</span>
                 </div>
               </div>
               <div className="hero-card__summary">

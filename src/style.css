@@ -249,7 +249,7 @@ header.header {
 .hero__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 410px);
-  gap: 3rem;
+  gap: 1.75rem;
   align-items: center;
 }
 
@@ -462,7 +462,7 @@ header.header {
   padding: 0.45rem 0.7rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.09);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 600;
 }
 
