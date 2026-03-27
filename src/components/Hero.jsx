@@ -6,7 +6,7 @@ const Hero = ({ onBorrowerClick }) => {
       <div className="container hero__content">
         <div className="hero__grid">
           <div className="hero__copy">
-            <span className="hero__eyebrow">Refinancia tu tarjeta en Bolivia</span>
+            <span className="hero__eyebrow">Refinancia tu tarjeta de crédito en Bolivia</span>
             <h1 className="hero__title">
               Deja de pagar tanto por tu tarjeta de crédito
             </h1>

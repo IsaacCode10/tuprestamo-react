@@ -248,7 +248,7 @@ header.header {
 
 .hero__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 420px);
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 410px);
   gap: 3rem;
   align-items: center;
 }
@@ -273,11 +273,11 @@ header.header {
 
 .hero__title {
   font-family: var(--font-head);
-  font-size: 3.2rem;
+  font-size: 3rem;
   line-height: 1.08;
   margin-bottom: 1rem;
   font-weight: 700;
-  max-width: 13ch;
+  max-width: 15ch;
 }
 
 .hero__subtitle {
