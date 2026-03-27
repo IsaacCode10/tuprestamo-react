@@ -248,8 +248,8 @@ header.header {
 
 .hero__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 410px);
-  gap: 1.75rem;
+  grid-template-columns: minmax(0, 1.18fr) minmax(340px, 420px);
+  gap: 0.9rem;
   align-items: center;
 }
 
