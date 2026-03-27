@@ -243,7 +243,7 @@ header.header {
     radial-gradient(circle at top right, rgba(38, 194, 178, 0.18), transparent 32%),
     linear-gradient(180deg, #f8fffe 0%, #ffffff 100%);
   color: var(--primary-color);
-  padding: 4.5rem 0 4rem;
+  padding: 2.75rem 0 4rem;
 }
 
 .hero__grid {
