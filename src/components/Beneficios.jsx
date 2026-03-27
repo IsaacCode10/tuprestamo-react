@@ -8,37 +8,37 @@ const Beneficios = () => {
         <div className="benefits-grid">
           <div className="benefit-card">
             <div className="benefit-card__icon">⚡</div>
-            <h3 className="benefit-card__title">Libertad Total de Pago</h3>
+            <h3 className="benefit-card__title">Menos costo que seguir con tu tarjeta</h3>
             <p className="benefit-card__text">
-              Adelanta cuotas o cancela cuando quieras: <strong>Bs 0</strong> de comisiones por prepago. Tu dinero se aplica 100% a capital.
+              Si hoy pagas tasas altas, mantenimiento mensual y cargos confusos, refinanciar puede ayudarte a recuperar control sobre tu deuda.
             </p>
           </div>
           <div className="benefit-card">
-            <div className="benefit-card__icon">💰</div>
-            <h3 className="benefit-card__title">Mejores condiciones</h3>
+            <div className="benefit-card__icon">🏦</div>
+            <h3 className="benefit-card__title">Pago directo a tu banco</h3>
             <p className="benefit-card__text">
-              Tasas justas y cuota fija. Si tienes excelente historial, accedes a condiciones preferenciales.
+              El desembolso va directo al banco acreedor para cancelar tu tarjeta. As&iacute; el cr&eacute;dito cumple exactamente su prop&oacute;sito.
             </p>
           </div>
           <div className="benefit-card">
             <div className="benefit-card__icon">📝</div>
-            <h3 className="benefit-card__title">Proceso simple</h3>
+            <h3 className="benefit-card__title">Condiciones m&aacute;s claras</h3>
             <p className="benefit-card__text">
-              Solicita online y recibe una respuesta clara y r&aacute;pida.
+              Antes de aceptar, conoces tu tasa, tus costos y el proceso. Sin letras peque&ntilde;as ni cobros dif&iacute;ciles de entender.
             </p>
           </div>
           <div className="benefit-card">
-            <div className="benefit-card__icon">📈</div>
-            <h3 className="benefit-card__title">Para inversionistas</h3>
+            <div className="benefit-card__icon">📱</div>
+            <h3 className="benefit-card__title">Proceso 100% online</h3>
             <p className="benefit-card__text">
-              Invierte en personas con excelente perfil y obt&eacute;n rendimiento atractivo.
+              Puedes iniciar tu solicitud y cargar tus documentos desde tu celular, con seguimiento digital de tu proceso.
             </p>
           </div>
           <div className="benefit-card">
-            <div className="benefit-card__icon">🌐</div>
-            <h3 className="benefit-card__title">100% digital</h3>
+            <div className="benefit-card__icon">💰</div>
+            <h3 className="benefit-card__title">Evaluaci&oacute;n justa</h3>
             <p className="benefit-card__text">
-              Sin papeleo innecesario. Transparencia total y soporte cercano.
+              Tu caso se revisa seg&uacute;n tu perfil real para ofrecerte condiciones acordes a tu situaci&oacute;n financiera.
             </p>
           </div>
         </div>

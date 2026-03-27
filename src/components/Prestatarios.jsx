@@ -6,29 +6,26 @@ const Prestatarios = ({ onSolicitudClick }) => {
       <div className="container">
         <h2 className="section__title">Para Prestatarios</h2>
         <p className="section__text">
-          Si tienes tarjeta de cr&eacute;dito y buscas refinanciar con mejores tasas, Tu Pr&eacute;stamo es tu aliado. Deja de regalar tu dinero a los bancos.
+          Si tu tarjeta de cr&eacute;dito te cobra demasiado y sientes que tu deuda no baja, en Tu Pr&eacute;stamo puedes solicitar una evaluaci&oacute;n para refinanciar con condiciones m&aacute;s claras.
         </p>
         <ul className="features-list">
           <li className="features-list__item">
-            Proceso &aacute;gil: Olv&iacute;date de la burocracia bancaria. Nuestro proceso de solicitud es en l&iacute;nea y r&aacute;pido.
+            Pago directo a tu banco acreedor: refinanciamos tu deuda de tarjeta sin desembolso libre a tu cuenta.
           </li>
           <li className="features-list__item">
-            Ahorro real: las TC en Bolivia cobran tasas de inter&eacute;s anuales superiores al 24% y costos de mantenimiento de m&aacute;s de Bs 120 al mes. Con nosotros, puedes acceder a un refinanciamiento significativamente menor.
+            Condiciones m&aacute;s claras: conoces tu tasa, tus costos y el paso a paso antes de decidir.
           </li>
           <li className="features-list__item">
-            Desembolso directo a tu banco acreedor: pagamos tu tarjeta, no transferimos a tu cuenta. As&iacute; te enfocas en salir de la deuda.
+            Proceso 100% online: inicia tu solicitud desde tu celular y sube tus documentos en l&iacute;nea.
           </li>
           <li className="features-list__item">
-            Evaluaci&oacute;n justa: no eres solo un n&uacute;mero en un sistema. Un analista de cr&eacute;dito experto revisar&aacute; tu perfil para ofrecerte las mejores condiciones.
-          </li>
-          <li className="features-list__item">
-            Transparencia radical: Olv&iacute;date de los costos fijos mensuales. Solo pagas una comisi&oacute;n por originaci&oacute;n que depende de tu perfil (premiamos a los buenos pagadores) y una comisi&oacute;n de servicio y seguro que disminuye con tu deuda. Simple y claro.
+            Evaluaci&oacute;n seg&uacute;n tu perfil: analizamos tu caso para ofrecerte condiciones acordes a tu situaci&oacute;n real.
           </li>
         </ul>
         <div className="button-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <p className="cta-text">&iexcl;Solicita tu refinanciamiento ahora sin compromiso!</p>
+          <p className="cta-text">Solicita tu evaluaci&oacute;n sin compromiso.</p>
           <button className="btn btn--secondary" onClick={() => onSolicitudClick('prestatario')}>
-            Completa tu Solicitud
+            Solicitar evaluaci&oacute;n
           </button>
           <a className="btn btn--primary" href="/calculadora" style={{ marginTop: 8 }}>
             Calculadora de Ahorro

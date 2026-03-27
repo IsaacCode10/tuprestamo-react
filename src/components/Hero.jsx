@@ -6,24 +6,19 @@ const Hero = () => {
     <section id="hero" className="hero">
       <div className="container hero__content">
         <h1 className="hero__title">
-          Refinancia tus tarjetas de crédito en Bolivia con mejores tasas
+          Deja de pagar tanto por tu tarjeta de crédito
         </h1>
         <p className="hero__subtitle">
-          Conectamos personas que necesitan refinanciar sus tarjetas de crédito con inversionistas que buscan rentabilidad. Tasas justas, proceso simple y 100% en línea.
+          Si tu tarjeta te cobra intereses altos, mantenimiento y pagos mínimos que no te dejan avanzar, en Tu Préstamo puedes solicitar una evaluación online para refinanciar tu deuda con condiciones más claras.
         </p>
 
-        {/* CTA Items */}
         <div className="hero__cta">
           <div className="cta-item">
-            <Link to="prestatarios" smooth={true} duration={500} className="btn btn--secondary">Quiero refinanciar</Link>
+            <Link to="prestatarios" smooth={true} duration={500} className="btn btn--secondary">Solicitar evaluación</Link>
             <div className="cta-box">
-              <p>REDUCE TUS INTERESES CON TASAS DESDE 15% ANUAL. CUOTA FIJA MENSUAL</p>
-            </div>
-          </div>
-          <div className="cta-item">
-            <Link to="inversionistas" smooth={true} duration={500} className="btn btn--primary">Quiero invertir</Link>
-            <div className="cta-box">
-              <p>RECIBE PAGOS MENSUALES Y RENDIMIENTO ANUAL ESTIMADO HASTA 15%</p>
+              <p>PAGO DIRECTO A TU BANCO ACREEDOR</p>
+              <p>TASAS DESDE 15% ANUAL SEGUN PERFIL</p>
+              <p>PROCESO 100% ONLINE</p>
             </div>
           </div>
         </div>
