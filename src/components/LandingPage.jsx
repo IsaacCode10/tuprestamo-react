@@ -52,7 +52,7 @@ const LandingPage = () => {
         </script>
         <link rel="canonical" href="https://tuprestamobo.com" />
       </Helmet>
-      <Hero />
+      <Hero onBorrowerClick={() => handleOpenModal('prestatario')} />
       <Beneficios />
       <Prestatarios onSolicitudClick={() => handleOpenModal('prestatario')} />
       <Inversionistas onSolicitudClick={() => handleOpenModal('inversionista')} />
