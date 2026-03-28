@@ -251,6 +251,8 @@ header.header {
   grid-template-columns: minmax(0, 1.18fr) minmax(340px, 420px);
   gap: 0.9rem;
   align-items: center;
+  max-width: 1160px;
+  margin: 0 auto;
 }
 
 .hero__copy {
@@ -320,7 +322,7 @@ header.header {
 .hero__visual {
   display: flex;
   justify-content: flex-start;
-  transform: translateX(-72px);
+  margin-left: -44px;
 }
 
 .hero-card {
@@ -1209,7 +1211,7 @@ header.header {
     justify-content: center;
   }
   .hero__visual {
-    transform: none;
+    margin-left: 0;
   }
   .benefits-grid {
     grid-template-columns: 1fr;
