@@ -319,8 +319,8 @@ header.header {
 
 .hero__visual {
   display: flex;
-  justify-content: center;
-  transform: translateX(-28px);
+  justify-content: flex-start;
+  transform: translateX(-72px);
 }
 
 .hero-card {
