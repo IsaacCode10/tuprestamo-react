@@ -243,14 +243,14 @@ header.header {
     radial-gradient(circle at top right, rgba(38, 194, 178, 0.18), transparent 32%),
     linear-gradient(180deg, #f8fffe 0%, #ffffff 100%);
   color: var(--primary-color);
-  padding: 2.75rem 0 4rem;
+  padding: 1.5rem 0 4rem;
 }
 
 .hero__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) minmax(340px, 420px);
   gap: 0.9rem;
-  align-items: center;
+  align-items: start;
   max-width: 1160px;
   margin: 0 auto;
 }
@@ -1186,7 +1186,7 @@ header.header {
 
 @media (max-width: 768px) {
   .hero {
-    padding: 3rem 0 2.5rem;
+    padding: 2.2rem 0 2.5rem;
   }
   .hero__grid {
     grid-template-columns: 1fr;
