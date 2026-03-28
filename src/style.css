@@ -434,7 +434,6 @@ header.header {
   margin: 0;
   position: relative;
   z-index: 1;
-  transform: rotate(90deg);
 }
 
 .hero-card__contactless span {
