@@ -429,31 +429,27 @@ header.header {
 }
 
 .hero-card__contactless {
-  width: 22px;
-  height: 16px;
+  width: 30px;
+  height: 22px;
   margin: 0;
   position: relative;
   z-index: 1;
   transform: rotate(90deg);
 }
 
-.hero-card__contactless::before,
-.hero-card__contactless::after {
-  content: '';
+.hero-card__contactless span {
   position: absolute;
   border: 2px solid rgba(255,255,255,0.72);
   border-left: 0;
   border-bottom: 0;
-  border-top-right-radius: 16px;
+  border-top-right-radius: 20px;
+  display: block;
 }
 
-.hero-card__contactless::before {
-  inset: 5px 10px 5px 4px;
-}
-
-.hero-card__contactless::after {
-  inset: 1px 5px 1px 9px;
-}
+.hero-card__contactless span:nth-child(1) { inset: 9px 19px 9px 3px; }
+.hero-card__contactless span:nth-child(2) { inset: 7px 15px 7px 5px; }
+.hero-card__contactless span:nth-child(3) { inset: 4px 10px 4px 8px; }
+.hero-card__contactless span:nth-child(4) { inset: 0 4px 0 12px; }
 
 .hero-card__label {
   display: inline-flex;

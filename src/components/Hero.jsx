@@ -34,7 +34,12 @@ const Hero = ({ onBorrowerClick }) => {
                 <div className="hero-card__top">
                   <div className="hero-card__top-left">
                     <div className="hero-card__chip"></div>
-                    <div className="hero-card__contactless"></div>
+                    <div className="hero-card__contactless">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
                   </div>
                   <div className="hero-card__brand">
                     <span></span>
