@@ -35,10 +35,12 @@ const Hero = ({ onBorrowerClick }) => {
                   <div className="hero-card__top-left">
                     <div className="hero-card__chip"></div>
                     <div className="hero-card__contactless">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                      <span></span>
+                      <svg viewBox="0 0 28 24" aria-hidden="true" focusable="false">
+                        <path d="M4 11a1.5 1.5 0 0 1 0 3" />
+                        <path d="M8 9a3.5 3.5 0 0 1 0 7" />
+                        <path d="M12 7a5.5 5.5 0 0 1 0 11" />
+                        <path d="M16 5a7.5 7.5 0 0 1 0 15" />
+                      </svg>
                     </div>
                   </div>
                   <div className="hero-card__brand">
