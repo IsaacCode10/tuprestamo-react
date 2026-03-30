@@ -5,6 +5,9 @@ const Prestatarios = ({ onSolicitudClick }) => {
     <section id="prestatarios" className="section section--light section--compact">
       <div className="container">
         <h2 className="section__title">Para Prestatarios</h2>
+        <p className="section__subtitle section__subtitle--centered">
+          Dise&ntilde;ado para personas que quieren dejar atr&aacute;s el costo de su tarjeta y avanzar con una alternativa m&aacute;s clara.
+        </p>
         <p className="section__text">
           Si tu tarjeta de cr&eacute;dito te cobra demasiado y sientes que tu deuda no baja, en Tu Pr&eacute;stamo puedes solicitar una evaluaci&oacute;n para refinanciar con condiciones m&aacute;s claras.
         </p>
