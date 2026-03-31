@@ -1013,8 +1013,8 @@ header.header {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 420px;
-  padding: 1rem;
+  max-width: 430px;
+  padding: 0;
 }
 
 .borrowers-visual__image {
@@ -1022,9 +1022,11 @@ header.header {
   width: 100%;
   height: auto;
   object-fit: contain;
-  transform: scale(0.92);
+  transform: none;
   transform-origin: center;
   filter: drop-shadow(0 18px 34px rgba(0, 68, 90, 0.12));
+  -webkit-mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, #000 62%, rgba(0, 0, 0, 0.96) 74%, rgba(0, 0, 0, 0.82) 82%, transparent 100%);
+  mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, #000 62%, rgba(0, 0, 0, 0.96) 74%, rgba(0, 0, 0, 0.82) 82%, transparent 100%);
 }
 
 .borrowers-cta {
@@ -1443,7 +1445,7 @@ header.header {
   }
   .borrowers-visual__frame {
     max-width: 340px;
-    padding: 0.6rem;
+    padding: 0;
   }
   .section__title {
     font-size: 1.5rem;
