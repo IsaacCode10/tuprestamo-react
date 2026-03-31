@@ -43,18 +43,6 @@ const benefits = [
     ),
   },
   {
-    label: 'Digital',
-    title: 'Proceso 100% online',
-    text: 'Inicia tu solicitud para refinanciar tu tarjeta de crédito y carga tus documentos desde tu celular.',
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="7" y="3.5" width="10" height="17" rx="2.5" />
-        <path d="M10 6.5h4" />
-        <path d="M11.5 17.5h1" />
-      </svg>
-    ),
-  },
-  {
     label: 'Perfil',
     title: 'Evaluación según tu perfil',
     text: 'Evaluamos tu perfil para ofrecerte condiciones acordes a tu situación financiera.',

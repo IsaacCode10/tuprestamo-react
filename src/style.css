@@ -826,22 +826,16 @@ header.header {
 
 @media (min-width: 1200px) {
   #beneficios .benefits-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.6rem;
   }
 }
 
-/* Desktop: 3 cards on row 1, and 2 centered on row 2 using 12-col grid */
 @media (min-width: 992px) and (max-width: 1199px) {
   #beneficios .benefits-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 1.35rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.2rem;
   }
-  #beneficios .benefit-card { grid-column: span 4; }
-  /* Center row 2: place 4th and 5th at columns 3-6 and 7-10 */
-  #beneficios .benefit-card:nth-child(4) { grid-column: 3 / span 4; }
-  #beneficios .benefit-card:nth-child(5) { grid-column: 7 / span 4; }
 }
 
 .benefit-card {
