@@ -13,35 +13,35 @@ const Beneficios = () => {
             <span className="benefit-card__eyebrow">Costo</span>
             <h3 className="benefit-card__title">Menos costo que seguir con tu tarjeta</h3>
             <p className="benefit-card__text">
-              Si hoy pagas tasas altas y cargos mensuales, refinanciar puede ayudarte a recuperar control sobre tu deuda.
+              Si hoy tu tarjeta de cr&eacute;dito te cobra intereses altos y cargos mensuales, refinanciar puede ayudarte a recuperar control sobre tu deuda.
             </p>
           </div>
           <div className="benefit-card">
             <span className="benefit-card__eyebrow">Banco</span>
             <h3 className="benefit-card__title">Pago directo a tu banco</h3>
             <p className="benefit-card__text">
-              El desembolso va directo al banco acreedor para cancelar tu tarjeta y cumplir exactamente su prop&oacute;sito.
+              El desembolso va directo al banco acreedor para cancelar la deuda de tu tarjeta de cr&eacute;dito.
             </p>
           </div>
           <div className="benefit-card">
             <span className="benefit-card__eyebrow">Claridad</span>
             <h3 className="benefit-card__title">Condiciones m&aacute;s claras</h3>
             <p className="benefit-card__text">
-              Antes de aceptar, conoces tu tasa, tus costos y el proceso, sin letras peque&ntilde;as.
+              Antes de aceptar, conoces la tasa, los costos y el proceso de refinanciar tu deuda, sin letras peque&ntilde;as.
             </p>
           </div>
           <div className="benefit-card">
             <span className="benefit-card__eyebrow">Digital</span>
             <h3 className="benefit-card__title">Proceso 100% online</h3>
             <p className="benefit-card__text">
-              Inicia tu solicitud y carga tus documentos desde tu celular, con seguimiento digital.
+              Inicia tu solicitud para refinanciar tu tarjeta de cr&eacute;dito y carga tus documentos desde tu celular.
             </p>
           </div>
           <div className="benefit-card">
             <span className="benefit-card__eyebrow">Perfil</span>
-            <h3 className="benefit-card__title">Evaluaci&oacute;n justa</h3>
+            <h3 className="benefit-card__title">Evaluaci&oacute;n seg&uacute;n tu perfil</h3>
             <p className="benefit-card__text">
-              Revisamos tu caso seg&uacute;n tu perfil real para ofrecerte condiciones acordes a tu situaci&oacute;n.
+              Evaluamos tu perfil para ofrecerte condiciones acordes a tu situaci&oacute;n financiera.
             </p>
           </div>
         </div>
