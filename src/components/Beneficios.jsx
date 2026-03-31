@@ -43,9 +43,9 @@ const benefits = [
     ),
   },
   {
-    label: 'Perfil',
-    title: 'Evaluación según tu perfil',
-    text: 'Evaluamos tu perfil para ofrecerte condiciones acordes a tu situación financiera.',
+    label: 'Evaluación',
+    title: 'Condiciones acordes a tu situación',
+    text: 'Revisamos tu caso para ofrecerte condiciones acordes a tu situación financiera.',
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="8" r="3.2" />
