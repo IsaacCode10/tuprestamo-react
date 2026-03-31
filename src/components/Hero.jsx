@@ -1,4 +1,5 @@
 import React from 'react';
+import deudaCerradaHeroImg from '../assets/images/deuda-cerrada-tarjeta-hero.png';
 
 const Hero = ({ onBorrowerClick }) => {
   return (
@@ -28,38 +29,13 @@ const Hero = ({ onBorrowerClick }) => {
           </div>
 
           <div className="hero__visual" aria-hidden="true">
-            <div className="hero-card">
-              <div className="hero-card__badge">Tu deuda hoy</div>
-              <div className="hero-card__surface">
-                <div className="hero-card__top">
-                  <div className="hero-card__top-left">
-                    <div className="hero-card__chip"></div>
-                    <div className="hero-card__contactless">
-                      <svg viewBox="0 0 28 24" aria-hidden="true" focusable="false">
-                        <path d="M4 11a1.5 1.5 0 0 1 0 3" />
-                        <path d="M8 9a3.5 3.5 0 0 1 0 7" />
-                        <path d="M12 7a5.5 5.5 0 0 1 0 11" />
-                        <path d="M16 5a7.5 7.5 0 0 1 0 15" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="hero-card__brand">
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-                <div className="hero-card__label">Deuda cerrada</div>
-                <div className="hero-card__number">•••• 2048</div>
-                <div className="hero-card__lines">
-                  <span>Pago mínimo: no te libera</span>
-                  <span>Intereses: suben tu costo</span>
-                  <span>Mantenimiento: suma cada mes</span>
-                </div>
-              </div>
-              <div className="hero-card__summary">
-                <strong>Tu objetivo</strong>
-                <p>Salir de la deuda de tu tarjeta con condiciones más claras.</p>
-              </div>
+            <div className="hero-illustration">
+              <img
+                className="hero-illustration__image"
+                src={deudaCerradaHeroImg}
+                alt=""
+                loading="eager"
+              />
             </div>
           </div>
         </div>
