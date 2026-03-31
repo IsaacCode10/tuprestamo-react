@@ -6,7 +6,7 @@ const Beneficios = () => {
       <div className="container">
         <h2 className="section__title">&iquest;Por qu&eacute; Tu Pr&eacute;stamo?</h2>
         <p className="section__subtitle section__subtitle--centered">
-          Una alternativa m&aacute;s clara para salir del costo de tu tarjeta y recuperar control sobre tu deuda.
+          No se trata solo de pagar menos en tu tarjeta de cr&eacute;dito. Se trata de entender mejor tu deuda y salir de ella con condiciones m&aacute;s claras.
         </p>
         <div className="benefits-grid">
           <div className="benefit-card">
