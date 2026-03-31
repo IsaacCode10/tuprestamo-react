@@ -1,4 +1,5 @@
 import React from 'react';
+import cerrarDeudaTarjetaImg from '../assets/images/cerrar-deuda-tarjeta-credito-bolivia.png';
 
 const Prestatarios = ({ onSolicitudClick }) => {
   return (
@@ -44,20 +45,14 @@ const Prestatarios = ({ onSolicitudClick }) => {
             </div>
           </div>
 
-          <div className="borrowers-panel" aria-hidden="true">
-            <div className="borrowers-panel__card">
-              <span className="borrowers-panel__eyebrow">Tu tarjeta hoy</span>
-              <div className="borrowers-panel__amount">Intereses altos</div>
-              <div className="borrowers-panel__items">
-                <span>Pago m&iacute;nimo</span>
-                <span>Mantenimiento</span>
-                <span>Deuda que no baja</span>
-              </div>
-            </div>
-            <div className="borrowers-panel__outcome">
-              <span className="borrowers-panel__eyebrow borrowers-panel__eyebrow--accent">Con Tu Pr&eacute;stamo</span>
-              <strong>Una salida m&aacute;s clara</strong>
-              <p>Refinancias tu deuda con pago directo al banco y condiciones que entiendes antes de decidir.</p>
+          <div className="borrowers-visual" aria-hidden="true">
+            <div className="borrowers-visual__frame">
+              <img
+                className="borrowers-visual__image"
+                src={cerrarDeudaTarjetaImg}
+                alt=""
+                loading="lazy"
+              />
             </div>
           </div>
         </div>
