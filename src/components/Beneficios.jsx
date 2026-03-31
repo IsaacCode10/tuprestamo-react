@@ -4,13 +4,13 @@ const benefits = [
   {
     label: 'Costo',
     title: 'Menos costo que seguir con tu tarjeta',
-    text: 'Si hoy tu tarjeta de crédito te cobra intereses altos y cargos mensuales, refinanciar puede ayudarte a recuperar control sobre tu deuda.',
+    text: 'Si hoy pagas intereses altos y cargos mensuales, refinanciar puede ayudarte a recuperar control sobre tu deuda.',
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M7 4v6" />
-        <path d="M17 14v6" />
-        <path d="M4 7h6" />
-        <path d="M14 17h6" />
+        <rect x="4.5" y="6.5" width="15" height="11" rx="2.2" />
+        <circle cx="12" cy="12" r="2.2" />
+        <path d="M7 10h.01" />
+        <path d="M17 14h.01" />
       </svg>
     ),
   },
