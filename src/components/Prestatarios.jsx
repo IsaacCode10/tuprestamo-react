@@ -6,11 +6,11 @@ const Prestatarios = ({ onSolicitudClick }) => {
     <section id="prestatarios" className="section section--borrowers">
       <div className="container">
         <h2 className="section__title">Para Prestatarios</h2>
-        <p className="section__text">
-          Si tu tarjeta de cr&eacute;dito te cobra demasiado y sientes que tu deuda no baja, en Tu Pr&eacute;stamo puedes solicitar una evaluaci&oacute;n para refinanciar con condiciones m&aacute;s claras.
-        </p>
         <div className="borrowers-layout">
           <div className="borrowers-list">
+            <p className="borrowers-intro">
+              Si tu tarjeta de cr&eacute;dito te cobra demasiado y sientes que tu deuda no baja, en Tu Pr&eacute;stamo puedes solicitar una evaluaci&oacute;n para refinanciar con condiciones m&aacute;s claras.
+            </p>
             <div className="borrower-point">
               <span className="borrower-point__check" aria-hidden="true">
                 ✓

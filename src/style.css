@@ -946,16 +946,23 @@ header.header {
 
 .borrowers-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 360px);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 1.6rem;
   align-items: center;
-  max-width: 1080px;
-  margin: 1.5rem auto 0;
+  max-width: 940px;
+  margin: 1.2rem auto 0;
 }
 
 .borrowers-list {
   display: grid;
-  gap: 1rem;
+  gap: 0.9rem;
+}
+
+.borrowers-intro {
+  margin: 0 0 0.3rem;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  color: #355963;
 }
 
 .borrower-point {
@@ -996,12 +1003,13 @@ header.header {
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
 }
 
 .borrowers-visual::before {
   content: '';
   position: absolute;
-  inset: 12% 6% 10% 8%;
+  inset: 14% 8% 12% 10%;
   border-radius: 32px;
   background:
     radial-gradient(circle at 35% 35%, rgba(38, 194, 178, 0.18), transparent 42%),
@@ -1013,7 +1021,7 @@ header.header {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 430px;
+  max-width: 350px;
   padding: 0;
 }
 
@@ -1030,7 +1038,7 @@ header.header {
 }
 
 .borrowers-cta {
-  margin-top: 1.5rem;
+  margin-top: 1.2rem;
 }
 
 .borrowers-cta__actions {
@@ -1431,6 +1439,9 @@ header.header {
     gap: 1.2rem;
     margin-top: 1rem;
   }
+  .borrowers-intro {
+    font-size: 0.95rem;
+  }
   .borrower-point {
     grid-template-columns: 34px minmax(0, 1fr);
     gap: 0.7rem;
@@ -1444,7 +1455,7 @@ header.header {
     font-size: 0.95rem;
   }
   .borrowers-visual__frame {
-    max-width: 340px;
+    max-width: 320px;
     padding: 0;
   }
   .section__title {
@@ -1471,11 +1482,11 @@ header.header {
 @media (max-width: 992px) {
   .borrowers-layout {
     grid-template-columns: 1fr;
-    max-width: 760px;
+    max-width: 700px;
   }
 
   .borrowers-visual {
-    max-width: 520px;
+    max-width: 420px;
     width: 100%;
     margin: 0 auto;
   }
