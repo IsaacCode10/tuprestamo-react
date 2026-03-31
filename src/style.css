@@ -332,6 +332,7 @@ header.header {
   align-items: center;
   justify-content: center;
   margin-left: -22px;
+  isolation: isolate;
 }
 
 .hero-illustration::before {
@@ -353,8 +354,7 @@ header.header {
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 20px 34px rgba(0, 68, 90, 0.08));
-  -webkit-mask-image: radial-gradient(ellipse 84% 78% at 52% 50%, #000 62%, rgba(0, 0, 0, 0.96) 74%, rgba(0, 0, 0, 0.82) 84%, transparent 100%);
-  mask-image: radial-gradient(ellipse 84% 78% at 52% 50%, #000 62%, rgba(0, 0, 0, 0.96) 74%, rgba(0, 0, 0, 0.82) 84%, transparent 100%);
+  mix-blend-mode: multiply;
 }
 
 .hero-card {
