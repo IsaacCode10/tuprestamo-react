@@ -331,6 +331,7 @@ header.header {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: -22px;
 }
 
 .hero-illustration::before {
@@ -352,6 +353,8 @@ header.header {
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 20px 34px rgba(0, 68, 90, 0.08));
+  -webkit-mask-image: radial-gradient(ellipse 84% 78% at 52% 50%, #000 62%, rgba(0, 0, 0, 0.96) 74%, rgba(0, 0, 0, 0.82) 84%, transparent 100%);
+  mask-image: radial-gradient(ellipse 84% 78% at 52% 50%, #000 62%, rgba(0, 0, 0, 0.96) 74%, rgba(0, 0, 0, 0.82) 84%, transparent 100%);
 }
 
 .hero-card {
@@ -1547,6 +1550,7 @@ header.header {
   }
   .hero-illustration {
     width: min(100%, 360px);
+    margin-left: 0;
   }
   .section--borrowers {
     padding: 2.4rem 0 2.7rem;
