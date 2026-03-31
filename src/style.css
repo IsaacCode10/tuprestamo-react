@@ -1440,6 +1440,49 @@ header.header {
   .hero__title {
     font-size: 1.75rem;
   }
+  .section--benefits {
+    padding: 2.4rem 0 2.6rem;
+  }
+  .benefits-shell {
+    max-width: 100%;
+  }
+  .benefits-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 0.9rem;
+  }
+  .benefit-card {
+    padding: 0.2rem 0.1rem;
+  }
+  .benefit-card__icon-wrap {
+    margin-bottom: 0.7rem;
+  }
+  .benefit-card__icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+  }
+  .benefit-card__icon svg {
+    width: 26px;
+    height: 26px;
+  }
+  .benefit-card__eyebrow {
+    margin-bottom: 0.45rem;
+    font-size: 0.68rem;
+  }
+  .benefit-card__title {
+    font-size: 0.98rem;
+    margin-bottom: 0.45rem;
+  }
+  .benefit-card__text {
+    max-width: none;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+  .section__subtitle.section__subtitle--centered {
+    max-width: 32ch;
+    margin-bottom: 1.1rem;
+    font-size: 0.98rem;
+  }
   .hero__eyebrow {
     font-size: 0.82rem;
   }
