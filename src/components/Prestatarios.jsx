@@ -15,29 +15,29 @@ const Prestatarios = ({ onSolicitudClick }) => {
             <div className="borrower-point">
               <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Pago directo a tu banco.</strong> Refinanciamos tu deuda de tarjeta sin
-                desembolso libre a tu cuenta.
+                <strong>Es para deuda de tarjeta de cr&eacute;dito.</strong> Refinanciamos este tipo
+                de deuda para ayudarte a salir de cargos e intereses que se acumulan mes a mes.
               </p>
             </div>
             <div className="borrower-point">
               <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Condiciones m&aacute;s claras.</strong> Conoces tu tasa, tus costos y el paso
-                a paso antes de decidir.
+                <strong>Sabes si te conviene antes de decidir.</strong> Primero evaluamos tu caso y
+                te mostramos condiciones claras para que tomes una decisi&oacute;n informada.
               </p>
             </div>
             <div className="borrower-point">
               <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Proceso 100% online.</strong> Inicias tu solicitud y subes tus documentos
-                desde tu celular.
+                <strong>Todo empieza 100% online.</strong> Puedes iniciar tu solicitud y avanzar
+                desde tu celular, sin vueltas innecesarias.
               </p>
             </div>
             <div className="borrower-point">
               <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Evaluaci&oacute;n seg&uacute;n tu perfil.</strong> Analizamos tu caso para
-                ofrecerte condiciones acordes a tu situaci&oacute;n.
+                <strong>Recupera el control de tus finanzas.</strong> La idea no es seguir pateando
+                la deuda, sino ayudarte a ordenarte con una alternativa m&aacute;s clara.
               </p>
             </div>
           </div>
@@ -57,10 +57,10 @@ const Prestatarios = ({ onSolicitudClick }) => {
         <div className="button-container borrowers-cta">
           <p className="cta-text">Solicita tu evaluaci&oacute;n sin compromiso.</p>
           <div className="borrowers-cta__actions">
-            <button className="btn btn--secondary" onClick={() => onSolicitudClick('prestatario')}>
+            <button className="btn btn--primary" onClick={() => onSolicitudClick('prestatario')}>
               Solicitar evaluaci&oacute;n
             </button>
-            <a className="btn btn--primary" href="/calculadora">
+            <a className="btn btn--secondary" href="/calculadora">
               Calculadora de Ahorro
             </a>
           </div>
