@@ -9,38 +9,35 @@ const Prestatarios = ({ onSolicitudClick }) => {
         <div className="borrowers-layout">
           <div className="borrowers-list">
             <p className="borrowers-intro">
-              Si tu tarjeta de cr&eacute;dito te cobra demasiado y sientes que tu deuda no baja, en Tu Pr&eacute;stamo puedes solicitar una evaluaci&oacute;n para refinanciar con condiciones m&aacute;s claras.
+              <strong>Lib&eacute;rate de la deuda de tu tarjeta de cr&eacute;dito.</strong> Corta con
+              los intereses altos, el mantenimiento y los pagos m&iacute;nimos que no te dejan avanzar.
             </p>
             <div className="borrower-point">
-              <span className="borrower-point__check" aria-hidden="true">
-                ✓
-              </span>
+              <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Pago directo a tu banco.</strong> Refinanciamos tu deuda de tarjeta sin desembolso libre a tu cuenta.
+                <strong>Pago directo a tu banco.</strong> Refinanciamos tu deuda de tarjeta sin
+                desembolso libre a tu cuenta.
               </p>
             </div>
             <div className="borrower-point">
-              <span className="borrower-point__check" aria-hidden="true">
-                ✓
-              </span>
+              <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Condiciones m&aacute;s claras.</strong> Conoces tu tasa, tus costos y el paso a paso antes de decidir.
+                <strong>Condiciones m&aacute;s claras.</strong> Conoces tu tasa, tus costos y el paso
+                a paso antes de decidir.
               </p>
             </div>
             <div className="borrower-point">
-              <span className="borrower-point__check" aria-hidden="true">
-                ✓
-              </span>
+              <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Proceso 100% online.</strong> Inicias tu solicitud y subes tus documentos desde tu celular.
+                <strong>Proceso 100% online.</strong> Inicias tu solicitud y subes tus documentos
+                desde tu celular.
               </p>
             </div>
             <div className="borrower-point">
-              <span className="borrower-point__check" aria-hidden="true">
-                ✓
-              </span>
+              <span className="borrower-point__check" aria-hidden="true">✓</span>
               <p className="borrower-point__text">
-                <strong>Evaluaci&oacute;n seg&uacute;n tu perfil.</strong> Analizamos tu caso para ofrecerte condiciones acordes a tu situaci&oacute;n.
+                <strong>Evaluaci&oacute;n seg&uacute;n tu perfil.</strong> Analizamos tu caso para
+                ofrecerte condiciones acordes a tu situaci&oacute;n.
               </p>
             </div>
           </div>
