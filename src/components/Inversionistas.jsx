@@ -10,7 +10,6 @@ const Inversionistas = ({ onSolicitudClick }) => {
     <section id="inversionistas" className="section section--light-alt section--compact">
       <div className="container">
         <div className="investors-copy investors-copy--single">
-          <span className="investors-eyebrow">Inversi&oacute;n con flujo mensual</span>
           <h2 className="section__title investors-title">Para Inversionistas</h2>
           <p className="section__text investors-text">
             Esta secci&oacute;n cumple un rol secundario dentro de la home. Si quieres evaluar el
