@@ -14,8 +14,8 @@ const Inversionistas = ({ onSolicitudClick }) => {
         <div className="investors-layout">
           <div className="investors-copy investors-copy--single">
             <p className="investors-intro">
-              Si quieres evaluar el potencial de retorno, revisa primero la calculadora y conoce
-              la propuesta de valor de este modelo de inversi&oacute;n.
+              Tu dinero puede hacer m&aacute;s que quedarse quieto en un dep&oacute;sito a plazo fijo.
+              Mira cu&aacute;nto podr&iacute;as ganar con oportunidades publicadas en Tu Pr&eacute;stamo.
             </p>
 
             <div className="investor-points">
@@ -36,8 +36,8 @@ const Inversionistas = ({ onSolicitudClick }) => {
               <div className="investor-point">
                 <span className="investor-point__check" aria-hidden="true">✓</span>
                 <p className="investor-point__text">
-                  <strong>Oportunidades evaluadas por perfil.</strong> El foco est&aacute; en
-                  refinanciamiento dirigido de tarjeta con revisi&oacute;n previa.
+                  <strong>Oportunidades con evaluaci&oacute;n previa.</strong> Nos enfocamos en
+                  personas que buscan salir de la deuda de su tarjeta de cr&eacute;dito.
                 </p>
               </div>
               <div className="investor-point">
