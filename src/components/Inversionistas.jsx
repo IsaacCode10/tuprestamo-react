@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProfile } from '@/hooks/useProfile.js';
-import invertirDineroImg from '../assets/images/invertir_dinero_flujo-mensual-bolivia.png';
+import invertirDineroImg from '../assets/images/invertir-dinero-flujo-mensual-bolivia.png';
 
 const Inversionistas = ({ onSolicitudClick }) => {
   const { session, profile } = useProfile();
