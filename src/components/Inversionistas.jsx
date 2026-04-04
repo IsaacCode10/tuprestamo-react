@@ -9,45 +9,101 @@ const Inversionistas = ({ onSolicitudClick }) => {
   return (
     <section id="inversionistas" className="section section--light-alt section--compact">
       <div className="container">
-        <h2 className="section__title">Para Inversionistas</h2>
-        <p className="section__text">
-          Si eres inversionista en Bolivia y est&aacute;s cansado del 3.5% de los DPF, Tu Pr&eacute;stamo te ofrece retornos atractivos con una cartera de bajo riesgo.
-        </p>
-        <ul className="features-list">
-          <li className="features-list__item">
-            Rendimiento competitivo: acceso a pr&eacute;stamos con rendimiento anual bruto de hasta 15%.
-          </li>
-          <li className="features-list__item">
-            Inversi&oacute;n segura: minimizamos el riesgo enfoc&aacute;ndonos exclusivamente en prestatarios de alto perfil crediticio que buscan refinanciar deudas t&oacute;xicas.
-          </li>
-          <li className="features-list__item">
-            Inter&eacute;s compuesto: haz crecer tu capital de forma acelerada al reinvertir los pagos mensuales que recibes. Es la f&oacute;rmula perfecta para que tu dinero trabaje por ti.
-          </li>
-          <li className="features-list__item">
-            Protecci&oacute;n de tu capital con Seguro de Desgravamen.
-          </li>
-        </ul>
-        <div className="button-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <p className="cta-text">Reg&iacute;strate como inversionista y conoce las oportunidades.</p>
-          {showCalculatorPrimary ? (
-            <>
-              <a className="btn btn--primary" href="/calculadora-inversionista">
-                Calculadora de Ganancias
-              </a>
-              <button className="btn btn--secondary" onClick={() => onSolicitudClick('inversionista')} style={{ marginTop: 8 }}>
-                Ver Oportunidades
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
-                Ver Oportunidades
-              </button>
-              <a className="btn" href="/calculadora-inversionista" style={{ marginTop: 8, background: '#eef9f8', border: '1px solid #26C2B2', color: '#00445A' }}>
-                Calculadora de Ganancias
-              </a>
-            </>
-          )}
+        <div className="investors-layout">
+          <div className="investors-copy">
+            <span className="investors-eyebrow">Inversi&oacute;n con flujo mensual</span>
+            <h2 className="section__title investors-title">Para Inversionistas</h2>
+            <p className="section__text investors-text">
+              Si buscas una alternativa a los rendimientos bajos de la banca tradicional,
+              en Tu Pr&eacute;stamo puedes invertir en oportunidades publicadas con retorno
+              anual competitivo y pagos mensuales proyectados.
+            </p>
+
+            <div className="investor-points">
+              <div className="investor-point">
+                <span className="investor-point__check" aria-hidden="true">✓</span>
+                <p className="investor-point__text">
+                  <strong>Retornos de 10% a 15% anual bruto.</strong> Seg&uacute;n el perfil
+                  de riesgo de cada oportunidad publicada.
+                </p>
+              </div>
+              <div className="investor-point">
+                <span className="investor-point__check" aria-hidden="true">✓</span>
+                <p className="investor-point__text">
+                  <strong>Flujo mensual proyectado.</strong> Recibes pagos peri&oacute;dicos
+                  y puedes reinvertir para hacer crecer tu capital.
+                </p>
+              </div>
+              <div className="investor-point">
+                <span className="investor-point__check" aria-hidden="true">✓</span>
+                <p className="investor-point__text">
+                  <strong>Oportunidades filtradas.</strong> El producto est&aacute; enfocado en
+                  refinanciamiento dirigido de tarjeta y evaluaci&oacute;n de riesgo previa.
+                </p>
+              </div>
+              <div className="investor-point">
+                <span className="investor-point__check" aria-hidden="true">✓</span>
+                <p className="investor-point__text">
+                  <strong>Modelo claro de ingresos.</strong> Tu rendimiento objetivo se muestra
+                  por oportunidad y la comisi&oacute;n de servicio es de 1% sobre cada pago recibido.
+                </p>
+              </div>
+            </div>
+
+            <div className="button-container investors-cta">
+              <p className="cta-text">Explora si este tipo de inversi&oacute;n encaja contigo.</p>
+              <div className="investors-cta__actions">
+                {showCalculatorPrimary ? (
+                  <>
+                    <a className="btn btn--primary" href="/calculadora-inversionista">
+                      Calculadora de Ganancias
+                    </a>
+                    <button className="btn btn--secondary" onClick={() => onSolicitudClick('inversionista')}>
+                      Ver Oportunidades
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
+                      Ver Oportunidades
+                    </button>
+                    <a className="btn btn--secondary" href="/calculadora-inversionista">
+                      Calculadora de Ganancias
+                    </a>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <aside className="investor-showcase" aria-label="Resumen de inversión">
+            <div className="investor-showcase__card">
+              <div className="investor-showcase__header">
+                <span className="investor-showcase__label">Oportunidades Tu Pr&eacute;stamo</span>
+                <strong className="investor-showcase__headline">Diversifica con tickets claros y pagos estimados</strong>
+              </div>
+
+              <div className="investor-showcase__stats">
+                <div className="investor-stat">
+                  <span className="investor-stat__value">10% - 15%</span>
+                  <span className="investor-stat__label">Rendimiento anual bruto objetivo</span>
+                </div>
+                <div className="investor-stat">
+                  <span className="investor-stat__value">Mensual</span>
+                  <span className="investor-stat__label">Frecuencia esperada de pagos</span>
+                </div>
+                <div className="investor-stat">
+                  <span className="investor-stat__value">1%</span>
+                  <span className="investor-stat__label">Comisi&oacute;n sobre cada pago recibido</span>
+                </div>
+              </div>
+
+              <div className="investor-showcase__note">
+                <strong>No es un DPF.</strong> Inviertes en oportunidades espec&iacute;ficas
+                publicadas en la plataforma, con rendimiento objetivo, plazo y flujo mensual proyectado.
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </section>
@@ -55,4 +111,3 @@ const Inversionistas = ({ onSolicitudClick }) => {
 };
 
 export default Inversionistas;
-
