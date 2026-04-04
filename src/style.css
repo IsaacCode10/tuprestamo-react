@@ -1277,12 +1277,18 @@ header.header {
    SECCIÓN “CÓMO FUNCIONA” – ajuste de padding y espaciado
    ======================== */
 .section--compact#como-funciona {
-  padding: 2.5rem 0; /* menos espacio vertical */
+  padding: 2.1rem 0;
 }
 
 #como-funciona .section__title {
-  margin-bottom: 0.75rem; /* reducir espacio bajo título */
-  font-size: 1.75rem; /* ligeramente más pequeño */
+  margin-bottom: 0.55rem;
+  font-size: 1.68rem;
+}
+
+#como-funciona .section__text {
+  margin-bottom: 0.8rem;
+  max-width: 640px;
+  line-height: 1.4;
 }
 
 /* ========================
@@ -1291,19 +1297,19 @@ header.header {
 .steps-row {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  gap: 1.2rem;
+  margin-top: 1rem;
 }
 
 /* La segunda fila de pasos se centra */
 .steps-row--centered {
-  margin-top: 1rem; /* menos espacio entre filas */
+  margin-top: 0.8rem;
 }
 
 /* Tarjetas de paso */
 .step-card {
   width: 100%;
-  max-width: 220px; /* un poco mayor que 180px pero no tanto */
+  max-width: 214px;
   background: #ffffff;
   border-radius: var(--radius);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -1317,7 +1323,7 @@ header.header {
 
 .step-card__header {
   background: var(--accent-color);
-  padding: 0.6rem; /* pequeño ajuste */
+  padding: 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1345,18 +1351,18 @@ header.header {
 
 .step-card__title {
   font-family: var(--font-head);
-  font-size: 1rem; /* mantener */
+  font-size: 0.96rem;
   font-weight: 600;
   color: var(--primary-color);
-  margin: 0.6rem; /* reducido */
+  margin: 0.5rem 0.55rem 0.35rem;
   text-align: center;
 }
 
 .step-card__text {
-  font-size: 0.9rem; /* un poco mayor */
-  line-height: 1.4;
+  font-size: 0.85rem;
+  line-height: 1.32;
   color: #333333;
-  padding: 0 0.6rem 1rem; /* ajustado */
+  padding: 0 0.65rem 0.8rem;
   text-align: center;
 }
 
