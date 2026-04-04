@@ -1151,7 +1151,7 @@ header.header {
 }
 
 .investors-title {
-  text-align: left;
+  text-align: center;
   margin-bottom: 0.85rem;
 }
 
@@ -1203,18 +1203,18 @@ header.header {
 
 .investors-cta {
   margin-top: 1.35rem;
-  text-align: left;
+  text-align: center;
 }
 
 .investors-cta .cta-text {
-  text-align: left;
+  text-align: center;
 }
 
 .investors-cta__actions {
   display: flex;
   gap: 0.85rem;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 /* ========================
