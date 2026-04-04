@@ -64,7 +64,7 @@ const Inversionistas = ({ onSolicitudClick }) => {
         </div>
 
         <div className="button-container investors-cta">
-          <p className="cta-text">Conoce el potencial de ganancia antes de registrarte.</p>
+          <p className="cta-text">Conoce las oportunidades para invertir tu dinero.</p>
           <div className="investors-cta__actions">
             {showCalculatorPrimary ? (
               <>
