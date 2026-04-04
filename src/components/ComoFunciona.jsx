@@ -5,17 +5,21 @@ const ComoFunciona = () => {
   return (
     <section id="como-funciona" className="section section--white section--compact">
       <div className="container">
-        <h2 className="section__title">&iquest;C&oacute;mo Funciona?</h2>
-        {/* Fila superior: pasos 1, 2, 3 */}
+        <h2 className="section__title">&iquest;C&oacute;mo funciona para salir de la deuda de tu tarjeta?</h2>
+        <p className="section__text">
+          As&iacute; funciona el proceso para solicitar una evaluaci&oacute;n, recibir una oferta y
+          pagar la deuda de tu tarjeta de cr&eacute;dito con condiciones m&aacute;s claras.
+        </p>
         <div className="steps-row">
           <div className="step-card">
             <div className="step-card__header">
               <span className="step-card__number">1</span>
               <span className="step-card__icon" aria-hidden>📝</span>
             </div>
-            <h3 className="step-card__title">Solicita y Pre&#8209;eval&uacute;a</h3>
+            <h3 className="step-card__title">Solicita tu evaluaci&oacute;n</h3>
             <p className="step-card__text">
-              Completa nuestro formulario en l&iacute;nea. Nuestro algoritmo hace una pre&#8209;selecci&oacute;n r&aacute;pida y un analista experto revisa tu solicitud para una primera aprobaci&oacute;n.
+              Completa tu solicitud online con tu deuda estimada e ingresos. En pocos pasos sabr&aacute;s
+              si tu perfil puede avanzar en el proceso.
             </p>
           </div>
 
@@ -24,45 +28,36 @@ const ComoFunciona = () => {
               <span className="step-card__number">2</span>
               <span className="step-card__icon" aria-hidden>✅</span>
             </div>
-            <h3 className="step-card__title">Verificaci&oacute;n y Aprobaci&oacute;n Final</h3>
+            <h3 className="step-card__title">Revisamos tu informaci&oacute;n</h3>
             <p className="step-card__text">
-              Verificamos tu documentaci&oacute;n y realizamos la <strong>consulta de tu historial crediticio</strong>. Un analista confirma tu tasa y condiciones.
-            </p>
-          </div>
-
-          <div className="step-card">
-            <div className="step-card__header">
-              <span className="step-card__number">3</span>
-              <span className="step-card__icon" aria-hidden>🤝</span>
-            </div>
-            <h3 className="step-card__title">Fondeo Colectivo</h3>
-            <p className="step-card__text">
-              Tras la firma notariada del contrato, tu pr&eacute;stamo se publica como oportunidad de inversi&oacute;n. Inversionistas aportan desde Bs 700 hasta completar el total.
+              Revisamos tus documentos y confirmamos el saldo real de tu tarjeta. Con eso definimos
+              tu tasa y las condiciones finales de tu oferta.
             </p>
           </div>
         </div>
 
-        {/* Fila inferior: pasos 4, 5 centrados */}
         <div className="steps-row steps-row--centered">
           <div className="step-card">
             <div className="step-card__header">
-              <span className="step-card__number">4</span>
+              <span className="step-card__number">3</span>
               <span className="step-card__icon" aria-hidden>🏦</span>
             </div>
-            <h3 className="step-card__title">Desembolso Transparente</h3>
+            <h3 className="step-card__title">Te mostramos tu oferta</h3>
             <p className="step-card__text">
-              Cuando el fondeo llega al 100%, <strong>realizamos el pago directo al banco acreedor</strong> para asegurar el destino del cr&eacute;dito. La <strong>comisi&oacute;n de originaci&oacute;n</strong> se aplica seg&uacute;n nivel de riesgo: <strong>A 3%</strong> / <strong>B 4%</strong> / <strong>C 5%</strong>.
+              Antes de decidir, ves tu cuota estimada, plazo y condiciones de forma clara para saber
+              si realmente te conviene seguir.
             </p>
           </div>
 
           <div className="step-card">
             <div className="step-card__header">
-              <span className="step-card__number">5</span>
-              <span className="step-card__icon" aria-hidden>📈</span>
+              <span className="step-card__number">4</span>
+              <span className="step-card__icon" aria-hidden>💳</span>
             </div>
-            <h3 className="step-card__title">Administraci&oacute;n y Rendimientos</h3>
+            <h3 className="step-card__title">Pagamos directo a tu banco</h3>
             <p className="step-card__text">
-              Pagas en <strong>cuota fija mensual</strong>. Gestionamos la cobranza y distribuimos autom&aacute;ticamente capital e intereses a los inversionistas.
+              Cuando tu solicitud se concreta, el pago se realiza directo a la entidad acreedora para
+              ayudarte a salir de la deuda de tu tarjeta con una cuota mensual m&aacute;s ordenada.
             </p>
           </div>
         </div>
