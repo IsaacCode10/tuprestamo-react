@@ -19,9 +19,8 @@
   .step-card__meta {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     margin-bottom: 8px;
-    gap: 8px;
   }
 
   .step-card__number {
@@ -38,16 +37,11 @@
     font-size: 1.05rem;
   }
 
-  .step-card__label {
-    font-size: 0.76rem;
-    letter-spacing: 0.08em;
-  }
-
   .step-card__title {
     margin-top: 0;
     margin-bottom: 6px;
     font-weight: 700;
-    text-align: left;
+    text-align: center;
     color: var(--primary-color, #00445A);
   }
 
