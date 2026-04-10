@@ -19,7 +19,7 @@ const Testimonio = () => {
           <div className="testimony-text">
             <p>
               <strong>Tu Pr&eacute;stamo nace de una experiencia real.</strong> En <strong>2014</strong>
-              asum&iacute; una deuda de <strong>17.000 Bs</strong> en una tarjeta de cr&eacute;dito,
+              tuve una deuda de <strong>17.000 Bs</strong> en una tarjeta de cr&eacute;dito,
               con una tasa anual de <strong>24%</strong> y un mantenimiento mensual de <strong>120 Bs</strong>.
               Durante a&ntilde;os busqu&eacute; una forma m&aacute;s clara de ordenar esa deuda, pero no
               encontr&eacute; una alternativa real.
