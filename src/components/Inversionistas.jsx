@@ -68,12 +68,12 @@ const Inversionistas = ({ onSolicitudClick }) => {
           <div className="investors-cta__actions">
             {showCalculatorPrimary ? (
               <>
-                <a className="btn btn--primary" href="/calculadora-inversionista">
-                  Calculadora de Ganancias
-                </a>
-                <button className="btn btn--secondary" onClick={() => onSolicitudClick('inversionista')}>
+                <button className="btn btn--primary" onClick={() => onSolicitudClick('inversionista')}>
                   Ver Oportunidades
                 </button>
+                <a className="btn btn--secondary" href="/calculadora-inversionista">
+                  Calculadora de Ganancias
+                </a>
               </>
             ) : (
               <>
