@@ -1,4 +1,17 @@
 
+## Actualizacion 2026-05-05
+
+**Lo hecho hoy:**
+- Se implemento una fase estatica de visibilidad para LLMs sin tocar codigo React, rutas protegidas, Supabase ni dashboards.
+- Se creo `public/llms.txt` con descripcion de Tu Prestamo Bolivia, publico objetivo, enlaces principales y disclaimers prudentes.
+- Se actualizo `public/robots.txt` para permitir explicitamente `OAI-SearchBot`, `GPTBot`, `Google-Extended` y `PerplexityBot`, manteniendo crawling general abierto.
+- Se actualizo `public/sitemap.xml` agregando rutas publicas existentes (`/faq-inversionista`, `/terminos`, `/privacidad`) y metadata basica de sitemap.
+
+**Validacion:**
+- Se revisaron manualmente los archivos estaticos modificados.
+- `npm run build` no pudo ejecutarse en este entorno por limitacion local de Node/WSL 1: `WSL 1 is not supported. Please upgrade to WSL 2 or above. Could not determine Node.js install directory`.
+- No aplica migracion de base de datos ni deploy de Edge Functions.
+
 
 ## Actualizacion 2026-02-18
 
@@ -186,3 +199,65 @@
   - conciliacion waterfall con `diferencia = 0`,
   - validacion de `investor_next_payment_view` para inversionista con multi-oportunidad.
 - Documentar politica operativa final de fechas de cobro/pago (prestatario/inversionista) en documentos de negocio y dejar backlog tecnico de migracion definitiva de fechas si se decide cambio de calendario.
+
+## Cierre de lanzamiento 2026-03-02
+
+**Estado general:**
+- Se completó el E2E operativo completo (prestatario -> analista -> operaciones -> inversionistas) en oportunidades reales.
+- Se validó cierre de flujo en producción con:
+  - fondeo,
+  - desembolso dirigido,
+  - cronograma de cuotas prestatario,
+  - pago de cuota,
+  - generación y pago de payouts a inversionistas,
+  - notificaciones y correos clave.
+- Se ejecutó auditoría SQL de pre-lanzamiento (GO/NO-GO) y no se detectaron bloqueantes de caja/flujo.
+
+**Fixes estructurales cerrados antes de launch:**
+- Normalización de estado inconsistente `financiada -> fondeada` con guardrail en DB.
+- Corrección de fuente de datos en panel inversionista multi-oportunidad:
+  - `get_investor_installments` canónico por oportunidad.
+  - `investor_next_payment_view` alineado a lógica `v2`.
+- Mejoras UX sin impacto transaccional:
+  - próximo pago multi-oportunidad con contexto.
+  - copy comercial en marketplace y etapa de aceptación de propuesta.
+  - estado de cronograma prestatario en castellano.
+
+**Riesgos conocidos no bloqueantes (post-launch):**
+- Duplicidad puntual de notificaciones/correos en algunos eventos (`loan_funded`, `opportunity_funded`, `investment_payment_verified`) por falta de idempotencia en mensajería.
+- Ajustes menores de copy/consistencia visual que no afectan el flujo de negocio.
+
+**Decisión:**
+- Plataforma lista para lanzamiento.
+
+## Actualizacion 2026-04-09
+
+**Lo hecho hoy:**
+- Se cerró la iteracion de mejora de HOME con foco prestatario y se consolidó una **version nueva de la home** respecto a V0/V1.
+- Se mantuvo el objetivo original: mejorar conversion y SEO sin tocar backend, formularios ni flujo operativo.
+- Se terminaron ajustes en secciones clave de la landing:
+  - `Hero` con foco prestatario.
+  - `Por que Tu Prestamo`.
+  - `Para Prestatarios`.
+  - `Para Inversionistas` como bloque secundario, con imagen, copy alineado al modelo y CTA principal en `Ver Oportunidades`.
+  - `Como funciona` rediseñado como modulo de pasos mas limpio, con foco en tarjeta de credito.
+  - `Mi Testimonio` reemplazado por una seccion fundacional: `Por que nace Tu Prestamo`, manteniendo datos reales para autoridad.
+  - `Preguntas Frecuentes` curada para SEO y objeciones de prestatario.
+
+**Lectura de version:**
+- **V0:** home previa, mas explicativa y menos enfocada.
+- **V1:** primera iteracion de foco prestatario (hero + primer ajuste de narrativa).
+- **V2 vigente:** home actual, posterior a V1, con mayor coherencia visual, mejor rol de cada seccion y narrativa mas orientada a conversion/SEO.
+
+**Decision de producto:**
+- La HOME deja de ser una pagina mixta de explicacion institucional.
+- Pasa a ser una landing de conversion con foco principal en personas que buscan salir de la deuda de su tarjeta de credito en Bolivia.
+
+**Pendiente fuera de este bloque:**
+- Medir comportamiento post-deploy contra baseline V0/V1:
+  - Unique Page Views
+  - Calculated Loan Result
+  - Viewed Loan Application Form
+  - Started Loan Application
+  - Submitted Loan Application
+  - Viewed Borrower Dashboard
