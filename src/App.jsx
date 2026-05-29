@@ -139,10 +139,14 @@ function App() {
 
     // Si encontramos al menos una propiedad UTM, disparamos el evento
     if (Object.keys(properties).length > 0) {
+      trackEvent('Campaign Lead', {
+        ...properties,
+        landing_path: location.pathname,
+      });
       // Marcamos que el evento ya se disparo en esta sesion
       sessionStorage.setItem('utm_event_fired', 'true');
     }
-  }, [location.search ]);
+  }, [location.pathname, location.search]);
 
   // Rutas donde deseamos ocultar el Header (solo confirmacion)
   const hideHeaderPaths = [
