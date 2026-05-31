@@ -171,11 +171,11 @@ const AuditorTarjetasPage = () => {
         <section className="auditor-hero">
           <div className="auditor-shell">
             <div className="auditor-hero__copy">
-              <span className="auditor-eyebrow">Auditor de Tarjetas</span>
-              <h1>Calculadora de intereses de tarjeta de crédito en Bolivia</h1>
+              <span className="auditor-eyebrow">Del video al cálculo real</span>
+              <h1>¿Cuánto te está costando realmente tu tarjeta de crédito?</h1>
               <p>
-                Estima cuánto pagas por intereses, mantenimiento y seguro en tu tarjeta de crédito.
-                Entiende mejor tu extracto y descubre cuánto te puede costar seguir financiando tu deuda.
+                Ingresa los datos de tu tarjeta y descubre el costo real en bolivianos: intereses,
+                mantenimiento y comisiones sumados. Muchas personas se sorprenden cuando ven el número final.
               </p>
               <div className="auditor-hero__badges">
                 <span>Auditoría gratuita</span>
@@ -186,8 +186,8 @@ const AuditorTarjetasPage = () => {
 
             <div className="auditor-controls">
               <div className="auditor-controls__header">
-                <h2>Ajusta tu escenario</h2>
-                <p>Usa datos aproximados de tu tarjeta para estimar su costo financiero real en Bolivia.</p>
+                <h2>Ingresa los datos de tu tarjeta</h2>
+                <p>Usa los datos de tu extracto. En segundos ves cuánto te cuesta al año.</p>
               </div>
 
               <label className="auditor-field">
@@ -315,6 +315,15 @@ const AuditorTarjetasPage = () => {
                   Este monto sirve para simular consumos adicionales y estimar cómo pueden crecer los intereses mes a mes.
                 </p>
               </label>
+
+              <div className="auditor-live-result">
+                <span className="auditor-live-result__label">Tu tarjeta te cuesta aprox.</span>
+                <div className="auditor-live-result__row">
+                  <strong className="auditor-live-result__number">Bs {formatCurrency(bankScenario.annualCost)}</strong>
+                  <span className="auditor-live-result__period">al año</span>
+                </div>
+                <span className="auditor-live-result__sub">Entre intereses, mantenimiento y seguro</span>
+              </div>
             </div>
           </div>
         </section>
@@ -469,19 +478,26 @@ const AuditorTarjetasPage = () => {
           <div className="auditor-shell auditor-shell--narrow">
             <div className="auditor-summary-grid auditor-summary-grid--two">
               <article className="auditor-summary-card auditor-summary-card--bank">
-                <span className="auditor-summary-card__label">Lo que pagas con tu banco hoy</span>
-                <strong>Bs {formatCurrency(bankScenario.annualCost)}</strong>
-                <p>Estimación anual entre intereses, mantenimiento y seguro sobre el escenario que ingresaste.</p>
+                <span className="auditor-summary-card__label">Intereses con tu banco (estimado)</span>
+                <strong>Bs {formatCurrency(bankScenario.annualInterest)}</strong>
+                <p>Solo en intereses sobre tu deuda al {tna.toFixed(1)}% anual. Sin contar mantenimiento ni seguro.</p>
               </article>
               <article className="auditor-summary-card auditor-summary-card--tp">
-                <span className="auditor-summary-card__label">Tu Préstamo</span>
-                <strong>Desde {REFERENCE_TU_PRESTAMO_RATE}%</strong>
+                <span className="auditor-summary-card__label">Referencia Tu Préstamo ({REFERENCE_TU_PRESTAMO_RATE}% anual)</span>
+                <strong>Bs {formatCurrency(bankScenario.referenceInterestAt15)}</strong>
                 <p>
-                  Cargo mensual desde Bs 10 según saldo. La tasa final depende de tu perfil y también
-                  aplica originación según el monto y la evaluación.
+                  Estimación sobre la misma deuda al {REFERENCE_TU_PRESTAMO_RATE}% de referencia.
+                  La tasa final depende de tu perfil y validación documental.
                 </p>
               </article>
             </div>
+            {bankScenario.annualInterest > bankScenario.referenceInterestAt15 && (
+              <p className="auditor-saving-note">
+                Diferencia estimada de{' '}
+                <strong>Bs {formatCurrency(bankScenario.annualInterest - bankScenario.referenceInterestAt15)}</strong>
+                {' '}solo en intereses anuales sobre tu deuda actual.
+              </p>
+            )}
           </div>
         </section>
 

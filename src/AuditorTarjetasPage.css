@@ -566,6 +566,68 @@
   margin-top: 1rem;
 }
 
+/* --- Resultado en vivo --- */
+.auditor-live-result {
+  margin-top: 1.5rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1a0a0a 0%, #3b0f0f 100%);
+  padding: 1.1rem 1.25rem;
+  border: 1px solid rgba(185, 76, 58, 0.3);
+}
+
+.auditor-live-result__label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 200, 180, 0.8);
+  margin-bottom: 0.4rem;
+}
+
+.auditor-live-result__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.auditor-live-result__number {
+  font-family: var(--font-head);
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  line-height: 1;
+  color: #ff7c6e;
+}
+
+.auditor-live-result__period {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 200, 180, 0.7);
+}
+
+.auditor-live-result__sub {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: rgba(255, 200, 180, 0.55);
+}
+
+/* --- Nota diferencia comparación --- */
+.auditor-saving-note {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #0b6e6a;
+  background: rgba(38, 194, 178, 0.08);
+  border: 1px solid rgba(38, 194, 178, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+.auditor-saving-note strong {
+  color: #0b5e5a;
+  font-size: 1.05rem;
+}
+
 @media (min-width: 768px) {
   .auditor-hero {
     padding-top: 2.2rem;
