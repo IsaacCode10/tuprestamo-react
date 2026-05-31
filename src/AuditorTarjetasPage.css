@@ -620,23 +620,6 @@
 }
 
 @media (max-width: 767px) {
-  .auditor-page {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .auditor-page__section--statement {
-    order: 1;
-  }
-
-  .auditor-page__section--summary-top {
-    order: 2;
-  }
-
-  .auditor-page__section--comparison {
-    order: 3;
-  }
-
   .statement-frame__topbar {
     flex-direction: column;
   }
