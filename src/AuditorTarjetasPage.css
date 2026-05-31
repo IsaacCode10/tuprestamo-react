@@ -628,6 +628,16 @@
   font-size: 1.05rem;
 }
 
+/* Toggle colapsable — oculto en desktop */
+.auditor-collapse-toggle {
+  display: none;
+}
+
+/* Contenido colapsable — siempre visible en desktop */
+.auditor-collapsible {
+  display: block;
+}
+
 @media (min-width: 768px) {
   .auditor-hero {
     padding-top: 2.2rem;
@@ -682,6 +692,46 @@
 }
 
 @media (max-width: 767px) {
+  /* Botón toggle — visible solo en mobile */
+  .auditor-collapse-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(0, 68, 90, 0.18);
+    border-radius: 14px;
+    background: #f4f9fa;
+    color: #00445a;
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .auditor-collapse-icon {
+    font-size: 0.75rem;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+    color: #4f7a84;
+  }
+
+  .auditor-collapse-icon.is-open {
+    transform: rotate(180deg);
+  }
+
+  /* Contenido colapsable — oculto por defecto en mobile */
+  .auditor-collapsible {
+    display: none;
+  }
+
+  .auditor-collapsible.is-open {
+    display: block;
+  }
+
   .statement-frame__topbar {
     flex-direction: column;
   }

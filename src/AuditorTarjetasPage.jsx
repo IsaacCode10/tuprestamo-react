@@ -55,6 +55,8 @@ const AuditorTarjetasPage = () => {
   const [maintenance, setMaintenance] = useState(120);
   const [monthlySpend, setMonthlySpend] = useState(1800);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStatementOpen, setIsStatementOpen] = useState(false);
+  const [isSeoOpen, setIsSeoOpen] = useState(false);
 
   const bankScenario = useMemo(
     () => calculateBankScenario({ debt, creditLimit, tna, maintenance, monthlySpend }),
@@ -352,6 +354,15 @@ const AuditorTarjetasPage = () => {
 
         <section className="auditor-page__section auditor-page__section--statement">
           <div className="auditor-shell auditor-shell--narrow">
+            <button
+              className="auditor-collapse-toggle"
+              onClick={() => setIsStatementOpen(o => !o)}
+              aria-expanded={isStatementOpen}
+            >
+              <span>Extracto auditado detallado</span>
+              <span className={`auditor-collapse-icon${isStatementOpen ? ' is-open' : ''}`}>▼</span>
+            </button>
+            <div className={`auditor-collapsible${isStatementOpen ? ' is-open' : ''}`}>
             <div className="statement-frame">
               <div className="statement-frame__topbar">
                 <div className="statement-frame__brand statement-frame__brand--bank">
@@ -471,6 +482,7 @@ const AuditorTarjetasPage = () => {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         </section>
 
@@ -528,6 +540,15 @@ const AuditorTarjetasPage = () => {
 
         <section className="auditor-page__section auditor-page__section--seo">
           <div className="auditor-shell auditor-shell--narrow">
+            <button
+              className="auditor-collapse-toggle"
+              onClick={() => setIsSeoOpen(o => !o)}
+              aria-expanded={isSeoOpen}
+            >
+              <span>Guía: TNA, TEA y comisiones explicadas</span>
+              <span className={`auditor-collapse-icon${isSeoOpen ? ' is-open' : ''}`}>▼</span>
+            </button>
+            <div className={`auditor-collapsible${isSeoOpen ? ' is-open' : ''}`}>
             <div className="auditor-seo-intro">
               <span className="auditor-section-kicker">Guía útil</span>
               <h2>Cómo entender los intereses y comisiones de una tarjeta de crédito en Bolivia</h2>
@@ -591,6 +612,7 @@ const AuditorTarjetasPage = () => {
                   documentación, tu saldo real y tu perfil de riesgo.
                 </p>
               </article>
+            </div>
             </div>
           </div>
         </section>
