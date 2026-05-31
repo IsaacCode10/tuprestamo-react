@@ -30,6 +30,10 @@ const formatPercent = (value) => {
   return `${num.toFixed(1)}%`;
 };
 
+const isWithin48h = (dateStr) => {
+  return (Date.now() - new Date(dateStr).getTime()) < 48 * 60 * 60 * 1000;
+};
+
 const COSTO_ANALISTA_POR_APROBADO = 50;
 const COSTO_INFOCRED_POR_CONSULTA = 11;
 
@@ -282,7 +286,8 @@ const AdminDashboard = () => {
       const { data: requestsData, error: requestsError } = await supabase
         .from('solicitudes')
         .select('*')
-        .eq('tipo_solicitud', 'prestatario');
+        .eq('tipo_solicitud', 'prestatario')
+        .order('created_at', { ascending: false });
 
       if (requestsError) throw requestsError;
       
@@ -813,6 +818,35 @@ const AdminDashboard = () => {
       <hr />
 
       <h3>Detalle de Solicitudes</h3>
+      {(() => {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const hoy = requests.filter(r => new Date(r.created_at) >= todayStart);
+        if (hoy.length === 0) return null;
+        return (
+          <div className="nuevas-hoy-banner">
+            <div className="nuevas-hoy-header">
+              <span className="nuevas-hoy-count">
+                {hoy.length} nueva{hoy.length !== 1 ? 's' : ''} hoy
+              </span>
+              <span className="nuevas-hoy-subtitle">Ingresadas desde las 00:00 de hoy</span>
+            </div>
+            <div className="nuevas-hoy-list">
+              {hoy.map(r => (
+                <div key={r.id} className="nuevas-hoy-item">
+                  <span className="nuevas-hoy-hora">
+                    {new Date(r.created_at).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="nuevas-hoy-nombre">{r.nombre_completo}</span>
+                  <span className="nuevas-hoy-monto">{formatCurrency(r.monto_solicitado)}</span>
+                  <span className={`status status-${r.estado}`}>{r.estado}</span>
+                  <button className="btn btn--ghost btn--xs" onClick={() => handleSelectRequest(r)}>Ver</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       <div className="filter-buttons">
         {statusFilters.map(status => (
           <button
@@ -855,6 +889,9 @@ const AdminDashboard = () => {
                   <span className={`priority-tag ${req.estado === 'documentos-en-revision' ? 'priority-tag--hot' : ''}`}>
                     {req.estado === 'documentos-en-revision' ? 'Lead caliente' : 'Solicitud'}
                   </span>
+                  {isWithin48h(req.created_at) && (
+                    <span className="new-badge">Nuevo</span>
+                  )}
                 </td>
                 <td>{new Date(req.created_at).toLocaleDateString()}</td>
                 <td>{req.id}</td>

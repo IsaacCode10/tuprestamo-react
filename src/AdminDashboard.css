@@ -308,3 +308,86 @@
   background: #dc3545;
   color: #fff;
 }
+
+/* --- Nuevas hoy --- */
+.nuevas-hoy-banner {
+  margin: 0 0 20px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(38, 194, 178, 0.35);
+  background: linear-gradient(135deg, #edfaf7 0%, #f4fffe 100%);
+  overflow: hidden;
+}
+
+.nuevas-hoy-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, #00445a, #0b6e6a);
+}
+
+.nuevas-hoy-count {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(255,255,255,0.18);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+
+.nuevas-hoy-subtitle {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.78);
+}
+
+.nuevas-hoy-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.nuevas-hoy-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(38, 194, 178, 0.15);
+  flex-wrap: wrap;
+}
+
+.nuevas-hoy-item:last-child {
+  border-bottom: 0;
+}
+
+.nuevas-hoy-hora {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0b6e6a;
+  min-width: 42px;
+}
+
+.nuevas-hoy-nombre {
+  font-weight: 600;
+  color: #00445a;
+  flex: 1;
+  min-width: 120px;
+}
+
+.nuevas-hoy-monto {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a5c6a;
+}
+
+/* --- Badge Nuevo --- */
+.new-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #28a745;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
