@@ -193,6 +193,7 @@ function App() {
         <Suspense fallback={<div>Cargando...</div>}>
           <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/solicitud" element={<Navigate to="/?open=solicitud" replace />} />
           <Route path="/calculadora" element={<CalculatorPage />} />
           <Route path="/auditor-de-tarjetas" element={<AuditorTarjetasPage />} />
           <Route path="/no-disponible" element={<NotAvailable />} /> {/* <-- ANADIMOS LA RUTA */}

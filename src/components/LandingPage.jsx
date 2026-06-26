@@ -31,6 +31,9 @@ const LandingPage = () => {
     if (open === 'investor-form') {
       setModalRole('inversionista');
     }
+    if (open === 'solicitud') {
+      setModalRole('prestatario');
+    }
   }, [location.search]);
 
   const siteOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://tuprestamobo.com');
