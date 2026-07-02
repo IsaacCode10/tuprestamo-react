@@ -1203,7 +1203,7 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
       { id: 'extracto_bancario_m1', nombre: 'Extracto Bancario (Mes 1)', definition: 'Tu extracto bancario más reciente. Permite verificar la consistencia de tus ingresos.' },
       { id: 'extracto_bancario_m2', nombre: 'Extracto Bancario (Mes 2)', definition: 'Tu extracto bancario del mes anterior. Permite verificar la consistencia de tus ingresos.' },
       { id: 'extracto_bancario_m3', nombre: 'Extracto Bancario (Mes 3)', definition: 'Tu extracto bancario de hace dos meses. Permite verificar la consistencia de tus ingresos.' },
-      { id: 'nit', nombre: 'NIT (Opcional)', definition: 'Si tienes NIT, súbelo para confirmar tu actividad económica. Si no, puedes dejar este campo vacío.' },
+      { id: 'nit', nombre: 'NIT (Opcional)', definition: 'Si tienes NIT, súbelo para confirmar tu actividad económica. Si no, puedes dejar este campo vacío.', optional: true },
     ],
     'Jubilado': [
       { id: 'boleta_jubilacion', nombre: 'Boleta de Pago de Jubilación', definition: 'Para verificar tus ingresos como jubilado y la regularidad de los mismos.' },
@@ -1911,7 +1911,8 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
 
 
   const handleFileUpload = async (file, docId) => {
-    if (isReviewLocked) return;
+    const isOptionalDoc = requiredDocs.find(d => d.id === docId)?.optional;
+    if (isReviewLocked && !isOptionalDoc) return;
     if (!file) return;
     trackEvent('Started Document Upload', { document_type: docId });
 
@@ -2040,7 +2041,7 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
                   (doc.id === 'boleta_aviso_electricidad' ? uploadedDocuments.find(d => d.tipo_documento === 'factura_servicio') : null)
                 )}
                 onFileSelect={(file) => handleFileUpload(file, doc.id)}
-                disabled={isReviewLocked || ((isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !authPreprintUrl))}
+                disabled={(isReviewLocked && !doc.optional) || ((isUploadingGlobal && !uploadProgress[doc.id]) || (isAuthFirmada && !authPreprintUrl))}
                 isAnalyzed={isAnalyzed}
               />
             </div>

@@ -192,7 +192,11 @@ function App() {
       <main>
         <Suspense fallback={<div>Cargando...</div>}>
           <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={
+            !loading && profile?.role === 'prestatario'
+              ? <Navigate to="/borrower-dashboard" replace />
+              : <LandingPage />
+          } />
           <Route path="/solicitud" element={<Navigate to="/?open=solicitud" replace />} />
           <Route path="/calculadora" element={<CalculatorPage />} />
           <Route path="/auditor-de-tarjetas" element={<AuditorTarjetasPage />} />
