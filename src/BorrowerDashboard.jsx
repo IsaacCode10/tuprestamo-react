@@ -1249,7 +1249,7 @@ const InProgressApplicationView = ({ solicitud, user, documents, onDocumentUploa
     useEffect(() => {
       if (!solicitud?.id) return;
       const selectedPlazo = Number(simulation.plazo);
-      if (![12, 24, 36, 48].includes(selectedPlazo)) return;
+      if (![6, 12, 18, 24].includes(selectedPlazo)) return;
       const persistedPlazo = Number(solicitud.plazo_meses || 0);
       if (persistedPlazo === selectedPlazo) return;
 
