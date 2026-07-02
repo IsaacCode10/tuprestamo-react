@@ -14,7 +14,10 @@ const PRICING_MODEL = {
   Rechazado: { label: 'Rechazado' },
 };
 
-// --- FUNCIÓN DE CÁLCULO DE COSTOS (SIN CAMBIOS) ---
+// --- FUNCIÓN DE CÁLCULO DE COSTOS ---
+// principal aquí es el BRUTO (ya incluye la originación vía gross-up).
+// La originación NO se suma al costo: ya está embebida en el principal.
+// cuota_promedio = pmt + avgServiceFee (alineado con loan.js / SSOT).
 const calculateLoanCosts = (principal, annualRate, termMonths, originacion_porcentaje) => {
   console.log(`Calculando costos para: P=${principal}, R=${annualRate}%, T=${termMonths}m, O=${originacion_porcentaje}%`);
   const monthlyRate = annualRate / 100 / 12;
@@ -47,10 +50,12 @@ const calculateLoanCosts = (principal, annualRate, termMonths, originacion_porce
     }
   }
 
+  // La originación ya está en el principal (bruto). No se suma de nuevo.
+  const avgServiceFee = termMonths > 0 ? totalServiceFee / termMonths : 0;
+  const cuota_promedio = (isFinite(pmt) ? pmt : 0) + avgServiceFee;
   const comision_originacion = principal * (originacion_porcentaje / 100);
   const costo_total_credito = totalInterest + totalServiceFee + comision_originacion;
-  const total_a_pagar = principal + costo_total_credito;
-  const cuota_promedio = total_a_pagar / termMonths;
+  const total_a_pagar = principal + totalInterest + totalServiceFee;
 
   const results = {
     interes_total: parseFloat(totalInterest.toFixed(2)),
