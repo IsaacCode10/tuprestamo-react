@@ -291,7 +291,7 @@ const RiskAnalystDashboard = () => {
         monto_bruto_aprobado: montoTotalPrestamo ? Number(montoTotalPrestamo) : null,
         saldo_deudor_verificado: netVerified || null,
         perfil_riesgo: perfilRiesgo,
-        plazo_meses: perfilSeleccionado?.plazo_meses || 24,
+        plazo_meses: decisionData.plazo || perfilSeleccionado?.plazo_meses || 24,
       };
       const { data, error } = await supabase.functions.invoke('registrar-decision-final', {
         body: payload,
@@ -1365,6 +1365,7 @@ useEffect(() => {
         onSubmit={handleSubmitDecision}
         profile={perfilSeleccionado}
         decisionType={decisionType}
+        initialPlazo={perfilSeleccionado?.plazo_meses || 24}
       />
     </div>
   );

@@ -20,20 +20,23 @@ const APPROVAL_REASONS = [
   'Verificación de documentos exitosa y consistente',
 ];
 
-const DecisionModal = ({ isOpen, onClose, onSubmit, profile, decisionType }) => {
+const PLAZO_OPTIONS = [6, 12, 18, 24];
+
+const DecisionModal = ({ isOpen, onClose, onSubmit, profile, decisionType, initialPlazo }) => {
   const [motivoRechazo, setMotivoRechazo] = useState('');
   const [motivosAprobacion, setMotivosAprobacion] = useState([]);
   const [notas, setNotas] = useState('');
+  const [plazoModal, setPlazoModal] = useState(initialPlazo || 24);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      // Reset state when modal opens
       setMotivoRechazo(decisionType === 'Rechazado' ? REJECTION_REASONS[0] : '');
       setMotivosAprobacion([]);
       setNotas('');
+      setPlazoModal(initialPlazo || 24);
     }
-  }, [isOpen, decisionType]);
+  }, [isOpen, decisionType, initialPlazo]);
 
   if (!isOpen) {
     return null;
@@ -64,6 +67,7 @@ const DecisionModal = ({ isOpen, onClose, onSubmit, profile, decisionType }) => 
         decision: decisionType,
         motivo: motivo,
         notas,
+        plazo: decisionType === 'Aprobado' ? plazoModal : undefined,
       });
     } catch (error) {
       console.error("Submission failed:", error);
@@ -102,23 +106,33 @@ const DecisionModal = ({ isOpen, onClose, onSubmit, profile, decisionType }) => 
                 </select>
               </div>
             ) : (
-              <div className="form-group">
-                <label>Indicadores Clave de Aprobación (Selecciona al menos uno)</label>
-                <div className="checkbox-group">
-                  {APPROVAL_REASONS.map(reason => (
-                    <div key={reason} className="checkbox-item">
-                      <input 
-                        type="checkbox" 
-                        id={reason} 
-                        value={reason} 
-                        checked={motivosAprobacion.includes(reason)}
-                        onChange={() => handleApprovalReasonChange(reason)}
-                      />
-                      <label htmlFor={reason}>{reason}</label>
-                    </div>
-                  ))}
+              <>
+                <div className="form-group">
+                  <label>Indicadores Clave de Aprobación (Selecciona al menos uno)</label>
+                  <div className="checkbox-group">
+                    {APPROVAL_REASONS.map(reason => (
+                      <div key={reason} className="checkbox-item">
+                        <input
+                          type="checkbox"
+                          id={reason}
+                          value={reason}
+                          checked={motivosAprobacion.includes(reason)}
+                          onChange={() => handleApprovalReasonChange(reason)}
+                        />
+                        <label htmlFor={reason}>{reason}</label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+                <div className="form-group">
+                  <label htmlFor="plazo-modal">Plazo aprobado (meses)</label>
+                  <select id="plazo-modal" value={plazoModal} onChange={(e) => setPlazoModal(Number(e.target.value))}>
+                    {PLAZO_OPTIONS.map(p => (
+                      <option key={p} value={p}>{p} meses</option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )}
 
             <div className="form-group">
