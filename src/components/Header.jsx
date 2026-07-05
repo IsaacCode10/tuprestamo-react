@@ -192,6 +192,9 @@ const Header = () => {
       case 'prestatario':
         dashboardPath = '/borrower-dashboard';
         break;
+      case 'analista_riesgo':
+        dashboardPath = '/dashboard-analista';
+        break;
       default:
         dashboardPath = '/';
     }

@@ -103,6 +103,8 @@ const RedirectIfAuth = ({ profile, loading, children }) => {
         return <Navigate to="/investor-dashboard" replace />;
       case 'prestatario':
         return <Navigate to="/borrower-dashboard" replace />;
+      case 'analista_riesgo':
+        return <Navigate to="/dashboard-analista" replace />;
       default:
         return <Navigate to="/" replace />; // Fallback
     }
