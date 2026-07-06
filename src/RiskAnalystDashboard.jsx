@@ -876,7 +876,7 @@ useEffect(() => {
 
     return (
       <>
-        <aside className="lista-perfiles">
+        <aside className={`lista-perfiles${perfilSeleccionado ? ' hidden-mobile' : ''}`}>
           <header>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
               <h2 style={{margin:0}}>Perfiles por revisar ({perfiles.length})</h2>
@@ -1023,9 +1023,12 @@ useEffect(() => {
           </section>
         </aside>
 
-        <main className="scorecard-digital" ref={mainPanelRef}>
+        <main className={`scorecard-digital${!perfilSeleccionado ? ' hidden-mobile' : ''}`} ref={mainPanelRef}>
           {perfilSeleccionado ? (
               <>
+              <button className="btn-volver-mobile" onClick={() => setPerfilSeleccionado(null)}>
+                ← Volver a la lista
+              </button>
               <header className="scorecard-header">
                 <h1>Scorecard Digital</h1>
             <p>Análisis de Riesgo para <strong>{perfilSeleccionado.nombre_completo || 'N/A'}</strong> (ID {perfilSeleccionado.id || 'N/D'})</p>

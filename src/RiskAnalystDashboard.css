@@ -651,6 +651,67 @@ section h2 {
   to { opacity: 1; }
 }
 
+.btn-volver-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .risk-analyst-dashboard {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .lista-perfiles {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid #d9d9d9;
+  }
+
+  .lista-perfiles.hidden-mobile {
+    display: none;
+  }
+
+  .scorecard-digital {
+    max-width: 100%;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .scorecard-digital.hidden-mobile {
+    display: none;
+  }
+
+  .btn-volver-mobile {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: #00445A;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 8px 0 14px 0;
+  }
+
+  .metricas-clave {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .decision-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .checklist-documentos ul {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* --- Verificación Manual y Cálculo --- */
 .verificacion-manual {
   background-color: #f0f8ff; /* AliceBlue, un color suave para destacar */
