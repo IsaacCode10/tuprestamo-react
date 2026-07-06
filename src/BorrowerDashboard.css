@@ -1353,3 +1353,154 @@
   font-size: 1.28rem !important;
   font-weight: 600 !important;
 }
+
+/* ============================================
+   MOBILE (≤ 640px)
+   ============================================ */
+@media (max-width: 640px) {
+  .borrower-dashboard {
+    margin: 0;
+    padding: 1rem;
+    border-radius: 0;
+  }
+
+  .borrower-dashboard.borrower-offer-view {
+    padding: 1rem;
+  }
+
+  /* Header */
+  .dashboard-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .dashboard-header p {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Progress stepper — iconos solamente, etiquetas mini */
+  .progress-stepper {
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .step {
+    min-width: 60px;
+  }
+
+  .step .step-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+  }
+
+  .step .step-label {
+    font-size: 0.68rem;
+    line-height: 1.2;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  /* Loan details */
+  .loan-details {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  /* Offer hero */
+  .offer-hero {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .offer-hero h2 {
+    font-size: 1.3rem;
+  }
+
+  /* Offer grid — 1 columna */
+  .offer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Offer CTA */
+  .offer-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .offer-cta-actions {
+    width: 100%;
+  }
+
+  .offer-cta-actions .btn,
+  .offer-cta-actions button {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* KPI row */
+  .summary-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Summary strip */
+  .summary-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .summary-main {
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* Savings calculator */
+  .savings-calculator .calculator-form {
+    grid-template-columns: 1fr;
+  }
+
+  .savings-calculator .calculator-form .btn-submit {
+    grid-column: span 1;
+  }
+
+  /* Transparency table — scrollable */
+  .transparency-card {
+    overflow-x: auto;
+  }
+
+  .transparency-table {
+    min-width: 400px;
+  }
+
+  /* Document grid — 1 columna */
+  .document-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Card padding */
+  .card {
+    padding: 1rem;
+  }
+
+  /* CTA button */
+  .cta-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 0.85rem 1.5rem;
+  }
+
+  /* Total savings */
+  .borrower-dashboard .total-savings .total-savings-value {
+    font-size: clamp(2rem, 10vw, 2.8rem) !important;
+  }
+}

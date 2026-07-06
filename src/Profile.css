@@ -143,3 +143,24 @@
   font-style: italic;
   line-height: 1.5;
 }
+
+@media (max-width: 640px) {
+  .profile-page {
+    margin: 0;
+    padding: 1rem;
+  }
+
+  .profile-page h1 {
+    font-size: 1.8rem;
+  }
+
+  .profile-card {
+    padding: 1rem;
+  }
+
+  .preference-item-static {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
