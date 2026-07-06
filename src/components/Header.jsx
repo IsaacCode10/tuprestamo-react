@@ -509,6 +509,14 @@ const Header = () => {
                   <button className="mobile-menu-item" onClick={() => { setIsMobileNavOpen(false); navigate('/perfil'); }}>Mi Perfil</button>
                 )}
                 <button className="mobile-menu-item danger" onClick={() => { setIsMobileNavOpen(false); handleLogout(); }}>Cerrar sesi&oacute;n</button>
+                {profile?.id === '8983b4fb-93c8-4951-b2db-c595f61fd3c4' && (
+                  <>
+                    <div className="mobile-menu-sep" />
+                    <div style={{ padding: '0 4px' }} onClick={(e) => e.stopPropagation()}>
+                      <RoleSwitcher />
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
