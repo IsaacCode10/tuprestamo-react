@@ -31,6 +31,7 @@ const Profile = lazy(() => import('./Profile.jsx'));
 const NotAvailable = lazy(() => import('./NotAvailable.jsx')); // <-- IMPORTAMOS LA NUEVA PAGINA
 const AdminOperations = lazy(() => import('@/AdminOperations.jsx'));
 const BorrowerLayout = lazy(() => import('@/layouts/BorrowerLayout.jsx'));
+const AdminGeneradorArticulos = lazy(() => import('@/AdminGeneradorArticulos.jsx'));
 
 // Componente "Guardia" especifico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
@@ -164,6 +165,7 @@ function App() {
     '/admin-dashboard',
     '/investor-dashboard',
     '/admin/manage-investors',
+    '/admin/generador-articulos',
     '/dashboard-analista',
     '/admin/operaciones',
     '/borrower-dashboard',
@@ -219,11 +221,19 @@ function App() {
               </AdminRoute>
             }
           />
-          <Route 
-            path="/admin/operaciones" 
+          <Route
+            path="/admin/operaciones"
             element={
               <AdminRoute profile={profile} loading={loading}>
                 <AdminOperations />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/generador-articulos"
+            element={
+              <AdminRoute profile={profile} loading={loading}>
+                <AdminGeneradorArticulos />
               </AdminRoute>
             }
           />
