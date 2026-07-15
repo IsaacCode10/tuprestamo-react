@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
 import { supabase } from '@/supabaseClient';
 import './AdminGeneradorArticulos.css';
 
@@ -227,8 +226,7 @@ const FORM_INITIAL = {
   datoSorpresa: '', captionFoto: '', captionFoto2: '', cta: 'auditor',
 };
 
-export default function AdminGeneradorArticulos({ profile }) {
-  if (profile?.role !== 'admin') return <Navigate to="/" replace />;
+export default function AdminGeneradorArticulos() {
 
   const [tab, setTab]               = useState('form');
   const [form, setForm]             = useState(() => _cachedForm || lsGet(LS_FORM, FORM_INITIAL));
