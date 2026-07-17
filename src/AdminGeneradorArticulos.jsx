@@ -8,6 +8,13 @@ const CONCEPTOS = {
     keyword: 'cómo sacar tarjeta de crédito Bolivia primera vez',
     titleHook: 'Fui al Mundial Brasil 2014 con una tarjeta de crédito que no entendía — y tardé 11 años en ver el costo real',
     h1Suffix: 'fui al Mundial Brasil 2014 con una tarjeta de crédito que no entendía — y tardé 11 años en ver el costo real',
+    titulosSugeridos: [
+      'Fui al Mundial Brasil 2014 con una tarjeta de crédito que no entendía — y tardé 11 años en ver el costo real',
+      'Usé mi primera tarjeta de crédito para irme al Mundial 2014 — lo que firmé ese día me costó Bs 60.720',
+      'Cómo el Mundial Brasil 2014 me enseñó lo que los bancos no te explican de una tarjeta de crédito',
+      'En Bolivia me aprobaron mi primera tarjeta de crédito en 10 minutos — 11 años después entendí el verdadero precio',
+      'El día más feliz de mi vida fue al Mundial Brasil 2014 — lo pagué con una tarjeta que no entendía',
+    ],
     slug: 'primera-tarjeta-credito-bolivia',
     esOrigen: true,
     explicacion: [
@@ -187,9 +194,9 @@ function buildResult(form) {
   if (!c) return null;
   const nums = calcNums(form);
   const ft   = s => tpl(s, nums, form.pais, form.year);
-  const kw   = form.keyword || c.keyword;
-  const titleTag  = ft(c.titleHook);
-  const h1        = `En ${form.pais}, ${ft(c.h1Suffix)}`;
+  const kw        = form.keyword || c.keyword;
+  const titleTag  = form.tituloCustom?.trim() || ft(c.titleHook);
+  const h1        = form.tituloCustom?.trim() || ft(c.titleHook);
   const metaDesc  = `Isaac Alfaro, fundador de Tu Préstamo Bolivia, cuenta cómo su experiencia en ${form.pais} en ${form.year} le enseñó sobre ${kw.split(' ').slice(0, 4).join(' ')}. Historia real con números reales de Bolivia.`;
   const slugBase  = form.pais.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const slug      = `finanzas-de-isaac/${form.year}-${slugBase}-${c.slug}`;
@@ -221,6 +228,7 @@ const TABS = [
 const FORM_INITIAL = {
   pais: 'Brasil', year: '2014', concepto: 'primera-tarjeta',
   keyword: 'cómo sacar tarjeta de crédito Bolivia primera vez',
+  tituloCustom: '',
   historia: '', aprendizaje: '',
   deuda: '17000', tasa: '24', mantenimiento: '120', totalPagado: '68000',
   datoSorpresa: '', captionFoto: '', captionFoto2: '', cta: 'auditor',
@@ -438,7 +446,43 @@ export default function AdminGeneradorArticulos() {
             </div>
 
             <div className="gen-card">
-              <div className="gen-card-hd"><span className="gen-num">2</span>La historia — en tu propia voz</div>
+              <div className="gen-card-hd"><span className="gen-num">2</span>Título del artículo</div>
+              <div className="gen-card-bd">
+                {CONCEPTOS[form.concepto]?.titulosSugeridos && (
+                  <div className="gen-field">
+                    <label>Elegí un título sugerido (o escribí el tuyo abajo)</label>
+                    <div className="gen-titulos-list">
+                      {CONCEPTOS[form.concepto].titulosSugeridos.map((t, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          className={`gen-titulo-opt ${form.tituloCustom === t ? 'selected' : ''}`}
+                          onClick={() => setField('tituloCustom', form.tituloCustom === t ? '' : t)}
+                        >
+                          {form.tituloCustom === t && <span className="gen-titulo-check">✓ </span>}
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="gen-field">
+                  <label>O escribí tu propio título</label>
+                  <input
+                    type="text"
+                    value={form.tituloCustom}
+                    onChange={e => setField('tituloCustom', e.target.value)}
+                    placeholder={CONCEPTOS[form.concepto]?.titleHook || 'Escribí el título del artículo'}
+                  />
+                  <span className="gen-hint">
+                    Si dejás este campo vacío se usa el título sugerido seleccionado. Si ninguno está seleccionado, se usa el título por defecto del concepto.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="gen-card">
+              <div className="gen-card-hd"><span className="gen-num">3</span>La historia — en tu propia voz</div>
               <div className="gen-card-bd">
                 <div className="gen-field">
                   <label>Pegá tu historia completa acá</label>
@@ -458,7 +502,7 @@ export default function AdminGeneradorArticulos() {
             </div>
 
             <div className="gen-card">
-              <div className="gen-card-hd"><span className="gen-num">3</span>Los números reales</div>
+              <div className="gen-card-hd"><span className="gen-num">4</span>Los números reales</div>
               <div className="gen-card-bd">
                 <div className="gen-row2">
                   <div className="gen-field">
@@ -490,7 +534,7 @@ export default function AdminGeneradorArticulos() {
             </div>
 
             <div className="gen-card">
-              <div className="gen-card-hd"><span className="gen-num">4</span>Las fotos del viaje</div>
+              <div className="gen-card-hd"><span className="gen-num">5</span>Las fotos del viaje</div>
               <div className="gen-card-bd">
                 <div className="gen-photos-row">
 
@@ -549,7 +593,7 @@ export default function AdminGeneradorArticulos() {
             </div>
 
             <div className="gen-card">
-              <div className="gen-card-hd"><span className="gen-num">5</span>CTA final del artículo</div>
+              <div className="gen-card-hd"><span className="gen-num">6</span>CTA final del artículo</div>
               <div className="gen-card-bd">
                 <div className="gen-field">
                   <label>¿A dónde llevás al lector?</label>

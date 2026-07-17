@@ -180,6 +180,21 @@
 }
 .gen-photo-remove:hover { border-color: #E05555; color: #E05555; }
 
+/* Títulos sugeridos */
+.gen-titulos-list {
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px;
+}
+.gen-titulo-opt {
+  text-align: left; background: #F5F7FA; border: 1.5px solid #DDE3EF;
+  border-radius: 7px; padding: 11px 14px; font-size: 13.5px;
+  color: #2A3A4E; cursor: pointer; line-height: 1.45;
+  transition: border-color .15s, background .15s;
+  font-family: inherit;
+}
+.gen-titulo-opt:hover { border-color: #1B52A8; background: #EBF0FA; }
+.gen-titulo-opt.selected { border-color: #1B52A8; background: #EBF0FA; color: #0D2A5A; font-weight: 600; }
+.gen-titulo-check { color: #1B52A8; font-weight: 700; }
+
 /* Dos columnas de foto */
 .gen-photos-row {
   display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
