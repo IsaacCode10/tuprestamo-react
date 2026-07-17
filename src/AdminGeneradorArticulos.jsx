@@ -17,11 +17,20 @@ const CONCEPTOS = {
     ],
     slug: 'primera-tarjeta-credito-bolivia',
     esOrigen: true,
-    explicacion: [
-      'Cuando el banco te ofrece una tarjeta de crédito, el pitch siempre es el mismo: flexibilidad, compras en cuotas, emergencias cubiertas. Lo que no te explican con la misma claridad son las condiciones reales: la tasa nominal anual, la capitalización mensual, el mantenimiento fijo que corre aunque no uses la tarjeta, y cómo funciona el pago mínimo.',
-      'En Bolivia, una tarjeta estándar viene con una TNA de entre 24% y 28%, más un mantenimiento mensual de entre Bs 80 y Bs 180. Si te dan un límite de <strong>Bs {deuda}</strong> y lo usás completo, estás pagando <strong>Bs {interesMensual}</strong> solo en intereses el primer mes — antes de reducir ni un boliviano del capital.',
+    // Narrativa personal — segunda parte del artículo (voz de Isaac)
+    textoFirme: [
+      'Cuando mi ejecutiva en el banco me presentó los papeles, recuerdo que le estaba preguntando si conocía Brasil. Estábamos charlando del Mundial mientras ella preparaba los documentos. En algún momento me señaló dónde firmar. Yo firmé. No leí nada. No me interesaba nada que no fueran las entradas de la FIFA.',
+      'Lo que había en ese contrato — la TNA del {tasa}%, el mantenimiento mensual de Bs {mantenimiento} que corre aunque no uses la tarjeta, cómo funciona el pago mínimo — lo entendí mucho tiempo después. Ese día, no tenía idea.',
     ],
-    insight: 'El límite de crédito no es dinero tuyo — es dinero del banco que te cobran por usar. Con una TNA del {tasa}% sobre Bs {deuda}, el costo de "usar el límite completo" es Bs {interesMensual} por mes, todos los meses, mientras la deuda siga ahí.',
+    textoPrimerosMeses: [
+      'Lo que vino después fue peor. Los primeros meses me dediqué a gastar. Los estados de cuenta no me llegaban por correo — no llegaron hasta que yo reclamé. Tuve que ir al banco, sacar un ticket, esperar mi turno, y pedirle a alguien que me explique qué significaba cada línea del extracto.',
+      'No es como ahora, que podés entrar a una app y ver todo en tiempo real. En {year}, si querías saber cuánto debías y por qué, salías de tu trabajo, cruzabas la ciudad, y rezabas para que el ejecutivo no estuviera en almuerzo. Eso hice varias veces.',
+      'Cuando por fin empecé a recibir los extractos, me encontré con términos que no entendía: saldo mínimo, cargo por financiamiento, interés moratorio. Tenía la tarjeta hacía meses y recién ahí me di cuenta que no sabía exactamente lo que había firmado.',
+    ],
+    textoCalculo: [
+      'Cuando empecé a armar Tu Préstamo y entendí cómo funcionan realmente los costos de una tarjeta, hice el cálculo que nunca me había animado a hacer. Si usás el límite completo de Bs {deuda} y solo pagás el mínimo — como hacemos la mayoría al principio — el costo entre intereses y mantenimiento es Bs {costoMensualTotal} por mes. Todos los meses.',
+    ],
+    insight: 'No lo pongo para asustarte. Lo pongo porque yo pagué eso sin saberlo — y si alguien me lo hubiera mostrado el día que firmé, quizás hubiera tomado mejores decisiones mucho antes. Por eso existe este blog.',
     faqs: [
       { q: '¿Cuáles son los requisitos para sacar una tarjeta de crédito en Bolivia?', a: 'Generalmente necesitás CI, ingresos demostrables (boleta de pago o declaración de renta) y no tener deudas en mora en INFOCRED. Cada banco tiene criterios propios de monto y tasa según tu perfil.' },
       { q: '¿Cuánto dan de límite de crédito en una primera tarjeta en Bolivia?', a: 'Depende del banco y tus ingresos. Una primera tarjeta suele otorgar entre Bs 5.000 y Bs 20.000 de límite. Cuanto más alto el límite, mayor el riesgo si no se maneja con disciplina.' },
@@ -139,8 +148,10 @@ function calcNums(form) {
   const totalMant       = mant * 12 * years;
   const deudaSegundoMes = deuda + interesMensual;
   const ahorro          = Math.max(0, total - deuda * (1 + 0.15 / 12 * 12 * years));
+  const costoMensualTotal = interesMensual + mant;
+  const acumulado = costoMensualTotal * 12 * years;
   return { deuda, tasa, mant, total, years, interesMensual, tea, difAnual,
-           mantAnual, totalMant, deudaSegundoMes, ahorro };
+           mantAnual, totalMant, deudaSegundoMes, ahorro, costoMensualTotal, acumulado };
 }
 
 function tpl(s, nums, pais, year) {
@@ -157,6 +168,8 @@ function tpl(s, nums, pais, year) {
     .replace(/{totalPagado}/g,        fmt(nums.total))
     .replace(/{deudaSegundoMes}/g,    fmt(nums.deudaSegundoMes))
     .replace(/{ahorro}/g,             fmt(nums.ahorro))
+    .replace(/{costoMensualTotal}/g,  fmt(nums.costoMensualTotal))
+    .replace(/{acumulado}/g,          fmt(nums.acumulado))
     .replace(/{pais}/g,               pais)
     .replace(/{year}/g,               year);
 }
@@ -672,32 +685,121 @@ function ArticlePreview({ generated, form, photoUrl, photoUrl2 }) {
   const { c, nums, ft, h1, keyword } = generated;
   const esOrigen = c.esOrigen;
   const cta = CTA_DATA[form.cta];
+  const eyebrow = esOrigen
+    ? `Episodio 0 · El Origen · ${form.pais} · ${form.year}`
+    : `14 Años con la Tarjeta · ${form.pais} · ${form.year}`;
 
-  const rows = esOrigen ? [
-    ['Límite de crédito otorgado',                        `Bs ${fmt(nums.deuda)}`],
-    ['Tasa nominal anual (TNA)',                          `${nums.tasa}%`],
-    ['Mantenimiento mensual',                             `Bs ${fmt(nums.mant)}`],
-    ['Costo en intereses si usás el límite completo',    `Bs ${fmt(nums.interesMensual)}/mes`],
-    ['Costo mensual total (interés + mantenimiento)',     `Bs ${fmt(nums.interesMensual + nums.mant)}`],
-    [`Acumulado en ${nums.years} años (solo interés + mant.)`, `Bs ${fmt((nums.interesMensual + nums.mant) * 12 * nums.years)}`],
-  ] : [
+  // Tabla para episodio 0 — SIN el acumulado (va en el reveal al final)
+  const rowsOrigen = [
+    ['Límite de crédito otorgado',                     `Bs ${fmt(nums.deuda)}`],
+    ['Tasa nominal anual (TNA)',                        `${nums.tasa}%`],
+    ['Mantenimiento mensual',                           `Bs ${fmt(nums.mant)}`],
+    ['Intereses si usás el límite completo',            `Bs ${fmt(nums.interesMensual)} / mes`],
+    ['Costo mensual total (interés + mantenimiento)',   `Bs ${fmt(nums.costoMensualTotal)}`],
+  ];
+
+  // Tabla para otros episodios
+  const rowsOtros = [
     ['Deuda original',                   `Bs ${fmt(nums.deuda)}`],
     ['Tasa de la tarjeta',               `${nums.tasa}% TNA`],
     ['Interés mensual',                  `Bs ${fmt(nums.interesMensual)}`],
     ['Mantenimiento mensual',            `Bs ${fmt(nums.mant)}`],
-    ['Costo mensual total',              `Bs ${fmt(nums.interesMensual + nums.mant)}`],
+    ['Costo mensual total',              `Bs ${fmt(nums.costoMensualTotal)}`],
     [`Total pagado en ${nums.years} años`, `Bs ${fmt(nums.total)}`],
   ];
-  if (form.datoSorpresa) rows.push(['📌 El dato que sorprende', form.datoSorpresa]);
+  if (form.datoSorpresa) rowsOtros.push(['📌 El dato que sorprende', form.datoSorpresa]);
 
-  const eyebrow   = esOrigen ? `Episodio 0 · El Origen · ${form.pais} · ${form.year}` : `14 Años con la Tarjeta · ${form.pais} · ${form.year}`;
-  const tableLabel = esOrigen ? `El contrato que firmé · ${form.pais}, ${form.year}` : `Mi tarjeta · ${form.pais}, ${form.year}`;
-  const h2Tabla   = esOrigen ? 'El contrato en números — lo que firmé' : 'En números — lo que pasaba con mi tarjeta';
-  const h2Aprend  = esOrigen ? 'Lo que ojalá alguien me hubiera explicado antes de firmar' : `Lo que aprendí en ${form.pais}`;
-  const h2Concepto = esOrigen
-    ? '¿Qué condiciones tiene una tarjeta de crédito en Bolivia?'
-    : `¿Qué es ${keyword.split(' ').slice(0, 5).join(' ')}?`;
+  if (esOrigen) {
+    // ── ESTRUCTURA EPISODIO 0 ────────────────────────────────────────────────
+    return (
+      <article className="art">
+        <span className="art-eyebrow">{eyebrow}</span>
+        <h1 className="art-h1">{h1}</h1>
+        <p className="art-meta">Por Isaac Alfaro · Fundador de Tu Préstamo Bolivia</p>
 
+        {/* Foto 1 */}
+        {photoUrl
+          ? <img src={photoUrl} className="art-photo" alt={form.captionFoto || ''} />
+          : <div className="art-photo-ph">📷 Foto 1 — apertura del artículo</div>
+        }
+        {(form.captionFoto || photoUrl) && <p className="art-caption">{form.captionFoto}</p>}
+
+        {/* Historia personal */}
+        {form.historia.split('\n').filter(Boolean).map((p, i) => (
+          <p key={i} className="art-p">{p}</p>
+        ))}
+
+        {/* Foto 2 */}
+        {photoUrl2
+          ? <img src={photoUrl2} className="art-photo" alt={form.captionFoto2 || ''} />
+          : <div className="art-photo-ph">🏟️ Foto 2 — en el estadio</div>
+        }
+        {(form.captionFoto2 || photoUrl2) && <p className="art-caption">{form.captionFoto2}</p>}
+
+        {/* Sección: Lo que firmé sin leer */}
+        <h2 className="art-h2">Lo que firmé sin leer</h2>
+        {c.textoFirme.map((p, i) => (
+          <p key={i} className="art-p" dangerouslySetInnerHTML={{ __html: ft(p) }} />
+        ))}
+
+        {/* Tabla del contrato */}
+        <div className="art-data-box">
+          <div className="art-data-label">Lo que decía el contrato · {form.pais}, {form.year}</div>
+          {rowsOrigen.map(([k, v], i) => (
+            <div key={i} className="art-data-row">
+              <span className="art-data-key">{k}</span>
+              <span className="art-data-val">{v}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Sección: Los primeros meses */}
+        <h2 className="art-h2">Los primeros meses — ni un extracto</h2>
+        {c.textoPrimerosMeses.map((p, i) => (
+          <p key={i} className="art-p" dangerouslySetInnerHTML={{ __html: ft(p) }} />
+        ))}
+
+        {/* Sección: Lo que calculé X años después — REVEAL */}
+        <h2 className="art-h2">Lo que calculé {nums.years} años después</h2>
+        {c.textoCalculo.map((p, i) => (
+          <p key={i} className="art-p" dangerouslySetInnerHTML={{ __html: ft(p) }} />
+        ))}
+        <p className="art-p">En {nums.years} años, eso suma:</p>
+        <div className="art-reveal">
+          <div className="art-reveal-label">Costo acumulado · {nums.years} años · Bolivia</div>
+          <div className="art-reveal-number">Bs {fmt(nums.acumulado)}</div>
+          <div className="art-reveal-sub">Solo en intereses y mantenimiento.<br />Sin reducir un boliviano de la deuda original.</div>
+        </div>
+        <p className="art-p" dangerouslySetInnerHTML={{ __html: ft(c.insight) }} />
+
+        {/* Gancho de la serie */}
+        {form.aprendizaje && (
+          <div className="art-insight">
+            {form.aprendizaje.split('\n').filter(Boolean).map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </div>
+        )}
+
+        {/* FAQs */}
+        <h2 className="art-h2">Preguntas frecuentes</h2>
+        {c.faqs.map((f, i) => (
+          <div key={i} className="art-faq">
+            <div className="art-faq-q" dangerouslySetInnerHTML={{ __html: ft(f.q) }} />
+            <div className="art-faq-a" dangerouslySetInnerHTML={{ __html: ft(f.a) }} />
+          </div>
+        ))}
+
+        <div className="art-cta">
+          <h3>{c.ctaLine}</h3>
+          <p>{cta.sub}</p>
+          <a href={`https://tuprestamobo.com${cta.url}`} className="art-cta-btn">{cta.label}</a>
+        </div>
+      </article>
+    );
+  }
+
+  // ── ESTRUCTURA OTROS EPISODIOS ─────────────────────────────────────────────
   return (
     <article className="art">
       <span className="art-eyebrow">{eyebrow}</span>
@@ -708,9 +810,7 @@ function ArticlePreview({ generated, form, photoUrl, photoUrl2 }) {
         ? <img src={photoUrl} className="art-photo" alt={form.captionFoto || ''} />
         : <div className="art-photo-ph">📷 Foto 1 — apertura del artículo</div>
       }
-      {(form.captionFoto || photoUrl) && (
-        <p className="art-caption">{form.captionFoto || ''}</p>
-      )}
+      {(form.captionFoto || photoUrl) && <p className="art-caption">{form.captionFoto}</p>}
 
       {form.historia.split('\n').filter(Boolean).map((p, i) => (
         <p key={i} className="art-p">{p}</p>
@@ -718,21 +818,19 @@ function ArticlePreview({ generated, form, photoUrl, photoUrl2 }) {
 
       {photoUrl2
         ? <img src={photoUrl2} className="art-photo" alt={form.captionFoto2 || ''} />
-        : <div className="art-photo-ph">🏟️ Foto 2 — en el estadio</div>
+        : <div className="art-photo-ph">🏟️ Foto 2 — en el viaje</div>
       }
-      {(form.captionFoto2 || photoUrl2) && (
-        <p className="art-caption">{form.captionFoto2 || ''}</p>
-      )}
+      {(form.captionFoto2 || photoUrl2) && <p className="art-caption">{form.captionFoto2}</p>}
 
-      <h2 className="art-h2">{h2Concepto}</h2>
+      <h2 className="art-h2">{`¿Qué es ${keyword.split(' ').slice(0, 5).join(' ')}?`}</h2>
       {c.explicacion.map((p, i) => (
         <p key={i} className="art-p" dangerouslySetInnerHTML={{ __html: ft(p) }} />
       ))}
 
-      <h2 className="art-h2">{h2Tabla}</h2>
+      <h2 className="art-h2">En números — lo que pasaba con mi tarjeta</h2>
       <div className="art-data-box">
-        <div className="art-data-label">{tableLabel}</div>
-        {rows.map(([k, v], i) => (
+        <div className="art-data-label">Mi tarjeta · {form.pais}, {form.year}</div>
+        {rowsOtros.map(([k, v], i) => (
           <div key={i} className="art-data-row">
             <span className="art-data-key">{k}</span>
             <span className="art-data-val">{v}</span>
@@ -740,12 +838,11 @@ function ArticlePreview({ generated, form, photoUrl, photoUrl2 }) {
         ))}
       </div>
 
-      <h2 className="art-h2">{h2Aprend}</h2>
+      <h2 className="art-h2">{`Lo que aprendí en ${form.pais}`}</h2>
       {form.aprendizaje.split('\n').filter(Boolean).map((p, i) => (
         <p key={i} className="art-p">{p}</p>
       ))}
       <div className="art-insight">
-        <strong>La conclusión: </strong>
         <span dangerouslySetInnerHTML={{ __html: ft(c.insight) }} />
       </div>
 
