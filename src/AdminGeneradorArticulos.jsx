@@ -6,8 +6,8 @@ import './AdminGeneradorArticulos.css';
 const CONCEPTOS = {
   'primera-tarjeta': {
     keyword: 'cómo sacar tarjeta de crédito Bolivia primera vez',
-    titleHook: 'Cómo conseguí mi primera tarjeta de crédito en Bolivia — y lo que firmé sin entender',
-    h1Suffix: 'me dieron mi primera tarjeta de crédito — y nadie me explicó lo que estaba firmando',
+    titleHook: 'Fui al Mundial Brasil 2014 con una tarjeta de crédito que no entendía — y tardé 11 años en ver el costo real',
+    h1Suffix: 'fui al Mundial Brasil 2014 con una tarjeta de crédito que no entendía — y tardé 11 años en ver el costo real',
     slug: 'primera-tarjeta-credito-bolivia',
     esOrigen: true,
     explicacion: [
