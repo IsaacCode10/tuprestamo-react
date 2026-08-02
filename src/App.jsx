@@ -153,6 +153,12 @@ function App() {
     }
   }, [location.pathname, location.search]);
 
+  // Al navegar a una ruta nueva (click en link interno), volver al tope de la pagina —
+  // React Router no lo hace solo, a diferencia de una navegacion tradicional
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   // Rutas donde deseamos ocultar el Header (solo confirmacion)
   const hideHeaderPaths = [
     '/confirmar',

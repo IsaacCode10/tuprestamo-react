@@ -48,6 +48,26 @@
   margin: 0; /* elimina espacios verticales extra del <p> */
 }
 
+.footer__blog-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(38, 194, 178, 0.12);
+  border: 1px solid rgba(38, 194, 178, 0.45);
+  border-radius: 20px;
+  padding: 7px 16px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #00445A;
+  text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.footer__blog-cta strong { color: #007A6E; }
+.footer__blog-cta:hover {
+  background: rgba(38, 194, 178, 0.22);
+  border-color: #26C2B2;
+}
+
 .footer__links {
   display: flex;
   justify-content: center; /* centrar enlaces */

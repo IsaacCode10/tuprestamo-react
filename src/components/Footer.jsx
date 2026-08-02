@@ -57,11 +57,13 @@ const Footer = ({ isDashboard }) => {
           <p className="footer__slogan">
             Refinancia con tasas justas y vive sin deudas tóxicas.
           </p>
+          <NavLink to="/finanzas-de-isaac" className="footer__blog-cta">
+            📖 Descubrí <strong>Finanzas de Isaac</strong> — historias reales de tarjetas y viajes →
+          </NavLink>
         </div>
 
         {/* Bloque medio: enlaces rápidos */}
         <div className="footer__links">
-          <NavLink to="/finanzas-de-isaac" className="footer__link">Finanzas de Isaac</NavLink>
           <NavLink to="/faq-inversionista" className="footer__link">FAQ</NavLink>
           <NavLink to="/terminos" className="footer__link">Términos y Condiciones</NavLink>
           <NavLink to="/privacidad" className="footer__link">Política de Privacidad</NavLink>
