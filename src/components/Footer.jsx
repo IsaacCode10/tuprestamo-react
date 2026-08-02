@@ -61,6 +61,7 @@ const Footer = ({ isDashboard }) => {
 
         {/* Bloque medio: enlaces rápidos */}
         <div className="footer__links">
+          <NavLink to="/finanzas-de-isaac" className="footer__link">Finanzas de Isaac</NavLink>
           <NavLink to="/faq-inversionista" className="footer__link">FAQ</NavLink>
           <NavLink to="/terminos" className="footer__link">Términos y Condiciones</NavLink>
           <NavLink to="/privacidad" className="footer__link">Política de Privacidad</NavLink>

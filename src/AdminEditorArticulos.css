@@ -1,0 +1,74 @@
+.edt-root {
+  min-height: calc(100vh - 60px);
+  background: #F6F8FC;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.edt-loading { padding: 60px; text-align: center; color: #8496AC; }
+
+.edt-hdr {
+  background: #0C1728;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.edt-hdr-title { display: block; font-size: 14px; font-weight: 700; color: #E4EAF4; }
+.edt-hdr-sub { display: block; font-size: 11.5px; color: #4A6080; margin-top: 2px; }
+.edt-hdr-right { display: flex; align-items: center; gap: 10px; }
+
+.edt-chip {
+  font-size: 12px; font-weight: 700; color: #7AADEE;
+  background: #10233F; border: 1px solid #2A4A70;
+  padding: 4px 12px; border-radius: 20px;
+}
+.edt-chip-live { color: #10B981; background: #0A2018; border-color: #065F46; }
+.edt-chip-error { color: #F87171; background: #2A0E0E; border-color: #7F1D1D; }
+
+.edt-body {
+  max-width: 660px; margin: 0 auto;
+  padding: 32px 20px 60px;
+  display: flex; flex-direction: column; gap: 22px;
+}
+
+.edt-field { display: flex; flex-direction: column; gap: 6px; }
+.edt-field label { font-size: 13px; font-weight: 600; color: #4E5E74; }
+.edt-field input,
+.edt-field textarea {
+  background: #fff; border: 1px solid #DDE3EF; border-radius: 8px;
+  padding: 12px 14px; font-size: 15px; color: #0D1520;
+  font-family: inherit; width: 100%; outline: none;
+}
+.edt-field textarea { resize: vertical; min-height: 160px; line-height: 1.7; }
+.edt-field input:focus, .edt-field textarea:focus {
+  border-color: #1B52A8; box-shadow: 0 0 0 3px #EBF0FA;
+}
+.edt-hint { font-size: 12px; color: #8496AC; }
+
+.edt-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 560px) { .edt-photos { grid-template-columns: 1fr; } }
+
+.edt-photo-label { font-size: 13px; font-weight: 600; color: #4E5E74; margin-bottom: 6px; }
+.edt-upload {
+  position: relative; border: 2px dashed #DDE3EF; border-radius: 10px;
+  aspect-ratio: 16 / 9; overflow: hidden; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.edt-upload input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.edt-upload img { width: 100%; height: 100%; object-fit: cover; }
+.edt-upload-ph { color: #8496AC; font-size: 13px; }
+.edt-caption-input {
+  margin-top: 8px; width: 100%; background: #fff;
+  border: 1px solid #DDE3EF; border-radius: 6px;
+  padding: 8px 10px; font-size: 13px; font-family: inherit; outline: none;
+}
+.edt-caption-input:focus { border-color: #1B52A8; }
+
+.edt-note {
+  background: #EBF0FA; border: 1px solid #1B52A8; border-radius: 8px;
+  padding: 12px 14px; font-size: 13px; color: #1B3A66; line-height: 1.6;
+}
+.edt-note code { background: #fff; padding: 2px 6px; border-radius: 3px; font-size: 12px; }

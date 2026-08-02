@@ -1,0 +1,209 @@
+/* Diseño "Finanzas de Isaac" — todo escopado bajo .art para no afectar el resto del sitio */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=swap');
+
+.art {
+  --primary: #00445A;
+  --accent: #26C2B2;
+  --bg-alt: #F8F8F8;
+  --ink: #0D1A24;
+  --body-c: #3A3A3A;
+  --muted: #767676;
+  --rule: #E0E8EB;
+  --rule-soft: #EEF4F5;
+}
+@media (prefers-color-scheme: dark) {
+  .art {
+    --bg-alt: #0D1F25;
+    --ink: #EEF4F5;
+    --body-c: #A8BDC2;
+    --muted: #4E6570;
+    --rule: #1A2F38;
+    --rule-soft: #132028;
+  }
+}
+
+.art {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 52px 24px 88px;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 17.5px;
+  line-height: 1.65;
+  color: var(--body-c);
+  -webkit-font-smoothing: antialiased;
+}
+
+.art-series {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  letter-spacing: .09em; text-transform: uppercase; margin-bottom: 20px;
+}
+
+.art h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(24px, 4.6vw, 33px); font-weight: 700;
+  line-height: 1.2; color: var(--ink); margin-bottom: 22px;
+  text-wrap: balance; letter-spacing: -.015em;
+}
+
+.byline {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 30px; padding-bottom: 28px;
+  border-bottom: 1px solid var(--rule);
+}
+.byline-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--primary); display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+  flex-shrink: 0;
+}
+.byline-meta strong { color: var(--ink); font-weight: 600; font-size: 13.5px; }
+.byline-meta div { margin-top: 1px; }
+
+.photo-slot {
+  width: 100%; aspect-ratio: 4 / 3; margin-bottom: 10px; border-radius: 5px; overflow: hidden;
+  background: var(--bg-alt); border: 1px solid var(--rule);
+}
+.photo-slot img {
+  width: 100%; height: 100%; display: block; object-fit: cover;
+}
+.photo-slot-ph {
+  aspect-ratio: 16/9; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  color: var(--muted); font-size: 13px;
+}
+.art .caption {
+  font-size: 12px; color: var(--muted); text-align: center;
+  font-style: italic; margin-bottom: 36px; line-height: 1.5;
+}
+
+.art p { margin-bottom: 15px; color: var(--body-c); }
+.art p:last-child { margin-bottom: 0; }
+.art strong { color: var(--ink); font-weight: 600; }
+
+.art .pq {
+  border-left: 3px solid var(--accent); padding: 4px 0 4px 22px; margin: 38px 0;
+  font-family: 'Montserrat', sans-serif; font-size: 18px; font-style: italic;
+  font-weight: 600; line-height: 1.5; color: var(--primary);
+}
+@media (prefers-color-scheme: dark) { .art .pq { color: var(--accent); } }
+
+.art h2 {
+  font-family: 'Montserrat', sans-serif; font-size: 18.5px; font-weight: 700;
+  color: var(--primary); margin: 48px 0 16px; letter-spacing: -.005em; line-height: 1.28;
+}
+@media (prefers-color-scheme: dark) { .art h2 { color: var(--accent); } }
+
+.data-wrap {
+  background: var(--bg-alt); border: 1px solid var(--rule); border-radius: 6px;
+  overflow: hidden; margin-bottom: 32px;
+}
+.data-head {
+  padding: 11px 18px; background: var(--primary);
+  font-family: 'Montserrat', sans-serif; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: #fff;
+}
+.data-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 11px 18px; border-bottom: 1px solid var(--rule); gap: 16px;
+}
+.data-row:last-child { border: none; }
+.dk { font-size: 13.5px; color: var(--body-c); flex: 1; }
+.dv {
+  font-family: 'Courier New', Courier, monospace; font-size: 14px; font-weight: 700;
+  color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) { .dv { color: var(--accent); } }
+
+.reveal {
+  background: var(--primary); border-radius: 8px; padding: 26px 26px 22px;
+  margin: 48px 0 32px; text-align: center;
+}
+.reveal-label {
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+}
+.reveal-number {
+  font-family: 'Montserrat', sans-serif; font-size: clamp(36px, 8vw, 52px);
+  font-weight: 700; color: #fff; line-height: 1; margin-bottom: 8px; letter-spacing: -.02em;
+}
+.reveal-sub { font-size: 14px; color: rgba(255,255,255,.65); line-height: 1.6; }
+
+.faq { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--rule-soft); }
+.faq:last-of-type { border: none; margin-bottom: 0; padding-bottom: 0; }
+.fq {
+  font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 700; color: var(--ink);
+  line-height: 1.4; cursor: pointer; list-style: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.fq::-webkit-details-marker { display: none; }
+.fq::after {
+  content: '+'; flex-shrink: 0; font-size: 18px; font-weight: 400; color: var(--accent);
+  transition: transform .15s;
+}
+.faq[open] .fq::after { transform: rotate(45deg); }
+.fa { font-size: 14px; color: var(--body-c); line-height: 1.7; margin-top: 10px; }
+
+.suscripcion {
+  border: 1px dashed var(--rule); border-radius: 8px;
+  padding: 22px 24px; margin-top: 48px; background: var(--bg-alt);
+}
+.suscripcion-eyebrow {
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+}
+.suscripcion h3 {
+  font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700;
+  color: var(--ink); margin-bottom: 6px; line-height: 1.35;
+}
+.suscripcion p { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+.suscripcion-form { display: flex; gap: 10px; flex-wrap: wrap; }
+.suscripcion-form input {
+  flex: 1; min-width: 200px; padding: 10px 14px; border-radius: 6px;
+  border: 1px solid var(--rule); font-size: 14px; font-family: inherit;
+  background: var(--bg-alt); color: var(--ink);
+}
+.suscripcion-form input:focus { outline: none; border-color: var(--accent); }
+.suscripcion-form button {
+  background: var(--primary); color: #fff; border: none; border-radius: 6px;
+  padding: 10px 20px; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; text-transform: uppercase; letter-spacing: .02em; white-space: nowrap;
+}
+.suscripcion-form button:disabled { opacity: .6; cursor: not-allowed; }
+.suscripcion-error { display: block; margin-top: 8px; font-size: 12.5px; color: #E05555; }
+.suscripcion--ok p { color: var(--ink); margin-bottom: 0; font-weight: 600; }
+
+.art .cta { background: var(--accent); border-radius: 8px; padding: 28px 28px 26px; margin-top: 48px; }
+.cta-eyebrow {
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.75); margin-bottom: 10px;
+}
+.art .cta h3 { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.3; letter-spacing: -.01em; }
+.art .cta p { font-size: 14px; color: rgba(255,255,255,.8); margin-bottom: 22px; line-height: 1.65; }
+.cta-btn {
+  display: inline-block; background: #fff; color: var(--primary);
+  font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+  padding: 11px 24px; border-radius: 6px; text-decoration: none;
+  letter-spacing: .02em; text-transform: uppercase; transition: opacity .15s;
+}
+.cta-btn:hover { opacity: .9; }
+
+.snav {
+  margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--rule);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;
+}
+.sn { max-width: 240px; }
+.sn.r { text-align: right; }
+.sn-lbl {
+  font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+}
+.sn-title { font-size: 14px; color: var(--ink); font-weight: 600; line-height: 1.38; }
+.sn-dis { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 500px) {
+  .snav { flex-direction: column; }
+  .sn.r { text-align: left; }
+  .art { padding-top: 36px; }
+}

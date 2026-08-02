@@ -31,7 +31,9 @@ const Profile = lazy(() => import('./Profile.jsx'));
 const NotAvailable = lazy(() => import('./NotAvailable.jsx')); // <-- IMPORTAMOS LA NUEVA PAGINA
 const AdminOperations = lazy(() => import('@/AdminOperations.jsx'));
 const BorrowerLayout = lazy(() => import('@/layouts/BorrowerLayout.jsx'));
-const AdminGeneradorArticulos = lazy(() => import('@/AdminGeneradorArticulos.jsx'));
+const AdminEditorArticulos = lazy(() => import('@/AdminEditorArticulos.jsx'));
+const BlogArticlePage = lazy(() => import('@/BlogArticlePage.jsx'));
+const BlogHubPage = lazy(() => import('@/BlogHubPage.jsx'));
 
 // Componente "Guardia" especifico para rutas de Administrador
 const AdminRoute = ({ profile, loading, children }) => {
@@ -165,7 +167,7 @@ function App() {
     '/admin-dashboard',
     '/investor-dashboard',
     '/admin/manage-investors',
-    '/admin/generador-articulos',
+    '/admin/editor-articulos',
     '/dashboard-analista',
     '/admin/operaciones',
     '/borrower-dashboard',
@@ -204,6 +206,8 @@ function App() {
           <Route path="/solicitud" element={<Navigate to="/?open=solicitud" replace />} />
           <Route path="/calculadora" element={<CalculatorPage />} />
           <Route path="/auditor-de-tarjetas" element={<AuditorTarjetasPage />} />
+          <Route path="/finanzas-de-isaac" element={<BlogHubPage />} />
+          <Route path="/finanzas-de-isaac/:articleSlug" element={<BlogArticlePage />} />
           <Route path="/no-disponible" element={<NotAvailable />} /> {/* <-- ANADIMOS LA RUTA */}
           <Route 
             path="/auth" 
@@ -230,10 +234,10 @@ function App() {
             }
           />
           <Route
-            path="/admin/generador-articulos"
+            path="/admin/editor-articulos"
             element={
               <AdminRoute profile={profile} loading={loading}>
-                <AdminGeneradorArticulos />
+                <AdminEditorArticulos />
               </AdminRoute>
             }
           />
