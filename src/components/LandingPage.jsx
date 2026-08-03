@@ -50,7 +50,13 @@ const LandingPage = () => {
             name: 'Tu Pr\u00E9stamo',
             url: siteOrigin,
             logo: `${siteOrigin}/Logo-Tu-Prestamo.png`,
-            sameAs: []
+            description: 'Tu Pr\u00E9stamo Bolivia conecta personas que necesitan refinanciar la deuda de su tarjeta de cr\u00E9dito con inversionistas que buscan rentabilidad.',
+            sameAs: [
+              'https://www.facebook.com/profile.php?id=61586402161099',
+              'https://www.instagram.com/tuprestamobo/',
+              'https://www.linkedin.com/company/tu-pr\u00E9stamo/',
+              'https://www.tiktok.com/@tuprestamobo'
+            ]
           })}
         </script>
         <link rel="canonical" href="https://tuprestamobo.com" />
