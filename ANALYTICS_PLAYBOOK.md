@@ -89,6 +89,13 @@ Objetivo: medir lo minimo necesario para tomar decisiones de lanzamiento sin inf
   - `Calculator_LeadForm_Viewed`
   - `Submitted Investor Interest`
 
+### Blog "Finanzas de Isaac" (agregado 2026-08-02)
+- `Viewed Blog Hub` — al cargar `/finanzas-de-isaac` (sin propiedades)
+- `Viewed Blog Article` — al cargar un episodio (`slug`, `titulo`)
+- `Blog Subscribed` — al suscribirse al lead magnet de "avisame del próximo capítulo" (`slug` de origen)
+- El pageview automático (`[Auto] Page View`) ya cubre tráfico general de estas rutas sin código adicional — estos 3 eventos son para medir el funnel específico (ver artículo → suscribirse), no el tráfico crudo.
+- Los links que se compartan en redes deben llevar UTM (`utm_source=instagram|facebook|linkedin|tiktok|email`, ver `docs/SEO/PLAN_LANZAMIENTO_EPISODIOS.md`) — así el evento `Campaign Lead` ya existente atribuye automáticamente qué canal trae lectores, sin evento nuevo.
+
 ---
 
 ## 3. Taxonomia real que debemos respetar

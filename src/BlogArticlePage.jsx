@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/supabaseClient';
+import { trackEvent } from '@/analytics.js';
 import './BlogArticlePage.css';
 
 // Convierte el texto de "historia" en los bloques del artículo, respetando el orden en que
@@ -84,6 +85,7 @@ function SuscripcionCapitulos({ origenSlug }) {
       return;
     }
     try { localStorage.setItem(LS_SUSCRITO, '1'); } catch {}
+    trackEvent('Blog Subscribed', { slug: origenSlug });
     setStatus('success');
   };
 
@@ -133,8 +135,12 @@ export default function BlogArticlePage() {
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return;
-        if (error || !data) setState({ loading: false, row: null, notFound: true });
-        else setState({ loading: false, row: data, notFound: false });
+        if (error || !data) {
+          setState({ loading: false, row: null, notFound: true });
+        } else {
+          setState({ loading: false, row: data, notFound: false });
+          trackEvent('Viewed Blog Article', { slug: data.slug, titulo: data.titulo });
+        }
       });
     return () => { cancelled = true; };
   }, [articleSlug]);

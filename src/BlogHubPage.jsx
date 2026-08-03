@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/supabaseClient';
+import { trackEvent } from '@/analytics.js';
 import './BlogHubPage.css';
 
 // Primer párrafo "real" de la historia, saltando marcadores (## , [FOTO2], [TABLA], [REVEAL])
@@ -17,6 +18,7 @@ export default function BlogHubPage() {
   const [articulos, setArticulos] = useState(null);
 
   useEffect(() => {
+    trackEvent('Viewed Blog Hub');
     supabase
       .from('articulos')
       .select('slug, titulo, serie_label, foto1_url, foto1_caption, historia, created_at')
