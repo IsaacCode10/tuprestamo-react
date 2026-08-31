@@ -45,6 +45,17 @@ const RoleSwitcher = () => {
         <button onClick={() => switchRole('analista_riesgo')} disabled={loading}>Ver como Analista de Riesgo</button>
       </div>
       {message && <p style={{ marginTop: '10px', color: message.includes('Error') ? 'red' : 'green' }}>{message}</p>}
+      <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #f0ad4e' }}>
+        <a
+          href="/admin/editor-articulos"
+          style={{
+            display: 'inline-block', padding: '6px 12px', border: '1px solid #ccc',
+            borderRadius: '4px', textDecoration: 'none', color: '#333', fontSize: '14px',
+          }}
+        >
+          📝 Editor de Artículos
+        </a>
+      </div>
     </div>
   );
 };
