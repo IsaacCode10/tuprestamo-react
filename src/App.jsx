@@ -247,6 +247,14 @@ function App() {
               </AdminRoute>
             }
           />
+          <Route
+            path="/admin/preview-articulo/:articleSlug"
+            element={
+              <AdminRoute profile={profile} loading={loading}>
+                <BlogArticlePage preview />
+              </AdminRoute>
+            }
+          />
           <Route 
             path="/investor-dashboard" 
             element={

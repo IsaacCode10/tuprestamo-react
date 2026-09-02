@@ -120,30 +120,29 @@ function SuscripcionCapitulos({ origenSlug }) {
   );
 }
 
-export default function BlogArticlePage() {
+export default function BlogArticlePage({ preview = false }) {
   const { articleSlug } = useParams();
   const [state, setState] = useState({ loading: true, row: null, notFound: false });
 
   useEffect(() => {
     let cancelled = false;
     setState({ loading: true, row: null, notFound: false });
-    supabase
-      .from('articulos')
-      .select('*')
-      .eq('slug', articleSlug)
-      .eq('publicado', true)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    let query = supabase.from('articulos').select('*').eq('slug', articleSlug);
+    // En preview mostramos el borrador tal cual esté (publicado o no); en la ruta pública
+    // solo lo publicado.
+    if (!preview) query = query.eq('publicado', true);
+    query.maybeSingle().then(({ data, error }) => {
         if (cancelled) return;
         if (error || !data) {
           setState({ loading: false, row: null, notFound: true });
         } else {
           setState({ loading: false, row: data, notFound: false });
-          trackEvent('Viewed Blog Article', { slug: data.slug, titulo: data.titulo });
+          // El preview no cuenta como visita real de un lector.
+          if (!preview) trackEvent('Viewed Blog Article', { slug: data.slug, titulo: data.titulo });
         }
       });
     return () => { cancelled = true; };
-  }, [articleSlug]);
+  }, [articleSlug, preview]);
 
   if (state.loading) {
     return <div style={{ padding: '80px 20px', textAlign: 'center', color: '#8496AC' }}>Cargando artículo...</div>;
@@ -190,11 +189,21 @@ export default function BlogArticlePage() {
   return (
     <>
       <Helmet>
-        <title>{row.seo_title || row.titulo}</title>
+        <title>{preview ? `[VISTA PREVIA] ${row.seo_title || row.titulo}` : (row.seo_title || row.titulo)}</title>
         {row.seo_description && <meta name="description" content={row.seo_description} />}
-        <link rel="canonical" href={canonical} />
-        <script type="application/ld+json">{JSON.stringify(schema)}</script>
+        {preview ? <meta name="robots" content="noindex, nofollow" /> : <link rel="canonical" href={canonical} />}
+        {!preview && <script type="application/ld+json">{JSON.stringify(schema)}</script>}
       </Helmet>
+
+      {preview && (
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 50, background: '#00445A', color: '#fff',
+          textAlign: 'center', padding: '8px 12px', fontFamily: 'Inter, sans-serif',
+          fontSize: 13, fontWeight: 600,
+        }}>
+          👁️ Vista previa — {row.publicado ? 'este episodio ya está publicado' : 'borrador, todavía NO publicado'}
+        </div>
+      )}
 
       <article className="art">
         {row.serie_label && <div className="art-series">{row.serie_label}</div>}
