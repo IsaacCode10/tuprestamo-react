@@ -9,7 +9,8 @@ import './BlogArticlePage.css';
 // fueron escritos. Marcadores reconocidos dentro del texto:
 //   ## Subtítulo          -> encabezado H2
 //   "Frase entre comillas" (párrafo que empieza y termina con ") -> cita destacada
-//   [FOTO2]               -> foto 2 + su pie, en ese punto exacto
+//   [FOTO2]               -> foto 2 + su pie, en ese punto exacto (recorte 4:3, para fotos de escena)
+//   [FOTO2-DOC]           -> igual, pero sin recortar (para capturas/comprobantes: correos, recibos)
 //   [TABLA]               -> la tabla de datos (tabla_titulo / tabla_filas)
 //   [REVEAL]              -> el bloque de monto acumulado (reveal_label/numero/sub)
 //   cualquier otra línea  -> párrafo normal
@@ -19,11 +20,14 @@ function renderHistoria(historia, row, tablaFilas) {
     if (linea.startsWith('## ')) {
       return <h2 key={i}>{linea.slice(3)}</h2>;
     }
-    if (linea === '[FOTO2]') {
+    if (linea === '[FOTO2]' || linea === '[FOTO2-DOC]') {
       if (!row.foto2_url && !row.foto2_caption) return null;
+      // [FOTO2-DOC] es para capturas/comprobantes (correos, recibos): se muestra completa,
+      // sin el recorte 4:3 que usamos para fotos de escena.
+      const slotClass = linea === '[FOTO2-DOC]' ? 'photo-slot photo-slot--doc' : 'photo-slot';
       return (
         <React.Fragment key={i}>
-          {row.foto2_url && <div className="photo-slot"><img src={row.foto2_url} alt={row.foto2_caption || ''} /></div>}
+          {row.foto2_url && <div className={slotClass}><img src={row.foto2_url} alt={row.foto2_caption || ''} /></div>}
           {row.foto2_caption && <p className="caption">{row.foto2_caption}</p>}
         </React.Fragment>
       );

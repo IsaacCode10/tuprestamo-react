@@ -78,7 +78,8 @@ grande con el número acumulado real de los 11 años.
 
 ### 3. Terminar de armar (a mano, junto con Isaac)
 - [ ] Ubicar la frase destacada (párrafo entre comillas en el texto)
-- [ ] Insertar marcador `[FOTO2]` en el punto correcto de la historia
+- [ ] Insertar marcador `[FOTO2]` en el punto correcto de la historia (usar `[FOTO2-DOC]` si
+      la foto 2 es una captura/comprobante — correo, recibo — para que no se recorte)
 - [ ] Insertar subtítulos `## ...` donde corresponda
 - [ ] Armar la tabla de datos (`tabla_titulo` / `tabla_filas`) + marcador `[TABLA]` — solo con datos que el contrato realmente indica, no cálculos
 - [ ] **Si NO es el último episodio de la tabla maestra:** cerrar con un párrafo de intriga (sin `[REVEAL]`, sin revelar el número acumulado) — ver "Regla del final abierto" más arriba
