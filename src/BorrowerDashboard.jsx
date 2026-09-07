@@ -2117,6 +2117,19 @@ const BorrowerDashboard = () => {
       const solicitudConOpps = { ...solData, oportunidades: oppsData || [] };
       setSolicitud(solicitudConOpps);
 
+      // Marca la primera vez real que esta persona entra a su dashboard (no en cada carga -
+      // solo si todavia no estaba marcado). Sirve para el flujo de reactivacion por WhatsApp
+      // (GUIA_DEFINITIVA_BOT_WHATSAPP.md Parte 10): sin esto no hay forma de distinguir a quien
+      // envio la solicitud y nunca volvio de quien si esta usando la plataforma.
+      if (!solData.activado_en_dashboard_at) {
+        supabase.from('solicitudes')
+          .update({ activado_en_dashboard_at: new Date().toISOString() })
+          .eq('id', solData.id)
+          .then(({ error: activErr }) => {
+            if (activErr) console.error('Error marcando activado_en_dashboard_at:', activErr);
+          });
+      }
+
       const { data: docsData, error: docsError } = await supabase
         .from('documentos')
         .select('*')
