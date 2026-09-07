@@ -18,6 +18,12 @@
   celular, email si solo dejo correo) a quien empezo y no termino.
 - Creado `FRAMEWORK_CONVERSION.md` (Cialdini + LIFT), adaptado del de Capibara Kids pero
   construido junto con Isaac turno a turno, no copiado - ver pendientes abajo.
+- Agregada "PARTE 10: Reenganche automatico con plantillas de Meta" a
+  `../GUIA_DEFINITIVA_BOT_WHATSAPP.md` (un nivel arriba de este repo, compartida entre
+  proyectos) - patron real sacado del codigo en produccion de Capibara Kids
+  (`send-carrito-abandonado` / `send-reenganche-chat`, Edge Function + pg_cron + plantilla
+  de Meta), adaptado a las tablas de Tu Prestamo (`solicitudes_parciales` / `solicitudes`).
+  Es documentacion del patron, todavia no esta construido para Tu Prestamo.
 
 **Pendiente / bloqueadores activos:**
 - Constituir la SRL de Tu Prestamo.
@@ -29,12 +35,14 @@
   `FRAMEWORK_CONVERSION.md`, no se asumio una respuesta.
 - Falta trabajar el LIFT Model completo (Propuesta de valor, Claridad, Relevancia,
   Urgencia, Ansiedad, Distraccion) en `FRAMEWORK_CONVERSION.md` - solo se cerro Cialdini.
-- Falta disenar el flujo de reactivacion por WhatsApp (bot `tuprestamo-bot` + plantillas
-  Meta) para: (a) quien envio la solicitud completa pero nunca activo su cuenta/dashboard
-  (lead caliente), y (b) quien empezo el formulario y no lo termino con celular dejado
-  (lead frio, mensaje distinto). Si solo dejo email, va por email marketing en vez de
-  WhatsApp. Todavia no se reviso como esta armado `tuprestamo-bot` para saber que tan
-  facil es engancharle el disparador.
+- Construir de verdad el flujo de reactivacion por WhatsApp (el patron tecnico ya esta
+  documentado en `GUIA_DEFINITIVA_BOT_WHATSAPP.md` Parte 10): (a) quien envio la solicitud
+  completa pero nunca activo su cuenta/dashboard (lead caliente), y (b) quien empezo el
+  formulario y no lo termino con celular dejado (lead frio, mensaje distinto). Si solo dejo
+  email, va por email marketing en vez de WhatsApp. Falta: crear y mandar a aprobar las
+  plantillas de Meta, decidir cuantas horas de espera, escribir el texto real de cada
+  plantilla (depende de `FRAMEWORK_CONVERSION.md`), y decidir como se detecta "nunca activo
+  su cuenta" en `solicitudes` (campo nuevo vs. consulta a Mixpanel).
 - El mensaje de exito del formulario de prestatario (`LoanRequestForm.jsx`) todavia dice
   "Mantente atento a tu correo electronico" - contradice la premisa de que en Bolivia se
   usa mas WhatsApp que email; cambiar cuando el flujo de WhatsApp este armado.
