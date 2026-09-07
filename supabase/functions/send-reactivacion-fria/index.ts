@@ -80,7 +80,7 @@ async function enviarWhatsApp(telefono: string, nombreCompleto: string): Promise
       template: {
         name: 'reactivacion_solicitud_fria',
         language: { code: 'es_BO' },
-        components: [{ type: 'body', parameters: [{ type: 'text', text: nombre }] }],
+        components: [{ type: 'body', parameters: [{ type: 'text', parameter_name: 'customer_name', text: nombre }] }],
       },
     }),
   })
