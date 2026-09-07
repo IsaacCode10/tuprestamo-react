@@ -82,8 +82,8 @@ async function enviarWhatsApp(telefono: string, nombreCompleto: string): Promise
       type: 'template',
       template: {
         name: 'reactivacion_solicitud_caliente',
-        language: { code: 'es_BO' },
-        components: [{ type: 'body', parameters: [{ type: 'text', parameter_name: 'customer_name', text: nombre }] }],
+        language: { code: 'es_AR' },
+        components: [{ type: 'body', parameters: [{ type: 'text', text: nombre }] }],
         // Si la plantilla se aprueba con un boton de tipo URL dinamica, agregar aca un
         // componente adicional { type: 'button', sub_type: 'url', index: '0',
         // parameters: [{ type: 'text', text: '<token o id de solicitud>' }] } - pendiente de
