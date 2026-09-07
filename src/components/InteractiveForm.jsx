@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { trackEvent } from '@/analytics.js';
 import './InteractiveForm.css';
 
-const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos el schema
+const InteractiveForm = ({ questions, onSubmit, schema, onProgress }) => { // <-- Recibimos el schema
   const [answers, setAnswers] = useState({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentValue, setCurrentValue] = useState('');
@@ -58,6 +58,9 @@ const InteractiveForm = ({ questions, onSubmit, schema }) => { // <-- Recibimos 
 
     const newAnswers = { ...answers, [currentQuestion.clave]: currentValue };
     setAnswers(newAnswers);
+    // Guardado progresivo: se lo pasamos al padre en cada paso (el padre decide si ya
+    // hay suficiente dato de contacto como para persistirlo - ver LoanRequestForm.jsx).
+    if (typeof onProgress === 'function') onProgress(newAnswers, currentQuestion);
 
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);

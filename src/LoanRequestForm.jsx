@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/supabaseClient';
 import { trackEvent } from '@/analytics.js';
 import InteractiveForm from '@/components/InteractiveForm.jsx'; // Importamos el nuevo componente
@@ -43,6 +43,41 @@ const LoanRequestForm = ({ onClose, role }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const ACTIVE_SOLICITUD_STATES = ['pendiente', 'pre-aprobado', 'documentos-en-revision', 'aprobado_para_oferta'];
+
+  // Guardado progresivo para remarketing (ver solicitudes_parciales): guarda el id
+  // del borrador una vez creado, para actualizar esa misma fila en vez de duplicarla
+  // en cada paso, y para marcarla como convertida si termina enviando la solicitud.
+  const parcialIdRef = useRef(null);
+
+  const handleProgress = async (answers, currentQuestion) => {
+    // Recien vale la pena guardar algo desde que hay un dato de contacto (email, que
+    // es la pregunta 2) - antes de eso (solo el nombre) no sirve para remarketing.
+    if (!answers.email) return;
+    const payload = {
+      tipo_solicitud: role,
+      nombre_completo: answers.nombre_completo || null,
+      email: answers.email || null,
+      telefono: answers.telefono || null,
+      ultima_pregunta_id: currentQuestion.id,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      if (parcialIdRef.current) {
+        await supabase.from('solicitudes_parciales').update(payload).eq('id', parcialIdRef.current);
+      } else {
+        const { data, error: parcialError } = await supabase
+          .from('solicitudes_parciales')
+          .insert(payload)
+          .select('id')
+          .single();
+        if (parcialError) throw parcialError;
+        parcialIdRef.current = data.id;
+      }
+    } catch (err) {
+      // Nunca bloquear el formulario real por esto - es solo para remarketing.
+      console.warn('No se pudo guardar el borrador de solicitud:', err);
+    }
+  };
 
   const handleFormSubmit = async (answers) => {
     setLoading(true);
@@ -109,6 +144,17 @@ const LoanRequestForm = ({ onClose, role }) => {
         loan_term_months: dataToInsert.plazo_meses,
       });
 
+      // Marcamos el borrador (si existe) como convertido, para que no entre en
+      // remarketing de "empezó pero no terminó" - ya terminó.
+      if (parcialIdRef.current) {
+        supabase.from('solicitudes_parciales')
+          .update({ convertido: true, convertido_at: new Date().toISOString() })
+          .eq('id', parcialIdRef.current)
+          .then(({ error: convError }) => {
+            if (convError) console.warn('No se pudo marcar el borrador como convertido:', convError);
+          });
+      }
+
       setSuccess(true);
 
     } catch (error) {
@@ -161,6 +207,7 @@ const LoanRequestForm = ({ onClose, role }) => {
                 questions={borrowerQuestions}
                 onSubmit={handleFormSubmit}
                 schema={solicitudPrestatarioSchema} // Pasamos el esquema como prop
+                onProgress={handleProgress}
             />
         )}
       </div>
