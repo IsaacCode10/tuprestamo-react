@@ -1,4 +1,44 @@
 
+## Actualizacion 2026-09-07
+
+**Lo hecho hoy:**
+- Analisis de Mixpanel del ultimo mes (trafico, blog, calculadora, funnel prestatario e
+  inversionista) - ver detalle en el chat, no se guardo como reporte aparte.
+- Exclusion de trafico interno en Mixpanel sin depender de IP: `?notrack=1` guarda una
+  marca en `localStorage` (`src/analytics.js`). Isaac debe abrir ese link una vez en cada
+  dispositivo propio para activarlo.
+- Preview de articulos del blog sin publicar: ruta admin `/admin/preview-articulo/:slug`
+  (`src/BlogArticlePage.jsx`), mas marcador `[FOTO2-DOC]` para fotos tipo captura/comprobante
+  que no se recortan (a diferencia de `[FOTO2]`, pensado para fotos de escena).
+- Guardado progresivo de solicitudes de prestatario abandonadas a mitad de formulario:
+  tabla nueva `solicitudes_parciales` (migracion `20260907192823`) + wiring en
+  `LoanRequestForm.jsx` / `InteractiveForm.jsx`. Guarda nombre/email/telefono apenas la
+  persona los contesta (no espera a que termine todo el formulario), y marca `convertido`
+  si termina enviando la solicitud real - para poder hacer remarketing (WhatsApp si dejo
+  celular, email si solo dejo correo) a quien empezo y no termino.
+- Creado `FRAMEWORK_CONVERSION.md` (Cialdini + LIFT), adaptado del de Capibara Kids pero
+  construido junto con Isaac turno a turno, no copiado - ver pendientes abajo.
+
+**Pendiente / bloqueadores activos:**
+- Constituir la SRL de Tu Prestamo.
+- Alta en INFOCRED (depende de la SRL constituida).
+- Cerrar al primer cliente real - candidato: Adhemar Rodo Sosa (unico lead con
+  documentacion completa a la fecha). De ahi salen: el primer testimonio real (prueba
+  social) y el cupon de referido gana-gana (reciprocidad).
+- Definir "Unidad" (Cialdini) con Isaac, o descartarlo - queda abierto en
+  `FRAMEWORK_CONVERSION.md`, no se asumio una respuesta.
+- Falta trabajar el LIFT Model completo (Propuesta de valor, Claridad, Relevancia,
+  Urgencia, Ansiedad, Distraccion) en `FRAMEWORK_CONVERSION.md` - solo se cerro Cialdini.
+- Falta disenar el flujo de reactivacion por WhatsApp (bot `tuprestamo-bot` + plantillas
+  Meta) para: (a) quien envio la solicitud completa pero nunca activo su cuenta/dashboard
+  (lead caliente), y (b) quien empezo el formulario y no lo termino con celular dejado
+  (lead frio, mensaje distinto). Si solo dejo email, va por email marketing en vez de
+  WhatsApp. Todavia no se reviso como esta armado `tuprestamo-bot` para saber que tan
+  facil es engancharle el disparador.
+- El mensaje de exito del formulario de prestatario (`LoanRequestForm.jsx`) todavia dice
+  "Mantente atento a tu correo electronico" - contradice la premisa de que en Bolivia se
+  usa mas WhatsApp que email; cambiar cuando el flujo de WhatsApp este armado.
+
 ## Actualizacion 2026-05-05
 
 **Lo hecho hoy:**
@@ -261,3 +301,41 @@
   - Started Loan Application
   - Submitted Loan Application
   - Viewed Borrower Dashboard
+
+## Actualizacion 2026-06-11 — Bot WhatsApp + Email Marketing
+
+**Contexto del nuevo proyecto:**
+- Se decidio construir un bot comercial de WhatsApp para campanas de adquisicion en Tu Prestamo.
+- La base de datos de contactos (nombre, telefono, algunos emails) proviene de usuarios de banco con tarjetas de credito.
+- Estrategia del funnel: email frio primero (menos intrusivo) → tracking de interaccion → remarketing por WhatsApp solo a contactos tibios.
+
+**Stack decidido:**
+- Email campaigns: **Brevo** (gratis: 9,000 emails/mes, contactos ilimitados). Klaviyo descartado (solo 250 contactos gratis, orientado a ecommerce).
+- Tracking: Mixpanel (ya existe) + UTM params en links del email.
+- Base de datos del bot: tablas nuevas en Supabase de Tu Prestamo (prefijo `bot_`). No se puede crear tercer proyecto Supabase gratis.
+- Bot: repo separado Next.js + Vercel (Tu Prestamo no tiene servidor Node.js propio, solo Edge Functions Deno).
+- LLM: OpenRouter + DeepSeek V3 (muy economico, buena calidad en espanol).
+- WhatsApp: Meta Business API.
+- Firebase descartado (Cloud Functions gratis no permiten llamadas HTTP externas).
+
+**Lo hecho hoy — configuracion Meta Developers:**
+- Se accedio a Meta Developers por primera vez via `developers.facebook.com/async/registration`.
+- Se registro la cuenta de Isaac Alfaro como desarrollador de Meta (rol: Propietario/fundador).
+- Se creo la app `TuPrestamo Bot` con caso de uso WhatsApp.
+- Portfolios propios restringidos por Meta a raiz de intento de hackeo previo (Admired Taut, Frilly Medium, Isaac Alberto Alfaro Aguirre, etc. todos con restriccion de advertising).
+- Se logro crear la app usando el portfolio **RendimaxOficial** como workaround temporal.
+- Se llego al panel de la app en Meta Developers.
+
+**Pendiente para manana — continuar configuracion Meta:**
+1. En el panel de la app: agregar caso de uso WhatsApp → Configurar.
+2. En WhatsApp → Configuracion de la API:
+   - Copiar **Phone Number ID** (numero de prueba que da Meta).
+   - Copiar **Access Token temporal** (dura 24h, para pruebas).
+3. Crear cuenta en **OpenRouter** (openrouter.ai) → Keys → crear key `tuprestamo-bot` → copiar API key.
+4. Empezar construccion del repo del bot (Next.js).
+5. Ejecutar schema SQL de tablas `bot_*` en Supabase Tu Prestamo.
+
+**Pendiente paralelo — seguridad Meta:**
+- Contactar soporte de Meta en `business.facebook.com/help` para apelar restriccion de portfolios por hackeo.
+- Cuando se levante la restriccion, mover la app al portfolio de Tu Prestamo Bolivia.
+- Dominio `tuprestamobo.com` registrado en Namecheap — verificar en Brevo cuando llegue la base de datos de contactos.
