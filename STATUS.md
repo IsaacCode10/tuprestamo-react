@@ -18,6 +18,15 @@
   celular, email si solo dejo correo) a quien empezo y no termino.
 - Creado `FRAMEWORK_CONVERSION.md` (Cialdini + LIFT), adaptado del de Capibara Kids pero
   construido junto con Isaac turno a turno, no copiado - ver pendientes abajo.
+- Mejoras al CRM del bot (`tuprestamo-bot`, repo separado), portadas del mismo patron ya en
+  produccion en `capibara-kids-bot`: `/api/conversations` ahora ordena por el mensaje mas
+  reciente de cada contacto (antes ordenaba por fecha de creacion del contacto), nueva
+  columna `bot_contacts.last_read_at` (migracion `20260907195933` en este repo, misma logica
+  que con `solicitudes_parciales` - la tabla vive conceptualmente en el bot pero el CLI de
+  Supabase esta linkeado aca), y `/conversations` muestra contador de "nuevas" + punto rojo
+  por conversacion sin revisar. Los botones de Bot ON/OFF y Bloquear/Desbloquear ya existian
+  de antes en `tuprestamo-bot`, no hizo falta agregarlos. Deployado a
+  `tuprestamo-bot.vercel.app`.
 - Agregada "PARTE 10: Reenganche automatico con plantillas de Meta" a
   `../GUIA_DEFINITIVA_BOT_WHATSAPP.md` (un nivel arriba de este repo, compartida entre
   proyectos) - patron real sacado del codigo en produccion de Capibara Kids
