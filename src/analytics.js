@@ -1,5 +1,26 @@
 import mixpanel from 'mixpanel-browser';
 
+const NOTRACK_KEY = 'tp_notrack';
+
+// Exclusion de trafico interno sin depender de una config de Mixpanel (el plan no tiene
+// exclusion por IP, y ademas una IP cambia todo el tiempo - no es confiable). Un link con
+// ?notrack=1, abierto UNA sola vez desde un navegador, deja guardada la marca en
+// localStorage - de ahi en mas ese navegador nunca vuelve a inicializar ni mandar nada
+// a Mixpanel, sin importar cuantas veces se visite el sitio despues (ni de que red venga).
+function estaExcluido() {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (new URLSearchParams(window.location.search).get('notrack') === '1') {
+      localStorage.setItem(NOTRACK_KEY, '1');
+    }
+    return localStorage.getItem(NOTRACK_KEY) === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+const excluido = estaExcluido();
+
 // Solo enviar en produccion por defecto
 const mixpanelEnabled = import.meta.env.MODE === 'production';
 const MIXPANEL_TOKEN = import.meta.env.VITE_MIXPANEL_TOKEN;
@@ -80,6 +101,9 @@ const stopActivePing = () => {
 };
 
 export const initMixpanel = () => {
+  // Chequeo ANTES de mixpanel.init(): si este navegador esta excluido, ni siquiera se
+  // inicializa el SDK - ni esta carga de pagina ni ninguna futura mandan nada.
+  if (excluido) return;
   if (!mixpanelEnabled) return;
   if (!MIXPANEL_TOKEN) {
     console.warn('Mixpanel no inicializado: falta VITE_MIXPANEL_TOKEN');
@@ -113,7 +137,7 @@ export const initMixpanel = () => {
 export const isMixpanelInitialized = () => initialized;
 
 export const trackEvent = (eventName, properties) => {
-  if (!mixpanelEnabled || !initialized) return;
+  if (excluido || !mixpanelEnabled || !initialized) return;
   const now = Date.now();
   const last = lastSentByEvent.get(eventName) || 0;
   if (now - last < DEDUP_WINDOW_MS) return;
@@ -123,7 +147,9 @@ export const trackEvent = (eventName, properties) => {
 };
 
 export const identifyUser = (userId, properties) => {
-  if (!mixpanelEnabled || !initialized) return;
+  // Misma exclusion tambien para identificacion de usuarios logueados (prestatarios/
+  // inversionistas con cuenta) - no solo para el tracking anonimo.
+  if (excluido || !mixpanelEnabled || !initialized) return;
   if (userId) {
     mixpanel.identify(userId);
   }
@@ -140,12 +166,12 @@ export const identifyUser = (userId, properties) => {
 };
 
 export const setSuperProperties = (properties) => {
-  if (!mixpanelEnabled || !initialized || !properties) return;
+  if (excluido || !mixpanelEnabled || !initialized || !properties) return;
   try { mixpanel.register(properties); } catch {}
 };
 
 export const resetMixpanel = () => {
-  if (!mixpanelEnabled || !initialized) return;
+  if (excluido || !mixpanelEnabled || !initialized) return;
   try { stopActivePing(); } catch {}
   mixpanel.reset();
 };
@@ -184,6 +210,7 @@ const parseUTMFromURL = () => {
 };
 
 export const captureAndRegisterUTM = () => {
+  if (excluido) return;
   const { utm, hasAny } = parseUTMFromURL();
   const referrer_domain = getReferrerDomain();
   const landing_page = (() => { try { return window.location.pathname || ''; } catch { return ''; } })();
@@ -216,7 +243,10 @@ export const captureAndRegisterUTM = () => {
 
 export const getCurrentUTM = () => {
   // mixpanel.get_property lee superprops actuales
-  const getProp = (k) => { try { return mixpanel.get_property(k) || ''; } catch { return ''; } };
+  const getProp = (k) => {
+    if (excluido) return '';
+    try { return mixpanel.get_property(k) || ''; } catch { return ''; }
+  };
   return {
     utm_source: getProp('utm_last_source') || getProp('utm_first_source'),
     utm_medium: getProp('utm_last_medium') || getProp('utm_first_medium'),
