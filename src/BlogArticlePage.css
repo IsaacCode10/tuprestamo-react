@@ -219,8 +219,16 @@
   display: block; text-decoration: none;
 }
 a.sn-title:hover { color: var(--accent); text-decoration: underline; }
-.sn-title--soon { cursor: default; }
 .sn-dis { font-size: 13px; color: var(--muted); }
+
+/* Próximo episodio todavía sin publicar: nunca se ve como un link (cursor default,
+   color muted) para que no se sienta como un link roto - se marca explícitamente
+   como "Próximamente" en vez de simular que el título es clickeable. */
+.sn-soon-tag {
+  display: inline-block; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px;
+}
+.sn-soon-title { font-size: 13px; color: var(--muted); font-style: italic; line-height: 1.4; }
 
 @media (max-width: 500px) {
   .snav { flex-direction: column; }

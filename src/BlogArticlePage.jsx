@@ -298,7 +298,10 @@ export default function BlogArticlePage({ preview = false }) {
                 {row.nav_siguiente_slug ? (
                   <Link to={`/finanzas-de-isaac/${row.nav_siguiente_slug}`} className="sn-title">{row.nav_siguiente_titulo}</Link>
                 ) : (
-                  <div className="sn-title sn-title--soon">{row.nav_siguiente_titulo}</div>
+                  <div className="sn-soon">
+                    <span className="sn-soon-tag">Próximamente</span>
+                    <div className="sn-soon-title">{row.nav_siguiente_titulo}</div>
+                  </div>
                 )}
               </div>
             )}
