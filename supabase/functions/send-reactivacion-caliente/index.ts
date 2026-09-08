@@ -98,7 +98,7 @@ async function enviarWhatsApp(telefono: string, nombreCompleto: string): Promise
   // Texto real de la plantilla aprobada (con Isaac, ver FRAMEWORK_CONVERSION.md): identificacion
   // de Sofia + beneficio (dejar atras los intereses) antes del pedido, botones de Respuesta
   // rapida "Entrar a mi cuenta" / "Que me llamen" manejados en tuprestamo-bot/webhook/route.ts.
-  const contenidoReal = `Hola ${nombre}! Soy Sofía, de Tu Préstamo 👋 Ya diste el paso más difícil: tu solicitud está lista. Solo te falta entrar a tu cuenta para ver el estado y seguir dejando atrás los intereses de tu tarjeta de crédito. ¿Cómo preferís seguir?`
+  const contenidoReal = `Hola ${nombre}! Soy Sofía, de Tu Préstamo 👋 Tu solicitud de refinanciamiento de tarjeta de crédito está lista. Solo te falta entrar a tu cuenta para ver el estado y seguir dejando atrás los altos intereses de tu tarjeta de crédito. ¿Cómo preferís seguir?`
   await logToBotCRM(numero, nombreCompleto, contenidoReal, wamid)
   return true
 }
