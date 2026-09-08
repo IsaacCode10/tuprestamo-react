@@ -26,16 +26,16 @@ que usa Capibara Kids en sus propios flujos de reactivación ("arranca simple a 
 nada de secuencia de varios toques"). Si un solo mensaje no alcanza, se decide agregar un
 segundo toque más adelante, no se asume de entrada.
 
-## 3. Los dos segmentos activos
+## 3. Los tres segmentos activos
 
-| | **Frío** (`reactivacion_solicitud_fria`) | **Caliente** (`reactivacion_solicitud_caliente`) |
-|---|---|---|
-| **Quién es** | Empezó el formulario de solicitud (dejó nombre + email + celular) pero nunca lo terminó | Terminó toda la solicitud, pero nunca entró a su cuenta/dashboard |
-| **Tabla de origen** | `solicitudes_parciales` | `solicitudes` |
-| **Nivel de compromiso** | Bajo — recién está conociendo el producto | Alto — ya mandó CI, ingresos, deuda, todo |
-| **Objetivo del mensaje** | Que termine el formulario | Que active su cuenta y vea el estado |
-| **Botones** | "Por el formulario" / "Sigo por WhatsApp" | "Entrar a mi cuenta" / "Que me llame un asesor" |
-| **Espera antes de mandar** | 6 horas sin actividad | 6 horas sin actividad |
+| | **Frío** (`reactivacion_solicitud_fria`) | **Caliente** (`reactivacion_solicitud_caliente`) | **Documentos** (`reactivacion_solicitud_documentos`) |
+|---|---|---|---|
+| **Quién es** | Empezó el formulario de solicitud (dejó nombre + email + celular) pero nunca lo terminó | Terminó toda la solicitud, pero nunca entró a su cuenta/dashboard | Solicitud aprobada, ya activó su cuenta y subió al menos 1 documento, pero no todos los requeridos |
+| **Tabla de origen** | `solicitudes_parciales` | `solicitudes` | `solicitudes` + `documentos` |
+| **Nivel de compromiso** | Bajo — recién está conociendo el producto | Alto — ya mandó CI, ingresos, deuda, todo | **El más alto de los tres** — ya cruzó el filtro del scorecard y ya empezó a subir papeles |
+| **Objetivo del mensaje** | Que termine el formulario | Que active su cuenta y vea el estado | Que termine de subir los documentos que le faltan |
+| **Botones** | "Por el formulario" / "Sigo por WhatsApp" | "Entrar a mi cuenta" / "Que me llame un asesor" | "Termino por WhatsApp" / "Termino por la web" / "Necesito ayuda" |
+| **Espera antes de mandar** | 6 horas sin actividad | 6 horas sin actividad | 6 horas desde la **última subida real** de documento (no desde que se creó la solicitud) |
 
 ## 4. Cadencia y volumen — la pregunta clave
 
@@ -68,6 +68,12 @@ para no colar a nadie que no se revisó uno por uno):
 - **Eva López Mamani** (ID 254) — pre-aprobado, tiene tarjeta de crédito real, nunca subió
   ningún documento (nunca activó su cuenta).
 
+Mismo criterio, columna separada (`incluir_reactivacion_documentos_retroactiva` — a
+propósito distinta de la de arriba, para que nadie califique para dos campañas por error)
+para el segmento de documentos incompletos:
+- **Adelia Ari Quispe** (ID 263) — ya subió 3 documentos.
+- **Luis Brian Equilea Belzu** (ID 269) — ya subió 2 documentos.
+
 ## 6. Costo
 
 Meta cobra por conversación iniciada por el negocio con plantillas categoría `MARKETING`
@@ -86,6 +92,15 @@ abandona el formulario o no activa su cuenta, no se multiplica por reintentos.
 - **"Que me llame un asesor"** → Sofía le confirma que alguien lo va a llamar, **y le llega
   un WhatsApp a Isaac en el momento** con el nombre y teléfono para que haga la llamada.
   Ninguna opción hace que el cliente tenga que llamar a nadie.
+- **"Termino por WhatsApp"** → Sofía le va pidiendo, un documento a la vez, que mande la
+  foto o el PDF de cada uno que le falta — quedan guardados en el mismo lugar que si los
+  hubiera subido desde la web, el analista de riesgo los ve igual.
+- **"Termino por la web"** → mismo mecanismo de link de acceso directo, pero apuntado
+  directo a la pantalla de subida de documentos de su dashboard (no a la pantalla de "creá
+  tu contraseña", porque esta persona ya activó su cuenta antes).
+- **"Necesito ayuda"** → Sofía le confirma que un asesor lo va a ayudar, **y le llega un
+  WhatsApp a Isaac con el detalle exacto de qué documentos le faltan** — para que la ayuda
+  sea útil desde el primer mensaje, no tenga que preguntar de cero.
 
 ## 8.1 Revisión completa del historial (2026-09-08) — registro para no repetir el análisis
 
@@ -117,14 +132,13 @@ qué a este sí y a este no?":
 
 **Incluidos retroactivamente** (ver sección 5): IDs 247 y 254.
 
-**Encontrados pero sin plantilla todavía — nuevo segmento identificado:**
+**Tercer segmento identificado y construido (2026-09-08):**
 - ID 263 (Adelia Ari Quispe, 3 documentos subidos) y ID 269 (Luis Brian Equilea Belzu, 2
   documentos subidos) — **ya activaron su cuenta y ya subieron algo, pero no completaron
-  todos los documentos requeridos.** Ninguna de las 2 plantillas actuales les queda bien:
-  "Entrá a tu cuenta" no aplica (ya entraron) y "Terminá el formulario" tampoco (el
-  formulario ya está hecho). Hace falta una **tercera plantilla** ("te faltan documentos
-  para terminar tu evaluación") — ver pendientes, sección 9. No se les manda nada hasta
-  que exista.
+  todos los documentos requeridos.** Ninguna de las 2 plantillas anteriores les quedaba
+  bien ("Entrá a tu cuenta" no aplica si ya entraron, "Terminá el formulario" tampoco si el
+  formulario ya está hecho) — de ahí salió la tercera plantilla,
+  `reactivacion_solicitud_documentos` (ver sección 3), incluidos retroactivamente arriba.
 
 ## 8. Decisiones de negocio tomadas (registro, no repetir la discusión)
 
@@ -136,11 +150,23 @@ qué a este sí y a este no?":
 - 2026-09-07: nunca tocar leads de antes de la fecha de lanzamiento de esta campaña.
 - 2026-09-07: "que me llamen" en vez de "llamar" — nadie quiere llamar, sí quieren que los
   llamen (decisión de copy con impacto directo en el diseño técnico de los botones).
+- 2026-09-08: la 3ra plantilla ofrece 3 caminos, no 2 — además de la elección de canal
+  (WhatsApp vs. web), se suma "Necesito ayuda" para quien no se frenó por preferencia sino
+  por no entender el trámite. No se lo manda al mismo flujo guiado (probablemente se
+  vuelva a frenar igual) sino a ayuda humana directa, mismo patrón que "que me llame un
+  asesor".
+- 2026-09-08: el link de "seguir por la web" para alguien que YA activó su cuenta antes va
+  directo al dashboard, no a la pantalla de crear contraseña — esa pantalla es solo para la
+  primera activación (ver `GUIA_DEFINITIVA_BOT_WHATSAPP.md` 10.8).
 
 ## 9. Pendiente / próximos pasos
 
-- [ ] Confirmar aprobación de las 2 plantillas en Meta (estado `PENDING` al momento de
-      escribir esto).
+- [ ] Confirmar aprobación de las 3 plantillas en Meta (`PENDING` al momento de escribir
+      esto) — falta crear `reactivacion_solicitud_documentos` en el editor de Meta con el
+      copy y los 3 botones de la sección 3.
+- [ ] Probar el flujo guiado de subida por WhatsApp con un caso real antes de confiar en
+      él del todo — está construido y deployado, pero nunca corrió con un archivo real de
+      un cliente (descarga de media de Meta + Storage + `documentos`).
 - [ ] Medir en Mixpanel/CRM del bot cuántos de los mensajes de reactivación efectivamente
       convierten (terminan el formulario / activan la cuenta) — todavía no hay un evento
       dedicado para esto, evaluar si hace falta.
@@ -151,12 +177,6 @@ qué a este sí y a este no?":
 - [ ] Aplicar el mismo patrón de estrategia a otros segmentos si surgen (ej. inversionistas
       que dejaron el formulario de interés a medias) — documentar acá, no crear un tercer
       lugar disperso.
-- [ ] **Nueva plantilla — "documentación incompleta"** (identificado 2026-09-08): segmento
-      de gente que activó su cuenta y subió algo, pero no todos los documentos requeridos
-      (ver sección 8.1, casos reales IDs 263 y 269). Necesita su propia lógica de
-      "completo" por `situacion_laboral` (ver `getRequiredDocs` en `BorrowerDashboard.jsx`
-      / `getRequiredDocsBySituation` en `RiskAnalystDashboard.jsx`) — no es tan simple como
-      "¿subió algo?".
 - [ ] **Campaña futura separada para rechazados** (no estas plantillas): el correo
       automático de rechazo ya promete "intentá de nuevo en unos meses" pero nadie lo
       recontacta de verdad. Evaluar una plantilla honesta tipo "¿tu situación cambió?"
@@ -173,5 +193,7 @@ qué a este sí y a este no?":
   (patrón general) y 10.7/10.8 (lecciones de estructura de plantillas y de auth).
 - Por qué dice lo que dice cada mensaje: `FRAMEWORK_CONVERSION.md` (Cialdini/LIFT).
 - Código real: `supabase/functions/send-reactivacion-fria`,
-  `supabase/functions/send-reactivacion-caliente` (este repo), y
-  `tuprestamo-bot/src/app/api/webhook/route.ts` (manejo de los botones).
+  `supabase/functions/send-reactivacion-caliente`,
+  `supabase/functions/send-reactivacion-documentos` (este repo), y
+  `tuprestamo-bot/src/app/api/webhook/route.ts` +
+  `tuprestamo-bot/src/lib/whatsapp.ts` (manejo de los botones y descarga de archivos).
