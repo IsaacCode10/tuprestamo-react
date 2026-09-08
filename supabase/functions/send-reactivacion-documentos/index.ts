@@ -108,7 +108,7 @@ async function enviarWhatsApp(telefono: string, nombreCompleto: string, cantidad
   const wamid = json?.messages?.[0]?.id ?? null
 
   // Texto real de la plantilla aprobada (con Isaac, ver FRAMEWORK_CONVERSION.md).
-  const contenidoReal = `Hola ${nombre}! Soy Sofía, de Tu Préstamo 👋 Tu solicitud ya está aprobada y ya subiste algunos documentos. Te faltan ${cantidadTexto} para terminar tu evaluación y dejar atrás los intereses de tu tarjeta de crédito. ¿Cómo preferís terminar?`
+  const contenidoReal = `Hola ${nombre}! Soy Sofía, de Tu Préstamo 👋 Tu solicitud de refinanciamiento de tarjeta de crédito ya está aprobada y ya subiste algunos documentos. Te faltan ${cantidadTexto} para terminar tu evaluación y dejar atrás los intereses de tu tarjeta de crédito. ¿Cómo preferís terminar?`
   await logToBotCRM(numero, nombreCompleto, contenidoReal, wamid)
   return true
 }
