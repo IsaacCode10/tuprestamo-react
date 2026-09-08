@@ -222,6 +222,16 @@ export default function BlogArticlePage({ preview = false }) {
       <article className="art">
         {row.serie_label && <div className="art-series">{row.serie_label}</div>}
 
+        {/* Orientación para quien llega directo a este capítulo sin pasar por el anterior -
+            arriba del todo, sin bloquear nada (nunca gatear el contenido, solo ofrecer el
+            camino de vuelta). Patrón de series serializadas: la gente que llega tarde intenta
+            volver al principio sola, el trabajo del sitio es hacérselo fácil desde el inicio. */}
+        {row.nav_anterior_slug && (
+          <Link to={`/finanzas-de-isaac/${row.nav_anterior_slug}`} className="art-catchup">
+            ← Si te lo perdiste, empezá por {row.nav_anterior_titulo || 'el episodio anterior'}
+          </Link>
+        )}
+
         <h1>{row.titulo}</h1>
 
         <div className="byline">
@@ -272,16 +282,26 @@ export default function BlogArticlePage({ preview = false }) {
           </div>
         )}
 
-        {row.nav_siguiente_titulo && (
+        {(row.nav_anterior_titulo || row.nav_siguiente_titulo) && (
           <div className="snav">
             <div className="sn">
               <div className="sn-lbl">← Anterior</div>
-              <div className="sn-dis">Este es el primer episodio</div>
+              {row.nav_anterior_slug ? (
+                <Link to={`/finanzas-de-isaac/${row.nav_anterior_slug}`} className="sn-title">{row.nav_anterior_titulo}</Link>
+              ) : (
+                <div className="sn-dis">Este es el primer episodio</div>
+              )}
             </div>
-            <div className="sn r">
-              <div className="sn-lbl">Próximo →</div>
-              <div className="sn-title">{row.nav_siguiente_titulo}</div>
-            </div>
+            {row.nav_siguiente_titulo && (
+              <div className="sn r">
+                <div className="sn-lbl">Próximo →</div>
+                {row.nav_siguiente_slug ? (
+                  <Link to={`/finanzas-de-isaac/${row.nav_siguiente_slug}`} className="sn-title">{row.nav_siguiente_titulo}</Link>
+                ) : (
+                  <div className="sn-title sn-title--soon">{row.nav_siguiente_titulo}</div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </article>
