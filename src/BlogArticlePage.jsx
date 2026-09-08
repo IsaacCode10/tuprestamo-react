@@ -14,7 +14,7 @@ import './BlogArticlePage.css';
 //   [TABLA]               -> la tabla de datos (tabla_titulo / tabla_filas)
 //   [REVEAL]              -> el bloque de monto acumulado (reveal_label/numero/sub)
 //   cualquier otra línea  -> párrafo normal
-function renderHistoria(historia, row, tablaFilas) {
+function renderHistoria(historia, row, tablaFilas, onZoom) {
   const lineas = (historia || '').split('\n').map(s => s.trim()).filter(Boolean);
   return lineas.map((linea, i) => {
     if (linea.startsWith('## ')) {
@@ -23,11 +23,16 @@ function renderHistoria(historia, row, tablaFilas) {
     if (linea === '[FOTO2]' || linea === '[FOTO2-DOC]') {
       if (!row.foto2_url && !row.foto2_caption) return null;
       // [FOTO2-DOC] es para capturas/comprobantes (correos, recibos): se muestra completa,
-      // sin el recorte 4:3 que usamos para fotos de escena.
+      // sin el recorte 4:3 que usamos para fotos de escena. Las dos son clickeables para
+      // abrir el lightbox - en [FOTO2-DOC] es donde más importa (letra chica de un correo).
       const slotClass = linea === '[FOTO2-DOC]' ? 'photo-slot photo-slot--doc' : 'photo-slot';
       return (
         <React.Fragment key={i}>
-          {row.foto2_url && <div className={slotClass}><img src={row.foto2_url} alt={row.foto2_caption || ''} /></div>}
+          {row.foto2_url && (
+            <div className={slotClass} onClick={() => onZoom(row.foto2_url, row.foto2_caption)}>
+              <img src={row.foto2_url} alt={row.foto2_caption || ''} />
+            </div>
+          )}
           {row.foto2_caption && <p className="caption">{row.foto2_caption}</p>}
         </React.Fragment>
       );
@@ -127,6 +132,11 @@ function SuscripcionCapitulos({ origenSlug }) {
 export default function BlogArticlePage({ preview = false }) {
   const { articleSlug } = useParams();
   const [state, setState] = useState({ loading: true, row: null, notFound: false });
+  // Lightbox de fotos: al tocar cualquier foto del artículo se abre a pantalla completa,
+  // más grande - pedido real de Isaac, en la foto del correo/comprobante no se llegaba a
+  // leer la letra chica con el tamaño normal dentro del artículo.
+  const [zoom, setZoom] = useState(null); // { src, alt } | null
+  const openZoom = (src, alt) => setZoom({ src, alt: alt || '' });
 
   useEffect(() => {
     let cancelled = false;
@@ -166,7 +176,7 @@ export default function BlogArticlePage({ preview = false }) {
   const canonical = `https://tuprestamobo.com/finanzas-de-isaac/${row.slug}`;
   const tablaFilas = Array.isArray(row.tabla_filas) ? row.tabla_filas : [];
   const faqs = Array.isArray(row.faqs) ? row.faqs : [];
-  const cuerpo = renderHistoria(row.historia, row, tablaFilas);
+  const cuerpo = renderHistoria(row.historia, row, tablaFilas, openZoom);
 
   const schema = {
     '@context': 'https://schema.org',
@@ -225,7 +235,11 @@ export default function BlogArticlePage({ preview = false }) {
         {(row.foto1_url || row.foto1_caption) && (
           <>
             {row.foto1_url
-              ? <div className="photo-slot"><img src={row.foto1_url} alt={row.foto1_caption || ''} /></div>
+              ? (
+                <div className="photo-slot" onClick={() => openZoom(row.foto1_url, row.foto1_caption)}>
+                  <img src={row.foto1_url} alt={row.foto1_caption || ''} />
+                </div>
+              )
               : null}
             {row.foto1_caption && <p className="caption">{row.foto1_caption}</p>}
           </>
@@ -271,6 +285,13 @@ export default function BlogArticlePage({ preview = false }) {
           </div>
         )}
       </article>
+
+      {zoom && (
+        <div className="img-zoom-overlay" onClick={() => setZoom(null)}>
+          <button className="img-zoom-close" onClick={() => setZoom(null)} aria-label="Cerrar">×</button>
+          <img src={zoom.src} alt={zoom.alt} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </>
   );
 }
