@@ -54,7 +54,38 @@
 - **Saldo inconsistente**: volver a calcular gross-up y ajustar oferta antes de emitir propuesta final.
 - **Estado en inglés**: refrescar; si persiste, reportar a soporte.
 
-## 6. Checklist diario
+## 6. Control de duplicados / identidad (agregado 2026-09-08)
+
+**Regla:** una misma Cédula de Identidad no puede tener más de una solicitud de
+prestatario en estado activo (`pendiente`, `pre-aprobado`, `documentos-en-revision`,
+`aprobado_para_oferta`) al mismo tiempo. Rechazada o desembolsada, sí puede volver a
+aplicar más adelante — solo se bloquea tener dos activas a la vez.
+
+**Por qué se agregó — caso real detectado el 2026-09-08:** un solicitante (Luis Zenón
+Segundo Padilla, CI `11366636`) aplicó 4 veces en 3 semanas. El control que existía hasta
+ese momento comparaba por **email**, y lo esquivó agregando una letra de más al final del
+correo en el segundo intento. Entre intento e intento **cambió los datos que declaró**
+(situación laboral e ingreso mensual), es decir, fue ajustando los números a mano
+buscando una combinación que pasara el scorecard automático — exactamente el patrón que
+un control de identidad real tiene que atrapar.
+
+**Cómo quedó resuelto (dos capas, no solo una):**
+1. **Código de la aplicación** (`LoanRequestForm.jsx` y la Edge Function
+   `handle-new-solicitud`): el chequeo de "¿ya tiene una solicitud activa?" ahora compara
+   por `cedula_identidad`, no por `email`.
+2. **Base de datos** (respaldo real, no solo el código): índice único parcial
+   `solicitudes_cedula_activa_unique` sobre `cedula_identidad`, condicionado a
+   `tipo_solicitud = 'prestatario'` y estado activo. Aunque el código de la app tuviera un
+   bug futuro, la base de datos físicamente no va a permitir dos filas activas con la misma
+   CI — esto es lo que hace que el control sea real y no dependa de que nadie se acuerde
+   de mantenerlo.
+
+**Qué hacer si un analista encuentra un caso similar** (alguien con múltiples intentos y
+datos que cambian entre uno y otro): tratarlo como señal de posible manipulación del
+scorecard, no como una simple corrección de datos — escalar para revisión manual antes de
+avanzar con cualquiera de las solicitudes de esa persona.
+
+## 7. Checklist diario
 - Revisar nuevas solicitudes y documentos pendientes.
 - Completar decisiones en cola y transferir a Operaciones las aprobadas (`pendiente_notariado`) para cierre notarial/publicación.
 - Coordinar con Operaciones si hay cambios de datos que afecten pagos/cronos.

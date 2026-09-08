@@ -135,7 +135,7 @@ serve(async (req) => {
   try {
     const { record: solicitud } = await req.json();
     const solicitudPayload = solicitud ?? {};
-    const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses, saldo_deuda_tc } = solicitudPayload;
+    const { id: solicitud_id, email, nombre_completo, tipo_solicitud, monto_solicitado, plazo_meses, saldo_deuda_tc, cedula_identidad } = solicitudPayload;
 
     // Flujo AUTOMÁTICO para INVERSIONISTA: generar invitación y enviar correo de bienvenida
     if (tipo_solicitud === 'inversionista') {
@@ -226,12 +226,17 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    // Hardening: evita duplicados activos por email para prestatarios.
+    // Hardening: evita duplicados activos por CI (Cedula de Identidad), no por email - el
+    // email lo cambia cualquiera con un caracter de mas. Caso real detectado el 2026-09-07:
+    // un solicitante reaplico 4 veces con la misma CI, agregando una "S" al email para
+    // esquivar este chequeo, y cambio sus datos declarados (ingreso, situacion laboral) en
+    // cada intento buscando pasar el scorecard automatico. Ver docs/MANUAL_ANALISTA_RIESGO.md
+    // seccion 6 (Control de duplicados / identidad).
     const { data: existingActiveSolicitudes, error: existingActiveError } = await supabaseAdmin
       .from('solicitudes')
       .select('id,estado')
       .eq('tipo_solicitud', 'prestatario')
-      .eq('email', email)
+      .eq('cedula_identidad', cedula_identidad)
       .neq('id', solicitud_id)
       .in('estado', ACTIVE_SOLICITUD_STATES)
       .order('created_at', { ascending: false })
@@ -245,7 +250,7 @@ serve(async (req) => {
     if ((existingActiveSolicitudes || []).length > 0) {
       const activeRef = existingActiveSolicitudes![0];
       console.warn(
-        `Solicitud ${solicitud_id}: bloqueada por solicitud activa existente (id=${activeRef.id}, estado=${activeRef.estado}).`
+        `Solicitud ${solicitud_id}: bloqueada por solicitud activa existente con la misma CI (id=${activeRef.id}, estado=${activeRef.estado}).`
       );
       await supabaseAdmin
         .from('solicitudes')
@@ -254,7 +259,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({
-          message: 'Solicitud bloqueada: ya existe una solicitud activa para este correo.',
+          message: 'Solicitud bloqueada: ya existe una solicitud activa para esta Cedula de Identidad.',
           active_solicitud_id: activeRef.id,
           active_estado: activeRef.estado,
         }),

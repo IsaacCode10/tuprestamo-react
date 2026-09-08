@@ -113,11 +113,15 @@ const LoanRequestForm = ({ onClose, role }) => {
     };
 
     try {
+      // Dedup por Cedula de Identidad, no por email - el email lo cambia cualquiera con un
+      // caracter de mas (paso real: alguien agrego una "S" al final de su email y el chequeo
+      // anterior por email no lo detecto, permitiendole reaplicar cambiando sus datos
+      // declarados cada vez). La CI es el dato que no se puede alterar sin ser otra persona.
       const { data: existingActive, error: checkError } = await supabase
         .from('solicitudes')
         .select('id,estado')
         .eq('tipo_solicitud', 'prestatario')
-        .ilike('email', answers.email)
+        .eq('cedula_identidad', answers.cedula_identidad)
         .in('estado', ACTIVE_SOLICITUD_STATES)
         .order('created_at', { ascending: false })
         .limit(1);
