@@ -89,9 +89,10 @@ async function enviarWhatsApp(telefono: string, nombreCompleto: string): Promise
   if (!res.ok) { console.error('[send-reactivacion-fria] error whatsapp:', JSON.stringify(json)); return false }
   const wamid = json?.messages?.[0]?.id ?? null
 
-  // Texto real todavia no confirmado contra un envio real (plantilla recien creada) - mejor
-  // aproximacion, a revisar cuando Meta la apruebe y se vea el primer envio de verdad.
-  const contenidoReal = `Hola ${nombre}! Vimos que empezaste tu solicitud para refinanciar tu tarjeta de credito con Tu Prestamo y no llegaste a terminarla. Te tomamos unos 3 minutos, sin compromiso - seguis exactamente donde la dejaste. Si tenes alguna duda, contestanos por aca no mas.`
+  // Texto real de la plantilla aprobada (con Isaac, ver FRAMEWORK_CONVERSION.md): identificacion
+  // de Sofia + beneficio (dejar atras los intereses) antes del pedido, botones de Respuesta
+  // rapida "Por el formulario" / "Sigo por WhatsApp" manejados en tuprestamo-bot/webhook/route.ts.
+  const contenidoReal = `Hola ${nombre}! Soy Sofía, de Tu Préstamo 👋 Estás a un par de datos de dejar atrás los altos intereses de tu tarjeta de crédito y pasar a una cuota fija que sí podés manejar. ¿Cómo preferís seguir?`
   await logToBotCRM(numero, nombreCompleto, contenidoReal, wamid)
   return true
 }

@@ -71,7 +71,6 @@ async function logToBotCRM(whatsappNormalizado: string, nombre: string, content:
 async function enviarWhatsApp(telefono: string, nombreCompleto: string): Promise<boolean> {
   const numero = normalizarWhatsapp(telefono)
   const nombre = primerNombre(nombreCompleto)
-  const loginUrl = `${SITE_URL}/auth`
 
   const res = await fetch(`https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
@@ -83,11 +82,11 @@ async function enviarWhatsApp(telefono: string, nombreCompleto: string): Promise
       template: {
         name: 'reactivacion_solicitud_caliente',
         language: { code: 'es_AR' },
+        // Botones "Entrar a mi cuenta" / "Que me llamen" son de Respuesta rapida (texto fijo,
+        // no llevan link/telefono dinamico) - vienen ya incluidos en la plantilla aprobada,
+        // no hace falta un componente 'button' aca. Se manejan al tocarlos en
+        // tuprestamo-bot/src/app/api/webhook/route.ts.
         components: [{ type: 'body', parameters: [{ type: 'text', text: nombre }] }],
-        // Si la plantilla se aprueba con un boton de tipo URL dinamica, agregar aca un
-        // componente adicional { type: 'button', sub_type: 'url', index: '0',
-        // parameters: [{ type: 'text', text: '<token o id de solicitud>' }] } - pendiente de
-        // decidir si el link lleva a /auth simple o a un magic link real (mas seguro).
       },
     }),
   })
@@ -96,9 +95,10 @@ async function enviarWhatsApp(telefono: string, nombreCompleto: string): Promise
   if (!res.ok) { console.error('[send-reactivacion-caliente] error whatsapp:', JSON.stringify(json)); return false }
   const wamid = json?.messages?.[0]?.id ?? null
 
-  // Texto real todavia no confirmado contra un envio real (plantilla recien creada) - mejor
-  // aproximacion, a revisar cuando Meta la apruebe y se vea el primer envio de verdad.
-  const contenidoReal = `Hola ${nombre}! Ya tenemos tu solicitud para refinanciar tu tarjeta de credito con Tu Prestamo, pero todavia no entraste a ver el estado. Entra aca para seguir: ${loginUrl}. Cualquier duda, contestanos por aca no mas.`
+  // Texto real de la plantilla aprobada (con Isaac, ver FRAMEWORK_CONVERSION.md): identificacion
+  // de Sofia + beneficio (dejar atras los intereses) antes del pedido, botones de Respuesta
+  // rapida "Entrar a mi cuenta" / "Que me llamen" manejados en tuprestamo-bot/webhook/route.ts.
+  const contenidoReal = `Hola ${nombre}! Soy Sofía, de Tu Préstamo 👋 Ya diste el paso más difícil: tu solicitud está lista. Solo te falta entrar a tu cuenta para ver el estado y seguir dejando atrás los intereses de tu tarjeta de crédito. ¿Cómo preferís seguir?`
   await logToBotCRM(numero, nombreCompleto, contenidoReal, wamid)
   return true
 }
