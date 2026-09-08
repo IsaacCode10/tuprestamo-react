@@ -37,7 +37,9 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 11px; font-weight: 700; color: var(--accent);
   letter-spacing: .09em; text-transform: uppercase; margin-bottom: 20px;
+  text-decoration: none; display: inline-block;
 }
+a.art-series:hover { text-decoration: underline; }
 
 .art-catchup {
   display: inline-block; font-size: 13px; color: var(--primary); font-weight: 600;
@@ -221,6 +223,17 @@
 a.sn-title:hover { color: var(--accent); text-decoration: underline; }
 .sn-dis { font-size: 13px; color: var(--muted); }
 
+/* Link al hub /finanzas-de-isaac, siempre presente entre Anterior/Próximo - sin esto,
+   quien esta en el episodio 0 (sin "anterior") no tiene forma de volver al listado
+   completo salvo el boton "atras" del navegador. */
+.snav-hub {
+  align-self: center; flex-shrink: 0; font-family: 'Montserrat', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; border: 1px solid var(--rule);
+  border-radius: 20px; padding: 6px 14px; white-space: nowrap;
+}
+.snav-hub:hover { color: var(--accent); border-color: var(--accent); }
+
 /* Próximo episodio todavía sin publicar: nunca se ve como un link (cursor default,
    color muted) para que no se sienta como un link roto - se marca explícitamente
    como "Próximamente" en vez de simular que el título es clickeable. */
@@ -233,6 +246,7 @@ a.sn-title:hover { color: var(--accent); text-decoration: underline; }
 @media (max-width: 500px) {
   .snav { flex-direction: column; }
   .sn.r { text-align: left; }
+  .snav-hub { align-self: flex-start; order: 3; margin-top: 4px; }
   .art { padding-top: 36px; }
 }
 

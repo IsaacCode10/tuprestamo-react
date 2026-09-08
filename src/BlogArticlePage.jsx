@@ -220,7 +220,9 @@ export default function BlogArticlePage({ preview = false }) {
       )}
 
       <article className="art">
-        {row.serie_label && <div className="art-series">{row.serie_label}</div>}
+        {row.serie_label && (
+          <Link to="/finanzas-de-isaac" className="art-series">{row.serie_label}</Link>
+        )}
 
         {/* Orientación para quien llega directo a este capítulo sin pasar por el anterior -
             arriba del todo, sin bloquear nada (nunca gatear el contenido, solo ofrecer el
@@ -292,6 +294,7 @@ export default function BlogArticlePage({ preview = false }) {
                 <div className="sn-dis">Este es el primer episodio</div>
               )}
             </div>
+            <Link to="/finanzas-de-isaac" className="snav-hub">Todos los capítulos</Link>
             {row.nav_siguiente_titulo && (
               <div className="sn r">
                 <div className="sn-lbl">Próximo →</div>
