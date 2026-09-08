@@ -53,12 +53,20 @@ segundo toque más adelante, no se asume de entrada.
   silenciosamente (queda registrado en los logs de la Edge Function) y esa persona sigue
   disponible para el próximo intento una vez aprobada.
 
-## 5. Corte de fecha (no negociable, decisión explícita de Isaac)
+## 5. Corte de fecha + whitelist retroactiva (revisado 2026-09-08)
 
-Ninguna de las dos campañas toca datos de antes del **2026-09-07**. Un lead viejo que
-llenó el formulario a medias en julio, por ejemplo, **nunca** va a recibir este mensaje —
-el filtro de fecha está hardcodeado en el código de las dos Edge Functions
-(`FECHA_CORTE`), no es un flag que se pueda desactivar sin tocar el código a propósito.
+Regla general: ninguna de las dos campañas toca datos de antes del **2026-09-07** — el
+filtro de fecha (`FECHA_CORTE`) sigue hardcodeado en las Edge Functions, no es un flag que
+se pueda desactivar sin querer.
+
+**Excepción explícita:** el 2026-09-08 Isaac revisó **todo el historial de solicitudes**
+de `prestatario` (ver tabla completa abajo, sección 8.1) y aprobó incluir a **2 personas
+puntuales de antes del corte** en la campaña caliente, vía la columna
+`solicitudes.incluir_reactivacion_retroactiva` (nunca moviendo la fecha de corte general,
+para no colar a nadie que no se revisó uno por uno):
+- **Jose Antonio Ayala Marmañaz** (ID 247) — pre-aprobado, nunca contestó los mensajes.
+- **Eva López Mamani** (ID 254) — pre-aprobado, tiene tarjeta de crédito real, nunca subió
+  ningún documento (nunca activó su cuenta).
 
 ## 6. Costo
 
@@ -78,6 +86,45 @@ abandona el formulario o no activa su cuenta, no se multiplica por reintentos.
 - **"Que me llame un asesor"** → Sofía le confirma que alguien lo va a llamar, **y le llega
   un WhatsApp a Isaac en el momento** con el nombre y teléfono para que haga la llamada.
   Ninguna opción hace que el cliente tenga que llamar a nadie.
+
+## 8.1 Revisión completa del historial (2026-09-08) — registro para no repetir el análisis
+
+Isaac revisó cada solicitud de `prestatario` existente antes del corte para decidir quién
+entra retroactivamente. Resultado, para no repetir la discusión si alguien pregunta "¿por
+qué a este sí y a este no?":
+
+**Excluidos definitivamente de esta campaña:**
+- IDs 213, 217, 218, 221-236, 244, 245, 246, 258, 260 — prueba interna de Isaac (mismo
+  patrón de emails ya identificado en el análisis de Mixpanel).
+- IDs 264, 266, 268, 270 (Luis Zenón Segundo Padilla) — CI duplicada reaplicando con datos
+  alterados cada vez, tratado como intento de fraude (ver
+  `docs/MANUAL_ANALISTA_RIESGO.md` sección 6). Marcados `rechazado`.
+- IDs 255, 256 (Ángela Linda Paz Núñez) — duplicado real (error de tipeo, no fraude), pero
+  contactada por Isaac y descartada: no entendió la propuesta de valor. Marcados `rechazado`.
+- ID 216 (Saith Ricaldez) y 249 (Emiliano Ballejos) — no tienen tarjeta de crédito, no son
+  público objetivo (249 además es amigo de Isaac).
+- ID 220 (Angel Miranda) — rechazado. **Regla general: nunca se reactiva a un rechazado con
+  estas plantillas** — ambas asumen que hay una cuenta/oferta esperando, lo cual sería falso
+  para alguien ya rechazado. Ver nota abajo sobre una posible campaña futura distinta para
+  este caso.
+- ID 241 (Davy) y 250 (Rodrigo Fernando) — amigos de Isaac / no tienen tarjeta de crédito.
+- ID 257 (Anatalia Monteiro) — número no boliviano. **Regla de seguridad de Isaac: solo se
+  aceptan solicitudes de números de teléfono bolivianos**, sin excepción.
+- ID 261 (Adhemar Alan Rodo Sosa) — el lead más avanzado (único con documentación 100%
+  completa), pero **excluido a propósito de la automatización**: está en manejo manual
+  directo de Isaac (pendiente de constituir la SRL para poder pedir el servicio de
+  INFOCRED y cerrar su análisis). No tiene sentido que Sofía le escriba en paralelo.
+
+**Incluidos retroactivamente** (ver sección 5): IDs 247 y 254.
+
+**Encontrados pero sin plantilla todavía — nuevo segmento identificado:**
+- ID 263 (Adelia Ari Quispe, 3 documentos subidos) y ID 269 (Luis Brian Equilea Belzu, 2
+  documentos subidos) — **ya activaron su cuenta y ya subieron algo, pero no completaron
+  todos los documentos requeridos.** Ninguna de las 2 plantillas actuales les queda bien:
+  "Entrá a tu cuenta" no aplica (ya entraron) y "Terminá el formulario" tampoco (el
+  formulario ya está hecho). Hace falta una **tercera plantilla** ("te faltan documentos
+  para terminar tu evaluación") — ver pendientes, sección 9. No se les manda nada hasta
+  que exista.
 
 ## 8. Decisiones de negocio tomadas (registro, no repetir la discusión)
 
@@ -104,6 +151,21 @@ abandona el formulario o no activa su cuenta, no se multiplica por reintentos.
 - [ ] Aplicar el mismo patrón de estrategia a otros segmentos si surgen (ej. inversionistas
       que dejaron el formulario de interés a medias) — documentar acá, no crear un tercer
       lugar disperso.
+- [ ] **Nueva plantilla — "documentación incompleta"** (identificado 2026-09-08): segmento
+      de gente que activó su cuenta y subió algo, pero no todos los documentos requeridos
+      (ver sección 8.1, casos reales IDs 263 y 269). Necesita su propia lógica de
+      "completo" por `situacion_laboral` (ver `getRequiredDocs` en `BorrowerDashboard.jsx`
+      / `getRequiredDocsBySituation` en `RiskAnalystDashboard.jsx`) — no es tan simple como
+      "¿subió algo?".
+- [ ] **Campaña futura separada para rechazados** (no estas plantillas): el correo
+      automático de rechazo ya promete "intentá de nuevo en unos meses" pero nadie lo
+      recontacta de verdad. Evaluar una plantilla honesta tipo "¿tu situación cambió?"
+      mandada varios meses después del rechazo — nunca reusar las plantillas actuales para
+      esto, asumen una cuenta/oferta activa que un rechazado no tiene.
+- [ ] Arreglar `normalizarWhatsapp()` (le antepone "591" a cualquier número que no empiece
+      así) antes de que algún número no boliviano vuelva a colarse en el flujo — hoy no es
+      urgente porque la regla es no aceptar números no bolivianos, pero es un bug latente
+      si esa regla se relaja alguna vez.
 
 ## 10. Referencias
 

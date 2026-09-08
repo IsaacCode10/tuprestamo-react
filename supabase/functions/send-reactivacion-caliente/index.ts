@@ -12,7 +12,10 @@ const corsHeaders = {
 // Parte 10 y FRAMEWORK_CONVERSION.md.
 //
 // Corte por fecha: solo solicitudes creadas desde HOY (2026-09-07) en adelante - decision
-// explicita de Isaac para no reactivar leads viejos con plantillas pagas.
+// explicita de Isaac para no reactivar leads viejos con plantillas pagas SIN REVISAR. Los
+// leads de antes del corte que Isaac revisó y aprobó uno por uno (2026-09-08, ver
+// ESTRATEGIA_REACTIVACION_WHATSAPP.md) entran vía `incluir_reactivacion_retroactiva = true`,
+// no moviendo la fecha de corte general.
 //
 // Pensado para correr cada 30 min via pg_cron (ver migracion add-reactivacion-caliente-cron).
 
@@ -109,13 +112,17 @@ serve(async (req) => {
   try {
     const limite = new Date(Date.now() - HORAS_ESPERA * 60 * 60 * 1000).toISOString()
 
+    // Corte general por fecha, MAS una whitelist explicita de leads de antes del corte
+    // revisados uno por uno con Isaac (ver incluir_reactivacion_retroactiva y
+    // ESTRATEGIA_REACTIVACION_WHATSAPP.md) - nunca se movio la fecha de corte general para
+    // no colar leads que todavia no se revisaron.
     const { data: solicitudes, error } = await supabaseAdmin
       .from('solicitudes')
       .select('id, nombre_completo, telefono, created_at, estado')
       .eq('tipo_solicitud', 'prestatario')
       .in('estado', ESTADOS_ACTIVOS)
       .not('telefono', 'is', null)
-      .gte('created_at', FECHA_CORTE)
+      .or(`created_at.gte.${FECHA_CORTE},incluir_reactivacion_retroactiva.eq.true`)
       .lte('created_at', limite)
       .is('activado_en_dashboard_at', null)
       .is('reactivacion_enviada_at', null)
