@@ -1,4 +1,33 @@
 
+## Actualizacion 2026-09-07 (tarde) - Plantillas de reactivacion armadas y aprobadas en Meta
+
+**Lo hecho:**
+- Copy final de las 2 plantillas de WhatsApp trabajado con Isaac aplicando
+  `FRAMEWORK_CONVERSION.md` (identificacion de Sofia + beneficio real antes del pedido,
+  nunca caracteristicas sueltas): `reactivacion_solicitud_fria` (botones "Por el
+  formulario" / "Sigo por WhatsApp") y `reactivacion_solicitud_caliente` (botones "Entrar
+  a mi cuenta" / "Que me llame un asesor"). Las dos con botones de Respuesta rapida, no
+  de Link - Meta no permite mezclar tipos de boton en una misma plantilla.
+- `tuprestamo-bot/src/lib/whatsapp.ts`: el webhook ahora entiende mensajes `type: "button"`
+  (antes se ignoraban en silencio, un tap no hacia nada).
+- `tuprestamo-bot/src/app/api/webhook/route.ts`: maneja cada boton con una respuesta fija
+  (no deja que la IA improvise):
+  - "Por el formulario" -> link publico del formulario.
+  - "Que me llame un asesor" -> confirma al cliente + notifica a Isaac por WhatsApp para
+    que el llame (nunca al reves - decision explicita: "nadie quiere llamar").
+  - "Entrar a mi cuenta" -> **bug real encontrado y corregido en el momento**: un link
+    generico a `/auth` no serviria, porque `handle-new-solicitud` crea la cuenta
+    automaticamente al enviar la solicitud pero la contraseña recien se crea cuando la
+    persona abre el magic link del correo original (a `/confirmar`) - si nunca lo abrio
+    (que es justo el motivo de estar en este segmento), `/auth` le pediria una
+    contraseña inexistente. Ahora busca la solicitud por telefono (ultimos 8 digitos) y
+    genera un magic link nuevo del mismo tipo, en vez de un link generico.
+
+**Pendiente:**
+- Esperar aprobacion de Meta de las 2 plantillas (estado PENDING al momento de escribir esto).
+- Cargar el `WHATSAPP_BUSINESS_ACCOUNT_ID` de Tu Prestamo en `META.md` si hace falta para
+  futuras plantillas.
+
 ## Actualizacion 2026-09-07
 
 **Lo hecho hoy:**
