@@ -23,6 +23,11 @@
     contraseña inexistente. Ahora busca la solicitud por telefono (ultimos 8 digitos) y
     genera un magic link nuevo del mismo tipo, en vez de un link generico.
 
+- Todo lo aprendido armando estas 2 plantillas (estructura de botones de Meta, formato de
+  variable Numero vs Nombre, y el bug real del magic link) quedo documentado en
+  `../GUIA_DEFINITIVA_BOT_WHATSAPP.md`, secciones 10.7 y 10.8 - leer eso antes de armar
+  cualquier plantilla de remarketing nueva, en este proyecto o en otro.
+
 **Pendiente:**
 - Esperar aprobacion de Meta de las 2 plantillas (estado PENDING al momento de escribir esto).
 - Cargar el `WHATSAPP_BUSINESS_ACCOUNT_ID` de Tu Prestamo en `META.md` si hace falta para
