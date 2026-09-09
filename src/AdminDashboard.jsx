@@ -18,25 +18,12 @@ const formatCurrency = (value) => {
   return Number.isFinite(number) ? currencyFormatter.format(number) : 'Bs 0.00';
 };
 
-const formatDate = (value) => {
-  if (!value) return '--';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '--';
-  return date.toLocaleDateString();
-};
-
-const formatPercent = (value) => {
-  const num = Number(value || 0);
-  return `${num.toFixed(1)}%`;
-};
-
 const isWithin48h = (dateStr) => {
   return (Date.now() - new Date(dateStr).getTime()) < 48 * 60 * 60 * 1000;
 };
 
-const COSTO_ANALISTA_POR_APROBADO = 50;
-const COSTO_INFOCRED_POR_CONSULTA = 11;
-
+// Sin cambios: activa de verdad (confirma pago de un inversionista), no tiene equivalente
+// en ningun otro panel - 2026-09-09, confirmado con Isaac antes de tocar este archivo.
 const PendingInvestments = () => {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +36,8 @@ const PendingInvestments = () => {
       const { data, error } = await supabase
         .from('inversiones')
         .select(`
-          id, 
-          amount, 
+          id,
+          amount,
           created_at,
           opportunity_id
         `)
@@ -80,7 +67,7 @@ const PendingInvestments = () => {
       if (error) throw error;
 
       // Actualiza la UI eliminando la inversión confirmada de la lista
-      setInvestments(currentInvestments => 
+      setInvestments(currentInvestments =>
         currentInvestments.filter(inv => inv.id !== investmentId)
       );
 
@@ -167,7 +154,7 @@ const RiskDistributionChart = ({ stats }) => {
       <h3>Distribución de Riesgo</h3>
       <div className="risk-bar">
         {segments.map(seg => (
-          <div 
+          <div
             key={seg.profile}
             className={`risk-segment ${seg.className}`}
             style={{ width: `${getPercentage(seg.count)}%` }}
@@ -189,93 +176,108 @@ const RiskDistributionChart = ({ stats }) => {
   );
 };
 
+// Nombres legibles para cada estado real (el literal que vive en solicitudes.estado) - se usan
+// para la insignia de la fila y en el panel de detalle. No agrupan nada, son 1 a 1.
+const ESTADO_LABELS = {
+  pendiente: 'Pendiente',
+  'documentos-en-revision': 'Documentos en revisión',
+  'pre-aprobado': 'Pre-aprobado',
+  aprobado_para_oferta: 'Aprobado (para oferta)',
+  desembolsado: 'Desembolsado',
+  rechazado: 'Rechazado',
+};
+
+// Mismos 3 umbrales que corre el scorecard automático al decidir de verdad
+// (supabase/functions/handle-new-solicitud/index.ts, función runRiskScorecard) - duplicados
+// a propósito acá, en el frontend, para poder mostrar "por qué" sin tocar ese archivo
+// compartido (usado también por Análisis de Riesgo y Operaciones). Es un cálculo EN VIVO
+// sobre los datos actuales de la solicitud, no un registro histórico guardado - hoy esa razón
+// no se persiste en ningún lado en el momento de la decisión real, así que si los datos
+// declarados se editaron después, el motivo mostrado acá puede no coincidir exacto con el
+// que se aplicó en su momento. Cubre el caso más común (rechazo/aprobación automática por
+// scorecard) y el chequeo de CI duplicada; no cubre un rechazo manual con motivo propio de
+// un analista, que tampoco se guarda hoy en ningún lado.
+const ESTADOS_ACTIVOS_CI = ['pendiente', 'pre-aprobado', 'documentos-en-revision', 'aprobado_para_oferta'];
+
+function evaluarMotivo(req, todasLasSolicitudes) {
+  const estado = (req.estado || '').toLowerCase().trim();
+
+  if (estado === 'rechazado' && req.cedula_identidad) {
+    const duplicada = todasLasSolicitudes.some(o =>
+      o.id !== req.id &&
+      o.cedula_identidad === req.cedula_identidad &&
+      ESTADOS_ACTIVOS_CI.includes((o.estado || '').toLowerCase().trim())
+    );
+    if (duplicada) return 'Ya existe otra solicitud activa con esta misma Cédula (posible duplicado)';
+  }
+
+  const ingresos = parseFloat(req.ingreso_mensual);
+  const saldoDeuda = parseFloat(req.saldo_deuda_tc);
+  const tasaAnual = parseFloat(req.tasa_interes_tc);
+  const antiguedad = parseInt(req.antiguedad_laboral, 10);
+
+  if ([ingresos, saldoDeuda, tasaAnual, antiguedad].some(Number.isNaN)) {
+    return 'Datos incompletos o inválidos en la solicitud';
+  }
+
+  if (ingresos < 3000) {
+    return `Ingreso mensual ${formatCurrency(ingresos)} (mínimo Bs 3.000)`;
+  }
+
+  const interesMensual = (saldoDeuda * (tasaAnual / 100)) / 12;
+  const amortizacion = saldoDeuda * 0.01;
+  const dti = ((interesMensual + amortizacion) / ingresos) * 100;
+
+  if (dti > 50) {
+    return `DTI ${dti.toFixed(1)}% (máximo 50%)`;
+  }
+
+  let score = 0;
+  if (ingresos > 8000) score += 3;
+  else if (ingresos >= 5000) score += 2;
+  else if (ingresos >= 3000) score += 1;
+
+  if (dti < 20) score += 3;
+  else if (dti <= 30) score += 2;
+  else if (dti <= 50) score += 1;
+
+  if (antiguedad >= 24) score += 2;
+  else if (antiguedad >= 12) score += 1;
+
+  let perfil = null;
+  if (score >= 7) perfil = 'A';
+  else if (score >= 5) perfil = 'B';
+  else if (score >= 2) perfil = 'C';
+
+  if (!perfil) return `Score insuficiente (${score} pts)`;
+  return `Perfil ${perfil} · DTI ${dti.toFixed(1)}% · score ${score} pts`;
+}
+
 // --- Componente Principal ---
 
 const AdminDashboard = () => {
   const [requests, setRequests] = useState([]);
-  const [stats, setStats] = useState({ 
+  const [stats, setStats] = useState({
     solicitudesHoy: 0, montoPreAprobadoHoy: 0,
-    totalPendientes: 0, totalPreAprobados: 0, totalRechazados: 0,
+    totalPendientes: 0, totalPreAprobados: 0, totalAprobados: 0, totalRechazados: 0,
     perfilA: 0, perfilB: 0, perfilC: 0
   });
-  const [fundingStats, setFundingStats] = useState({
-    monthCount: 0,
-    monthAmount: 0,
-    totalCount: 0,
-    totalAmount: 0,
-  });
-  const [ledgerMonth, setLedgerMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
-  const [ledgerRows, setLedgerRows] = useState([]);
-  const [ledgerTotals, setLedgerTotals] = useState({ cobros: 0, payouts: 0, comisiones: 0, originacion: 0, margen: 0 });
-  const [unitEconomics, setUnitEconomics] = useState({
-    aprobadosMes: 0,
-    consultasInfocredMes: 0,
-    costoAnalistaMes: 0,
-    costoInfocredMes: 0,
-    costosUnitariosMes: 0,
-    resultadoNetoMes: 0,
-  });
-  const [ledgerLoading, setLedgerLoading] = useState(false);
-  const [ledgerError, setLedgerError] = useState(null);
-  const [fuenteChecks, setFuenteChecks] = useState([]);
-  const [fuenteLoading, setFuenteLoading] = useState(false);
-  const [fuenteError, setFuenteError] = useState(null);
-  const [moraLoading, setMoraLoading] = useState(false);
-  const [moraError, setMoraError] = useState(null);
-  const [moraGlobal, setMoraGlobal] = useState({ cuotasVencidas: 0, cuotasTotales: 0, montoVencido: 0, montoTotal: 0, buckets: { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 } });
-  const [moraPorOpp, setMoraPorOpp] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
   const [alertMessage, setAlertMessage] = useState('');
   const prevRejectionsRef = useRef(0);
 
+  // Agrupa los 6 estados reales en 4 baldes para el resumen y los filtros ("documentos-en-
+  // revision" cuenta como pre-aprobado - ya paso el scorecard -, "aprobado_para_oferta" y
+  // "desembolsado" cuentan como aprobado). La insignia de cada fila sigue mostrando el
+  // estado real, esto solo agrupa para el KPI/filtro.
   const normalizedStatus = (state) => {
     if (!state) return 'pendiente';
     const lower = state.toLowerCase().trim();
     if (lower === 'documentos-en-revision') return 'pre-aprobado';
+    if (lower === 'aprobado_para_oferta' || lower === 'desembolsado') return 'aprobado';
     return lower;
-  };
-
-  const computeMora = (rows) => {
-    const global = { cuotasVencidas: 0, cuotasTotales: 0, montoVencido: 0, montoTotal: 0, buckets: { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 } };
-    const byOpp = {};
-    rows.forEach((r) => {
-      const status = (r.status || '').toLowerCase();
-      const amount = Number(r.expected_amount || 0);
-      const daysOverdue = Number(r.days_past_due || 0);
-      global.cuotasTotales += 1;
-      global.montoTotal += amount;
-      if (status === 'paid') return;
-      if (daysOverdue <= 0) return;
-      global.cuotasVencidas += 1;
-      global.montoVencido += amount;
-      let bucket = '0-30';
-      if (daysOverdue > 90) bucket = '90+';
-      else if (daysOverdue > 60) bucket = '61-90';
-      else if (daysOverdue > 30) bucket = '31-60';
-      global.buckets[bucket] += amount;
-      const key = r.opportunity_id || 's/n';
-      if (!byOpp[key]) {
-        byOpp[key] = { opportunity_id: key, cuotasTotales: 0, cuotasVencidas: 0, montoTotal: 0, montoVencido: 0, daysOverdueSum: 0 };
-      }
-      byOpp[key].cuotasTotales += 1;
-      byOpp[key].cuotasVencidas += 1;
-      byOpp[key].montoTotal += amount;
-      byOpp[key].montoVencido += amount;
-      byOpp[key].daysOverdueSum += daysOverdue;
-    });
-    const moraList = Object.values(byOpp).map((o) => ({
-      ...o,
-      tasaCuotas: o.cuotasTotales ? (o.cuotasVencidas / o.cuotasTotales) * 100 : 0,
-      tasaMonto: o.montoTotal ? (o.montoVencido / o.montoTotal) * 100 : 0,
-      diasPromedio: o.cuotasVencidas ? o.daysOverdueSum / o.cuotasVencidas : 0,
-    })).sort((a, b) => b.montoVencido - a.montoVencido);
-    setMoraGlobal(global);
-    setMoraPorOpp(moraList);
   };
 
   const fetchDashboardData = async () => {
@@ -290,7 +292,7 @@ const AdminDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (requestsError) throw requestsError;
-      
+
       const requestIds = (requestsData || []).map(r => r.id);
       let oppsMap = {};
       if (requestIds.length > 0) {
@@ -313,9 +315,6 @@ const AdminDashboard = () => {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
 
       const statsPayload = processedRequests.reduce((acc, r) => {
         const memoEstado = normalizedStatus(r.estado);
@@ -336,9 +335,9 @@ const AdminDashboard = () => {
         }
 
         return acc;
-      }, { 
-        solicitudesHoy: 0, montoPreAprobadoHoy: 0, 
-        estados: {}, perfiles: {} 
+      }, {
+        solicitudesHoy: 0, montoPreAprobadoHoy: 0,
+        estados: {}, perfiles: {}
       });
 
       setStats({
@@ -346,34 +345,12 @@ const AdminDashboard = () => {
         montoPreAprobadoHoy: statsPayload.montoPreAprobadoHoy,
         totalPendientes: statsPayload.estados.pendiente || 0,
         totalPreAprobados: statsPayload.estados['pre-aprobado'] || 0,
+        totalAprobados: statsPayload.estados.aprobado || 0,
         totalRechazados: statsPayload.estados.rechazado || 0,
         perfilA: statsPayload.perfiles.perfilA || 0,
         perfilB: statsPayload.perfiles.perfilB || 0,
         perfilC: statsPayload.perfiles.perfilC || 0,
       });
-
-      // Fondeo: totales y mes actual (fondeada/activo/cerrado/en_mora)
-      let funding = { monthCount: 0, monthAmount: 0, totalCount: 0, totalAmount: 0 };
-      const { data: funded, error: fundErr } = await supabase
-        .from('oportunidades')
-        .select('id, monto, estado, created_at, updated_at')
-        .in('estado', ['fondeada', 'activo', 'cerrado', 'en_mora']);
-      if (fundErr) {
-        console.warn('No se pudo cargar fondeo para KPIs', fundErr);
-      } else if (funded) {
-        funding = funded.reduce((acc, o) => {
-          const refDate = o.updated_at ? new Date(o.updated_at) : new Date(o.created_at);
-          acc.totalCount += 1;
-          acc.totalAmount += Number(o.monto || 0);
-          if (refDate >= monthStart) {
-            acc.monthCount += 1;
-            acc.monthAmount += Number(o.monto || 0);
-          }
-          return acc;
-        }, funding);
-      }
-      setFundingStats(funding);
-
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError('Error al cargar los datos del panel.');
@@ -398,7 +375,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const subscription = supabase.channel('solicitudes-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes' }, 
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes' },
         () => fetchDashboardData()
       ).subscribe();
     return () => supabase.removeChannel(subscription);
@@ -415,180 +392,12 @@ const AdminDashboard = () => {
     return ['todos', ...Array.from(states)];
   }, [requests]);
 
-  const fetchLedger = async () => {
-    if (!ledgerMonth) return;
-    setLedgerLoading(true);
-    setLedgerError(null);
-    try {
-      const [year, month] = ledgerMonth.split('-').map(Number);
-      const start = new Date(year, month - 1, 1);
-      const end = new Date(year, month, 1);
-      const { data, error } = await supabase
-        .from('movimientos')
-        .select('opportunity_id, tipo, amount, created_at')
-        .gte('created_at', start.toISOString())
-        .lt('created_at', end.toISOString());
-      if (error) throw error;
-      const rows = (data || []).reduce((acc, m) => {
-        const key = m.opportunity_id || 's/n';
-        if (!acc[key]) {
-          acc[key] = { opportunity_id: key, cobros: 0, payouts: 0, comisiones: 0, originacion: 0 };
-        }
-        const tipo = (m.tipo || '').toLowerCase();
-        if (tipo === 'cobro_prestatario') acc[key].cobros += Number(m.amount || 0);
-        if (tipo === 'payout_inversionista') acc[key].payouts += Number(m.amount || 0);
-        if (tipo === 'comision_plataforma') acc[key].comisiones += Number(m.amount || 0);
-        if (tipo === 'comision_originacion') acc[key].originacion += Number(m.amount || 0);
-        return acc;
-      }, {});
-      const list = Object.values(rows).map((r) => ({
-        ...r,
-        margen: r.comisiones + r.originacion, // EBITDA aprox = comisión plataforma + originación
-        flujo_bruto: r.cobros - r.payouts,
-      }));
-      const totals = list.reduce((acc, r) => {
-        acc.cobros += r.cobros;
-        acc.payouts += r.payouts;
-        acc.comisiones += r.comisiones;
-        acc.originacion += r.originacion;
-        acc.margen += r.margen;
-        return acc;
-      }, { cobros: 0, payouts: 0, comisiones: 0, originacion: 0, margen: 0 });
-      setLedgerRows(list);
-      setLedgerTotals(totals);
-
-      const { count: aprobadosMesCount, error: aprobadosMesError } = await supabase
-        .from('decisiones_riesgo')
-        .select('id', { count: 'exact', head: true })
-        .eq('decision', 'Aprobado')
-        .gte('created_at', start.toISOString())
-        .lt('created_at', end.toISOString());
-      if (aprobadosMesError) {
-        console.warn('No se pudo cargar aprobados del mes para unit economics', aprobadosMesError);
-      }
-
-      const { data: infocredRows, error: infocredError } = await supabase
-        .from('documentos')
-        .select('solicitud_id, uploaded_at')
-        .eq('tipo_documento', 'historial_infocred')
-        .gte('uploaded_at', start.toISOString())
-        .lt('uploaded_at', end.toISOString());
-      if (infocredError) {
-        console.warn('No se pudo cargar consultas INFOCRED del mes para unit economics', infocredError);
-      }
-
-      const consultasInfocredMes = infocredError ? 0 : new Set((infocredRows || []).map((row) => row.solicitud_id)).size;
-      const aprobadosMes = aprobadosMesError ? 0 : Number(aprobadosMesCount || 0);
-      const costoAnalistaMes = aprobadosMes * COSTO_ANALISTA_POR_APROBADO;
-      const costoInfocredMes = consultasInfocredMes * COSTO_INFOCRED_POR_CONSULTA;
-      const costosUnitariosMes = costoAnalistaMes + costoInfocredMes;
-      const resultadoNetoMes = totals.margen - costosUnitariosMes;
-
-      setUnitEconomics({
-        aprobadosMes,
-        consultasInfocredMes,
-        costoAnalistaMes,
-        costoInfocredMes,
-        costosUnitariosMes,
-        resultadoNetoMes,
-      });
-    } catch (err) {
-      console.error('Error loading ledger', err);
-      setLedgerError('No pudimos cargar el resumen contable.');
-    } finally {
-      setLedgerLoading(false);
-    }
-  };
-
-  const fetchFuenteChecks = async () => {
-    setFuenteLoading(true);
-    setFuenteError(null);
-    try {
-      const { data, error } = await supabase
-        .from('fuente_unica_checks')
-        .select(`
-          opportunity_id,
-          borrower_payment_intent_id,
-          due_date,
-          borrower_status,
-          borrower_amount,
-          cobro_prestatario,
-          payouts_inversionistas,
-          comision_plataforma,
-          movimientos_pendientes,
-          payouts_pending,
-          diferencia,
-          divergence_amount,
-          status
-        `)
-        .order('due_date', { ascending: false })
-        .limit(8);
-      if (error) throw error;
-      setFuenteChecks(data || []);
-    } catch (err) {
-      console.error('Error loading Fuente Única checks', err);
-      setFuenteError('No pudimos cargar las validaciones de Fuente Única.');
-    } finally {
-      setFuenteLoading(false);
-    }
-  };
-
-  const fetchMora = async () => {
-    setMoraLoading(true);
-    setMoraError(null);
-    try {
-      const { data, error } = await supabase
-        .from('borrower_mora_view')
-        .select('id, opportunity_id, expected_amount, status, due_date, days_past_due');
-      if (error) throw error;
-      computeMora(data || []);
-    } catch (err) {
-      console.error('Error cargando mora', err);
-      setMoraError('No pudimos cargar la mora.');
-    } finally {
-      setMoraLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLedger();
-  }, [ledgerMonth]);
-
-  useEffect(() => {
-    fetchFuenteChecks();
-    fetchMora();
-  }, []);
-
-  const exportLedgerCsv = () => {
-    const headers = ['opportunity_id', 'cobros_prestatario', 'payouts_inversionistas', 'comisiones_tp', 'margen_aprox', 'flujo_bruto'];
-    const csv = [headers.join(',')]
-      .concat(ledgerRows.map(r => headers.map(h => {
-        const map = {
-          opportunity_id: r.opportunity_id,
-          cobros_prestatario: r.cobros,
-          payouts_inversionistas: r.payouts,
-          comisiones_tp: r.comisiones,
-          margen_aprox: r.margen,
-          flujo_bruto: r.flujo_bruto,
-        };
-        return map[h];
-      }).join(',')))
-      .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ledger_${ledgerMonth}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   const filterTooltips = {
-    todos: 'Ver todas las solicitudes activas',
-    pendiente: 'Pendientes de iniciar evaluación documental',
-    'documentos-en-revision': 'Documentos en análisis previo a la pre-aprobación',
-    'pre-aprobado': 'Listas para desembolso o seguimiento del pago',
-    rechazado: 'Rechazadas por riesgo o documentación incompleta'
+    todos: 'Ver todas las solicitudes',
+    pendiente: 'Recién ingresadas, todavía sin evaluar',
+    'pre-aprobado': 'Pasaron el scorecard automático o están subiendo documentos',
+    aprobado: 'Aprobadas para oferta o ya desembolsadas',
+    rechazado: 'Rechazadas por el scorecard automático o por Cédula duplicada',
   };
 
   const filteredRequests = useMemo(() => {
@@ -611,213 +420,21 @@ const AdminDashboard = () => {
           {alertMessage}
         </div>
       )}
-      
+
       {loading ? <p>Cargando métricas...</p> : (
         <>
-        <div className="kpi-dashboard">
-          <KpiCard title="Solicitudes Hoy" value={stats.solicitudesHoy} />
-          <KpiCard title="Monto Pre-Aprobado Hoy" value={formatCurrency(stats.montoPreAprobadoHoy)} />
-          <KpiCard title="Total Pre-Aprobadas" value={stats.totalPreAprobados} type="total-approved" />
-          <KpiCard title="Total Rechazadas" value={stats.totalRechazados} type="total-rejected" />
-              <KpiCard
-                title="Fondeadas (mes)"
-                value={fundingStats.monthCount}
-                subtitle={`${formatCurrency(fundingStats.monthAmount)} este mes`}
-              />
-          <KpiCard
-            title="Fondeadas (total)"
-            value={fundingStats.totalCount}
-            subtitle={formatCurrency(fundingStats.totalAmount)}
-          />
-        </div>
-        <RiskDistributionChart stats={stats} />
-
-        <div className="card" style={{ marginTop: 20 }}>
-          <h3>Ingresos y egresos (EBITDA aprox.)</h3>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              Mes:
-              <input
-                type="month"
-                value={ledgerMonth}
-                onChange={(e) => setLedgerMonth(e.target.value)}
-                style={{ padding: 6, borderRadius: 6, border: '1px solid #ccc' }}
-              />
-            </label>
-            <button className="btn" onClick={exportLedgerCsv} disabled={ledgerRows.length === 0}>Exportar CSV</button>
-            <div className="muted">EBITDA aprox = comisión TP + originación; costos unitarios (analista + INFOCRED) se muestran debajo.</div>
+          <div className="kpi-dashboard">
+            <KpiCard title="Solicitudes Hoy" value={stats.solicitudesHoy} />
+            <KpiCard title="Monto Pre-Aprobado Hoy" value={formatCurrency(stats.montoPreAprobadoHoy)} />
+            <KpiCard title="Pendientes" value={stats.totalPendientes} />
+            <KpiCard title="Pre-Aprobadas" value={stats.totalPreAprobados} type="total-approved" />
+            <KpiCard title="Aprobadas" value={stats.totalAprobados} type="total-approved" />
+            <KpiCard title="Rechazadas" value={stats.totalRechazados} type="total-rejected" />
           </div>
-          {ledgerLoading && <p className="muted">Cargando resumen contable...</p>}
-          {ledgerError && <p style={{ color: 'red' }}>{ledgerError}</p>}
-          {!ledgerLoading && !ledgerError && (
-            <>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
-                <KpiCard title="Cobros prestatario" value={formatCurrency(ledgerTotals.cobros)} />
-                <KpiCard title="Payouts inversionistas" value={formatCurrency(ledgerTotals.payouts)} type="secondary" />
-                <KpiCard title="Comisión TP (1%)" value={formatCurrency(ledgerTotals.comisiones)} />
-                <KpiCard title="Originación" value={formatCurrency(ledgerTotals.originacion)} />
-                <KpiCard title="EBITDA aprox." value={formatCurrency(ledgerTotals.margen)} type="success" subtitle="Comisión+originación; sin OPEX general" />
-                <KpiCard title="Aprobados (mes)" value={unitEconomics.aprobadosMes} subtitle={`Costo analista: ${formatCurrency(COSTO_ANALISTA_POR_APROBADO)} c/u`} />
-                <KpiCard title="Consultas INFOCRED (mes)" value={unitEconomics.consultasInfocredMes} subtitle={`Costo buró: ${formatCurrency(COSTO_INFOCRED_POR_CONSULTA)} c/u`} />
-                <KpiCard title="Costos unitarios (mes)" value={formatCurrency(unitEconomics.costosUnitariosMes)} type="secondary" subtitle="Analista + INFOCRED" />
-                <KpiCard title="Resultado neto aprox." value={formatCurrency(unitEconomics.resultadoNetoMes)} type={unitEconomics.resultadoNetoMes >= 0 ? 'success' : 'total-rejected'} subtitle="EBITDA aprox - costos unitarios" />
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cobros prestatario</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Payouts inversionistas</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Comisión TP</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Originación</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Flujo bruto (cobro - payout)</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>EBITDA aprox.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ledgerRows.length === 0 && (
-                      <tr>
-                        <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>Sin movimientos en este mes.</td>
-                      </tr>
-                    )}
-                    {ledgerRows.map((row) => (
-                      <tr key={row.opportunity_id}>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>ID {row.opportunity_id}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.cobros)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.payouts)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.comisiones)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.originacion)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.flujo_bruto)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.margen)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </div>
-        <div className="card fuente-section">
-          <h3>Fuente Única</h3>
-          <p className="muted">
-            Validamos que la cuota del prestatario (BPI) coincida con los payouts de inversionistas y que los movimientos pendientes estén alineados.
-          </p>
-          {fuenteLoading && <p className="muted">Cargando validaciones...</p>}
-          {fuenteError && <p style={{ color: 'red' }}>{fuenteError}</p>}
-          {!fuenteLoading && !fuenteError && (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="fuente-table">
-                <thead>
-                  <tr>
-                    <th>Oportunidad</th>
-                    <th>Vencimiento</th>
-                    <th>Cuota BPI</th>
-                    <th>Payouts</th>
-                    <th>Comisión</th>
-                    <th>Gap</th>
-                    <th>Pendientes</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fuenteChecks.length === 0 && (
-                    <tr>
-                      <td colSpan={8} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>
-                        Sin alertas; todo está alineado.
-                      </td>
-                    </tr>
-                  )}
-                  {fuenteChecks.map((row) => (
-                    <tr key={row.borrower_payment_intent_id || `${row.opportunity_id}-${row.due_date}`}>
-                      <td>ID {row.opportunity_id}</td>
-                      <td>{formatDate(row.due_date)}</td>
-                      <td>{formatCurrency(row.borrower_amount)}</td>
-                      <td>{formatCurrency(row.payouts_inversionistas)}</td>
-                      <td>{formatCurrency(row.comision_plataforma)}</td>
-                      <td>{formatCurrency(row.diferencia)}</td>
-                      <td>
-                        {row.movimientos_pendientes || 0} / {row.payouts_pending || 0}
-                      </td>
-                      <td>
-                        <span className={`fuente-status-chip ${row.status === 'ok' ? 'ok' : 'alert'}`}>
-                          {row.status === 'ok' ? 'OK' : 'Revisar'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-        <div className="card" style={{ marginTop: 20 }}>
-          <h3>Mora (cuotas vencidas)</h3>
-          {moraLoading ? <p>Cargando mora...</p> : moraError ? <p style={{ color: 'red' }}>{moraError}</p> : (
-            <>
-              <div className="kpi-dashboard" style={{ marginBottom: 10 }}>
-                <KpiCard
-                  title="Mora por monto"
-                  value={formatPercent(moraGlobal.montoTotal ? (moraGlobal.montoVencido / moraGlobal.montoTotal) * 100 : 0)}
-                  subtitle={`${formatCurrency(moraGlobal.montoVencido)} vencido de ${formatCurrency(moraGlobal.montoTotal)}`}
-                  type="secondary"
-                />
-                <KpiCard
-                  title="Mora por cuotas"
-                  value={formatPercent(moraGlobal.cuotasTotales ? (moraGlobal.cuotasVencidas / moraGlobal.cuotasTotales) * 100 : 0)}
-                  subtitle={`${moraGlobal.cuotasVencidas} vencidas de ${moraGlobal.cuotasTotales}`}
-                />
-                <KpiCard
-                  title="Buckets (monto vencido)"
-                  value=""
-                  subtitle={`0-30: ${formatCurrency(moraGlobal.buckets?.['0-30'] || 0)} · 31-60: ${formatCurrency(moraGlobal.buckets?.['31-60'] || 0)} · 61-90: ${formatCurrency(moraGlobal.buckets?.['61-90'] || 0)} · 90+: ${formatCurrency(moraGlobal.buckets?.['90+'] || 0)}`}
-                  type="total-rejected"
-                />
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Oportunidad</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Cuotas vencidas / totales</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Monto vencido / total</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>% Mora (cuotas)</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>% Mora (monto)</th>
-                      <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Días atraso prom.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {moraPorOpp.map((row) => (
-                      <tr key={row.opportunity_id}>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>Op {row.opportunity_id}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{row.cuotasVencidas} / {row.cuotasTotales}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatCurrency(row.montoVencido)} / {formatCurrency(row.montoTotal)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatPercent(row.tasaCuotas)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{formatPercent(row.tasaMonto)}</td>
-                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{row.diasPromedio.toFixed(1)}</td>
-                      </tr>
-                    ))}
-                    {moraPorOpp.length === 0 && (
-                      <tr>
-                        <td colSpan={6} style={{ padding: 12, textAlign: 'center', color: '#55747b' }}>Sin cuotas vencidas</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </div>
-      </>
-    )}
+          <RiskDistributionChart stats={stats} />
+        </>
+      )}
 
-      <hr />
-
-      <PendingInvestments />
-
-      <hr />
-
-      <h3>Detalle de Solicitudes</h3>
       {(() => {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -839,7 +456,7 @@ const AdminDashboard = () => {
                   </span>
                   <span className="nuevas-hoy-nombre">{r.nombre_completo}</span>
                   <span className="nuevas-hoy-monto">{formatCurrency(r.monto_solicitado)}</span>
-                  <span className={`status status-${r.estado}`}>{r.estado}</span>
+                  <span className={`status status-${r.estado}`}>{ESTADO_LABELS[r.estado] || r.estado}</span>
                   <button className="btn btn--ghost btn--xs" onClick={() => handleSelectRequest(r)}>Ver</button>
                 </div>
               ))}
@@ -847,6 +464,8 @@ const AdminDashboard = () => {
           </div>
         );
       })()}
+
+      <h3>Solicitudes</h3>
       <div className="filter-buttons">
         {statusFilters.map(status => (
           <button
@@ -866,83 +485,115 @@ const AdminDashboard = () => {
 
       {loading && <p>Cargando solicitudes...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      
+
       {!loading && !error && (
-        <table>
-          <thead>
-            <tr>
-              <th>Solicitud</th>
-              <th>Fecha</th>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Monto Solicitado</th>
-              <th>Ingresos Mensuales</th>
-              <th>Perfil Riesgo</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRequests.map((req) => (
-              <tr key={req.id}>
-                <td>
-                  <span className={`priority-tag ${req.estado === 'documentos-en-revision' ? 'priority-tag--hot' : ''}`}>
-                    {req.estado === 'documentos-en-revision' ? 'Lead caliente' : 'Solicitud'}
-                  </span>
-                  {isWithin48h(req.created_at) && (
-                    <span className="new-badge">Nuevo</span>
-                  )}
-                </td>
-                <td>{new Date(req.created_at).toLocaleDateString()}</td>
-                <td>{req.id}</td>
-                <td>{req.nombre_completo}</td>
-                <td>{formatCurrency(req.monto_solicitado)}</td>
-                <td>{req.ingreso_mensual ? formatCurrency(req.ingreso_mensual) : '--'}</td>
-                <td>
-                  {req.perfil_riesgo ? (
-                    <span className={`suggestion-label suggestion-${req.perfil_riesgo.toLowerCase()}`}>
-                      {req.perfil_riesgo}
-                    </span>
-                  ) : '--'}
-                </td>
-                <td><span className={`status status-${req.estado}`}>{req.estado}</span></td>
-                <td>
-                  <button className="btn btn--ghost btn--xs" onClick={() => handleSelectRequest(req)}>
-                    Ver solicitud
-                  </button>
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Monto Solicitado</th>
+                <th>Estado</th>
+                <th>Motivo</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredRequests.map((req) => (
+                <tr key={req.id}>
+                  <td>
+                    {new Date(req.created_at).toLocaleDateString()}
+                    {isWithin48h(req.created_at) && <span className="new-badge">Nuevo</span>}
+                  </td>
+                  <td>{req.id}</td>
+                  <td>{req.nombre_completo}</td>
+                  <td>{formatCurrency(req.monto_solicitado)}</td>
+                  <td>
+                    <span className={`status status-${req.estado}`}>{ESTADO_LABELS[req.estado] || req.estado}</span>
+                    {req.estado === 'documentos-en-revision' && (
+                      <span className="priority-tag priority-tag--hot" style={{ marginLeft: 6 }}>🔥 Lead caliente</span>
+                    )}
+                  </td>
+                  <td>
+                    <span className="motivo-cell" title={evaluarMotivo(req, requests)}>
+                      {evaluarMotivo(req, requests)}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="btn btn--ghost btn--xs" onClick={() => handleSelectRequest(req)}>
+                      Ver solicitud
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {filteredRequests.length === 0 && !loading && <p>No hay solicitudes que coincidan con el filtro seleccionado.</p>}
       {selectedRequest && (
         <div className="request-detail-panel">
           <div className="request-detail-header">
-            <h3>Solicitud #{selectedRequest.id}</h3>
+            <h3>Solicitud #{selectedRequest.id} — {selectedRequest.nombre_completo}</h3>
             <button className="btn btn--ghost btn--xs" onClick={() => setSelectedRequest(null)}>Cerrar</button>
           </div>
           <div className="request-detail-grid">
             <div>
               <strong>Estado</strong>
-              <p>{selectedRequest.estado}</p>
+              <p>{ESTADO_LABELS[selectedRequest.estado] || selectedRequest.estado}</p>
             </div>
             <div>
-              <strong>Perfil de riesgo</strong>
-              <p>{selectedRequest.perfil_riesgo || '--'}</p>
+              <strong>Fecha de solicitud</strong>
+              <p>{new Date(selectedRequest.created_at).toLocaleString('es-BO')}</p>
+            </div>
+            <div>
+              <strong>Cédula de Identidad</strong>
+              <p>{selectedRequest.cedula_identidad || '--'}</p>
+            </div>
+            <div>
+              <strong>Email</strong>
+              <p>{selectedRequest.email || '--'}</p>
+            </div>
+            <div>
+              <strong>Teléfono</strong>
+              <p>{selectedRequest.telefono || '--'}</p>
+            </div>
+            <div>
+              <strong>Situación laboral</strong>
+              <p>{selectedRequest.situacion_laboral || '--'}{selectedRequest.antiguedad_laboral ? ` · ${selectedRequest.antiguedad_laboral} meses` : ''}</p>
+            </div>
+            <div>
+              <strong>Ingreso mensual</strong>
+              <p>{selectedRequest.ingreso_mensual ? formatCurrency(selectedRequest.ingreso_mensual) : '--'}</p>
+            </div>
+            <div>
+              <strong>Deuda de tarjeta declarada</strong>
+              <p>{selectedRequest.saldo_deuda_tc ? formatCurrency(selectedRequest.saldo_deuda_tc) : '--'}{selectedRequest.tasa_interes_tc ? ` · ${selectedRequest.tasa_interes_tc}% anual` : ''}</p>
+            </div>
+            <div>
+              <strong>Plazo solicitado</strong>
+              <p>{selectedRequest.plazo_meses ? `${selectedRequest.plazo_meses} meses` : '--'}</p>
             </div>
             <div>
               <strong>Monto solicitado</strong>
               <p>{formatCurrency(selectedRequest.monto_solicitado)}</p>
             </div>
             <div>
-              <strong>Ingresos mensuales</strong>
-              <p>{selectedRequest.ingreso_mensual ? formatCurrency(selectedRequest.ingreso_mensual) : '--'}</p>
+              <strong>Perfil de riesgo asignado</strong>
+              <p>{selectedRequest.perfil_riesgo || '--'}</p>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <strong>Motivo (recalculado con los datos actuales)</strong>
+              <p>{evaluarMotivo(selectedRequest, requests)}</p>
             </div>
           </div>
         </div>
       )}
+
+      <hr style={{ margin: '32px 0' }} />
+      <PendingInvestments />
     </div>
   );
 };

@@ -391,3 +391,21 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+/* --- Estados reales que .status (LoanRequestsList.css) no cubre todavía --- */
+.status-pre-aprobado { background-color: #ffd166; }
+.status-documentos-en-revision { background-color: #ffb347; }
+.status-aprobado_para_oferta { background-color: #7bd389; }
+.status-desembolsado { background-color: #28a745; color: #fff; }
+
+/* --- Columna "Motivo" de la tabla de solicitudes: por qué se pre-aprobó/aprobó/rechazó,
+   recalculado en vivo (ver evaluarMotivo en AdminDashboard.jsx) --- */
+.motivo-cell {
+  display: block;
+  max-width: 260px;
+  font-size: 0.82rem;
+  color: #455a64;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
