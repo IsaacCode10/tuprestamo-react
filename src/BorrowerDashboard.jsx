@@ -1186,12 +1186,16 @@ const ApprovedLoanDashboard = ({ loan, user, onLogout }) => {
 
 // --- FUNCIÓN HELPER MOVILIZADA PARA SER REUTILIZABLE ---
   const getRequiredDocs = (situacionLaboral) => {
-    // Documentos base (sin la autorización firmada, que irá al final)
+    // Documentos base (sin la autorización firmada, que irá al final). extracto_tarjeta va
+    // primero a propósito (decisión de Isaac, 2026-09-09): es el único documento que prueba
+    // de verdad la deuda de tarjeta de crédito que se declaró en el formulario - pedirlo
+    // primero descubre lo antes posible a alguien que no tiene tarjeta de crédito de verdad,
+    // en vez de que suba 3 documentos personales (CI, domicilio) antes de toparse con eso.
     const baseDocs = [
+      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.', tooltip: 'La última boleta que te envía el banco; si no llega, solicita el documento a través de la banca en línea o en una agencia.' },
       { id: 'ci_anverso', nombre: 'Cédula de Identidad (Anverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
       { id: 'ci_reverso', nombre: 'Cédula de Identidad (Reverso)', definition: 'Para verificar tu identidad y cumplir con las regulaciones bolivianas (KYC - Conoce a tu Cliente).' },
       { id: 'boleta_aviso_electricidad', nombre: 'Boleta de aviso de electricidad', definition: 'Para validar tu dirección y tu historial de pago del servicio eléctrico. Este aviso suele mostrar los últimos meses.', tooltip: 'Sube la boleta de aviso de cobranza de luz eléctrica (historial del último año).' },
-      { id: 'extracto_tarjeta', nombre: 'Extracto de Tarjeta de Crédito', definition: 'Necesitamos tu último extracto mensual para verificar datos clave: saldo deudor, tasa de interés, cargos por mantenimiento y el número de cuenta. Esto es crucial para calcular tu ahorro y para realizar el pago directo de la deuda por ti.', tooltip: 'La última boleta que te envía el banco; si no llega, solicita el documento a través de la banca en línea o en una agencia.' },
       { id: 'selfie_ci', nombre: 'Selfie con Cédula de Identidad', definition: 'Una medida de seguridad adicional para prevenir el fraude y asegurar que realmente eres tú quien solicita el préstamo. Sostén tu CI al lado de tu cara.' },
     ];
   const situacionDocs = {
@@ -2000,6 +2004,12 @@ const DocumentManager = ({ solicitud, user, uploadedDocuments, onDocumentUploade
           ? 'La carga de archivos está temporalmente bloqueada mientras el equipo de riesgo finaliza la revisión.'
           : 'Arrastra y suelta tus archivos en las casillas correspondientes o haz clic para seleccionarlos. Formatos aceptados: PDF, JPG, PNG.'}
       </p>
+      {!isReviewLocked && (
+        <p className="muted" style={{ marginTop: -4, marginBottom: 16 }}>
+          Recordá: Tu Préstamo refinancia deuda de <strong>tarjeta de crédito</strong> — por
+          eso el primer documento que te pedimos es tu extracto de tarjeta.
+        </p>
+      )}
       <div className="document-grid">
         {requiredDocs.map(doc => {
           // Considerar documento "subido" si existe registro, sin depender del estado específico

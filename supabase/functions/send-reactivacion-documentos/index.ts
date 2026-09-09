@@ -30,8 +30,11 @@ const ESTADOS_ACTIVOS = ['pendiente', 'pre-aprobado', 'documentos-en-revision', 
 
 // Mismo mapa que tuprestamo-bot/src/app/api/webhook/route.ts (duplicado a proposito, son
 // runtimes distintos) y que getRequiredDocsBySituation en RiskAnalystDashboard.jsx. El NIT de
-// Independiente es opcional, no se cuenta como requerido.
-const BASE_DOCS = ['ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'extracto_tarjeta', 'selfie_ci', 'autorizacion_infocred_firmada']
+// Independiente es opcional, no se cuenta como requerido. Orden: extracto_tarjeta primero
+// (decision de Isaac, 2026-09-09, ver Parte 11.4 de GUIA_DEFINITIVA_BOT_WHATSAPP.md) - aca
+// el orden no cambia el conteo (solo se usa el largo de faltantes), se mantiene igual por
+// consistencia con los otros 2 lugares donde vive esta lista.
+const BASE_DOCS = ['extracto_tarjeta', 'ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'selfie_ci', 'autorizacion_infocred_firmada']
 const REQUIRED_DOCS_BY_SITUACION: Record<string, string[]> = {
   Dependiente: [...BASE_DOCS, 'boleta_pago', 'certificado_gestora'],
   Independiente: [...BASE_DOCS, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3'],

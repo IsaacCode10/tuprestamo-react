@@ -6,7 +6,13 @@ import { calcOriginacionYBruto, calcTPBreakdown } from './utils/loan';
 import DecisionModal from './DecisionModal'; // Importar el nuevo modal
 
 const getRequiredDocsBySituation = (situacion) => {
-  const baseDocs = ['ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'extracto_tarjeta', 'selfie_ci', 'autorizacion_infocred_firmada'];
+  // extracto_tarjeta va primero a proposito (decision de Isaac, 2026-09-09): el caso real de
+  // Luis Brian (solicitud 269) mostro que alguien puede quedar pre-aprobado con datos
+  // autodeclarados y recien 4 dias despues, al pedirle el extracto, decir que no tiene
+  // tarjeta de credito - para entonces ya habia subido su CI y una boleta de domicilio.
+  // Pedir el extracto primero descubre esto en el documento 1, no en el 4, sin agregar
+  // fricción al formulario web (que ya menciona "tarjeta de credito" explicitamente).
+  const baseDocs = ['extracto_tarjeta', 'ci_anverso', 'ci_reverso', 'boleta_aviso_electricidad', 'selfie_ci', 'autorizacion_infocred_firmada'];
   const map = {
     Dependiente: [...baseDocs, 'boleta_pago', 'certificado_gestora'],
     Independiente: [...baseDocs, 'extracto_bancario_m1', 'extracto_bancario_m2', 'extracto_bancario_m3', 'nit'],
