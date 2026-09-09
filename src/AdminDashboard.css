@@ -143,24 +143,6 @@
 .approve-btn { background-color: #28a745; }
 .reject-btn { background-color: #dc3545; }
 
-.priority-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background-color: #e9ecef;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #495057;
-}
-
-.priority-tag--hot {
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #d97706;
-  border: 1px solid #d97706;
-}
-
 .btn--ghost {
   background: transparent;
   border: 1px solid rgba(0, 0, 0, 0.15);
@@ -205,6 +187,20 @@
   box-shadow: 0 6px 20px rgba(0, 68, 90, 0.25);
 }
 
+.filter-count {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(0, 68, 90, 0.1);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.filter-btn--active .filter-count {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 .filter-helper {
   display: flex;
   gap: 8px;
@@ -232,11 +228,33 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-.request-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+/* Acordeon: el detalle aparece pegado a la fila que se clickeo, no al final de la pagina. */
+.row-expanded {
+  background: rgba(38, 194, 178, 0.08);
+}
+
+.row-expanded td {
+  border-bottom: none;
+}
+
+.detail-row td {
+  padding: 0 !important;
+  border-bottom: 1px solid #e2e8ee;
+}
+
+.request-detail-panel--inline {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: #f6f8fb;
+  padding: 16px 18px;
+  animation: detailSlideDown 0.18s ease-out;
+}
+
+@keyframes detailSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .request-detail-grid {
@@ -248,7 +266,8 @@
 .request-detail-grid div {
   border-radius: 8px;
   padding: 8px 10px;
-  background: #f6f8fb;
+  background: #fff;
+  border: 1px solid #e6ebf1;
 }
 
 .request-detail-grid strong {

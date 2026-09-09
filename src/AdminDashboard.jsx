@@ -369,16 +369,43 @@ const AdminDashboard = () => {
     return () => supabase.removeChannel(subscription);
   }, []);
 
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const handleSelectRequest = (request) => setSelectedRequest(request);
+  // Acordeon: un solo detalle abierto a la vez, pegado a la fila que se clickeo (no un panel
+  // fijo al final de la pagina - antes habia que scrollear "hasta abajo infinito" para verlo).
+  const [expandedId, setExpandedId] = useState(null);
+  const toggleExpand = (id) => setExpandedId(prev => (prev === id ? null : id));
 
-  const statusFilters = useMemo(() => {
-    const states = new Set();
-    requests.forEach(req => {
-      states.add(normalizedStatus(req.estado));
-    });
-    return ['todos', ...Array.from(states)];
-  }, [requests]);
+  // Usado solo desde "Nuevas hoy": esa lista puede mostrar una solicitud que el filtro actual
+  // no incluye (ej. estas viendo "Rechazadas" y llega una pendiente nueva) - hay que volver a
+  // "Todos" para que la fila exista de verdad en la tabla antes de poder desplegarla.
+  const verDesdeNuevasHoy = (req) => {
+    setFilter('todos');
+    setExpandedId(req.id);
+  };
+
+  useEffect(() => {
+    if (expandedId == null) return;
+    const el = document.getElementById(`solicitud-row-${expandedId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [expandedId]);
+
+  // Orden fijo y siempre los mismos 5 filtros (antes se armaban dinamicamente segun que
+  // estados hubiera cargados, asi que los botones podian cambiar de orden o desaparecer
+  // dependiendo de los datos - inestable). Cada uno muestra su contador real.
+  const FILTROS = [
+    { key: 'todos', label: 'Todos' },
+    { key: 'pendiente', label: 'Pendiente' },
+    { key: 'pre-aprobado', label: 'Pre-aprobado' },
+    { key: 'aprobado', label: 'Aprobado' },
+    { key: 'rechazado', label: 'Rechazado' },
+  ];
+
+  const filterCounts = {
+    todos: requests.length,
+    pendiente: stats.totalPendientes,
+    'pre-aprobado': stats.totalPreAprobados,
+    aprobado: stats.totalAprobados,
+    rechazado: stats.totalRechazados,
+  };
 
   const filterTooltips = {
     todos: 'Ver todas las solicitudes',
@@ -439,7 +466,7 @@ const AdminDashboard = () => {
                   <span className="nuevas-hoy-nombre">{r.nombre_completo}</span>
                   <span className="nuevas-hoy-monto">{formatCurrency(r.monto_solicitado)}</span>
                   <span className={`status status-${r.estado}`}>{ESTADO_LABELS[r.estado] || r.estado}</span>
-                  <button className="btn btn--ghost btn--xs" onClick={() => handleSelectRequest(r)}>Ver</button>
+                  <button className="btn btn--ghost btn--xs" onClick={() => verDesdeNuevasHoy(r)}>Ver</button>
                 </div>
               ))}
             </div>
@@ -449,14 +476,14 @@ const AdminDashboard = () => {
 
       <h3>Solicitudes</h3>
       <div className="filter-buttons">
-        {statusFilters.map(status => (
+        {FILTROS.map(f => (
           <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className={filter === status ? 'filter-btn filter-btn--active' : 'filter-btn'}
-            title={filterTooltips[status] || ''}
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={filter === f.key ? 'filter-btn filter-btn--active' : 'filter-btn'}
+            title={filterTooltips[f.key] || ''}
           >
-            {status === 'todos' ? 'Todos' : status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {f.label} <span className="filter-count">{filterCounts[f.key]}</span>
           </button>
         ))}
       </div>
@@ -483,96 +510,98 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredRequests.map((req) => (
-                <tr key={req.id}>
-                  <td>
-                    {new Date(req.created_at).toLocaleDateString()}
-                    {isWithin48h(req.created_at) && <span className="new-badge">Nuevo</span>}
-                  </td>
-                  <td>{req.id}</td>
-                  <td>{req.nombre_completo}</td>
-                  <td>{formatCurrency(req.monto_solicitado)}</td>
-                  <td>
-                    <span className={`status status-${req.estado}`}>{ESTADO_LABELS[req.estado] || req.estado}</span>
-                    {req.estado === 'documentos-en-revision' && (
-                      <span className="priority-tag priority-tag--hot" style={{ marginLeft: 6 }}>🔥 Lead caliente</span>
+              {filteredRequests.map((req) => {
+                const isOpen = expandedId === req.id;
+                return (
+                  <React.Fragment key={req.id}>
+                    <tr id={`solicitud-row-${req.id}`} className={isOpen ? 'row-expanded' : ''}>
+                      <td>
+                        {new Date(req.created_at).toLocaleDateString()}
+                        {isWithin48h(req.created_at) && <span className="new-badge">Nuevo</span>}
+                      </td>
+                      <td>{req.id}</td>
+                      <td>{req.nombre_completo}</td>
+                      <td>{formatCurrency(req.monto_solicitado)}</td>
+                      <td>
+                        <span className={`status status-${req.estado}`}>{ESTADO_LABELS[req.estado] || req.estado}</span>
+                      </td>
+                      <td>
+                        <span className="motivo-cell" title={evaluarMotivo(req, requests)}>
+                          {evaluarMotivo(req, requests)}
+                        </span>
+                      </td>
+                      <td>
+                        <button className="btn btn--ghost btn--xs" onClick={() => toggleExpand(req.id)}>
+                          {isOpen ? 'Ocultar ▲' : 'Ver solicitud ▼'}
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="detail-row">
+                        <td colSpan={7}>
+                          <div className="request-detail-panel request-detail-panel--inline">
+                            <div className="request-detail-grid">
+                              <div>
+                                <strong>Estado</strong>
+                                <p>{ESTADO_LABELS[req.estado] || req.estado}</p>
+                              </div>
+                              <div>
+                                <strong>Fecha de solicitud</strong>
+                                <p>{new Date(req.created_at).toLocaleString('es-BO')}</p>
+                              </div>
+                              <div>
+                                <strong>Cédula de Identidad</strong>
+                                <p>{req.cedula_identidad || '--'}</p>
+                              </div>
+                              <div>
+                                <strong>Email</strong>
+                                <p>{req.email || '--'}</p>
+                              </div>
+                              <div>
+                                <strong>Teléfono</strong>
+                                <p>{req.telefono || '--'}</p>
+                              </div>
+                              <div>
+                                <strong>Situación laboral</strong>
+                                <p>{req.situacion_laboral || '--'}{req.antiguedad_laboral ? ` · ${req.antiguedad_laboral} meses` : ''}</p>
+                              </div>
+                              <div>
+                                <strong>Ingreso mensual</strong>
+                                <p>{req.ingreso_mensual ? formatCurrency(req.ingreso_mensual) : '--'}</p>
+                              </div>
+                              <div>
+                                <strong>Deuda de tarjeta declarada</strong>
+                                <p>{req.saldo_deuda_tc ? formatCurrency(req.saldo_deuda_tc) : '--'}{req.tasa_interes_tc ? ` · ${req.tasa_interes_tc}% anual` : ''}</p>
+                              </div>
+                              <div>
+                                <strong>Plazo solicitado</strong>
+                                <p>{req.plazo_meses ? `${req.plazo_meses} meses` : '--'}</p>
+                              </div>
+                              <div>
+                                <strong>Monto solicitado</strong>
+                                <p>{formatCurrency(req.monto_solicitado)}</p>
+                              </div>
+                              <div>
+                                <strong>Perfil de riesgo asignado</strong>
+                                <p>{req.perfil_riesgo || '--'}</p>
+                              </div>
+                              <div style={{ gridColumn: '1 / -1' }}>
+                                <strong>Motivo (recalculado con los datos actuales)</strong>
+                                <p>{evaluarMotivo(req, requests)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                  <td>
-                    <span className="motivo-cell" title={evaluarMotivo(req, requests)}>
-                      {evaluarMotivo(req, requests)}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="btn btn--ghost btn--xs" onClick={() => handleSelectRequest(req)}>
-                      Ver solicitud
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
       {filteredRequests.length === 0 && !loading && <p>No hay solicitudes que coincidan con el filtro seleccionado.</p>}
-      {selectedRequest && (
-        <div className="request-detail-panel">
-          <div className="request-detail-header">
-            <h3>Solicitud #{selectedRequest.id} — {selectedRequest.nombre_completo}</h3>
-            <button className="btn btn--ghost btn--xs" onClick={() => setSelectedRequest(null)}>Cerrar</button>
-          </div>
-          <div className="request-detail-grid">
-            <div>
-              <strong>Estado</strong>
-              <p>{ESTADO_LABELS[selectedRequest.estado] || selectedRequest.estado}</p>
-            </div>
-            <div>
-              <strong>Fecha de solicitud</strong>
-              <p>{new Date(selectedRequest.created_at).toLocaleString('es-BO')}</p>
-            </div>
-            <div>
-              <strong>Cédula de Identidad</strong>
-              <p>{selectedRequest.cedula_identidad || '--'}</p>
-            </div>
-            <div>
-              <strong>Email</strong>
-              <p>{selectedRequest.email || '--'}</p>
-            </div>
-            <div>
-              <strong>Teléfono</strong>
-              <p>{selectedRequest.telefono || '--'}</p>
-            </div>
-            <div>
-              <strong>Situación laboral</strong>
-              <p>{selectedRequest.situacion_laboral || '--'}{selectedRequest.antiguedad_laboral ? ` · ${selectedRequest.antiguedad_laboral} meses` : ''}</p>
-            </div>
-            <div>
-              <strong>Ingreso mensual</strong>
-              <p>{selectedRequest.ingreso_mensual ? formatCurrency(selectedRequest.ingreso_mensual) : '--'}</p>
-            </div>
-            <div>
-              <strong>Deuda de tarjeta declarada</strong>
-              <p>{selectedRequest.saldo_deuda_tc ? formatCurrency(selectedRequest.saldo_deuda_tc) : '--'}{selectedRequest.tasa_interes_tc ? ` · ${selectedRequest.tasa_interes_tc}% anual` : ''}</p>
-            </div>
-            <div>
-              <strong>Plazo solicitado</strong>
-              <p>{selectedRequest.plazo_meses ? `${selectedRequest.plazo_meses} meses` : '--'}</p>
-            </div>
-            <div>
-              <strong>Monto solicitado</strong>
-              <p>{formatCurrency(selectedRequest.monto_solicitado)}</p>
-            </div>
-            <div>
-              <strong>Perfil de riesgo asignado</strong>
-              <p>{selectedRequest.perfil_riesgo || '--'}</p>
-            </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <strong>Motivo (recalculado con los datos actuales)</strong>
-              <p>{evaluarMotivo(selectedRequest, requests)}</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       <hr style={{ margin: '32px 0' }} />
       <PendingInvestments />
