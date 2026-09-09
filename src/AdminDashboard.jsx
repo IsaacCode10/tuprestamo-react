@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import AdminNav from './components/AdminNav';
 import './LoanRequestsList.css';
@@ -265,8 +265,6 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('todos');
-  const [alertMessage, setAlertMessage] = useState('');
-  const prevRejectionsRef = useRef(0);
 
   // Agrupa los 6 estados reales en 4 baldes para el resumen y los filtros ("documentos-en-
   // revision" cuenta como pre-aprobado - ya paso el scorecard -, "aprobado_para_oferta" y
@@ -364,16 +362,6 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (stats.totalRechazados > prevRejectionsRef.current) {
-      setAlertMessage('Rechazos diarios en aumento. Revisá las solicitudes con más atención.');
-      const timer = setTimeout(() => setAlertMessage(''), 4000);
-      return () => clearTimeout(timer);
-    }
-    prevRejectionsRef.current = stats.totalRechazados;
-    return undefined;
-  }, [stats.totalRechazados]);
-
-  useEffect(() => {
     const subscription = supabase.channel('solicitudes-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'solicitudes' },
         () => fetchDashboardData()
@@ -415,12 +403,6 @@ const AdminDashboard = () => {
           Ir a Operaciones (Pagos)
         </button>
       </div>
-      {alertMessage && (
-        <div className="alert-banner" role="status">
-          {alertMessage}
-        </div>
-      )}
-
       {loading ? <p>Cargando métricas...</p> : (
         <>
           <div className="kpi-dashboard">
